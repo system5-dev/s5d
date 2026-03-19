@@ -1,0 +1,19 @@
+spec_ref: decision.db-choice__20260319.s5d.yaml
+status: applied
+status_history:
+  - status: proposed
+    timestamp: "2026-03-19T10:00:00Z"
+  - status: applied
+    timestamp: "2026-03-19T10:15:00Z"
+
+decision:
+  title: "SQLite + FTS5"
+  winner: sqlite-fts5
+  rationale: "Zero operational overhead, benchmark confirms <5ms queries, local-first aligns with architecture principles"
+  timestamp: "2026-03-19T10:15:00Z"
+
+reflection:
+  summary: "Decision took 15 minutes. All three options evaluated with evidence."
+  worked: ["Benchmark gave clear signal", "FTS5 BM25 ranking perfect for beliefs"]
+  issues: ["No graph relationships — may need later"]
+  follow_ups: ["Monitor query performance at 50K beliefs"]

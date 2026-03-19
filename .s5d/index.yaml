@@ -1,0 +1,6 @@
+features:
+- id: feat.s5d.test-logging
+  spec_path: packages/feat.s5d.test-logging__20260411.s5d.yaml
+  status: applied
+  product: s5d
+  version: 1.0.0

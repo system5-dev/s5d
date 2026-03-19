@@ -1,0 +1,7 @@
+User-Agent: *
+Disallow-Training: /
+
+# S5D — AI/ML Training Prohibition
+# This repository and all its contents may NOT be used as training data
+# for machine learning models without explicit written permission from
+# the copyright holders. See NOTICE file for details.

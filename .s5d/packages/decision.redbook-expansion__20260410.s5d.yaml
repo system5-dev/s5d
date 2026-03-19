@@ -1,0 +1,143 @@
+s5d: '1.0'
+id: decision.redbook-expansion
+version: 1.0.0
+product: s5d
+tier: decision
+allow_update: true
+meta:
+  title: redbook-expansion
+  authors: []
+  date: 2026-04-10
+  tickets: []
+  adrs: []
+  renames: []
+context: null
+artifacts: null
+links: null
+contracts: []
+gates: []
+roc: null
+problem:
+  signal: S5D covers decision/feature/trace but has no protocol for session-level human-AI collaboration (WAL, IPC, REVIEW markers). Users invent these ad-hoc.
+  constraints:
+  - Must not break existing S5D lifecycle (decision + feature + trace)
+  - Must be decomposable if scope too large
+  - Tests must include both A/B and replay types
+  targets:
+  - Coverage of all 6 Red Book concepts
+  - Coherence with existing S5D skills
+  - Testability via concrete metrics
+  indicators:
+  - Adoption friction
+  - Token cost of protocol
+  acceptance: "All 6 Red Book concepts integrated; effectiveness metrics defined with measurement protocol; both A/B and replay test protocols specified"
+  blast_radius: skills/ directory only (no Rust changes)
+  reversibility: high (skill files are additive, easily removed)
+  status: in_progress
+hypotheses:
+- id: h1-new-skill-layer-s5d-session
+  title: 'H1: New skill layer — s5d-session'
+  content: 'Add a single new skill `s5d-session` covering all Red Book concepts: WAL protocol, IPC addressability (spec:// URI), atomicity rules, conflict resolution (human > spec > code), REVIEW markers, boot sequence, session lifecycle, effectiveness metrics. Pure SKILL.md — no Rust changes. The skill defines conventions and PRESENT blocks. Existing skills reference it for session context. Tests defined as skill-level acceptance scenarios.'
+  scope: skills/ directory only
+  kind: system
+  layer: L1
+  r_eff: null
+  evidence:
+  - id: 20260410-prediction-h1-new-skill-layer-s5d-session
+    type: prediction
+    content: 'Must observe: single SKILL.md covers all 6 concepts coherently; users invoke /s5d-session for operational protocol. Must NOT observe: concept fragmentation across files; need to read multiple skills to understand session protocol; SKILL.md exceeding 600 lines (sign of overload).'
+    verdict: refine
+    valid_until: 2026-07-09T15:38:56.685788+00:00
+    carrier_ref: null
+    formality: null
+    claim_scope: []
+    congruence_level: null
+    reliability: null
+  - id: 20260410-decomposition-h1-new-skill-layer-s5d-session
+    type: decomposition
+    content: 'Single s5d-session skill (~400-500 lines): WAL protocol (format, update rules, anti-instructions ~100L), IPC (spec:// URI, atomicity, conflict resolution ~100L), REVIEW markers (format, workflow ~50L), boot sequence (BOOT→WAL→specs ~50L), session lifecycle (start/end protocol ~50L), effectiveness metrics (definitions ~50L), test protocols (A/B + replay ~100L). Total ~500L, within budget. 1 domain (Skills), 1 component (skills/s5d-session/SKILL.md), 0 edges added. WLNK: monolithic skill may drift into umbrella territory — too much in one file.'
+    verdict: pass
+    valid_until: 2026-07-09T15:39:32.101342+00:00
+    carrier_ref: null
+    formality: 3
+    claim_scope:
+    - skill structure
+    - LOC estimate
+    - concept coverage
+    congruence_level: null
+    reliability: 0.8
+  depends_on: []
+  rationale: null
+  spec_ref: null
+- id: h2-embed-into-existing-skills-metrics-section
+  title: 'H2: Embed into existing skills + metrics section'
+  content: 'Distribute Red Book concepts across existing skills: WAL and session lifecycle into s5d (umbrella), IPC/addressability into s5d-feature (spec authoring), REVIEW markers into s5d-trace (code-to-spec alignment), conflict resolution into s5d-decision (priority rules). Add effectiveness metrics section to umbrella SKILL.md. Tests as new sections in existing skills. No new skills, no Rust changes.'
+  scope: skills/s5d/, skills/s5d-feature/, skills/s5d-trace/, skills/s5d-decision/
+  kind: system
+  layer: invalid
+  r_eff: null
+  evidence:
+  - id: 20260410-prediction-h2-embed-into-existing-skills-metrics-section
+    type: prediction
+    content: 'Must observe: each Red Book concept naturally fits its host skill without forcing; no cross-referencing needed between skills for session protocol. Must NOT observe: WAL concept split across 2+ skills; users confused about where to find session protocol; existing skill PRESENT blocks bloated with session concerns.'
+    verdict: refine
+    valid_until: 2026-07-09T15:39:05.206585+00:00
+    carrier_ref: null
+    formality: null
+    claim_scope: []
+    congruence_level: null
+    reliability: null
+  - id: 20260410-decomposition-h2-embed-into-existing-skills-metrics-section
+    type: decomposition
+    content: 'Distributed across existing: umbrella s5d.md (+150L for WAL + session + metrics → 1016L total), s5d-feature (+80L for IPC/addressability/atomicity → 599L), s5d-trace (+60L for REVIEW markers → 339L), s5d-decision (+40L for conflict resolution → 768L). Total delta: +330L across 4 files. PROBLEM: umbrella already 866L, adding 150L pushes to ~1016L — exceeds comfortable reading. WAL is a cross-cutting concern — embedding it in the umbrella means decision/feature/trace users must read umbrella for session protocol, breaking modularity. WLNK: WAL has no natural single host — it''s session-scoped, not step-scoped.'
+    verdict: fail
+    valid_until: 2026-07-09T15:39:39.646832+00:00
+    carrier_ref: null
+    formality: 3
+    claim_scope:
+    - skill structure
+    - LOC impact
+    - modularity assessment
+    congruence_level: null
+    reliability: 0.85
+  depends_on: []
+  rationale: null
+  spec_ref: null
+- id: h3-decomposed-sub-skills-with-shared-protocol
+  title: 'H3: Decomposed sub-skills with shared protocol'
+  content: 'Decompose Red Book concepts into 3 focused sub-skills: (1) s5d-wal — WAL protocol, session lifecycle, boot sequence; (2) s5d-ipc — addressability (spec:// URI), atomicity, conflict resolution, REVIEW markers; (3) s5d-metrics — effectiveness metrics, A/B test protocol, replay test protocol. Each is standalone, each has own SKILL.md. Umbrella s5d.md gets a brief reference section pointing to sub-skills. No Rust changes. Tests live in s5d-metrics as formal test protocols.'
+  scope: skills/ directory — 3 new sub-skills + umbrella update
+  kind: system
+  layer: L1
+  r_eff: null
+  evidence:
+  - id: 20260410-prediction-h3-decomposed-sub-skills-with-shared-protocol
+    type: prediction
+    content: 'Must observe: each sub-skill independently useful (can use s5d-wal without s5d-ipc); clean separation — no concept duplication between sub-skills; umbrella references sub-skills without inlining. Must NOT observe: circular dependencies between sub-skills; user needing all 3 to get basic session management; total LOC across 3 skills exceeding 2x what H1 would be (overhead of decomposition).'
+    verdict: refine
+    valid_until: 2026-07-09T15:39:06.520055+00:00
+    carrier_ref: null
+    formality: null
+    claim_scope: []
+    congruence_level: null
+    reliability: null
+  - id: 20260410-decomposition-h3-decomposed-sub-skills-with-shared-protocol
+    type: decomposition
+    content: '3 sub-skills: s5d-wal (~200L: WAL format, session lifecycle, boot sequence — self-contained), s5d-ipc (~200L: spec:// URI, atomicity, conflict protocol, REVIEW markers — self-contained), s5d-metrics (~200L: effectiveness metrics definitions, A/B test protocol, replay test protocol — self-contained). Total ~600L across 3 files. Umbrella +30L (reference section). CHECK independence: s5d-wal works without s5d-ipc (WAL doesn''t need URI scheme). s5d-ipc works without s5d-wal (addressability doesn''t need session state). s5d-metrics works without both (metrics measure any workflow). BUT: s5d-ipc''s REVIEW markers relate to s5d-wal''s session lifecycle (REVIEW → human resolves in next cycle → WAL tracks pending REVIEWs). Weak coupling, not blocking. WLNK: 3 new skills = 3 new things to discover/learn. Navigation overhead.'
+    verdict: pass
+    valid_until: 2026-07-09T15:39:46.905779+00:00
+    carrier_ref: null
+    formality: 3
+    claim_scope:
+    - skill structure
+    - LOC estimate
+    - independence assessment
+    congruence_level: null
+    reliability: 0.8
+  depends_on: []
+  rationale: null
+  spec_ref: null
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false

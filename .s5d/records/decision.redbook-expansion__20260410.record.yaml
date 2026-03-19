@@ -1,0 +1,27 @@
+spec_ref: decision.redbook-expansion__20260410.s5d.yaml
+spec_sha256: sha256:a2164c98384178300b5430b606317597257d1bdc782d04395095498dbdfa8f18
+status: proposed
+sync_status: unknown
+status_history:
+- status: proposed
+  timestamp: 2026-04-10T15:38:01.173706+00:00
+approvals: []
+preview: null
+reflection: null
+gate_results: []
+decision:
+  title: Create s5d-session skill for Red Book concepts
+  winner_id: h1-new-skill-layer-s5d-session
+  rejected_ids:
+  - h2-embed-into-existing-skills-metrics-section
+  - h3-decomposed-sub-skills-with-shared-protocol
+  context: S5D covers decision/feature/trace but has no protocol for session-level human-AI collaboration.
+  decision: Create one new skill s5d-session covering all Red Book concepts as a coherent session protocol layer.
+  rationale: H2 fails modularity. H3 adds MONO overhead. H1 gives all 6 concepts in one discoverable location.
+  consequences: Plus 1 skill. Stepping stone to H3 if exceeds 700L.
+  decided_at: 2026-04-10T15:49:09.668711+00:00
+  confirmed_by: Roman
+  expires_at: 2026-07-09
+  do_list: []
+  dont_list: []
+verified_by: null
