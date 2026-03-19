@@ -1,0 +1,18 @@
+S5D — Software Architecture Decision & Feature Framework
+Copyright 2024-2026 Roman Voronin, Ivan Podobed
+
+This product includes:
+- FPF (First Principles Framework) by Anatoly Levenchuk
+  https://github.com/ailev/FPF
+- S5D Metamodel by Roman Voronin and Ivan Podobed
+
+ADDITIONAL RESTRICTION — AI/ML TRAINING PROHIBITION:
+
+This software, its documentation, specifications, and any associated
+content (including but not limited to SKILL.md files, YAML schemas,
+and methodology descriptions) may NOT be used, in whole or in part,
+as training data, fine-tuning data, or input for training, evaluating,
+or improving machine learning models, large language models, or any
+AI systems — without explicit written permission from the copyright
+holders. This restriction applies regardless of the Apache 2.0
+license terms above and constitutes an additional condition of use.

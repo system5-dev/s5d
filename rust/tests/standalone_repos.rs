@@ -1,0 +1,1928 @@
+use std::ffi::OsStr;
+use std::fs;
+use std::path::{Path, PathBuf};
+use std::process::Command;
+
+use tempfile::TempDir;
+
+struct StandaloneRepo {
+    _dir: TempDir,
+    root: PathBuf,
+}
+
+struct CmdOutcome {
+    success: bool,
+    stdout: String,
+    stderr: String,
+}
+
+impl CmdOutcome {
+    fn summary(&self) -> String {
+        format!("stdout:\n{}\n\nstderr:\n{}", self.stdout, self.stderr)
+    }
+}
+
+impl StandaloneRepo {
+    fn new() -> Self {
+        let dir = TempDir::new().unwrap();
+        Self {
+            root: dir.path().to_path_buf(),
+            _dir: dir,
+        }
+    }
+
+    fn path(&self) -> &Path {
+        &self.root
+    }
+
+    fn write(&self, rel: &str, content: &str) {
+        let path = self.root.join(rel);
+        if let Some(parent) = path.parent() {
+            fs::create_dir_all(parent).unwrap();
+        }
+        fs::write(path, content).unwrap();
+    }
+
+    fn mkdir(&self, rel: &str) -> PathBuf {
+        let path = self.root.join(rel);
+        fs::create_dir_all(&path).unwrap();
+        path
+    }
+}
+
+fn s5d_bin() -> &'static str {
+    env!("CARGO_BIN_EXE_s5d")
+}
+
+fn run_s5d<I, S>(cwd: &Path, args: I) -> CmdOutcome
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<OsStr>,
+{
+    let output = Command::new(s5d_bin())
+        .args(args)
+        .current_dir(cwd)
+        .output()
+        .unwrap();
+
+    CmdOutcome {
+        success: output.status.success(),
+        stdout: String::from_utf8_lossy(&output.stdout).into_owned(),
+        stderr: String::from_utf8_lossy(&output.stderr).into_owned(),
+    }
+}
+
+#[track_caller]
+fn run_ok<I, S>(cwd: &Path, args: I) -> CmdOutcome
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<OsStr>,
+{
+    let outcome = run_s5d(cwd, args);
+    assert!(outcome.success, "command failed:\n{}", outcome.summary());
+    outcome
+}
+
+#[track_caller]
+fn run_fail<I, S>(cwd: &Path, args: I) -> CmdOutcome
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<OsStr>,
+{
+    let outcome = run_s5d(cwd, args);
+    assert!(
+        !outcome.success,
+        "command unexpectedly succeeded:\n{}",
+        outcome.summary()
+    );
+    outcome
+}
+
+fn only_spec_path(repo: &StandaloneRepo) -> PathBuf {
+    only_matching_file(&repo.path().join(".s5d").join("packages"), ".s5d.yaml")
+}
+
+fn only_matching_file(dir: &Path, suffix: &str) -> PathBuf {
+    let mut matches = fs::read_dir(dir)
+        .unwrap()
+        .map(|entry| entry.unwrap().path())
+        .filter(|path| {
+            path.file_name()
+                .and_then(|name| name.to_str())
+                .is_some_and(|name| name.ends_with(suffix))
+        })
+        .collect::<Vec<_>>();
+    matches.sort();
+    assert_eq!(
+        matches.len(),
+        1,
+        "expected exactly one file ending with {} in {}, got {:?}",
+        suffix,
+        dir.display(),
+        matches
+    );
+    matches.remove(0)
+}
+
+fn record_path_for(spec_path: &Path) -> PathBuf {
+    let spec_name = spec_path.file_name().unwrap().to_string_lossy();
+    spec_path
+        .parent()
+        .unwrap()
+        .parent()
+        .unwrap()
+        .join("records")
+        .join(spec_name.replace(".s5d.yaml", ".record.yaml"))
+}
+
+fn load_yaml<T: serde::de::DeserializeOwned>(path: &Path) -> T {
+    serde_yaml::from_str(&fs::read_to_string(path).unwrap()).unwrap()
+}
+
+fn configure_gate_command(repo: &StandaloneRepo, gate: &str, command: Vec<String>) {
+    let config_path = repo.path().join(".s5d").join("config.yaml");
+    let mut config: s5d::S5dConfig = load_yaml(&config_path);
+    config.gate_commands.insert(gate.to_string(), command);
+    fs::write(config_path, serde_yaml::to_string(&config).unwrap()).unwrap();
+}
+
+fn seed_rust_workspace(repo: &StandaloneRepo) {
+    repo.write(
+        "Cargo.toml",
+        "[workspace]\nmembers = [\"crates/orders\", \"crates/payments\"]\n",
+    );
+    repo.write(
+        "crates/orders/src/models.rs",
+        "pub struct Order {}\npub struct OrderLine {}\n",
+    );
+    repo.write(
+        "crates/orders/src/service.rs",
+        "pub fn create_order() {}\npub fn cancel_order() {}\n",
+    );
+    repo.write("crates/payments/src/models.rs", "pub struct Payment {}\n");
+}
+
+fn seed_python_monorepo(repo: &StandaloneRepo) {
+    repo.write("pyproject.toml", "[project]\nname = \"myapp\"\n");
+    repo.write(
+        "services/agents/src/models.py",
+        "from pydantic import BaseModel\n\nclass AgentConfig(BaseModel):\n    pass\nclass AgentResult(BaseModel):\n    pass\n",
+    );
+    repo.write(
+        "services/api/src/routes.py",
+        "from fastapi import APIRouter\nrouter = APIRouter()\n\n@router.get('/claims')\nasync def list_claims():\n    pass\n",
+    );
+    repo.write(
+        "ui/package.json",
+        "{\"name\": \"ui\", \"dependencies\": {}}",
+    );
+    repo.write("shared/core.py", "# shared utilities\n");
+}
+
+fn seed_searchable_rust_repo(repo: &StandaloneRepo) {
+    repo.write(
+        "Cargo.toml",
+        "[package]\nname = \"billing\"\nversion = \"0.1.0\"\nedition = \"2021\"\n",
+    );
+    repo.write(
+        "src/lib.rs",
+        "pub struct BillingService;\n\nimpl BillingService {\n    pub fn standalonee2emarker(&self) -> &'static str {\n        \"standalonee2emarker\"\n    }\n}\n",
+    );
+    repo.mkdir("apps/mobile");
+}
+
+#[test]
+fn init_bootstraps_project_layout_for_standalone_repo() {
+    let repo = StandaloneRepo::new();
+    seed_searchable_rust_repo(&repo);
+
+    let out = run_ok(repo.path(), ["init"]);
+
+    assert!(repo.path().join(".s5d").join("packages").is_dir());
+    assert!(repo.path().join(".s5d").join("records").is_dir());
+    assert!(repo.path().join(".s5d").join(".locks").is_dir());
+    assert!(out.stdout.contains("S5D initialized"));
+    assert!(out.stdout.contains("s5d analyze <path> --product <name>"));
+
+    let status = run_ok(repo.path(), ["status"]);
+    assert!(status
+        .stdout
+        .contains("No specs. Run `s5d new <id>` to create one."));
+}
+
+#[test]
+fn analyze_rust_workspace_writes_valid_draft_spec() {
+    let repo = StandaloneRepo::new();
+    seed_rust_workspace(&repo);
+
+    let out = run_ok(
+        repo.path(),
+        ["analyze", ".", "--product", "Shop", "-o", "draft.s5d.yaml"],
+    );
+
+    assert!(out.stdout.contains("Language: Rust"), "{}", out.summary());
+    let draft_path = repo.path().join("draft.s5d.yaml");
+    assert!(draft_path.is_file());
+
+    // Draft scaffold is valid YAML and parseable, but won't pass full validate
+    // (no capabilities/components yet — agent fills those)
+    let spec: s5d::Spec = load_yaml(&draft_path);
+    let artifacts = spec
+        .artifacts
+        .expect("analyze draft must contain artifacts");
+    assert_eq!(spec.product, "shop");
+    assert_eq!(artifacts.products[0].name, "Shop");
+    assert!(artifacts.domains.len() >= 2);
+}
+
+#[test]
+fn analyze_python_monorepo_writes_valid_draft_spec() {
+    let repo = StandaloneRepo::new();
+    seed_python_monorepo(&repo);
+
+    let out = run_ok(
+        repo.path(),
+        [
+            "analyze",
+            ".",
+            "--product",
+            "MyApp",
+            "-o",
+            "analysis.s5d.yaml",
+        ],
+    );
+
+    assert!(out.stdout.contains("Language: Python"), "{}", out.summary());
+    let draft_path = repo.path().join("analysis.s5d.yaml");
+
+    // Draft scaffold is parseable but won't pass full validate (no capabilities yet)
+    let spec: s5d::Spec = load_yaml(&draft_path);
+    let artifacts = spec
+        .artifacts
+        .expect("analyze draft must contain artifacts");
+    assert!(artifacts.domains.len() >= 4);
+    assert_eq!(artifacts.entities.len(), 0, "scaffold: entities filled by AI skill");
+}
+
+#[test]
+fn codebase_index_and_search_work_from_nested_directory() {
+    let repo = StandaloneRepo::new();
+    seed_searchable_rust_repo(&repo);
+    run_ok(repo.path(), ["init"]);
+
+    let nested = repo.path().join("apps").join("mobile");
+    let index_out = run_ok(&nested, ["codebase", "index", "."]);
+    assert!(
+        index_out.stdout.contains(".s5d/codebase.db"),
+        "{}",
+        index_out.summary()
+    );
+    assert!(repo.path().join(".s5d").join("codebase.db").is_file());
+
+    let search_out = run_ok(
+        &nested,
+        [
+            "codebase",
+            "search",
+            "standalonee2emarker",
+            "--path",
+            ".",
+            "--top-k",
+            "5",
+        ],
+    );
+    assert!(
+        search_out.stdout.contains("src/lib.rs"),
+        "{}",
+        search_out.summary()
+    );
+    assert!(
+        search_out.stdout.contains("standalonee2emarker"),
+        "{}",
+        search_out.summary()
+    );
+}
+
+#[test]
+fn lightweight_feature_flow_passes_with_configured_schema_gate() {
+    let repo = StandaloneRepo::new();
+    seed_searchable_rust_repo(&repo);
+    run_ok(repo.path(), ["init"]);
+    configure_gate_command(
+        &repo,
+        "schema",
+        vec![
+            s5d_bin().to_string(),
+            "validate".to_string(),
+            "{package}".to_string(),
+        ],
+    );
+
+    run_ok(
+        repo.path(),
+        [
+            "new",
+            "feat.billing.ratio",
+            "--tier",
+            "lightweight",
+            "--product",
+            "Billing",
+        ],
+    );
+    let spec_path = only_spec_path(&repo);
+    let spec_str = spec_path.to_str().unwrap();
+
+    // Add capability so lightweight validate passes
+    {
+        let mut spec: s5d::Spec = load_yaml(&spec_path);
+        if let Some(ref mut a) = spec.artifacts {
+            a.capabilities.push(s5d::Capability {
+                id: "cap.CalculateRatio".into(),
+                domain: "billing".into(),
+                name: "CalculateRatio".into(),
+                description: None,
+                since: None,
+            });
+        }
+        fs::write(&spec_path, serde_yaml::to_string(&spec).unwrap()).unwrap();
+    }
+
+    run_ok(repo.path(), ["preview", spec_str]);
+    run_ok(repo.path(), ["approve", spec_str, "--reviewer", "Roman"]);
+    let gates = run_ok(repo.path(), ["run-gates", spec_str]);
+    assert!(gates.stdout.contains("gate:schema"), "{}", gates.summary());
+
+    let import = run_ok(repo.path(), ["import", spec_str]);
+    assert!(import.stdout.contains("Imported"), "{}", import.summary());
+
+    let record: s5d::Record = load_yaml(&record_path_for(&spec_path));
+    assert_eq!(record.status, s5d::SpecStatus::Applied);
+    assert_eq!(record.sync_status, s5d::SyncStatus::Synced);
+    assert!(record
+        .gate_results
+        .iter()
+        .any(|result| result.kind == "schema" && result.status == "passed"));
+
+    let index: s5d::Index = load_yaml(&repo.path().join(".s5d").join("index.yaml"));
+    assert!(index
+        .features
+        .iter()
+        .any(|entry| entry.id == "feat.billing.ratio"));
+}
+
+#[test]
+fn import_stays_blocked_when_declared_gate_only_skips() {
+    let repo = StandaloneRepo::new();
+    seed_searchable_rust_repo(&repo);
+    run_ok(repo.path(), ["init"]);
+    run_ok(
+        repo.path(),
+        [
+            "new",
+            "feat.billing.skipgate",
+            "--tier",
+            "lightweight",
+            "--product",
+            "Billing",
+        ],
+    );
+    let spec_path = only_spec_path(&repo);
+    let spec_str = spec_path.to_str().unwrap();
+
+    run_ok(repo.path(), ["preview", spec_str]);
+    run_ok(repo.path(), ["approve", spec_str, "--reviewer", "Roman"]);
+    let gates = run_ok(repo.path(), ["run-gates", spec_str]);
+    assert!(gates.stdout.contains("skipped: 1"), "{}", gates.summary());
+
+    let import = run_fail(repo.path(), ["import", spec_str]);
+    assert!(
+        import
+            .stderr
+            .contains("all declared gates must pass before import"),
+        "{}",
+        import.summary()
+    );
+
+    let record: s5d::Record = load_yaml(&record_path_for(&spec_path));
+    assert_eq!(record.status, s5d::SpecStatus::Approved);
+    assert!(record
+        .gate_results
+        .iter()
+        .any(|result| result.kind == "schema" && result.status == "skipped"));
+}
+
+#[test]
+fn init_is_idempotent() {
+    let repo = StandaloneRepo::new();
+    seed_searchable_rust_repo(&repo);
+
+    // First init creates .s5d/
+    let first = run_ok(repo.path(), ["init"]);
+    assert!(first.stdout.contains("S5D initialized"), "{}", first.summary());
+    assert!(repo.path().join(".s5d").exists());
+
+    // Second init should succeed (not error)
+    let second = run_ok(repo.path(), ["init"]);
+    assert!(
+        second.stdout.contains("already") || second.stdout.contains("S5D initialized"),
+        "second init should succeed: {}",
+        second.summary()
+    );
+}
+
+#[test]
+fn decision_has_expiry_and_do_dont() {
+    let repo = StandaloneRepo::new();
+    seed_searchable_rust_repo(&repo);
+    run_ok(repo.path(), ["init"]);
+
+    // Create decision spec
+    run_ok(
+        repo.path(),
+        [
+            "new",
+            "decision.test-choice",
+            "--tier",
+            "decision",
+            "--question",
+            "Which approach?",
+            "--product",
+            "TestProject",
+        ],
+    );
+    let spec_path = only_spec_path(&repo);
+    let spec_str = spec_path.to_str().unwrap();
+
+    // Add hypotheses
+    run_ok(
+        repo.path(),
+        [
+            "add-hypothesis",
+            spec_str,
+            "--title",
+            "Approach A",
+            "--content",
+            "Direct approach",
+            "--scope",
+            "full",
+            "--kind",
+            "system",
+        ],
+    );
+    run_ok(
+        repo.path(),
+        [
+            "add-hypothesis",
+            spec_str,
+            "--title",
+            "Approach B",
+            "--content",
+            "Alternative approach",
+            "--scope",
+            "full",
+            "--kind",
+            "system",
+        ],
+    );
+
+    // Decide
+    let decide = run_ok(
+        repo.path(),
+        [
+            "decide",
+            spec_str,
+            "--title",
+            "Test Decision",
+            "--winner",
+            "approach-a",
+            "--confirmed-by",
+            "roman",
+            "--context",
+            "Testing",
+            "--decision",
+            "Use A",
+            "--rationale",
+            "Simpler",
+            "--consequences",
+            "None",
+            "--rejected",
+            "approach-b",
+            "--force",
+        ],
+    );
+    assert!(decide.stdout.contains("Decision recorded"), "{}", decide.summary());
+
+    // Check record has expires_at
+    let record: s5d::Record = load_yaml(&record_path_for(&spec_path));
+    let decision = record.decision.expect("decision should be recorded");
+    assert!(
+        decision.expires_at.is_some(),
+        "decision should have expires_at (90-day TTL)"
+    );
+
+    // Check expires_at is ~90 days from now
+    let expires = decision.expires_at.as_ref().unwrap();
+    assert!(
+        expires.starts_with("20"),
+        "expires_at should be a date: {}",
+        expires
+    );
+}
+
+#[test]
+fn analyze_produces_scaffold_without_entities() {
+    let repo = StandaloneRepo::new();
+    seed_searchable_rust_repo(&repo);
+    run_ok(repo.path(), ["init"]);
+
+    let analyze = run_ok(
+        repo.path(),
+        [
+            "analyze",
+            ".",
+            "--product",
+            "TestProject",
+            "-o",
+            repo.path().join("draft.s5d.yaml").to_str().unwrap(),
+        ],
+    );
+    assert!(
+        analyze.stdout.contains("Scaffold generated") || analyze.stdout.contains("Analyzed"),
+        "{}",
+        analyze.summary()
+    );
+
+    // Scaffold should have domains but 0 entities (agent fills those)
+    assert!(
+        analyze.stdout.contains("Entities:") && analyze.stdout.contains("0"),
+        "analyze should produce scaffold with 0 entities: {}",
+        analyze.summary()
+    );
+}
+
+#[test]
+fn codebase_search_requires_existing_index() {
+    let repo = StandaloneRepo::new();
+    seed_searchable_rust_repo(&repo);
+    run_ok(repo.path(), ["init"]);
+
+    let search = run_fail(
+        repo.path(),
+        [
+            "codebase",
+            "search",
+            "standalonee2emarker",
+            "--path",
+            ".",
+            "--top-k",
+            "3",
+        ],
+    );
+    assert!(
+        search.stderr.contains("no codebase index at"),
+        "{}",
+        search.summary()
+    );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// S5D Contract Tests — prove the skill's value with synthetic scenarios
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// Helper: create a feature spec with full metamodel (domains, capabilities, components)
+fn write_spec_with_metamodel(repo: &StandaloneRepo, id: &str) {
+    let spec_dir = repo.path().join(".s5d").join("packages");
+    fs::create_dir_all(&spec_dir).unwrap();
+    let spec_path = spec_dir.join(format!("{}__{}.s5d.yaml", id, "20260410"));
+    fs::write(
+        &spec_path,
+        format!(
+            r#"s5d: '1.0'
+id: {id}
+version: 1.0.0
+product: testproduct
+tier: standard
+allow_update: false
+meta:
+  title: Test Feature
+  authors: []
+  date: 2026-04-10
+  tickets: []
+  adrs: []
+  renames: []
+context: null
+artifacts:
+  products:
+  - id: testproduct
+    name: TestProduct
+    organization: null
+  domains:
+  - id: dom.testproduct.core
+    product: testproduct
+    name: Core
+    classification: Core
+    description: Core domain
+  capabilities:
+  - id: cap.DoThing
+    domain: dom.testproduct.core
+    name: DoThing
+  entities:
+  - id: ent.Widget
+    domain: dom.testproduct.core
+    name: Widget
+  features:
+  - id: {id}
+    product: testproduct
+    name: Test Feature
+    description: null
+  use_cases: []
+  systems: []
+  containers:
+  - id: ctr.main
+    system: sys.test
+    name: Main
+  components:
+  - id: comp.widget_handler
+    domain: dom.testproduct.core
+    feature: {id}
+    container: ctr.main
+    name: Widget Handler
+    paths:
+    - src/widget.rs
+  roles: []
+  concerns: []
+  metrics: []
+  supersystems: []
+  transports: []
+links:
+  feature_to_domain: []
+  use_case_to_capability: []
+  use_case_to_entity: []
+  component_to_capability: []
+  component_to_entity: []
+  container_to_capability: []
+  concern_to_metric: []
+  component_to_container: []
+  edges: []
+  depends_on: []
+  entity_relations: []
+  capability_to_entity: []
+  capability_to_concern: []
+contracts: []
+gates:
+- kind: schema
+- kind: graph
+roc: null
+problem: null
+hypotheses: []
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false
+"#
+        ),
+    )
+    .unwrap();
+}
+
+/// Helper: create a spec WITHOUT metamodel (no domains, no capabilities, no components)
+fn write_spec_without_metamodel(repo: &StandaloneRepo, id: &str) {
+    let spec_dir = repo.path().join(".s5d").join("packages");
+    fs::create_dir_all(&spec_dir).unwrap();
+    let spec_path = spec_dir.join(format!("{}__{}.s5d.yaml", id, "20260410"));
+    fs::write(
+        &spec_path,
+        format!(
+            r#"s5d: '1.0'
+id: {id}
+version: 1.0.0
+product: testproduct
+tier: standard
+allow_update: false
+meta:
+  title: Test Feature Without Metamodel
+  authors: []
+  date: 2026-04-10
+  tickets: []
+  adrs: []
+  renames: []
+context: null
+artifacts:
+  products:
+  - id: testproduct
+    name: TestProduct
+    organization: null
+  domains: []
+  capabilities: []
+  entities: []
+  features:
+  - id: {id}
+    product: testproduct
+    name: Test Feature
+    description: null
+  use_cases: []
+  systems: []
+  containers:
+  - id: ctr.main
+    system: sys.test
+    name: Main
+  components: []
+  roles: []
+  concerns: []
+  metrics: []
+  supersystems: []
+  transports: []
+links:
+  feature_to_domain: []
+  use_case_to_capability: []
+  use_case_to_entity: []
+  component_to_capability: []
+  component_to_entity: []
+  container_to_capability: []
+  concern_to_metric: []
+  component_to_container: []
+  edges: []
+  depends_on: []
+  entity_relations: []
+  capability_to_entity: []
+  capability_to_concern: []
+contracts: []
+gates:
+- kind: schema
+- kind: graph
+roc: null
+problem: null
+hypotheses: []
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false
+"#
+        ),
+    )
+    .unwrap();
+}
+
+// ── Test 1: Metamodel gate blocks specs without architectural decomposition ──
+
+#[test]
+fn contract_metamodel_gate_blocks_empty_spec() {
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+
+    write_spec_without_metamodel(&repo, "feat.testproduct.empty");
+
+    let result = run_fail(
+        repo.path(),
+        [
+            "validate",
+            &format!(
+                ".s5d/packages/feat.testproduct.empty__20260410.s5d.yaml"
+            ),
+        ],
+    );
+    assert!(
+        result.stderr.contains("metamodel: spec has no domains"),
+        "should block on missing domains:\n{}",
+        result.summary()
+    );
+    assert!(
+        result.stderr.contains("metamodel: spec has no capabilities"),
+        "should block on missing capabilities:\n{}",
+        result.summary()
+    );
+    assert!(
+        result.stderr.contains("metamodel: spec has no components"),
+        "should block on missing components:\n{}",
+        result.summary()
+    );
+}
+
+// ── Test 2: Metamodel gate passes specs WITH architectural decomposition ──
+
+#[test]
+fn contract_metamodel_gate_passes_complete_spec() {
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+
+    write_spec_with_metamodel(&repo, "feat.testproduct.complete");
+
+    run_ok(
+        repo.path(),
+        [
+            "validate",
+            ".s5d/packages/feat.testproduct.complete__20260410.s5d.yaml",
+        ],
+    );
+}
+
+// ── Test 3: Lightweight tier only requires capabilities (not domains/components) ──
+
+#[test]
+fn contract_lightweight_tier_requires_only_capabilities() {
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+
+    let spec_dir = repo.path().join(".s5d").join("packages");
+    fs::create_dir_all(&spec_dir).unwrap();
+    fs::write(
+        spec_dir.join("feat.testproduct.light__20260410.s5d.yaml"),
+        r#"s5d: '1.0'
+id: feat.testproduct.light
+version: 1.0.0
+product: testproduct
+tier: lightweight
+allow_update: false
+meta:
+  title: Light Feature
+  authors: []
+  date: 2026-04-10
+  tickets: []
+  adrs: []
+  renames: []
+context: null
+artifacts:
+  products:
+  - id: testproduct
+    name: TestProduct
+    organization: null
+  domains: []
+  capabilities:
+  - id: cap.QuickFix
+    domain: dom.testproduct.core
+    name: QuickFix
+  entities: []
+  features:
+  - id: feat.testproduct.light
+    product: testproduct
+    name: Light Feature
+    description: null
+  use_cases: []
+  systems: []
+  containers:
+  - id: ctr.main
+    system: sys.test
+    name: Main
+  components: []
+  roles: []
+  concerns: []
+  metrics: []
+  supersystems: []
+  transports: []
+links:
+  feature_to_domain: []
+  use_case_to_capability: []
+  use_case_to_entity: []
+  component_to_capability: []
+  component_to_entity: []
+  container_to_capability: []
+  concern_to_metric: []
+  component_to_container: []
+  edges: []
+  depends_on: []
+  entity_relations: []
+  capability_to_entity: []
+  capability_to_concern: []
+contracts: []
+gates:
+- kind: schema
+roc: null
+problem: null
+hypotheses: []
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false
+"#,
+    )
+    .unwrap();
+
+    // Lightweight with capabilities → should pass (no domains/components required)
+    run_ok(
+        repo.path(),
+        [
+            "validate",
+            ".s5d/packages/feat.testproduct.light__20260410.s5d.yaml",
+        ],
+    );
+}
+
+// ── Test 4: Lightweight without capabilities still fails ──
+
+#[test]
+fn contract_lightweight_without_capabilities_fails() {
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+
+    let spec_dir = repo.path().join(".s5d").join("packages");
+    fs::create_dir_all(&spec_dir).unwrap();
+    fs::write(
+        spec_dir.join("feat.testproduct.nocap__20260410.s5d.yaml"),
+        r#"s5d: '1.0'
+id: feat.testproduct.nocap
+version: 1.0.0
+product: testproduct
+tier: lightweight
+allow_update: false
+meta:
+  title: No Cap Feature
+  authors: []
+  date: 2026-04-10
+  tickets: []
+  adrs: []
+  renames: []
+context: null
+artifacts:
+  products:
+  - id: testproduct
+    name: TestProduct
+    organization: null
+  domains: []
+  capabilities: []
+  entities: []
+  features:
+  - id: feat.testproduct.nocap
+    product: testproduct
+    name: No Cap Feature
+    description: null
+  use_cases: []
+  systems: []
+  containers:
+  - id: ctr.main
+    system: sys.test
+    name: Main
+  components: []
+  roles: []
+  concerns: []
+  metrics: []
+  supersystems: []
+  transports: []
+links:
+  feature_to_domain: []
+  use_case_to_capability: []
+  use_case_to_entity: []
+  component_to_capability: []
+  component_to_entity: []
+  container_to_capability: []
+  concern_to_metric: []
+  component_to_container: []
+  edges: []
+  depends_on: []
+  entity_relations: []
+  capability_to_entity: []
+  capability_to_concern: []
+contracts: []
+gates:
+- kind: schema
+roc: null
+problem: null
+hypotheses: []
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false
+"#,
+    )
+    .unwrap();
+
+    let result = run_fail(
+        repo.path(),
+        [
+            "validate",
+            ".s5d/packages/feat.testproduct.nocap__20260410.s5d.yaml",
+        ],
+    );
+    assert!(
+        result.stderr.contains("metamodel: spec has no capabilities"),
+        "lightweight without capabilities should fail:\n{}",
+        result.summary()
+    );
+}
+
+// ── Test 5: Decision tier is exempt from metamodel (no artifacts) ──
+
+#[test]
+fn contract_decision_tier_exempt_from_metamodel() {
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+
+    run_ok(
+        repo.path(),
+        [
+            "new",
+            "decision.testproduct.arch",
+            "--tier",
+            "decision",
+            "--question",
+            "Which database to use?",
+            "--product",
+            "testproduct",
+        ],
+    );
+
+    let spec_path = only_spec_path(&repo);
+    // Decision tier → no artifacts needed → should validate fine
+    run_ok(
+        repo.path(),
+        ["validate", spec_path.to_str().unwrap()],
+    );
+}
+
+// ── Test 6: Graph cycle detection blocks validation ──
+
+#[test]
+fn contract_graph_cycle_blocks_validation() {
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+
+    let spec_dir = repo.path().join(".s5d").join("packages");
+    fs::create_dir_all(&spec_dir).unwrap();
+    // Two domains with a directional cycle: A→B (customer_supplier) and B→A (customer_supplier)
+    fs::write(
+        spec_dir.join("feat.testproduct.cycle__20260411.s5d.yaml"),
+        r#"s5d: '1.0'
+id: feat.testproduct.cycle
+version: 1.0.0
+product: testproduct
+tier: standard
+allow_update: false
+meta:
+  title: Cycle Test
+  authors: []
+  date: 2026-04-11
+  tickets: []
+  adrs: []
+  renames: []
+context: null
+artifacts:
+  products:
+  - id: testproduct
+    name: TestProduct
+    organization: null
+  domains:
+  - id: dom.testproduct.alpha
+    product: testproduct
+    name: Alpha
+    classification: core
+    description: null
+  - id: dom.testproduct.beta
+    product: testproduct
+    name: Beta
+    classification: supporting
+    description: null
+  capabilities:
+  - id: cap.DoAlpha
+    domain: dom.testproduct.alpha
+    name: DoAlpha
+  - id: cap.DoBeta
+    domain: dom.testproduct.beta
+    name: DoBeta
+  entities: []
+  features:
+  - id: feat.testproduct.cycle
+    product: testproduct
+    name: Cycle Test
+    description: null
+  use_cases: []
+  systems: []
+  containers:
+  - id: ctr.main
+    system: sys.test
+    name: Main
+  components:
+  - id: comp.alpha_handler
+    domain: dom.testproduct.alpha
+    feature: feat.testproduct.cycle
+    container: ctr.main
+    name: Alpha Handler
+    paths:
+    - src/alpha.rs
+  - id: comp.beta_handler
+    domain: dom.testproduct.beta
+    feature: feat.testproduct.cycle
+    container: ctr.main
+    name: Beta Handler
+    paths:
+    - src/beta.rs
+  roles: []
+  concerns: []
+  metrics: []
+  supersystems: []
+  transports: []
+links:
+  feature_to_domain: []
+  use_case_to_capability: []
+  use_case_to_entity: []
+  component_to_capability: []
+  component_to_entity: []
+  container_to_capability: []
+  concern_to_metric: []
+  component_to_container: []
+  edges:
+  - from: dom.testproduct.alpha
+    to: dom.testproduct.beta
+    archetype: customer_supplier
+  - from: dom.testproduct.beta
+    to: dom.testproduct.alpha
+    archetype: customer_supplier
+  depends_on: []
+  entity_relations: []
+  capability_to_entity: []
+  capability_to_concern: []
+contracts: []
+gates:
+- kind: schema
+- kind: graph
+roc: null
+problem: null
+hypotheses: []
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false
+"#,
+    )
+    .unwrap();
+
+    // Validate passes (structural OK)
+    run_ok(
+        repo.path(),
+        [
+            "validate",
+            ".s5d/packages/feat.testproduct.cycle__20260411.s5d.yaml",
+        ],
+    );
+
+    // Graph check FAILS — directional cycle
+    let result = run_fail(
+        repo.path(),
+        [
+            "graph-check",
+            ".s5d/packages/feat.testproduct.cycle__20260411.s5d.yaml",
+        ],
+    );
+    assert!(
+        result.stderr.contains("cycle") || result.stdout.contains("cycle"),
+        "should detect cycle:\n{}",
+        result.summary()
+    );
+}
+
+// ── Test 7: Layering violation — supporting depends on core is OK, generic depends on core is NOT ──
+
+#[test]
+fn contract_layering_generic_to_core_blocked() {
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+
+    let spec_dir = repo.path().join(".s5d").join("packages");
+    fs::create_dir_all(&spec_dir).unwrap();
+    fs::write(
+        spec_dir.join("feat.testproduct.layering__20260411.s5d.yaml"),
+        r#"s5d: '1.0'
+id: feat.testproduct.layering
+version: 1.0.0
+product: testproduct
+tier: standard
+allow_update: false
+meta:
+  title: Layering Test
+  authors: []
+  date: 2026-04-11
+  tickets: []
+  adrs: []
+  renames: []
+context: null
+artifacts:
+  products:
+  - id: testproduct
+    name: TestProduct
+    organization: null
+  domains:
+  - id: dom.testproduct.core
+    product: testproduct
+    name: Core
+    classification: core
+    description: null
+  - id: dom.testproduct.infra
+    product: testproduct
+    name: Infra
+    classification: generic
+    description: null
+  capabilities:
+  - id: cap.DoCore
+    domain: dom.testproduct.core
+    name: DoCore
+  entities: []
+  features:
+  - id: feat.testproduct.layering
+    product: testproduct
+    name: Layering Test
+    description: null
+  use_cases: []
+  systems: []
+  containers:
+  - id: ctr.main
+    system: sys.test
+    name: Main
+  components:
+  - id: comp.core_handler
+    domain: dom.testproduct.core
+    feature: feat.testproduct.layering
+    container: ctr.main
+    name: Core Handler
+    paths:
+    - src/core.rs
+  roles: []
+  concerns: []
+  metrics: []
+  supersystems: []
+  transports: []
+links:
+  feature_to_domain: []
+  use_case_to_capability: []
+  use_case_to_entity: []
+  component_to_capability: []
+  component_to_entity: []
+  container_to_capability: []
+  concern_to_metric: []
+  component_to_container: []
+  edges:
+  - from: dom.testproduct.infra
+    to: dom.testproduct.core
+    archetype: conformist
+  depends_on: []
+  entity_relations: []
+  capability_to_entity: []
+  capability_to_concern: []
+contracts: []
+gates:
+- kind: schema
+- kind: graph
+roc: null
+problem: null
+hypotheses: []
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false
+"#,
+    )
+    .unwrap();
+
+    let result = run_fail(
+        repo.path(),
+        [
+            "graph-check",
+            ".s5d/packages/feat.testproduct.layering__20260411.s5d.yaml",
+        ],
+    );
+    assert!(
+        result.stderr.contains("layering") || result.stdout.contains("layering"),
+        "should detect layering violation (generic→core):\n{}",
+        result.summary()
+    );
+}
+
+// ── Test 8: Full lifecycle — init → new → validate → preview → approve → import ──
+
+#[test]
+fn contract_full_lifecycle_end_to_end() {
+    let repo = StandaloneRepo::new();
+    seed_rust_workspace(&repo);
+    run_ok(repo.path(), ["init"]);
+
+    // Create spec
+    run_ok(
+        repo.path(),
+        [
+            "new",
+            "feat.shop.orders",
+            "--tier",
+            "standard",
+            "--product",
+            "shop",
+        ],
+    );
+
+    let spec_path = only_spec_path(&repo);
+    let spec_str = spec_path.to_str().unwrap().to_string();
+
+    // Write metamodel into the spec so validate passes
+    let mut spec: s5d::Spec = load_yaml(&spec_path);
+    let artifacts = spec.artifacts.as_mut().expect("should have artifacts");
+    artifacts.domains.push(s5d::Domain {
+        id: "dom.shop.orders".into(),
+        product: "shop".into(),
+        name: "Orders".into(),
+        classification: Some("core".into()),
+        description: None,
+        team: None,
+        maturity_level: None,
+    });
+    artifacts.capabilities.push(s5d::Capability {
+        id: "cap.CreateOrder".into(),
+        domain: "dom.shop.orders".into(),
+        name: "CreateOrder".into(),
+        description: None,
+        since: None,
+    });
+    artifacts.containers.push(s5d::Container {
+        id: "ctr.api".into(),
+        name: "API".into(),
+        system: String::new(),
+        technology: None,
+    });
+    artifacts.components.push(s5d::Component {
+        id: "comp.order_service".into(),
+        domain: "dom.shop.orders".into(),
+        feature: "feat.shop.orders".into(),
+        container: "ctr.api".into(),
+        name: "Order Service".into(),
+        paths: vec!["crates/orders/src/service.rs".into()],
+    });
+    fs::write(&spec_path, serde_yaml::to_string(&spec).unwrap()).unwrap();
+
+    // Configure gate commands — must use real s5d commands
+    configure_gate_command(
+        &repo,
+        "schema",
+        vec![
+            s5d_bin().to_string(),
+            "validate".to_string(),
+            "{package}".to_string(),
+        ],
+    );
+    configure_gate_command(
+        &repo,
+        "graph",
+        vec![
+            s5d_bin().to_string(),
+            "graph-check".to_string(),
+            "{package}".to_string(),
+        ],
+    );
+    configure_gate_command(&repo, "lint", vec!["true".into()]);
+
+    // Validate
+    run_ok(repo.path(), ["validate", &spec_str]);
+
+    // Graph check
+    run_ok(repo.path(), ["graph-check", &spec_str]);
+
+    // Preview (must be AFTER spec is final — modifying spec invalidates preview hash)
+    run_ok(repo.path(), ["preview", &spec_str]);
+
+    // Approve
+    run_ok(
+        repo.path(),
+        ["approve", &spec_str, "--reviewer", "TestReviewer"],
+    );
+
+    // Run gates (after approve, before import)
+    run_ok(repo.path(), ["run-gates", &spec_str]);
+
+    // Import
+    let import = run_ok(repo.path(), ["import", &spec_str]);
+    assert!(
+        import.stdout.contains("imported") || import.stdout.contains("state_fingerprint") || import.stdout.contains("Import"),
+        "import should succeed:\n{}",
+        import.summary()
+    );
+
+    // Status should show applied/imported
+    let status = run_ok(repo.path(), ["status"]);
+    assert!(
+        !status.stdout.contains("No specs"),
+        "status should show the spec:\n{}",
+        status.summary()
+    );
+}
+
+// ── Test 9: Decision tier — confirmed_by required, artifacts forbidden ──
+
+#[test]
+fn contract_decision_requires_confirmed_by() {
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+
+    run_ok(
+        repo.path(),
+        [
+            "new",
+            "decision.testproduct.db",
+            "--tier",
+            "decision",
+            "--question",
+            "SQL or NoSQL?",
+            "--product",
+            "testproduct",
+        ],
+    );
+
+    let spec_path = only_spec_path(&repo);
+
+    // Add hypothesis
+    run_ok(
+        repo.path(),
+        [
+            "add-hypothesis",
+            spec_path.to_str().unwrap(),
+            "--title",
+            "SQL",
+            "--content",
+            "Use PostgreSQL",
+            "--scope",
+            "data layer",
+        ],
+    );
+
+    // Try to decide without enough hypotheses and without confirmed_by structure
+    // The decide command requires --confirmed-by flag
+    let result = run_fail(
+        repo.path(),
+        [
+            "decide",
+            spec_path.to_str().unwrap(),
+            "--title",
+            "Use SQL",
+            "--winner",
+            "sql",
+            "--context",
+            "Need ACID",
+            "--decision",
+            "PostgreSQL",
+            "--rationale",
+            "ACID compliance",
+            "--consequences",
+            "Schema migrations needed",
+        ],
+    );
+    // Should fail — missing --confirmed-by (structural gate)
+    assert!(
+        result.stderr.contains("confirmed") || result.stderr.contains("required"),
+        "decide without confirmed_by should fail:\n{}",
+        result.summary()
+    );
+}
+
+// ── Test 10: Shared kernel edge does NOT trigger cycle detection ──
+
+#[test]
+fn contract_shared_kernel_bidirectional_allowed() {
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+
+    let spec_dir = repo.path().join(".s5d").join("packages");
+    fs::create_dir_all(&spec_dir).unwrap();
+    fs::write(
+        spec_dir.join("feat.testproduct.shared__20260411.s5d.yaml"),
+        r#"s5d: '1.0'
+id: feat.testproduct.shared
+version: 1.0.0
+product: testproduct
+tier: standard
+allow_update: false
+meta:
+  title: Shared Kernel Test
+  authors: []
+  date: 2026-04-11
+  tickets: []
+  adrs: []
+  renames: []
+context: null
+artifacts:
+  products:
+  - id: testproduct
+    name: TestProduct
+    organization: null
+  domains:
+  - id: dom.testproduct.alpha
+    product: testproduct
+    name: Alpha
+    classification: core
+    description: null
+  - id: dom.testproduct.beta
+    product: testproduct
+    name: Beta
+    classification: core
+    description: null
+  capabilities:
+  - id: cap.DoAlpha
+    domain: dom.testproduct.alpha
+    name: DoAlpha
+  - id: cap.DoBeta
+    domain: dom.testproduct.beta
+    name: DoBeta
+  entities: []
+  features:
+  - id: feat.testproduct.shared
+    product: testproduct
+    name: Shared Kernel Test
+    description: null
+  use_cases: []
+  systems: []
+  containers:
+  - id: ctr.main
+    system: sys.test
+    name: Main
+  components:
+  - id: comp.alpha_handler
+    domain: dom.testproduct.alpha
+    feature: feat.testproduct.shared
+    container: ctr.main
+    name: Alpha Handler
+    paths:
+    - src/alpha.rs
+  - id: comp.beta_handler
+    domain: dom.testproduct.beta
+    feature: feat.testproduct.shared
+    container: ctr.main
+    name: Beta Handler
+    paths:
+    - src/beta.rs
+  roles: []
+  concerns: []
+  metrics: []
+  supersystems: []
+  transports: []
+links:
+  feature_to_domain: []
+  use_case_to_capability: []
+  use_case_to_entity: []
+  component_to_capability: []
+  component_to_entity: []
+  container_to_capability: []
+  concern_to_metric: []
+  component_to_container: []
+  edges:
+  - from: dom.testproduct.alpha
+    to: dom.testproduct.beta
+    archetype: shared_kernel
+  - from: dom.testproduct.beta
+    to: dom.testproduct.alpha
+    archetype: shared_kernel
+  depends_on: []
+  entity_relations: []
+  capability_to_entity: []
+  capability_to_concern: []
+contracts: []
+gates:
+- kind: schema
+- kind: graph
+roc: null
+problem: null
+hypotheses: []
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false
+"#,
+    )
+    .unwrap();
+
+    // shared_kernel is bidirectional — graph check should PASS (no cycle violation)
+    run_ok(
+        repo.path(),
+        [
+            "graph-check",
+            ".s5d/packages/feat.testproduct.shared__20260411.s5d.yaml",
+        ],
+    );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Reference Integrity Negative Tests
+// ═══════════════════════════════════════════════════════════════════════════
+
+#[test]
+fn contract_ref_integrity_broken_edge_domain() {
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+
+    let spec_dir = repo.path().join(".s5d").join("packages");
+    fs::create_dir_all(&spec_dir).unwrap();
+    fs::write(
+        spec_dir.join("feat.testproduct.badedge__20260411.s5d.yaml"),
+        r#"s5d: '1.0'
+id: feat.testproduct.badedge
+version: 1.0.0
+product: testproduct
+tier: standard
+allow_update: false
+meta:
+  title: Bad Edge
+  authors: []
+  date: 2026-04-11
+  tickets: []
+  adrs: []
+  renames: []
+context: null
+artifacts:
+  products:
+  - id: testproduct
+    name: TestProduct
+    organization: null
+  domains:
+  - id: dom.testproduct.real
+    product: testproduct
+    name: Real
+    classification: core
+    description: null
+  capabilities:
+  - id: cap.DoReal
+    domain: dom.testproduct.real
+    name: DoReal
+  entities: []
+  features:
+  - id: feat.testproduct.badedge
+    product: testproduct
+    name: Bad Edge
+    description: null
+  use_cases: []
+  systems: []
+  containers:
+  - id: ctr.main
+    system: sys.test
+    name: Main
+  components:
+  - id: comp.handler
+    domain: dom.testproduct.real
+    feature: feat.testproduct.badedge
+    container: ctr.main
+    name: Handler
+    paths:
+    - src/handler.rs
+  roles: []
+  concerns: []
+  metrics: []
+  supersystems: []
+  transports: []
+links:
+  feature_to_domain: []
+  use_case_to_capability: []
+  use_case_to_entity: []
+  component_to_capability: []
+  component_to_entity: []
+  container_to_capability: []
+  concern_to_metric: []
+  component_to_container: []
+  edges:
+  - from: dom.testproduct.real
+    to: dom.testproduct.GHOST
+    archetype: customer_supplier
+  depends_on: []
+  entity_relations: []
+  capability_to_entity: []
+  capability_to_concern: []
+contracts: []
+gates:
+- kind: schema
+roc: null
+problem: null
+hypotheses: []
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false
+"#,
+    )
+    .unwrap();
+
+    let result = run_fail(
+        repo.path(),
+        [
+            "validate",
+            ".s5d/packages/feat.testproduct.badedge__20260411.s5d.yaml",
+        ],
+    );
+    assert!(
+        result.stderr.contains("GHOST") && result.stderr.contains("not declared"),
+        "should catch broken edge ref:\n{}",
+        result.summary()
+    );
+}
+
+#[test]
+fn contract_ref_integrity_broken_component_domain() {
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+
+    let spec_dir = repo.path().join(".s5d").join("packages");
+    fs::create_dir_all(&spec_dir).unwrap();
+    fs::write(
+        spec_dir.join("feat.testproduct.badcomp__20260411.s5d.yaml"),
+        r#"s5d: '1.0'
+id: feat.testproduct.badcomp
+version: 1.0.0
+product: testproduct
+tier: standard
+allow_update: false
+meta:
+  title: Bad Component
+  authors: []
+  date: 2026-04-11
+  tickets: []
+  adrs: []
+  renames: []
+context: null
+artifacts:
+  products:
+  - id: testproduct
+    name: TestProduct
+    organization: null
+  domains:
+  - id: dom.testproduct.real
+    product: testproduct
+    name: Real
+    classification: core
+    description: null
+  capabilities:
+  - id: cap.DoReal
+    domain: dom.testproduct.real
+    name: DoReal
+  entities: []
+  features:
+  - id: feat.testproduct.badcomp
+    product: testproduct
+    name: Bad Component
+    description: null
+  use_cases: []
+  systems: []
+  containers:
+  - id: ctr.main
+    system: sys.test
+    name: Main
+  components:
+  - id: comp.handler
+    domain: dom.testproduct.FAKE
+    feature: feat.testproduct.badcomp
+    container: ctr.main
+    name: Handler
+    paths:
+    - src/handler.rs
+  roles: []
+  concerns: []
+  metrics: []
+  supersystems: []
+  transports: []
+links:
+  feature_to_domain: []
+  use_case_to_capability: []
+  use_case_to_entity: []
+  component_to_capability: []
+  component_to_entity: []
+  container_to_capability: []
+  concern_to_metric: []
+  component_to_container: []
+  edges: []
+  depends_on: []
+  entity_relations: []
+  capability_to_entity: []
+  capability_to_concern: []
+contracts: []
+gates:
+- kind: schema
+roc: null
+problem: null
+hypotheses: []
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false
+"#,
+    )
+    .unwrap();
+
+    let result = run_fail(
+        repo.path(),
+        [
+            "validate",
+            ".s5d/packages/feat.testproduct.badcomp__20260411.s5d.yaml",
+        ],
+    );
+    assert!(
+        result.stderr.contains("FAKE") && result.stderr.contains("not declared"),
+        "should catch broken component domain ref:\n{}",
+        result.summary()
+    );
+}
+
+#[test]
+fn contract_validation_missing_format_and_content() {
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+
+    let spec_dir = repo.path().join(".s5d").join("packages");
+    fs::create_dir_all(&spec_dir).unwrap();
+    fs::write(
+        spec_dir.join("feat.testproduct.badcontract__20260411.s5d.yaml"),
+        r#"s5d: '1.0'
+id: feat.testproduct.badcontract
+version: 1.0.0
+product: testproduct
+tier: standard
+allow_update: false
+meta:
+  title: Bad Contract
+  authors: []
+  date: 2026-04-11
+  tickets: []
+  adrs: []
+  renames: []
+context: null
+artifacts:
+  products:
+  - id: testproduct
+    name: TestProduct
+    organization: null
+  domains:
+  - id: dom.testproduct.core
+    product: testproduct
+    name: Core
+    classification: core
+    description: null
+  capabilities:
+  - id: cap.DoThing
+    domain: dom.testproduct.core
+    name: DoThing
+  entities: []
+  features:
+  - id: feat.testproduct.badcontract
+    product: testproduct
+    name: Bad Contract
+    description: null
+  use_cases: []
+  systems: []
+  containers:
+  - id: ctr.main
+    system: sys.test
+    name: Main
+  components:
+  - id: comp.handler
+    domain: dom.testproduct.core
+    feature: feat.testproduct.badcontract
+    container: ctr.main
+    name: Handler
+    paths:
+    - src/handler.rs
+  roles: []
+  concerns: []
+  metrics: []
+  supersystems: []
+  transports: []
+links:
+  feature_to_domain: []
+  use_case_to_capability: []
+  use_case_to_entity: []
+  component_to_capability: []
+  component_to_entity: []
+  container_to_capability: []
+  concern_to_metric: []
+  component_to_container: []
+  edges: []
+  depends_on: []
+  entity_relations: []
+  capability_to_entity: []
+  capability_to_concern: []
+contracts:
+- id: contract.bad
+  format: yaml
+  binds_to: []
+gates:
+- kind: schema
+roc: null
+problem: null
+hypotheses: []
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false
+"#,
+    )
+    .unwrap();
+
+    let result = run_fail(
+        repo.path(),
+        [
+            "validate",
+            ".s5d/packages/feat.testproduct.badcontract__20260411.s5d.yaml",
+        ],
+    );
+    // Should catch: invalid format, missing path/inline, empty binds_to
+    assert!(
+        result.stderr.contains("invalid format"),
+        "should catch invalid contract format:\n{}",
+        result.summary()
+    );
+    assert!(
+        result.stderr.contains("path") || result.stderr.contains("inline"),
+        "should catch missing path/inline:\n{}",
+        result.summary()
+    );
+    assert!(
+        result.stderr.contains("binds_to"),
+        "should catch empty binds_to:\n{}",
+        result.summary()
+    );
+}

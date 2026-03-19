@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "s5d": {
+      "args": [
+        "mcp"
+      ],
+      "command": "/Users/random1st/bin/s5d",
+      "type": "stdio"
+    }
+  }
+}

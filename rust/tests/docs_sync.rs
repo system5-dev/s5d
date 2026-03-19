@@ -1,0 +1,73 @@
+use std::fs;
+use std::path::PathBuf;
+
+fn repo_root() -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .unwrap()
+        .to_path_buf()
+}
+
+fn read_repo_file(rel: &str) -> String {
+    fs::read_to_string(repo_root().join(rel)).unwrap()
+}
+
+#[test]
+fn skill_references_all_reference_docs() {
+    let skill = read_repo_file("skills/s5d/SKILL.md");
+    for doc in ["fpf.md", "metamodel.md", "session-protocol.md"] {
+        assert!(
+            skill.contains(doc),
+            "SKILL.md must reference: {}",
+            doc
+        );
+    }
+}
+
+#[test]
+fn reference_docs_exist() {
+    for doc in ["skills/s5d/fpf.md", "skills/s5d/metamodel.md", "skills/s5d/session-protocol.md"] {
+        assert!(
+            repo_root().join(doc).exists(),
+            "reference doc missing: {}",
+            doc
+        );
+    }
+}
+
+#[test]
+fn fpf_reference_has_rag_commands() {
+    let fpf = read_repo_file("skills/s5d/fpf.md");
+    assert!(fpf.contains("fpf_search"), "fpf.md must reference fpf_search MCP tool");
+    assert!(fpf.contains("fpf_sync"), "fpf.md must reference fpf_sync MCP tool");
+}
+
+#[test]
+fn metamodel_has_core_invariants() {
+    let meta = read_repo_file("skills/s5d/metamodel.md");
+    for term in ["Domain", "Capability", "Entity", "Component", "Edge"] {
+        assert!(
+            meta.contains(term),
+            "metamodel.md must define artifact: {}",
+            term
+        );
+    }
+}
+
+#[test]
+fn session_protocol_has_core_concepts() {
+    let session = read_repo_file("skills/s5d/session-protocol.md");
+    for term in ["WAL", "spec://", "REVIEW"] {
+        assert!(
+            session.contains(term),
+            "session-protocol.md must contain: {}",
+            term
+        );
+    }
+}
+
+#[test]
+fn docs_state_existing_codebase_scope() {
+    let readme = read_repo_file("README.md");
+    assert!(readme.contains("existing repository") || readme.contains("repository"));
+}

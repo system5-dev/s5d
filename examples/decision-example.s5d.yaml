@@ -1,0 +1,58 @@
+s5d: "1.0"
+id: decision.db-choice
+version: "1.0.0"
+product: MyProject
+tier: decision
+
+meta:
+  title: "Database Choice for Beliefs System"
+  authors: [roman]
+  date: "2026-03-19"
+
+context: |
+  ## Problem
+  Need persistent storage for belief-based memory system.
+  Requirements: local-first, fast queries, zero operational overhead.
+
+  ## Constraints
+  - Single user (for now)
+  - Must support full-text search
+  - Must handle 10K+ records efficiently
+
+problem:
+  question: "PostgreSQL, SQLite, or SQLite+FTS5 for beliefs storage?"
+
+hypotheses:
+  - id: postgres
+    title: "PostgreSQL"
+    content: "Battle-tested, scalable, rich querying. But requires running a server process."
+    layer: L1
+    evidence:
+      - type: analysis
+        content: "Requires pg process, ~100MB RAM, backup strategy needed"
+        verdict: FAIL
+
+  - id: sqlite-plain
+    title: "SQLite (plain)"
+    content: "Zero-config, local file, fast. But no full-text search built-in."
+    layer: L1
+    evidence:
+      - type: analysis
+        content: "No FTS = need external search. LIKE queries O(n) on 10K rows."
+        verdict: FAIL
+
+  - id: sqlite-fts5
+    title: "SQLite + FTS5"
+    content: "Full-text search via FTS5 virtual table. BM25 ranking. Zero ops."
+    layer: L2
+    evidence:
+      - type: benchmark
+        content: "10K beliefs: insert <1ms, query <5ms, FTS5 BM25 ranking works"
+        verdict: PASS
+      - type: analysis
+        content: "Single file, zero ops, works offline, 50KB overhead for FTS index"
+        verdict: PASS
+
+decision: null  # Written to record, not here
+
+gates: []

@@ -1,0 +1,102 @@
+s5d: '1.0'
+id: decision.skill-decomposition
+version: 1.0.0
+product: s5d
+tier: decision
+allow_update: true
+meta:
+  title: skill-decomposition
+  authors: []
+  date: 2026-04-07
+  tickets: []
+  adrs: []
+  renames: []
+context: null
+artifacts: null
+links: null
+contracts: []
+gates: []
+roc: null
+problem:
+  signal: How to decompose S5D monolithic SKILL.md into modular independently-installable skills
+  constraints: []
+  targets: []
+  indicators: []
+  acceptance: null
+  blast_radius: null
+  reversibility: null
+  status: backlog
+hypotheses:
+- id: domain-based-split-into-5-skills
+  title: Domain-based split into 5 skills
+  content: 'Split by functional domain: fpf, decision, feature, trace, umbrella. Each skill owns a coherent domain with minimal cross-references. Decision and Feature share metamodel vocabulary but are independently usable.'
+  scope: All of SKILL.md content
+  kind: system
+  layer: L1
+  r_eff: null
+  evidence:
+  - id: 20260407-decomposition-domain-based-split-into-5-skills
+    type: decomposition
+    content: '{"skills":["fpf","s5d-decision","s5d-feature","s5d-trace","s5d"],"coupling":"medium - FPF vocab (36 refs) shared across all, metamodel (22 refs) shared by decision+trace+health. CLI commands split cleanly.","blast_radius":"5 new SKILL.md files, 1 rewritten umbrella, install.sh + manifests updated","lines_per_skill":"fpf:317, decision:~450, feature:~150, trace:~180, umbrella:~80"}'
+    verdict: pass
+    valid_until: 2026-07-06T18:29:37.325555+00:00
+    carrier_ref: null
+    formality: 3
+    claim_scope:
+    - skill boundaries
+    - coupling
+    congruence_level: null
+    reliability: 0.75
+  depends_on: []
+  rationale: null
+  spec_ref: null
+- id: layer-based-split-into-3-skills
+  title: Layer-based split into 3 skills
+  content: 'Split by S5D layers: fpf (Layer 1), s5d-core (Layers 2+3 merged), umbrella. Fewer modules, less coupling, but s5d-core remains a 900-line monolith.'
+  scope: All of SKILL.md content
+  kind: system
+  layer: L1
+  r_eff: null
+  evidence:
+  - id: 20260407-decomposition-layer-based-split-into-3-skills
+    type: decomposition
+    content: '{"skills":["fpf","s5d-core","s5d"],"coupling":"minimal - only fpf referenced from core. But s5d-core is 900+ lines monolith, defeats purpose.","blast_radius":"3 files, minimal change","lines_per_skill":"fpf:317, core:~900, umbrella:~30"}'
+    verdict: pass
+    valid_until: 2026-07-06T18:29:37.331541+00:00
+    carrier_ref: null
+    formality: 3
+    claim_scope:
+    - skill boundaries
+    - coupling
+    congruence_level: null
+    reliability: 0.7
+  depends_on: []
+  rationale: null
+  spec_ref: null
+- id: capability-based-split-into-7-skills
+  title: Capability-based split into 7 skills
+  content: 'Maximum granularity: separate metamodel, decision, feature, trace, health, fpf, umbrella. Each capability independent. Risk: too many small skills with high cross-referencing, marketplace clutter.'
+  scope: All of SKILL.md content
+  kind: system
+  layer: invalid
+  r_eff: null
+  evidence:
+  - id: 20260407-decomposition-capability-based-split-into-7-skills
+    type: decomposition
+    content: '{"skills":["fpf","s5d-metamodel","s5d-decision","s5d-feature","s5d-trace","s5d-health","s5d"],"coupling":"high - metamodel referenced by 4 skills, FPF by all 6. Splitting metamodel from decision creates artificial seam - decomposition IS evidence in the decision path.","blast_radius":"7 new files, high cross-referencing, marketplace clutter","lines_per_skill":"fpf:317, metamodel:~100, decision:~350, feature:~150, trace:~120, health:~60, umbrella:~80"}'
+    verdict: fail
+    valid_until: 2026-07-06T18:29:37.337369+00:00
+    carrier_ref: null
+    formality: 3
+    claim_scope:
+    - skill boundaries
+    - coupling
+    congruence_level: null
+    reliability: 0.8
+  depends_on: []
+  rationale: null
+  spec_ref: null
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false

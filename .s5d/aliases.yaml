@@ -1,0 +1,20 @@
+global:
+- uuid: 2dccdb7a-6a0d-4357-b61d-fd218dbb9acb
+  artifact_id: s5d
+  artifact_type: Product
+  package_id: null
+  owning_package: feat.s5d.test-logging
+  deprecated: false
+packages:
+- uuid: 0d3f4abc-8b28-422f-ba12-3bdb515b33ac
+  artifact_id: cap.LogError
+  artifact_type: Capability
+  package_id: feat.s5d.test-logging
+  owning_package: null
+  deprecated: false
+- uuid: a9da1128-df40-4feb-ae3c-e19846210571
+  artifact_id: feat.s5d.test-logging
+  artifact_type: Feature
+  package_id: feat.s5d.test-logging
+  owning_package: null
+  deprecated: false

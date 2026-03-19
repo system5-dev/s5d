@@ -1,0 +1,6 @@
+{
+  "name": "s5d",
+  "version": "3.0.0",
+  "description": "S5D — unified SDLC for AI coding agents. Bootstrap, Frame, Decide, Spec, Build, Verify, Ship, Learn.",
+  "contextFileName": "S5D.md"
+}

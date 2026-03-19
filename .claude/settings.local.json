@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__diana-gw-linear__save_issue",
+      "mcp__s5d__*",
+      "mcp__diana-gw-linear__list_issues",
+      "mcp__diana-gw-diana-daemon__system_context",
+      "mcp__diana-gw-diana-daemon__system_search",
+      "mcp__diana-gw-diana-daemon__applescript_execute",
+      "mcp__diana-gw-diana-daemon__system_screenshot",
+      "mcp__diana-gw-diana-daemon__system_windows",
+      "mcp__diana-gw-beliefs__belief__search",
+      "mcp__diana-gw-beliefs__belief__observe",
+      "mcp__diana-gw-diana-daemon__system_clipboard"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "s5d"
+  ]
+}

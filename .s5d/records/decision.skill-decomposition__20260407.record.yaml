@@ -1,0 +1,23 @@
+spec_ref: decision.skill-decomposition__20260407.s5d.yaml
+spec_sha256: sha256:7ffff13c5de6a178d05741e335d1796928cb971096384807c9a9e3a284404a61
+status: proposed
+sync_status: unknown
+status_history:
+- status: proposed
+  timestamp: 2026-04-07T18:28:25.390589+00:00
+approvals: []
+preview: null
+reflection: null
+gate_results: []
+decision:
+  title: Domain-based decomposition with FPF RAG in s5d CLI
+  winner_id: domain-based-split-into-5-skills
+  rejected_ids:
+  - layer-based-split-into-3-skills
+  - capability-based-split-into-7-skills
+  context: S5D monolithic SKILL.md (1125 lines) blocks independent installation via marketplace. FPF RAG currently depends on diana CLI.
+  decision: Split into 5 skills (fpf, s5d-decision, s5d-feature, s5d-trace, s5d umbrella). Add s5d fpf sync/search with BM25+vector hybrid reusing codebase search infra. FPF RAG exposed as MCP tool.
+  rationale: Domain-based split has meaningful boundaries. Trace/codebase is independent utility. Decision and Feature are separate lifecycles. FPF in s5d removes diana dependency. Hybrid search already exists in codebase module.
+  consequences: 5 new SKILL.md files. s5d CLI gains fpf subcommand. MCP gains fpf_search tool. install.sh and manifests updated for new skill structure.
+  decided_at: 2026-04-07T18:34:44.296257+00:00
+  confirmed_by: Roman
