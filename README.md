@@ -10,14 +10,10 @@ S5D is an opinionated software-architecture profile built on FPF. It applies to 
 
 ## Skills
 
-| Skill | What it does | Standalone? |
-|-------|-------------|------------|
-| `/fpf` | FPF reasoning — problem framing, variants, evidence, ADI cycle | Yes |
-| `/s5d` | Umbrella — routes to the right sub-skill | Orchestrator |
-| `/s5d-decision` | Decision path — Steps 1-6, hypotheses, evidence, audit, decide | Yes (uses fpf vocab) |
-| `/s5d-feature` | Feature lifecycle — spec, preview, approve, gates, import, reflect | Yes (uses fpf vocab) |
-| `/s5d-trace` | Codebase traceability, architecture health, impact analysis | Yes |
-| `/s5d-cli` | Direct file operations — manual spec manipulation | Yes |
+| Skill | What it does |
+|-------|-------------|
+| `/s5d` | Unified SDLC — decisions, features, traceability, gates, lifecycle |
+| `/fpf` | FPF reasoning — problem framing, variants, evidence, ADI cycle |
 
 ## Install
 
@@ -47,7 +43,6 @@ curl -fsSL https://raw.githubusercontent.com/system5-dev/s5d/main/install.sh | b
 ```
 /s5d should I use PostgreSQL or SQLite?
 /s5d add authentication to the API
-/s5d-trace check my-feature-spec
 /fpf evaluate these three deployment strategies
 ```
 

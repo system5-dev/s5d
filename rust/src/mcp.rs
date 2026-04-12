@@ -63,371 +63,266 @@ fn handle_initialize() -> anyhow::Result<Value> {
 }
 
 fn handle_tools_list() -> anyhow::Result<Value> {
-    Ok(json!({
-        "tools": [
-            {
-                "name": "codebase_index",
-                "description": "Build or rebuild the full codebase index for a repository",
-                "inputSchema": {
-                    "type": "object",
-                    "properties": {
-                        "path": {"type": "string", "description": "Repository root path (default: current dir)"}
-                    }
-                }
-            },
-            {
-                "name": "codebase_update",
-                "description": "Incrementally update index using git diff (only re-indexes changed files)",
-                "inputSchema": {
-                    "type": "object",
-                    "properties": {
-                        "path": {"type": "string", "description": "Repository root path (default: current dir)"}
-                    }
-                }
-            },
-            {
-                "name": "codebase_search",
-                "description": "Search the codebase index using hybrid BM25+vector search with RRF fusion",
-                "inputSchema": {
-                    "type": "object",
-                    "required": ["query"],
-                    "properties": {
-                        "query": {"type": "string", "description": "Search query"},
-                        "path": {"type": "string", "description": "Repository root path (default: current dir)"},
-                        "top_k": {"type": "integer", "description": "Number of results (default: 10)"}
-                    }
-                }
-            },
-            {
-                "name": "codebase_symbol",
-                "description": "Look up a symbol by name — returns definition location and kind",
-                "inputSchema": {
-                    "type": "object",
-                    "required": ["name"],
-                    "properties": {
-                        "name": {"type": "string", "description": "Symbol name to look up"},
-                        "path": {"type": "string", "description": "Repository root path (default: current dir)"}
-                    }
-                }
-            },
-            {
-                "name": "s5d_analyze",
-                "description": "Analyze a codebase and return Metamodel YAML (domains, capabilities, components)",
-                "inputSchema": {
-                    "type": "object",
-                    "properties": {
-                        "path": {"type": "string", "description": "Repository root path (default: current dir)"},
-                        "product": {"type": "string", "description": "Product name (default: directory name)"}
-                    }
-                }
-            },
-            {
-                "name": "trace_build",
-                "description": "Build trace links between spec artifacts and code. Scans annotations + infers from symbols",
-                "inputSchema": {
-                    "type": "object",
-                    "required": ["spec"],
-                    "properties": {
-                        "spec": {"type": "string", "description": "Path to the spec YAML file"},
-                        "path": {"type": "string", "description": "Repository root path (default: current dir)"}
-                    }
-                }
-            },
-            {
-                "name": "trace_check",
-                "description": "Check trace coverage for a spec — reports matched, unmatched, and coverage percentage",
-                "inputSchema": {
-                    "type": "object",
-                    "required": ["spec"],
-                    "properties": {
-                        "spec": {"type": "string", "description": "Path to the spec YAML file"},
-                        "path": {"type": "string", "description": "Repository root path (default: current dir)"}
-                    }
-                }
-            },
-            {
-                "name": "trace_blast_radius",
-                "description": "Compute blast radius for a spec — domains touched, capabilities affected, cross-domain edges, weakest link",
-                "inputSchema": {
-                    "type": "object",
-                    "required": ["spec"],
-                    "properties": {
-                        "spec": {"type": "string", "description": "Path to the spec YAML file"},
-                        "path": {"type": "string", "description": "Repository root path (default: current dir)"}
-                    }
-                }
-            },
-            {
-                "name": "fpf_search",
-                "description": "Search the FPF (First Principles Framework) spec using BM25 full-text search. Returns ranked sections.",
-                "inputSchema": {
-                    "type": "object",
-                    "required": ["query"],
-                    "properties": {
-                        "query": {"type": "string", "description": "Search query terms"},
-                        "limit": {"type": "integer", "description": "Max results (default: 5)"},
-                        "full": {"type": "boolean", "description": "Return full section content (default: false)"}
-                    }
-                }
-            },
-            {
-                "name": "fpf_sync",
-                "description": "Download and index the latest FPF spec from GitHub. Run this before fpf_search if the index is empty.",
-                "inputSchema": {
-                    "type": "object",
-                    "properties": {
-                        "force": {"type": "boolean", "description": "Re-index even if up to date (default: false)"}
-                    }
-                }
-            },
-            {
-                "name": "s5d_init",
-                "description": "Initialize .s5d/ directory structure in the current working directory",
-                "inputSchema": {
-                    "type": "object",
-                    "properties": {}
-                }
-            },
-            {
-                "name": "s5d_new",
-                "description": "Create a new spec from template",
-                "inputSchema": {
-                    "type": "object",
-                    "required": ["id"],
-                    "properties": {
-                        "id": {"type": "string", "description": "Feature ID (e.g. feat.orders.tracking)"},
-                        "tier": {"type": "string", "description": "Assurance tier: decision|standard|lightweight|high|note (default: standard)"},
-                        "product": {"type": "string", "description": "Product name"},
-                        "question": {"type": "string", "description": "Decision question (required for tier=decision)"},
-                        "rationale": {"type": "string", "description": "Note rationale (required for tier=note)"}
-                    }
-                }
-            },
-            {
-                "name": "s5d_validate",
-                "description": "Validate a spec file against schema and business rules",
-                "inputSchema": {
-                    "type": "object",
-                    "required": ["spec"],
-                    "properties": {
-                        "spec": {"type": "string", "description": "Path to .s5d.yaml file"}
-                    }
-                }
-            },
-            {
-                "name": "s5d_graph_check",
-                "description": "Check graph structure — DFS cycle detection on spec relations",
-                "inputSchema": {
-                    "type": "object",
-                    "required": ["spec"],
-                    "properties": {
-                        "spec": {"type": "string", "description": "Path to .s5d.yaml file"}
-                    }
-                }
-            },
-            {
-                "name": "s5d_preview",
-                "description": "Dry-run import diff — shows what would be created/updated/linked",
-                "inputSchema": {
-                    "type": "object",
-                    "required": ["spec"],
-                    "properties": {
-                        "spec": {"type": "string", "description": "Path to .s5d.yaml file"}
-                    }
-                }
-            },
-            {
-                "name": "s5d_approve",
-                "description": "Record approval — binds spec_sha256 and diff_sha256",
-                "inputSchema": {
-                    "type": "object",
-                    "required": ["spec", "reviewer"],
-                    "properties": {
-                        "spec": {"type": "string", "description": "Path to .s5d.yaml file"},
-                        "reviewer": {"type": "string", "description": "Reviewer name"}
-                    }
-                }
-            },
-            {
-                "name": "s5d_run_gates",
-                "description": "Execute configured gate commands for a spec",
-                "inputSchema": {
-                    "type": "object",
-                    "required": ["spec"],
-                    "properties": {
-                        "spec": {"type": "string", "description": "Path to .s5d.yaml file"}
-                    }
-                }
-            },
-            {
-                "name": "s5d_import",
-                "description": "Transactional import — apply spec to alias table and ledger",
-                "inputSchema": {
-                    "type": "object",
-                    "required": ["spec"],
-                    "properties": {
-                        "spec": {"type": "string", "description": "Path to .s5d.yaml file"},
-                        "verified_by": {"type": "string", "description": "Who independently verified gates passed"},
-                        "force": {"type": "boolean", "description": "Override methodological checks (default: false)"}
-                    }
-                }
-            },
-            {
-                "name": "s5d_decide",
-                "description": "Record a decision in a decision-tier spec",
-                "inputSchema": {
-                    "type": "object",
-                    "required": ["spec", "title", "winner", "confirmed_by", "context", "decision", "rationale", "consequences"],
-                    "properties": {
-                        "spec": {"type": "string", "description": "Path to .s5d.yaml file"},
-                        "title": {"type": "string", "description": "Decision title"},
-                        "winner": {"type": "string", "description": "Winner hypothesis ID"},
-                        "confirmed_by": {"type": "string", "description": "Human who confirms the decision"},
-                        "context": {"type": "string", "description": "Decision context"},
-                        "decision": {"type": "string", "description": "What was decided"},
-                        "rationale": {"type": "string", "description": "Why this was chosen"},
-                        "consequences": {"type": "string", "description": "Expected consequences"},
-                        "rejected": {"type": "string", "description": "Rejected hypothesis IDs (comma-separated)"}
-                    }
-                }
-            },
-            {
-                "name": "s5d_add_hypothesis",
-                "description": "Add a hypothesis to a decision-tier spec",
-                "inputSchema": {
-                    "type": "object",
-                    "required": ["spec", "title", "content", "scope"],
-                    "properties": {
-                        "spec": {"type": "string", "description": "Path to .s5d.yaml file"},
-                        "title": {"type": "string", "description": "Hypothesis title"},
-                        "content": {"type": "string", "description": "Hypothesis content/description"},
-                        "scope": {"type": "string", "description": "Scope — where this applies"},
-                        "kind": {"type": "string", "description": "Kind: system or episteme (default: system)"}
-                    }
-                }
-            },
-            {
-                "name": "s5d_add_evidence",
-                "description": "Add evidence to a hypothesis in a decision-tier spec",
-                "inputSchema": {
-                    "type": "object",
-                    "required": ["spec", "hypothesis_id", "evidence_type", "content", "verdict"],
-                    "properties": {
-                        "spec": {"type": "string", "description": "Path to .s5d.yaml file"},
-                        "hypothesis_id": {"type": "string", "description": "Hypothesis ID to attach evidence to"},
-                        "evidence_type": {"type": "string", "description": "Evidence type: internal, external, gate:test, etc."},
-                        "content": {"type": "string", "description": "Evidence content"},
-                        "verdict": {"type": "string", "description": "Verdict: pass, fail, refine"},
-                        "formality": {"type": "integer", "description": "F-G-R Formality: rigor of evidence method (1-5)"},
-                        "claim_scope": {"type": "string", "description": "F-G-R ClaimScope: what the claim covers (comma-separated)"},
-                        "reliability": {"type": "number", "description": "F-G-R Reliability: probability claim is true (0.0-1.0)"}
-                    }
-                }
-            },
-            {
-                "name": "s5d_reflect",
-                "description": "Record reflection for a spec (OPERATE stage) — closes lifecycle with production evidence",
-                "inputSchema": {
-                    "type": "object",
-                    "required": ["spec", "summary", "heuristic"],
-                    "properties": {
-                        "spec": {"type": "string", "description": "Path to .s5d.yaml file"},
-                        "summary": {"type": "string", "description": "Summary of what happened in production"},
-                        "heuristic": {"type": "string", "description": "Reusable rule learned from this spec"},
-                        "issues": {"type": "string", "description": "Issues encountered (comma-separated)"}
-                    }
-                }
-            },
-            {
-                "name": "s5d_status",
-                "description": "Show status of all specs in the current project",
-                "inputSchema": {
-                    "type": "object",
-                    "properties": {}
-                }
-            },
-            {
-                "name": "s5d_show",
-                "description": "Show spec details — decision trace, hypothesis tree, or feature summary",
-                "inputSchema": {
-                    "type": "object",
-                    "required": ["spec"],
-                    "properties": {
-                        "spec": {"type": "string", "description": "Path to .s5d.yaml file"}
-                    }
-                }
-            },
-            {
-                "name": "s5d_waiver",
-                "description": "Record a waiver on a cross-domain link in a spec",
-                "inputSchema": {
-                    "type": "object",
-                    "required": ["spec", "gate", "reason", "condition", "approved_by"],
-                    "properties": {
-                        "spec": {"type": "string", "description": "Path to .s5d.yaml file"},
-                        "gate": {"type": "string", "description": "Gate or link ID to waive"},
-                        "reason": {"type": "string", "description": "Reason for waiver"},
-                        "condition": {"type": "string", "description": "Condition under which waiver applies"},
-                        "approved_by": {"type": "string", "description": "Who approved the waiver"}
-                    }
-                }
-            },
-            {
-                "name": "s5d_rollback",
-                "description": "Reverse last import for a spec — tombstones alias entries and appends rollback ledger entry",
-                "inputSchema": {
-                    "type": "object",
-                    "required": ["spec"],
-                    "properties": {
-                        "spec": {"type": "string", "description": "Path to .s5d.yaml file"}
-                    }
-                }
-            },
-            {
-                "name": "s5d_drift_check",
-                "description": "Compare live state vs last applied fingerprint. Checks all specs if none specified.",
-                "inputSchema": {
-                    "type": "object",
-                    "properties": {
-                        "spec": {"type": "string", "description": "Path to .s5d.yaml file (optional — checks all if omitted)"}
-                    }
-                }
-            },
-            {
-                "name": "s5d_reconcile",
-                "description": "Re-import to fix drift (desired-state restore). Reconciles all drifted specs if none specified.",
-                "inputSchema": {
-                    "type": "object",
-                    "properties": {
-                        "spec": {"type": "string", "description": "Path to .s5d.yaml file (optional — reconciles all drifted if omitted)"}
-                    }
-                }
-            },
-            {
-                "name": "s5d_check",
-                "description": "Architecture health check — coupling metrics, cycles, quality gate",
-                "inputSchema": {
-                    "type": "object",
-                    "required": ["spec"],
-                    "properties": {
-                        "spec": {"type": "string", "description": "Path to .s5d.yaml file"},
-                        "threshold": {"type": "integer", "description": "Minimum health score to pass (default: 0)"}
-                    }
-                }
-            },
-            {
-                "name": "s5d_metrics",
-                "description": "Display per-domain coupling metrics for a spec",
-                "inputSchema": {
-                    "type": "object",
-                    "required": ["spec"],
-                    "properties": {
-                        "spec": {"type": "string", "description": "Path to .s5d.yaml file"}
-                    }
+    Ok(json!({ "tools": core_tools() }))
+}
+
+fn core_tools() -> Vec<Value> {
+    vec![
+        json!({
+            "name": "s5d_init",
+            "description": "Initialize .s5d/ directory structure and register MCP server for agent tools",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "claude": {"type": "boolean", "description": "Register for Claude Code (.mcp.json) — default if no flags"},
+                    "cursor": {"type": "boolean", "description": "Register for Cursor (.cursor/mcp.json)"},
+                    "codex": {"type": "boolean", "description": "Register for Codex CLI (.codex/config.toml)"},
+                    "gemini": {"type": "boolean", "description": "Register for Gemini CLI (.gemini/settings.json)"},
+                    "all": {"type": "boolean", "description": "Register for all supported tools"}
                 }
             }
-        ]
-    }))
+        }),
+        json!({
+            "name": "s5d_new",
+            "description": "Create a new spec from template",
+            "inputSchema": {
+                "type": "object",
+                "required": ["id"],
+                "properties": {
+                    "id": {"type": "string", "description": "Feature ID (e.g. feat.orders.tracking)"},
+                    "tier": {"type": "string", "description": "Assurance tier: decision|standard|lightweight|high|note (default: standard)"},
+                    "product": {"type": "string", "description": "Product name"},
+                    "question": {"type": "string", "description": "Decision question (required for tier=decision)"},
+                    "rationale": {"type": "string", "description": "Note rationale (required for tier=note)"}
+                }
+            }
+        }),
+        json!({
+            "name": "s5d_note",
+            "description": "Quick note — one-shot shorthand that creates a note-tier spec from text",
+            "inputSchema": {
+                "type": "object",
+                "required": ["text"],
+                "properties": {
+                    "text": {"type": "string", "description": "Note text (used as title and rationale)"},
+                    "product": {"type": "string", "description": "Product name (optional)"}
+                }
+            }
+        }),
+        json!({
+            "name": "s5d_validate",
+            "description": "Validate a spec file against schema and business rules",
+            "inputSchema": {
+                "type": "object",
+                "required": ["spec"],
+                "properties": {
+                    "spec": {"type": "string", "description": "Path to .s5d.yaml file"}
+                }
+            }
+        }),
+        json!({
+            "name": "s5d_graph_check",
+            "description": "Check graph structure — DFS cycle detection on spec relations",
+            "inputSchema": {
+                "type": "object",
+                "required": ["spec"],
+                "properties": {
+                    "spec": {"type": "string", "description": "Path to .s5d.yaml file"}
+                }
+            }
+        }),
+        json!({
+            "name": "s5d_preview",
+            "description": "Dry-run import diff — shows what would be created/updated/linked",
+            "inputSchema": {
+                "type": "object",
+                "required": ["spec"],
+                "properties": {
+                    "spec": {"type": "string", "description": "Path to .s5d.yaml file"}
+                }
+            }
+        }),
+        json!({
+            "name": "s5d_approve",
+            "description": "Record approval — binds spec_sha256 and diff_sha256",
+            "inputSchema": {
+                "type": "object",
+                "required": ["spec", "reviewer"],
+                "properties": {
+                    "spec": {"type": "string", "description": "Path to .s5d.yaml file"},
+                    "reviewer": {"type": "string", "description": "Reviewer name"}
+                }
+            }
+        }),
+        json!({
+            "name": "s5d_run_gates",
+            "description": "Execute configured gate commands for a spec",
+            "inputSchema": {
+                "type": "object",
+                "required": ["spec"],
+                "properties": {
+                    "spec": {"type": "string", "description": "Path to .s5d.yaml file"}
+                }
+            }
+        }),
+        json!({
+            "name": "s5d_import",
+            "description": "Transactional import — apply spec to alias table and ledger",
+            "inputSchema": {
+                "type": "object",
+                "required": ["spec"],
+                "properties": {
+                    "spec": {"type": "string", "description": "Path to .s5d.yaml file"},
+                    "verified_by": {"type": "string", "description": "Who independently verified gates passed"},
+                    "force": {"type": "boolean", "description": "Override methodological checks (default: false)"}
+                }
+            }
+        }),
+        json!({
+            "name": "s5d_rollback",
+            "description": "Reverse last import for a spec — tombstones alias entries and appends rollback ledger entry",
+            "inputSchema": {
+                "type": "object",
+                "required": ["spec"],
+                "properties": {
+                    "spec": {"type": "string", "description": "Path to .s5d.yaml file"}
+                }
+            }
+        }),
+        json!({
+            "name": "s5d_decide",
+            "description": "Record a decision in a decision-tier spec. Requires adversarial challenge summary.",
+            "inputSchema": {
+                "type": "object",
+                "required": ["spec", "title", "winner", "confirmed_by", "context", "decision", "rationale", "consequences"],
+                "properties": {
+                    "spec": {"type": "string", "description": "Path to .s5d.yaml file"},
+                    "title": {"type": "string", "description": "Decision title"},
+                    "winner": {"type": "string", "description": "Winner hypothesis ID"},
+                    "confirmed_by": {"type": "string", "description": "Human who confirms the decision"},
+                    "context": {"type": "string", "description": "Decision context"},
+                    "decision": {"type": "string", "description": "What was decided"},
+                    "rationale": {"type": "string", "description": "Why this was chosen"},
+                    "consequences": {"type": "string", "description": "Expected consequences"},
+                    "rejected": {"type": "string", "description": "Rejected hypothesis IDs (comma-separated)"},
+                    "challenge_summary": {"type": "string", "description": "Adversarial challenge outcome summary"},
+                    "challenge_mode": {"type": "string", "description": "Challenge mode: tactical (1 probe) or standard (5 probes)"}
+                }
+            }
+        }),
+        json!({
+            "name": "s5d_add_hypothesis",
+            "description": "Add a hypothesis to a decision-tier spec",
+            "inputSchema": {
+                "type": "object",
+                "required": ["spec", "title", "content", "scope"],
+                "properties": {
+                    "spec": {"type": "string", "description": "Path to .s5d.yaml file"},
+                    "title": {"type": "string", "description": "Hypothesis title"},
+                    "content": {"type": "string", "description": "Hypothesis content/description"},
+                    "scope": {"type": "string", "description": "Scope — where this applies"},
+                    "kind": {"type": "string", "description": "Kind: system or episteme (default: system)"}
+                }
+            }
+        }),
+        json!({
+            "name": "s5d_add_evidence",
+            "description": "Add evidence to a hypothesis in a decision-tier spec",
+            "inputSchema": {
+                "type": "object",
+                "required": ["spec", "hypothesis_id", "evidence_type", "content", "verdict"],
+                "properties": {
+                    "spec": {"type": "string", "description": "Path to .s5d.yaml file"},
+                    "hypothesis_id": {"type": "string", "description": "Hypothesis ID to attach evidence to"},
+                    "evidence_type": {"type": "string", "description": "Evidence type: internal, external, gate:test, etc."},
+                    "content": {"type": "string", "description": "Evidence content"},
+                    "verdict": {"type": "string", "description": "Verdict: pass, fail, refine"},
+                    "formality": {"type": "integer", "description": "F-G-R Formality: rigor of evidence method (1-5)"},
+                    "claim_scope": {"type": "string", "description": "F-G-R ClaimScope: what the claim covers (comma-separated)"},
+                    "reliability": {"type": "number", "description": "F-G-R Reliability: probability claim is true (0.0-1.0)"}
+                }
+            }
+        }),
+        json!({
+            "name": "s5d_status",
+            "description": "Show status of all specs in the current project",
+            "inputSchema": {
+                "type": "object",
+                "properties": {}
+            }
+        }),
+        json!({
+            "name": "s5d_show",
+            "description": "Show spec details — decision trace, hypothesis tree, or feature summary",
+            "inputSchema": {
+                "type": "object",
+                "required": ["spec"],
+                "properties": {
+                    "spec": {"type": "string", "description": "Path to .s5d.yaml file"}
+                }
+            }
+        }),
+        json!({
+            "name": "s5d_drift_check",
+            "description": "Compare live state vs last applied fingerprint. Checks all specs if none specified.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "spec": {"type": "string", "description": "Path to .s5d.yaml file (optional — checks all if omitted)"}
+                }
+            }
+        }),
+        json!({
+            "name": "s5d_reconcile",
+            "description": "Re-import to fix drift (desired-state restore). Reconciles all drifted specs if none specified.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "spec": {"type": "string", "description": "Path to .s5d.yaml file (optional — reconciles all drifted if omitted)"}
+                }
+            }
+        }),
+        json!({
+            "name": "s5d_reflect",
+            "description": "Record reflection for a spec (OPERATE stage) — closes lifecycle with production evidence",
+            "inputSchema": {
+                "type": "object",
+                "required": ["spec", "summary", "heuristic"],
+                "properties": {
+                    "spec": {"type": "string", "description": "Path to .s5d.yaml file"},
+                    "summary": {"type": "string", "description": "Summary of what happened in production"},
+                    "heuristic": {"type": "string", "description": "Reusable rule learned from this spec"},
+                    "issues": {"type": "string", "description": "Issues encountered (comma-separated)"}
+                }
+            }
+        }),
+        json!({
+            "name": "s5d_route",
+            "description": "Classify a request into tier, mode, and entry point (Step 0 Phase A router)",
+            "inputSchema": {
+                "type": "object",
+                "required": ["description"],
+                "properties": {
+                    "description": {"type": "string", "description": "Request description to classify"}
+                }
+            }
+        }),
+        json!({
+            "name": "s5d_waiver",
+            "description": "Record a waiver on a cross-domain link in a spec",
+            "inputSchema": {
+                "type": "object",
+                "required": ["spec", "gate", "reason", "condition", "approved_by"],
+                "properties": {
+                    "spec": {"type": "string", "description": "Path to .s5d.yaml file"},
+                    "gate": {"type": "string", "description": "Gate or link ID to waive"},
+                    "reason": {"type": "string", "description": "Reason for waiver"},
+                    "condition": {"type": "string", "description": "Condition under which waiver applies"},
+                    "approved_by": {"type": "string", "description": "Who approved the waiver"}
+                }
+            }
+        }),
+    ]
 }
 
 fn handle_tools_call(params: &Value) -> anyhow::Result<Value> {
@@ -435,16 +330,6 @@ fn handle_tools_call(params: &Value) -> anyhow::Result<Value> {
     let args = &params["arguments"];
 
     let text = match name {
-        "codebase_index" => tool_codebase_index(args)?,
-        "codebase_update" => tool_codebase_update(args)?,
-        "codebase_search" => tool_codebase_search(args)?,
-        "codebase_symbol" => tool_codebase_symbol(args)?,
-        "s5d_analyze" => tool_s5d_analyze(args)?,
-        "trace_build" => tool_trace_build(args)?,
-        "trace_check" => tool_trace_check(args)?,
-        "trace_blast_radius" => tool_trace_blast_radius(args)?,
-        "fpf_search" => tool_fpf_search(args)?,
-        "fpf_sync" => tool_fpf_sync(args)?,
         "s5d_init" => tool_s5d_init(args)?,
         "s5d_new" => tool_s5d_new(args)?,
         "s5d_validate" => tool_s5d_validate(args)?,
@@ -459,12 +344,12 @@ fn handle_tools_call(params: &Value) -> anyhow::Result<Value> {
         "s5d_reflect" => tool_s5d_reflect(args)?,
         "s5d_status" => tool_s5d_status(args)?,
         "s5d_show" => tool_s5d_show(args)?,
+        "s5d_route" => tool_s5d_route(args)?,
         "s5d_waiver" => tool_s5d_waiver(args)?,
         "s5d_rollback" => tool_s5d_rollback(args)?,
         "s5d_drift_check" => tool_s5d_drift_check(args)?,
         "s5d_reconcile" => tool_s5d_reconcile(args)?,
-        "s5d_check" => tool_s5d_check(args)?,
-        "s5d_metrics" => tool_s5d_metrics(args)?,
+        "s5d_note" => tool_s5d_note(args)?,
         _ => {
             return Ok(
                 json!({"content":[{"type":"text","text":format!("Error: unknown tool '{}'", name)}],"isError":true}),
@@ -475,306 +360,7 @@ fn handle_tools_call(params: &Value) -> anyhow::Result<Value> {
     Ok(json!({"content":[{"type":"text","text":text}]}))
 }
 
-fn resolve_path(args: &Value) -> anyhow::Result<std::path::PathBuf> {
-    let raw = args["path"].as_str().unwrap_or(".");
-    let p = std::path::Path::new(raw)
-        .canonicalize()
-        .unwrap_or_else(|_| std::path::PathBuf::from(raw));
-    Ok(p)
-}
 
-fn tool_codebase_index(args: &Value) -> anyhow::Result<String> {
-    let path = resolve_path(args)?;
-    let db_path = path.join(".s5d/codebase.db");
-    let config = crate::codebase::IndexConfig {
-        db_path,
-        ..Default::default()
-    };
-    let stats = crate::codebase::index(&path, &config)?;
-    Ok(format!(
-        "Indexed {} files, {} chunks, {} symbols, {} embeddings",
-        stats.files_indexed, stats.chunks_indexed, stats.symbols_found, stats.embeddings_generated
-    ))
-}
-
-fn tool_codebase_update(args: &Value) -> anyhow::Result<String> {
-    let path = resolve_path(args)?;
-    let db_path = path.join(".s5d/codebase.db");
-    let config = crate::codebase::IndexConfig {
-        db_path,
-        ..Default::default()
-    };
-    let stats = crate::codebase::update(&path, &config)?;
-    Ok(format!(
-        "Updated {} files, {} chunks, {} symbols, {} embeddings",
-        stats.files_indexed, stats.chunks_indexed, stats.symbols_found, stats.embeddings_generated
-    ))
-}
-
-fn tool_codebase_search(args: &Value) -> anyhow::Result<String> {
-    let query = args["query"]
-        .as_str()
-        .ok_or_else(|| anyhow::anyhow!("missing required argument: query"))?;
-    let path = resolve_path(args)?;
-    let top_k = args["top_k"].as_u64().unwrap_or(10) as usize;
-    let db_path = path.join(".s5d/codebase.db");
-
-    let index = crate::codebase::CodebaseIndex::open(&db_path)?;
-    let results = crate::codebase::search::search(
-        &index,
-        query,
-        crate::codebase::search::SearchMode::Fts,
-        top_k,
-        None,
-    )?;
-
-    if results.is_empty() {
-        return Ok("No results found.".to_string());
-    }
-
-    let mut out = String::new();
-    for (i, r) in results.iter().enumerate() {
-        out.push_str(&format!(
-            "[{}] {}:{}-{} (score: {:.2})\n{}\n\n",
-            i + 1,
-            r.file_path,
-            r.start_line,
-            r.end_line,
-            r.score,
-            r.text.trim()
-        ));
-    }
-    Ok(out.trim_end().to_string())
-}
-
-fn tool_codebase_symbol(args: &Value) -> anyhow::Result<String> {
-    let name = args["name"]
-        .as_str()
-        .ok_or_else(|| anyhow::anyhow!("missing required argument: name"))?;
-    let path = resolve_path(args)?;
-    let db_path = path.join(".s5d/codebase.db");
-
-    let index = crate::codebase::CodebaseIndex::open(&db_path)?;
-    let symbols = index.symbol_lookup(name)?;
-
-    if symbols.is_empty() {
-        return Ok(format!("Symbol '{}' not found.", name));
-    }
-
-    let mut out = String::new();
-    for sym in &symbols {
-        out.push_str(&format!(
-            "{:<30} {}:{}\n",
-            format!("{} {}", sym.kind, sym.name),
-            sym.file_path,
-            sym.line
-        ));
-    }
-    Ok(out.trim_end().to_string())
-}
-
-fn tool_s5d_analyze(args: &Value) -> anyhow::Result<String> {
-    let path = resolve_path(args)?;
-    let product = args["product"]
-        .as_str()
-        .map(|s| s.to_string())
-        .unwrap_or_else(|| {
-            path.file_name()
-                .and_then(|n| n.to_str())
-                .unwrap_or("product")
-                .to_string()
-        });
-    let config = crate::AnalysisConfig {
-        path: path.clone(),
-        product,
-        spec_id: "analysis".to_string(),
-    };
-    let result = crate::analyze(&config)?;
-    let yaml = serde_yaml::to_string(&result.spec)?;
-    Ok(yaml)
-}
-
-fn load_spec_from_arg(args: &Value) -> anyhow::Result<(std::path::PathBuf, crate::Spec)> {
-    let spec_path = args["spec"]
-        .as_str()
-        .ok_or_else(|| anyhow::anyhow!("missing required argument: spec"))?;
-    let path = std::path::Path::new(spec_path);
-    if !path.exists() {
-        anyhow::bail!("spec not found: {}", spec_path);
-    }
-    let content = std::fs::read_to_string(path)?;
-    let spec: crate::Spec =
-        serde_yaml::from_str(&content).map_err(|e| anyhow::anyhow!("YAML parse error: {}", e))?;
-    Ok((path.to_path_buf(), spec))
-}
-
-fn resolve_root_from_spec(
-    spec_path: &std::path::Path,
-    args: &Value,
-) -> anyhow::Result<std::path::PathBuf> {
-    if let Some(p) = args["path"].as_str() {
-        return Ok(std::path::PathBuf::from(p)
-            .canonicalize()
-            .unwrap_or_else(|_| std::path::PathBuf::from(p)));
-    }
-    let abs = spec_path.canonicalize()?;
-    let project = crate::S5dProject::find(&abs)
-        .ok_or_else(|| anyhow::anyhow!("no .s5d/ found — is this spec inside an s5d project?"))?;
-    Ok(project.root.clone())
-}
-
-fn tool_trace_build(args: &Value) -> anyhow::Result<String> {
-    let (spec_path, spec) = load_spec_from_arg(args)?;
-    let root = resolve_root_from_spec(&spec_path, args)?;
-    let db_path = root.join(".s5d/codebase.db");
-    if !db_path.exists() {
-        anyhow::bail!("codebase index not found — run codebase_index first");
-    }
-    let index = crate::CodebaseIndex::open(&db_path)?;
-    let links = crate::build_trace(&index, &spec, &root)?;
-
-    let mut out = format!("Trace links built: {}\n", links.len());
-    let mut by_source: std::collections::HashMap<&str, usize> = std::collections::HashMap::new();
-    for link in &links {
-        *by_source.entry(&link.source).or_insert(0) += 1;
-    }
-    for (source, count) in &by_source {
-        out.push_str(&format!("  {}: {}\n", source, count));
-    }
-    Ok(out.trim_end().to_string())
-}
-
-fn tool_trace_check(args: &Value) -> anyhow::Result<String> {
-    let (spec_path, spec) = load_spec_from_arg(args)?;
-    let root = resolve_root_from_spec(&spec_path, args)?;
-    let db_path = root.join(".s5d/codebase.db");
-    if !db_path.exists() {
-        anyhow::bail!("codebase index not found — run codebase_index first");
-    }
-    let index = crate::CodebaseIndex::open(&db_path)?;
-    let report = crate::check_trace(&index, &spec)?;
-
-    let mut out = String::new();
-    out.push_str(&format!("Matched: {}\n", report.matched.len()));
-    for link in &report.matched {
-        out.push_str(&format!(
-            "  {} {} → {}:{} [{}  {:.2}]\n",
-            link.artifact_kind,
-            link.artifact_id,
-            link.file_path,
-            link.line_start,
-            link.source,
-            link.confidence
-        ));
-    }
-    if !report.unmatched_spec.is_empty() {
-        out.push_str(&format!("\nUnmatched: {}\n", report.unmatched_spec.len()));
-        for (kind, id) in &report.unmatched_spec {
-            out.push_str(&format!("  {} {} — no code binding\n", kind, id));
-        }
-    }
-    let total = report.matched.len() + report.unmatched_spec.len();
-    if total > 0 {
-        let coverage = report.matched.len() as f64 / total as f64 * 100.0;
-        out.push_str(&format!(
-            "\nCoverage: {:.0}% ({}/{})",
-            coverage,
-            report.matched.len(),
-            total
-        ));
-    }
-    Ok(out.trim_end().to_string())
-}
-
-fn tool_trace_blast_radius(args: &Value) -> anyhow::Result<String> {
-    let (spec_path, spec) = load_spec_from_arg(args)?;
-    let root = resolve_root_from_spec(&spec_path, args)?;
-    let db_path = root.join(".s5d/codebase.db");
-    if !db_path.exists() {
-        anyhow::bail!("codebase index not found — run codebase_index first");
-    }
-    let index = crate::CodebaseIndex::open(&db_path)?;
-    let br = crate::compute_blast_radius(&index, &spec)?;
-
-    let mut out = String::new();
-    out.push_str(&format!(
-        "Domains touched: {}\n",
-        if br.domains_touched.is_empty() {
-            "none".into()
-        } else {
-            br.domains_touched.join(", ")
-        }
-    ));
-    out.push_str(&format!(
-        "Capabilities affected: {}\n",
-        if br.capabilities_affected.is_empty() {
-            "none".into()
-        } else {
-            br.capabilities_affected.join(", ")
-        }
-    ));
-    out.push_str(&format!(
-        "Components affected: {}\n",
-        if br.components_affected.is_empty() {
-            "none".into()
-        } else {
-            br.components_affected.join(", ")
-        }
-    ));
-    out.push_str(&format!("Files: {}\n", br.files.len()));
-    out.push_str(&format!("Symbols: {}\n", br.symbols));
-    if !br.cross_domain_edges.is_empty() {
-        out.push_str("\nCross-domain edges:\n");
-        for (from, to, archetype) in &br.cross_domain_edges {
-            out.push_str(&format!("  {} → {} [{}]\n", from, to, archetype));
-        }
-    }
-    if let Some(ref wlnk) = br.weakest_link {
-        let kind_str = match &wlnk.kind {
-            crate::WeakestLinkKind::UnmatchedArtifact => "UNMATCHED — no code binding".into(),
-            crate::WeakestLinkKind::LowConfidenceMatch(c) => format!("LOW CONFIDENCE — {:.2}", c),
-            crate::WeakestLinkKind::CrossDomainWithoutTrace => {
-                "CROSS-DOMAIN — missing trace on one side".into()
-            }
-        };
-        out.push_str(&format!(
-            "\nWeakest link: {} {} — {}",
-            wlnk.artifact_kind, wlnk.artifact_id, kind_str
-        ));
-    }
-    Ok(out.trim_end().to_string())
-}
-
-fn tool_fpf_search(args: &Value) -> anyhow::Result<String> {
-    let query = args["query"]
-        .as_str()
-        .ok_or_else(|| anyhow::anyhow!("query is required"))?;
-    let limit = args["limit"].as_u64().unwrap_or(5) as usize;
-    let full = args["full"].as_bool().unwrap_or(false);
-
-    let hits = crate::fpf::search(query, limit, full)?;
-    if hits.is_empty() {
-        return Ok(format!("No results for: {}", query));
-    }
-
-    let mut out = String::new();
-    for (i, h) in hits.iter().enumerate() {
-        let breadcrumb = if h.heading_path.is_empty() {
-            String::new()
-        } else {
-            format!(" — {}", h.heading_path)
-        };
-        out.push_str(&format!("### {}. {}{}\n\n{}\n\n", i + 1, h.heading, breadcrumb, h.content));
-    }
-    Ok(out.trim_end().to_string())
-}
-
-fn tool_fpf_sync(args: &Value) -> anyhow::Result<String> {
-    let force = args["force"].as_bool().unwrap_or(false);
-    let embed = args["embed"].as_bool().unwrap_or(false);
-    crate::fpf::cmd_sync(force, embed)?;
-    Ok("FPF index synced successfully".to_string())
-}
 
 // ── S5D lifecycle helpers ─────────────────────────────────────────────────────
 
@@ -783,7 +369,7 @@ fn validate_spec_path(spec_arg: &str) -> anyhow::Result<()> {
     if spec_arg.contains("..") {
         anyhow::bail!("path traversal not allowed: {}", spec_arg);
     }
-    if !spec_arg.ends_with(".s5d.yaml") && !spec_arg.ends_with(".s5d.yml") {
+    if !spec_arg.ends_with(".s5d.yaml") {
         anyhow::bail!(
             "spec path must end with .s5d.yaml or .s5d.yml, got: {}",
             spec_arg
@@ -846,27 +432,149 @@ fn slugify_mcp(title: &str) -> String {
 
 // ── s5d_init ──────────────────────────────────────────────────────────────────
 
-fn tool_s5d_init(_args: &Value) -> anyhow::Result<String> {
+fn tool_s5d_init(args: &Value) -> anyhow::Result<String> {
     let cwd = std::env::current_dir()?;
     let (project, report) = crate::S5dProject::init(&cwd)?;
-    if report.dirs_created.is_empty() && report.files_created.is_empty() {
-        Ok(format!(
-            "S5D already initialized at: {}",
-            project.s5d_dir().display()
-        ))
+
+    let mut out = if report.dirs_created.is_empty() && report.files_created.is_empty() {
+        format!("S5D already initialized at: {}\n", project.s5d_dir().display())
     } else {
-        let mut out = format!(
-            "S5D initialized at: {}\n",
-            project.s5d_dir().display()
-        );
+        let mut s = format!("S5D initialized at: {}\n", project.s5d_dir().display());
         for d in &report.dirs_created {
-            out.push_str(&format!("  dir: {}\n", d.display()));
+            s.push_str(&format!("  dir: {}\n", d.display()));
         }
         for f in &report.files_created {
-            out.push_str(&format!("  file: {}\n", f.display()));
+            s.push_str(&format!("  file: {}\n", f.display()));
         }
-        Ok(out.trim_end().to_string())
+        s
+    };
+
+    // Multi-tool MCP registration
+    let claude = args["claude"].as_bool().unwrap_or(false);
+    let cursor = args["cursor"].as_bool().unwrap_or(false);
+    let codex = args["codex"].as_bool().unwrap_or(false);
+    let gemini = args["gemini"].as_bool().unwrap_or(false);
+    let all = args["all"].as_bool().unwrap_or(false);
+    let no_flags = !claude && !cursor && !codex && !gemini && !all;
+
+    let binary_str = std::env::current_exe()?.to_string_lossy().into_owned();
+
+    out.push_str("\nMCP registration:\n");
+
+    // Claude Code → .mcp.json
+    if claude || all || no_flags {
+        match register_mcp_json_mcp(&cwd.join(".mcp.json"), &binary_str) {
+            Ok(false) => out.push_str("  Claude (.mcp.json) — already registered\n"),
+            Ok(true) => out.push_str("  Claude (.mcp.json) — registered\n"),
+            Err(e) => out.push_str(&format!("  Claude: error — {}\n", e)),
+        }
     }
+
+    // Cursor → .cursor/mcp.json
+    if cursor || all {
+        match register_mcp_json_mcp(&cwd.join(".cursor").join("mcp.json"), &binary_str) {
+            Ok(false) => out.push_str("  Cursor (.cursor/mcp.json) — already registered\n"),
+            Ok(true) => out.push_str("  Cursor (.cursor/mcp.json) — registered\n"),
+            Err(e) => out.push_str(&format!("  Cursor: error — {}\n", e)),
+        }
+    }
+
+    // Codex CLI → .codex/config.toml
+    if codex || all {
+        match register_mcp_toml_mcp(&cwd.join(".codex").join("config.toml"), &binary_str) {
+            Ok(false) => out.push_str("  Codex (.codex/config.toml) — already registered\n"),
+            Ok(true) => out.push_str("  Codex (.codex/config.toml) — registered\n"),
+            Err(e) => out.push_str(&format!("  Codex: error — {}\n", e)),
+        }
+    }
+
+    // Gemini CLI → .gemini/settings.json
+    if gemini || all {
+        match register_mcp_json_mcp(&cwd.join(".gemini").join("settings.json"), &binary_str) {
+            Ok(false) => out.push_str("  Gemini (.gemini/settings.json) — already registered\n"),
+            Ok(true) => out.push_str("  Gemini (.gemini/settings.json) — registered\n"),
+            Err(e) => out.push_str(&format!("  Gemini: error — {}\n", e)),
+        }
+    }
+
+    Ok(out.trim_end().to_string())
+}
+
+/// Register s5d MCP server in a JSON config file (shared by MCP tool handlers).
+fn register_mcp_json_mcp(path: &std::path::Path, binary: &str) -> anyhow::Result<bool> {
+    let desired = serde_json::json!({
+        "command": binary,
+        "args": ["mcp"]
+    });
+
+    let mut settings: serde_json::Value = if path.exists() {
+        let raw = std::fs::read_to_string(path)?;
+        serde_json::from_str(&raw).unwrap_or(serde_json::json!({}))
+    } else {
+        serde_json::json!({})
+    };
+
+    let servers = settings
+        .as_object_mut()
+        .ok_or_else(|| anyhow::anyhow!("root is not an object"))?
+        .entry("mcpServers")
+        .or_insert(serde_json::json!({}))
+        .as_object_mut()
+        .ok_or_else(|| anyhow::anyhow!("mcpServers is not an object"))?;
+
+    if let Some(existing) = servers.get("s5d") {
+        if existing == &desired {
+            return Ok(false);
+        }
+    }
+
+    servers.insert("s5d".to_string(), desired);
+
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent)?;
+    }
+    std::fs::write(path, serde_json::to_string_pretty(&settings)?)?;
+    Ok(true)
+}
+
+/// Register s5d MCP server in a TOML config file (Codex CLI format, shared by MCP tool handlers).
+fn register_mcp_toml_mcp(path: &std::path::Path, binary: &str) -> anyhow::Result<bool> {
+    use toml_edit::{DocumentMut, Item, Table, value};
+
+    let mut doc: DocumentMut = if path.exists() {
+        let raw = std::fs::read_to_string(path)?;
+        raw.parse::<DocumentMut>()?
+    } else {
+        DocumentMut::new()
+    };
+
+    if let Some(mcp) = doc.get("mcp_servers") {
+        if let Some(s5d) = mcp.get("s5d") {
+            if let Some(cmd) = s5d.get("command") {
+                if cmd.as_str() == Some(binary) {
+                    return Ok(false);
+                }
+            }
+        }
+    }
+
+    if doc.get("mcp_servers").is_none() {
+        doc["mcp_servers"] = Item::Table(Table::new());
+    }
+    let mcp = doc["mcp_servers"].as_table_mut().unwrap();
+
+    if mcp.get("s5d").is_none() {
+        mcp["s5d"] = Item::Table(Table::new());
+    }
+    let s5d = mcp["s5d"].as_table_mut().unwrap();
+    s5d["command"] = value(binary);
+    s5d["args"] = value(toml_edit::Array::from_iter(["mcp"]));
+
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent)?;
+    }
+    std::fs::write(path, doc.to_string())?;
+    Ok(true)
 }
 
 // ── s5d_new ───────────────────────────────────────────────────────────────────
@@ -982,6 +690,7 @@ fn tool_s5d_preview(args: &Value) -> anyhow::Result<String> {
     let (project, spec_path, spec, spec_filename) = load_spec_context_mcp(spec_arg)?;
 
     let s5d_dir = project.s5d_dir();
+    let spec = crate::infer::materialize_spec(&spec);
     let mut aliases = crate::AliasTable::load(&s5d_dir)?;
     if let Some(ref meta) = spec.meta {
         aliases.apply_renames(&spec.id, &meta.renames);
@@ -1022,6 +731,7 @@ fn tool_s5d_preview(args: &Value) -> anyhow::Result<String> {
         .unwrap_or_else(|| crate::generate_record(&spec_filename, &spec_sha));
     record.preview = Some(crate::PreviewResult {
         diff_sha256: diff_sha,
+        previewed_spec_sha256: spec_sha.clone(),
         actions: counts,
         log: None,
     });
@@ -1057,6 +767,15 @@ fn tool_s5d_approve(args: &Value) -> anyhow::Result<String> {
             "spec must be in 'previewed' state before approval (current: {})",
             record.status
         );
+    }
+
+    // Check that spec hasn't changed since preview
+    if let Some(ref preview) = record.preview {
+        if !preview.previewed_spec_sha256.is_empty() && preview.previewed_spec_sha256 != spec_sha {
+            anyhow::bail!(
+                "spec modified since preview — re-run s5d_preview before approving"
+            );
+        }
     }
 
     let diff_sha = record
@@ -1182,11 +901,12 @@ fn tool_s5d_import(args: &Value) -> anyhow::Result<String> {
     }
 
     let s5d_dir = project.s5d_dir();
+    let materialized = crate::infer::materialize_spec(&spec);
     let mut aliases_check = crate::AliasTable::load(&s5d_dir)?;
-    if let Some(ref meta) = spec.meta {
-        aliases_check.apply_renames(&spec.id, &meta.renames);
+    if let Some(ref meta) = materialized.meta {
+        aliases_check.apply_renames(&materialized.id, &meta.renames);
     }
-    let fresh_actions = crate::compute_diff(&spec, &mut aliases_check);
+    let fresh_actions = crate::compute_diff(&materialized, &mut aliases_check);
     let fresh_diff_sha = fresh_actions.sha256();
 
     if fresh_diff_sha != approval.diff_sha256 {
@@ -1241,15 +961,16 @@ fn tool_s5d_decide(args: &Value) -> anyhow::Result<String> {
 
     let (path, spec) = load_spec_yaml_mcp(spec_arg)?;
 
-    // Load record — decision state lives in record, not spec
-    let record_path = path.with_file_name(
-        path.file_name().unwrap().to_string_lossy().replace(".s5d.yaml", ".record.yaml"),
-    );
-    let record: Option<crate::Record> = if record_path.exists() {
-        serde_yaml::from_str(&std::fs::read_to_string(&record_path)?).ok()
-    } else {
-        None
-    };
+    // Resolve project and load record from correct path (.s5d/records/, not packages/)
+    let abs_path = path.canonicalize()?;
+    let project = crate::S5dProject::find(&abs_path)
+        .ok_or_else(|| anyhow::anyhow!("no .s5d/ found — is this file inside an s5d project?"))?;
+    let spec_filename = abs_path
+        .file_name()
+        .ok_or_else(|| anyhow::anyhow!("cannot determine filename from path"))?
+        .to_string_lossy()
+        .into_owned();
+    let record: Option<crate::Record> = project.load_record(&spec_filename)?;
 
     let checks = crate::check_decide(&spec, &record, &confirmed_by.map(|s| s.to_string()));
     crate::enforce_checks(&checks, false)?;
@@ -1261,10 +982,19 @@ fn tool_s5d_decide(args: &Value) -> anyhow::Result<String> {
         );
     }
 
-    spec.hypotheses
+    let winner_hyp = spec.hypotheses
         .iter()
         .find(|h| h.id == winner)
         .ok_or_else(|| anyhow::anyhow!("winner hypothesis not found: {}", winner))?;
+
+    // Enforce spec_ref on winner hypothesis (feature decomposition)
+    if winner_hyp.spec_ref.is_none() {
+        anyhow::bail!(
+            "winner hypothesis '{}' has no spec_ref — create a feature spec first: \
+             s5d_new with hypothesis linking, then re-run s5d_decide",
+            winner
+        );
+    }
 
     let rejected_ids: Vec<String> = match rejected {
         Some(s) => s
@@ -1274,6 +1004,27 @@ fn tool_s5d_decide(args: &Value) -> anyhow::Result<String> {
             .collect(),
         None => vec![],
     };
+
+    // Parse challenge from MCP args
+    let challenge = if let Some(summary) = args["challenge_summary"].as_str() {
+        let mode = args["challenge_mode"]
+            .as_str()
+            .unwrap_or("standard")
+            .to_string();
+        Some(crate::Challenge {
+            mode,
+            passed: true,
+            summary: summary.to_string(),
+            checks: vec![],
+        })
+    } else {
+        None
+    };
+
+    // Adversarial challenge gate (centralized validation)
+    if let Some(msg) = crate::check_challenge(&challenge, &spec.tier, false, false) {
+        anyhow::bail!("{}", msg);
+    }
 
     let now = chrono::Utc::now();
     let expires = now + chrono::Duration::days(90);
@@ -1290,21 +1041,11 @@ fn tool_s5d_decide(args: &Value) -> anyhow::Result<String> {
         expires_at: Some(expires.format("%Y-%m-%d").to_string()),
         do_list: vec![],
         dont_list: vec![],
+        challenge,
     };
 
-    let abs_path = path.canonicalize()?;
-    let project = crate::S5dProject::find(&abs_path)
-        .ok_or_else(|| anyhow::anyhow!("no .s5d/ found — is this file inside an s5d project?"))?;
-    let spec_filename = abs_path
-        .file_name()
-        .ok_or_else(|| anyhow::anyhow!("cannot determine filename"))?
-        .to_string_lossy()
-        .into_owned();
-
     let spec_sha = crate::S5dProject::file_sha256(&abs_path)?;
-    let mut record = project
-        .load_record(&spec_filename)?
-        .unwrap_or_else(|| crate::generate_record(&spec_filename, &spec_sha));
+    let mut record = record.unwrap_or_else(|| crate::generate_record(&spec_filename, &spec_sha));
     record.decision = Some(decision_record);
     project.save_record(&spec_filename, &record)?;
 
@@ -1559,12 +1300,20 @@ fn tool_s5d_show(args: &Value) -> anyhow::Result<String> {
     let spec_path = args["spec"]
         .as_str()
         .ok_or_else(|| anyhow::anyhow!("missing required argument: spec"))?;
-    let (_path, spec) = load_spec_yaml_mcp(spec_path)?;
+    let (path, spec) = load_spec_yaml_mcp(spec_path)?;
+
+    // Load record for decision/approval truth
+    let effective_decision = if let Ok(abs) = path.canonicalize() {
+        if let Some(project) = crate::S5dProject::find(&abs) {
+            let fname = abs.file_name().unwrap().to_string_lossy().into_owned();
+            project.load_record(&fname).ok().flatten().and_then(|r| r.decision)
+        } else { None }
+    } else { None }
+    .or_else(|| spec.decision.clone());
 
     let is_decision = matches!(spec.tier, crate::Tier::Decision);
     let tier_label = format!("{}", spec.tier).to_uppercase();
-    let title = spec
-        .decision
+    let title = effective_decision
         .as_ref()
         .map(|d| d.title.as_str())
         .unwrap_or(&spec.id);
@@ -1576,14 +1325,13 @@ fn tool_s5d_show(args: &Value) -> anyhow::Result<String> {
         if let Some(ref problem) = spec.problem {
             out.push_str(&format!("  Signal: {}\n", problem.signal()));
         }
-        if let Some(ref dec) = spec.decision {
+        if let Some(ref dec) = effective_decision {
             if !dec.context.is_empty() {
                 out.push_str(&format!("  Context: {}\n", dec.context));
             }
         }
 
-        let winner_id = spec
-            .decision
+        let winner_id = effective_decision
             .as_ref()
             .map(|d| d.winner_id.as_str())
             .unwrap_or("");
@@ -1613,7 +1361,7 @@ fn tool_s5d_show(args: &Value) -> anyhow::Result<String> {
             }
         }
 
-        if let Some(ref dec) = spec.decision {
+        if let Some(ref dec) = effective_decision {
             out.push_str(&format!("\n  Decision: {}\n", dec.decision));
             if !dec.consequences.is_empty() {
                 out.push_str(&format!("  Consequences: {}\n", dec.consequences));
@@ -1641,6 +1389,17 @@ fn tool_s5d_show(args: &Value) -> anyhow::Result<String> {
     }
 
     Ok(out.trim_end().to_string())
+}
+
+// ── s5d_route ─────────────────────────────────────────────────────────────────
+
+fn tool_s5d_route(args: &Value) -> anyhow::Result<String> {
+    let description = args["description"]
+        .as_str()
+        .ok_or_else(|| anyhow::anyhow!("missing required argument: description"))?;
+
+    let result = crate::route(description);
+    Ok(serde_json::to_string_pretty(&result)?)
 }
 
 // ── s5d_waiver ────────────────────────────────────────────────────────────────
@@ -1887,96 +1646,56 @@ fn tool_s5d_reconcile(args: &Value) -> anyhow::Result<String> {
     Ok(out.trim_end().to_string())
 }
 
-// ── s5d_check ─────────────────────────────────────────────────────────────────
-
-fn tool_s5d_check(args: &Value) -> anyhow::Result<String> {
-    let spec_arg = args["spec"]
+fn tool_s5d_note(args: &Value) -> anyhow::Result<String> {
+    let text = args["text"]
         .as_str()
-        .ok_or_else(|| anyhow::anyhow!("missing required argument: spec"))?;
-    let threshold = args["threshold"].as_u64().unwrap_or(0) as u8;
+        .ok_or_else(|| anyhow::anyhow!("missing required argument: text"))?;
 
-    let (project, _spec_path, spec, spec_filename) = load_spec_context_mcp(spec_arg)?;
-
-    let report = crate::compute_health_report(&spec);
-    let spec_id = spec_filename.replace(".s5d.yaml", "");
-    let _ = crate::save_snapshot(&project.s5d_dir(), &spec_id, &report);
-
-    let pass = report.aggregate_score >= threshold;
-    let mut out = format!(
-        "{} {} health score: {}\n",
-        if pass { "ok" } else { "FAIL" },
-        spec_arg,
-        report.aggregate_score
-    );
-
-    if !report.cycles.is_empty() {
-        out.push_str("Cycles:\n");
-        for scc in &report.cycles {
-            out.push_str(&format!("  {} {}\n", "●", scc.join(" → ")));
-        }
+    if text.is_empty() {
+        anyhow::bail!("note text cannot be empty");
     }
 
-    if !report.violations.is_empty() {
-        out.push_str("Violations:\n");
-        for v in &report.violations {
-            out.push_str(&format!("  ● [{}] {} (−{})\n", v.kind, v.message, v.penalty));
-        }
+    // Generate slug from text
+    let slug: String = text
+        .to_lowercase()
+        .chars()
+        .map(|c| if c.is_alphanumeric() { c } else { '-' })
+        .collect::<String>()
+        .split('-')
+        .filter(|s| !s.is_empty())
+        .collect::<Vec<_>>()
+        .join("-");
+    let slug = if slug.len() > 40 { &slug[..40] } else { &slug };
+    let slug = slug.trim_end_matches('-');
+
+    let id = format!("note.{}", slug);
+    let product = args["product"].as_str();
+
+    // Delegate to s5d_new internals
+    let cwd = std::env::current_dir()?;
+    let project = crate::S5dProject::find(&cwd)
+        .ok_or_else(|| anyhow::anyhow!("no .s5d/ found (run s5d_init first)"))?;
+
+    let product_name = product.unwrap_or("default");
+    let today = chrono::Utc::now().format("%Y%m%d").to_string();
+    let spec_filename = format!("{}__{}.s5d.yaml", id, today);
+    let spec_path = project.s5d_dir().join("packages").join(&spec_filename);
+
+    if spec_path.exists() {
+        anyhow::bail!("spec already exists: {}", spec_path.display());
     }
 
-    out.push_str(&format!(
-        "\n{:<40} {:>4} {:>4} {:>6} {:>6}\n",
-        "Domain", "Ca", "Ce", "I", "Score"
-    ));
-    out.push_str(&format!("{}\n", "─".repeat(64)));
-    for dm in &report.domain_metrics {
-        out.push_str(&format!(
-            "{:<40} {:>4} {:>4} {:>6.2} {:>6}\n",
-            dm.domain_id, dm.ca, dm.ce, dm.instability, dm.health_score
-        ));
-    }
+    let spec = crate::generate_note_spec(&id, product_name, text, text);
+    let yaml = serde_yaml::to_string(&spec)?;
+    std::fs::write(&spec_path, &yaml)?;
 
-    if !pass {
-        anyhow::bail!(
-            "{}Health score {} below threshold {}",
-            out,
-            report.aggregate_score,
-            threshold
-        );
-    }
+    let sha = crate::S5dProject::file_sha256(&spec_path)?;
+    let record = crate::generate_record(&spec_filename, &sha);
+    project.save_record(&spec_filename, &record)?;
 
-    Ok(out.trim_end().to_string())
-}
+    let record_path = project.s5d_dir().join("records")
+        .join(spec_filename.replace(".s5d.yaml", ".record.yaml"));
 
-// ── s5d_metrics ───────────────────────────────────────────────────────────────
-
-fn tool_s5d_metrics(args: &Value) -> anyhow::Result<String> {
-    let spec_arg = args["spec"]
-        .as_str()
-        .ok_or_else(|| anyhow::anyhow!("missing required argument: spec"))?;
-    let (_project, _spec_path, spec, _spec_filename) = load_spec_context_mcp(spec_arg)?;
-
-    let report = crate::compute_health_report(&spec);
-
-    let mut out = format!(
-        "{:<40} {:>4} {:>4} {:>6} {:>6} Violations\n",
-        "Domain", "Ca", "Ce", "I", "Score"
-    );
-    out.push_str(&format!("{}\n", "─".repeat(80)));
-    for dm in &report.domain_metrics {
-        let violations_str = if dm.violations.is_empty() {
-            "—".into()
-        } else {
-            dm.violations.join(", ")
-        };
-        out.push_str(&format!(
-            "{:<40} {:>4} {:>4} {:>6.2} {:>6} {}\n",
-            dm.domain_id, dm.ca, dm.ce, dm.instability, dm.health_score, violations_str
-        ));
-    }
-    out.push_str(&format!(
-        "\nAggregate health score: {}",
-        report.aggregate_score
-    ));
-
-    Ok(out.trim_end().to_string())
+    Ok(format!("Note created: {}\n  spec: {}\n  record: {}",
+        id, spec_path.display(), record_path.display()))
 }

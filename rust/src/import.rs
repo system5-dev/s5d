@@ -284,14 +284,8 @@ pub fn execute_import(
         aliases.apply_renames(&spec.id, &meta.renames);
     }
 
-    // Auto-infer links from artifact hierarchy
-    let mut spec = spec.clone();
-    let inferred = crate::infer::infer_links(&spec);
-    if spec.links.is_none() {
-        spec.links = Some(inferred);
-    } else if let Some(ref mut links) = spec.links {
-        crate::infer::merge_links(links, &inferred);
-    }
+    // Materialize spec: merge inferred links into a clone
+    let spec = crate::infer::materialize_spec(spec);
 
     let actions = compute_diff(&spec, &mut aliases);
 

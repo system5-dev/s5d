@@ -40,7 +40,7 @@ pub struct Spec {
     pub auto_noted: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Tier {
     Note,
@@ -504,6 +504,34 @@ pub struct DecisionRecord {
     /// What this decision prohibits — explicit prohibitions.
     #[serde(default)]
     pub dont_list: Vec<String>,
+    /// Adversarial challenge results — must be present before decide (methodological gate).
+    #[serde(default)]
+    pub challenge: Option<Challenge>,
+}
+
+/// Adversarial challenge — pre-decision verification.
+/// 5 probes for standard/high, 1 counter-argument for lightweight/tactical.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Challenge {
+    /// Challenge depth: tactical (1 probe) or standard (5 probes)
+    pub mode: String,
+    /// Did the decision survive the challenge?
+    pub passed: bool,
+    /// One-line summary of challenge outcome
+    pub summary: String,
+    /// Individual challenge checks
+    #[serde(default)]
+    pub checks: Vec<ChallengeCheck>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChallengeCheck {
+    /// Kind: counter_argument, tail_failure, evidence_weakness, weakest_link, sota
+    pub kind: String,
+    /// What the probe found
+    pub finding: String,
+    /// pass, fail, or concern
+    pub verdict: String,
 }
 
 // ── Phase ─────────────────────────────────────────────────────────────────────
@@ -511,7 +539,7 @@ pub struct DecisionRecord {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub enum Phase {
-    Analyze,
+    Scaffold,
     Synthesize,
     Preview,
     Approve,
@@ -523,7 +551,7 @@ pub enum Phase {
 impl Phase {
     pub fn next(&self) -> Option<Phase> {
         match self {
-            Phase::Analyze => Some(Phase::Synthesize),
+            Phase::Scaffold => Some(Phase::Synthesize),
             Phase::Synthesize => Some(Phase::Preview),
             Phase::Preview => Some(Phase::Approve),
             Phase::Approve => Some(Phase::Execute),
@@ -535,14 +563,12 @@ impl Phase {
 
     pub fn cli_hint(&self) -> &'static str {
         match self {
-            Phase::Analyze => {
-                "Run: diana s5d analyze <goal> — or — diana s5d new <id> --tier <tier>"
-            }
-            Phase::Synthesize => "Run: diana s5d add-hypothesis — generate at least 3 hypotheses",
-            Phase::Preview => "Run: diana s5d preview <spec> — dry-run the import",
-            Phase::Approve => "Run: diana s5d approve <spec> --reviewer <name>",
-            Phase::Execute => "Run: diana s5d import <spec> — execute the approved spec",
-            Phase::Verify => "Run: diana s5d run-gates <spec> — verify all gates pass",
+            Phase::Scaffold => "Run: s5d new <id> --tier <tier> — create a spec scaffold",
+            Phase::Synthesize => "Run: s5d add-hypothesis <spec> — add at least 3 hypotheses",
+            Phase::Preview => "Run: s5d preview <spec> — dry-run the import",
+            Phase::Approve => "Run: s5d approve <spec> --reviewer <name>",
+            Phase::Execute => "Run: s5d import <spec> — execute the approved spec",
+            Phase::Verify => "Run: s5d run-gates <spec> — verify all gates pass",
             Phase::Learn => "Record reflection: what worked, what didn't, follow-ups",
         }
     }
@@ -551,7 +577,7 @@ impl Phase {
 impl std::fmt::Display for Phase {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Phase::Analyze => write!(f, "analyze"),
+            Phase::Scaffold => write!(f, "scaffold"),
             Phase::Synthesize => write!(f, "synthesize"),
             Phase::Preview => write!(f, "preview"),
             Phase::Approve => write!(f, "approve"),
@@ -654,6 +680,8 @@ pub struct Approval {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PreviewResult {
     pub diff_sha256: String,
+    #[serde(default)]
+    pub previewed_spec_sha256: String,
     pub actions: PreviewActions,
     #[serde(default)]
     pub log: Option<String>,
@@ -808,87 +836,3 @@ pub struct IndexEntry {
     pub version: String,
 }
 
-// ── Traceability ────────────────────────────────────────────────────────────
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct TraceLink {
-    pub spec_id: String,
-    pub artifact_kind: String,
-    pub artifact_id: String,
-    pub file_path: String,
-    pub symbol_name: Option<String>,
-    pub line_start: u32,
-    pub line_end: Option<u32>,
-    pub source: String,
-    pub confidence: f64,
-    pub updated_at: String,
-}
-
-#[derive(Debug, Clone)]
-pub struct TraceReport {
-    pub matched: Vec<TraceLink>,
-    pub unmatched_spec: Vec<(String, String)>,
-    pub orphaned_annotations: Vec<(String, u32, String, String)>,
-}
-
-// ── Architecture Health ────────────────────────────────────────────────────
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct DomainMetrics {
-    pub domain_id: String,
-    pub ca: usize,
-    pub ce: usize,
-    pub instability: f64,
-    pub cycle_member: bool,
-    pub health_score: u8,
-    #[serde(default)]
-    pub violations: Vec<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct HealthViolation {
-    pub kind: String,
-    pub target: String,
-    pub message: String,
-    pub penalty: u8,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct HealthReport {
-    pub timestamp: String,
-    pub domain_metrics: Vec<DomainMetrics>,
-    pub aggregate_score: u8,
-    pub cycles: Vec<Vec<String>>,
-    pub violations: Vec<HealthViolation>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct MetricsSnapshot {
-    pub schema: String,
-    pub timestamp: String,
-    pub spec_id: String,
-    pub domain_metrics: Vec<DomainMetrics>,
-    pub aggregate_score: u8,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct DomainDelta {
-    pub domain_id: String,
-    pub score_before: u8,
-    pub score_after: u8,
-    pub delta: i16,
-    pub status: String,
-    #[serde(default)]
-    pub new_violations: Vec<String>,
-    #[serde(default)]
-    pub fixed_violations: Vec<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct DegradationReport {
-    pub current_score: u8,
-    pub baseline_score: u8,
-    pub delta: i16,
-    pub status: String,
-    pub domain_deltas: Vec<DomainDelta>,
-}

@@ -2,16 +2,37 @@ use clap::{Parser, Subcommand};
 use colored::Colorize;
 
 #[derive(Parser)]
-#[command(name = "s5d", about = "S5D — Decision & Feature Framework")]
+#[command(name = "s5d", about = "S5D — protocol for high-assurance repo changes")]
 struct Cli {
     #[command(subcommand)]
     command: S5dCommand,
 }
 
+// ── Core commands — the critical path ────────────────────────────────────────
+//
+// intent → validate → approve → apply → detect drift → rollback
+//
+
 #[derive(Subcommand)]
 enum S5dCommand {
     /// Initialize .s5d/ directory structure
-    Init,
+    Init {
+        /// Register MCP server for Claude Code (.mcp.json)
+        #[arg(long)]
+        claude: bool,
+        /// Register MCP server for Cursor (.cursor/mcp.json)
+        #[arg(long)]
+        cursor: bool,
+        /// Register MCP server for Codex CLI (.codex/config.toml)
+        #[arg(long)]
+        codex: bool,
+        /// Register MCP server for Gemini CLI (.gemini/settings.json)
+        #[arg(long)]
+        gemini: bool,
+        /// Register MCP server for all supported tools
+        #[arg(long)]
+        all: bool,
+    },
     /// Create a new spec from template
     New {
         /// Feature ID (e.g., "feat.orders.tracking")
@@ -32,114 +53,14 @@ enum S5dCommand {
         #[arg(long)]
         hypothesis_id: Option<String>,
     },
-    /// Validate a spec file
-    Validate {
-        /// Path to .s5d.yaml file
-        spec: String,
-    },
-    /// Show status of all specs
-    Status,
-    /// Print Comparability Gauge ID
-    Cg,
-    /// Dry-run import diff
-    Preview {
-        /// Path to .s5d.yaml file
-        spec: String,
-    },
-    /// Record approval binding spec_sha256 + diff_sha256
-    Approve {
-        /// Path to .s5d.yaml file
-        spec: String,
-        /// Reviewer name
-        #[arg(long, default_value = "self")]
-        reviewer: String,
-        /// Block approval if reviewer is not a domain owner
+    /// Quick note — one-shot shorthand for `s5d new note.<slug> --tier note`
+    Note {
+        /// Note text (used as title and rationale)
+        text: Vec<String>,
+        /// Product name
         #[arg(long)]
-        require_owner: bool,
+        product: Option<String>,
     },
-    /// Execute configured gate commands
-    RunGates {
-        /// Path to .s5d.yaml file
-        spec: String,
-    },
-    /// Transactional import (apply spec to alias table + ledger)
-    Import {
-        /// Path to .s5d.yaml file
-        spec: String,
-        /// Who independently verified gates passed (trust separation)
-        #[arg(long)]
-        verified_by: Option<String>,
-        /// Override methodological checks
-        #[arg(long)]
-        force: bool,
-    },
-    /// Reverse last import for a spec
-    Rollback {
-        /// Path to .s5d.yaml file
-        spec: String,
-    },
-    /// Index management
-    Index {
-        #[command(subcommand)]
-        command: IndexCommand,
-    },
-    /// Seed alias table from bootstrap manifest
-    Bootstrap {
-        /// Path to bootstrap manifest YAML
-        manifest: String,
-    },
-    /// Graph/relation validation — DFS cycle detection
-    GraphCheck {
-        /// Path to .s5d.yaml file
-        spec: String,
-    },
-    /// Architecture health check — coupling metrics, cycles, quality gate
-    Check {
-        /// Path to .s5d.yaml file
-        spec: String,
-        /// Minimum health score to pass (exit 1 if below)
-        #[arg(long, default_value = "0")]
-        threshold: u8,
-        /// Compare against previous baseline snapshot
-        #[arg(long)]
-        compare: bool,
-        /// Output format: text or json
-        #[arg(long, default_value = "text")]
-        format: String,
-    },
-    /// Display per-domain coupling metrics
-    Metrics {
-        /// Path to .s5d.yaml file
-        spec: String,
-        /// Output format: text or json
-        #[arg(long, default_value = "text")]
-        format: String,
-    },
-    /// Compare live state vs last applied fingerprint
-    DriftCheck {
-        /// Path to .s5d.yaml file (optional: check all if omitted)
-        spec: Option<String>,
-    },
-    /// Re-import to fix drift (desired-state restore, bypasses diff_sha256)
-    Reconcile {
-        /// Path to .s5d.yaml file (optional: reconcile all drifted if omitted)
-        spec: Option<String>,
-    },
-    /// Validate contract sha256 digests and format structure
-    ContractCheck {
-        /// Path to .s5d.yaml file
-        spec: String,
-    },
-    /// Generate architecture rules from a spec (layering, allowed edges, no cycles)
-    GenerateRules {
-        /// Path to .s5d.yaml file
-        spec: String,
-        /// Output format: yaml or json
-        #[arg(long, default_value = "yaml")]
-        format: String,
-    },
-    /// Generate REPORT.md with adoption metrics
-    Report,
     /// Add a hypothesis to a decision spec
     AddHypothesis {
         /// Path to .s5d.yaml file
@@ -223,21 +144,60 @@ enum S5dCommand {
         /// Human who confirms the decision (required — non-waivable)
         #[arg(long)]
         confirmed_by: Option<String>,
+        /// Adversarial challenge summary (required unless --no-challenge)
+        #[arg(long)]
+        challenge_summary: Option<String>,
+        /// Challenge mode: tactical (1 probe) or standard (5 probes). Default: auto-detect from tier.
+        #[arg(long)]
+        challenge_mode: Option<String>,
+        /// Skip adversarial challenge gate (not recommended)
+        #[arg(long)]
+        no_challenge: bool,
     },
-    /// Generate diagram or interactive HTML from spec
-    Render {
+    /// Validate a spec file
+    Validate {
         /// Path to .s5d.yaml file
         spec: String,
-        /// View type: domain, components, decision (auto-detect if omitted)
-        #[arg(long)]
-        view: Option<String>,
-        /// Output format: mermaid (default) or html
-        #[arg(long, default_value = "mermaid")]
-        format: String,
-        /// Output to file instead of stdout
-        #[arg(long, short)]
-        output: Option<String>,
     },
+    /// Graph/relation validation — DFS cycle detection
+    GraphCheck {
+        /// Path to .s5d.yaml file
+        spec: String,
+    },
+    /// Dry-run import diff
+    Preview {
+        /// Path to .s5d.yaml file
+        spec: String,
+    },
+    /// Record approval binding spec_sha256 + diff_sha256
+    Approve {
+        /// Path to .s5d.yaml file
+        spec: String,
+        /// Reviewer name
+        #[arg(long, default_value = "self")]
+        reviewer: String,
+        /// Block approval if reviewer is not a domain owner
+        #[arg(long)]
+        require_owner: bool,
+    },
+    /// Execute configured gate commands
+    RunGates {
+        /// Path to .s5d.yaml file
+        spec: String,
+    },
+    /// Transactional import (apply spec to alias table + ledger)
+    Import {
+        /// Path to .s5d.yaml file
+        spec: String,
+        /// Who independently verified gates passed (trust separation)
+        #[arg(long)]
+        verified_by: Option<String>,
+        /// Override methodological checks
+        #[arg(long)]
+        force: bool,
+    },
+    /// Show status of all specs
+    Status,
     /// Show spec details — decision trace, hypothesis tree, or feature summary
     Show {
         /// Path to .s5d.yaml file
@@ -248,31 +208,20 @@ enum S5dCommand {
         /// Search query
         query: String,
     },
-    /// Analyze a codebase and generate draft domain map
-    Analyze {
-        /// Path to project root (default: current directory)
-        #[arg(default_value = ".")]
-        path: String,
-        /// Product name
-        #[arg(long)]
-        product: Option<String>,
-        /// Spec ID prefix
-        #[arg(long, default_value = "analysis")]
-        id: String,
-        /// Output file (default: stdout as YAML)
-        #[arg(long, short)]
-        output: Option<String>,
+    /// Compare live state vs last applied fingerprint
+    DriftCheck {
+        /// Path to .s5d.yaml file (optional: check all if omitted)
+        spec: Option<String>,
     },
-    /// Rename a domain ID across the entire spec (cascades to capabilities, components, entities, links)
-    RenameDomain {
+    /// Re-import to fix drift (desired-state restore, bypasses diff_sha256)
+    Reconcile {
+        /// Path to .s5d.yaml file (optional: reconcile all drifted if omitted)
+        spec: Option<String>,
+    },
+    /// Reverse last import for a spec
+    Rollback {
         /// Path to .s5d.yaml file
         spec: String,
-        /// Old domain ID
-        #[arg(long)]
-        old: String,
-        /// New domain ID
-        #[arg(long)]
-        new: String,
     },
     /// Record reflection for a spec (OPERATE stage) — closes lifecycle with production evidence
     Reflect {
@@ -300,31 +249,26 @@ enum S5dCommand {
         #[arg(long = "issue")]
         structured_issues: Vec<String>,
     },
-    /// Show git state for S5D specs
-    GitStatus {
-        /// Path to .s5d.yaml file (optional — checks all if omitted)
-        spec: Option<String>,
+    /// Classify a request into tier, mode, and entry point (Step 0 Phase A)
+    Route {
+        /// Request description to classify
+        description: Vec<String>,
+        /// Output format: text or json
+        #[arg(long, default_value = "text")]
+        format: String,
     },
-    /// Codebase index management
-    Codebase {
+    /// Index management
+    Index {
         #[command(subcommand)]
-        command: CodebaseCommand,
+        command: IndexCommand,
     },
-    /// Trace: map spec artifacts to code
-    Trace {
-        #[command(subcommand)]
-        command: TraceCommand,
+    /// Seed alias table from bootstrap manifest
+    Bootstrap {
+        /// Path to bootstrap manifest YAML
+        manifest: String,
     },
-    /// Learn phase — aggregate reflections, extract patterns, feed heuristics
-    Learn {
-        #[command(subcommand)]
-        command: LearnCommand,
-    },
-    /// FPF spec search and management
-    Fpf {
-        #[command(subcommand)]
-        command: FpfCommand,
-    },
+    /// Print Comparability Gauge ID
+    Cg,
     /// Start stdio MCP server (for Claude Code integration)
     Mcp,
     /// Register s5d MCP server in project .mcp.json
@@ -342,48 +286,6 @@ enum S5dCommand {
 }
 
 #[derive(Subcommand)]
-enum CodebaseCommand {
-    /// Build or rebuild the full codebase index
-    Index {
-        /// Path to repository root (default: current dir)
-        #[arg(default_value = ".")]
-        path: String,
-    },
-    /// Incrementally update index using git diff
-    Update {
-        /// Path to repository root (default: current dir)
-        #[arg(default_value = ".")]
-        path: String,
-    },
-    /// Search the codebase index
-    Search {
-        /// Search query
-        query: String,
-        /// Path to repository root (default: current dir)
-        #[arg(long, default_value = ".")]
-        path: String,
-        /// Number of results
-        #[arg(long, default_value = "10")]
-        top_k: usize,
-    },
-    /// Suggest domain boundaries from coupling analysis
-    SuggestDomains {
-        /// Path to repository root (default: current dir)
-        #[arg(default_value = ".")]
-        path: String,
-        /// Directory depth for module grouping (1=top-level, 2=nested)
-        #[arg(long, default_value = "1")]
-        depth: usize,
-        /// Minimum files per module to be considered a domain
-        #[arg(long, default_value = "2")]
-        min_files: usize,
-        /// Output format
-        #[arg(long, default_value = "text")]
-        format: String,
-    },
-}
-
-#[derive(Subcommand)]
 enum IndexCommand {
     /// Check index.yaml consistency
     Check,
@@ -391,77 +293,10 @@ enum IndexCommand {
     Sync,
 }
 
-#[derive(Subcommand)]
-enum TraceCommand {
-    /// Build trace links from code to spec artifacts
-    Build {
-        /// Path to .s5d.yaml spec file
-        spec: String,
-    },
-    /// Check trace coverage — which spec artifacts have code bindings
-    Check {
-        /// Path to .s5d.yaml spec file
-        spec: String,
-    },
-    /// Show trace report
-    Report {
-        /// Filter by spec ID
-        #[arg(long)]
-        spec: Option<String>,
-    },
-    /// Compute blast radius — domains, files, symbols, WLNK
-    BlastRadius {
-        /// Path to .s5d.yaml spec file
-        spec: String,
-    },
-}
-
-#[derive(Subcommand)]
-enum LearnCommand {
-    /// Aggregate reflections from all operated specs
-    Report,
-    /// Show relevant heuristics from past specs for a new spec
-    Feed {
-        /// Path to .s5d.yaml spec file
-        spec: String,
-    },
-}
-
-#[derive(Subcommand)]
-enum FpfCommand {
-    /// Download FPF spec from GitHub and rebuild the search index
-    Sync {
-        /// Re-index even if the upstream version hasn't changed
-        #[arg(short, long)]
-        force: bool,
-        /// Download embedding model (~640MB) and enable hybrid search
-        #[arg(long)]
-        embed: bool,
-    },
-    /// Search the FPF spec (BM25 full-text)
-    Search {
-        /// Query terms
-        query: Vec<String>,
-        /// Maximum results to return
-        #[arg(short = 'n', long, default_value = "5")]
-        limit: usize,
-        /// Print the full section body instead of a snippet
-        #[arg(long)]
-        full: bool,
-    },
-    /// Look up a section by heading (partial match)
-    Section {
-        /// Heading text to search for
-        heading: Vec<String>,
-    },
-    /// Show index status
-    Status,
-}
-
 fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
     match cli.command {
-        S5dCommand::Init => run_init(),
+        S5dCommand::Init { claude, cursor, codex, gemini, all } => run_init(claude, cursor, codex, gemini, all),
         S5dCommand::New {
             feature_id,
             tier,
@@ -477,6 +312,7 @@ fn main() -> anyhow::Result<()> {
             rationale.as_deref(),
             hypothesis_id.as_deref(),
         ),
+        S5dCommand::Note { text, product } => run_note(&text.join(" "), product.as_deref()),
         S5dCommand::Validate { spec } => run_validate(&spec),
         S5dCommand::Status => run_status(),
         S5dCommand::Cg => run_cg(),
@@ -495,18 +331,8 @@ fn main() -> anyhow::Result<()> {
         },
         S5dCommand::Bootstrap { manifest } => run_bootstrap(&manifest),
         S5dCommand::GraphCheck { spec } => run_graph_check(&spec),
-        S5dCommand::Check {
-            spec,
-            threshold,
-            compare,
-            format,
-        } => run_check(&spec, threshold, compare, &format),
-        S5dCommand::Metrics { spec, format } => run_metrics(&spec, &format),
         S5dCommand::DriftCheck { spec } => run_drift_check(spec.as_deref()),
         S5dCommand::Reconcile { spec } => run_reconcile(spec.as_deref()),
-        S5dCommand::ContractCheck { spec } => run_contract_check(&spec),
-        S5dCommand::GenerateRules { spec, format } => run_generate_rules(&spec, &format),
-        S5dCommand::Report => run_report(),
         S5dCommand::AddHypothesis {
             spec,
             id,
@@ -556,6 +382,9 @@ fn main() -> anyhow::Result<()> {
             consequences,
             force,
             confirmed_by,
+            challenge_summary,
+            challenge_mode,
+            no_challenge,
         } => run_decide(
             &spec,
             &title,
@@ -567,22 +396,13 @@ fn main() -> anyhow::Result<()> {
             &consequences,
             force,
             confirmed_by.as_deref(),
+            challenge_summary.as_deref(),
+            challenge_mode.as_deref(),
+            no_challenge,
         ),
-        S5dCommand::Render {
-            spec,
-            view,
-            format,
-            output,
-        } => run_render(&spec, view.as_deref(), format.as_str(), output.as_deref()),
         S5dCommand::Show { spec } => run_show(&spec),
+        S5dCommand::Route { description, format } => run_route(&description.join(" "), &format),
         S5dCommand::Search { query } => run_search(&query),
-        S5dCommand::Analyze {
-            path,
-            product,
-            id,
-            output,
-        } => run_analyze(&path, product.as_deref(), &id, output.as_deref()),
-        S5dCommand::RenameDomain { spec, old, new } => run_rename_domain(&spec, &old, &new),
         S5dCommand::Reflect {
             spec,
             summary,
@@ -602,36 +422,6 @@ fn main() -> anyhow::Result<()> {
             &heuristics,
             &structured_issues,
         ),
-        S5dCommand::GitStatus { spec } => run_git_status(spec.as_deref()),
-        S5dCommand::Codebase { command } => match command {
-            CodebaseCommand::Index { path } => run_codebase_index(&path),
-            CodebaseCommand::Update { path } => run_codebase_update(&path),
-            CodebaseCommand::Search { query, path, top_k } => {
-                run_codebase_search(&query, &path, top_k)
-            }
-            CodebaseCommand::SuggestDomains {
-                path,
-                depth,
-                min_files,
-                format,
-            } => run_suggest_domains(&path, depth, min_files, &format),
-        },
-        S5dCommand::Trace { command } => match command {
-            TraceCommand::Build { spec } => run_trace_build(&spec),
-            TraceCommand::Check { spec } => run_trace_check(&spec),
-            TraceCommand::Report { spec } => run_trace_report(spec.as_deref()),
-            TraceCommand::BlastRadius { spec } => run_trace_blast_radius(&spec),
-        },
-        S5dCommand::Learn { command } => match command {
-            LearnCommand::Report => run_learn_report(),
-            LearnCommand::Feed { spec } => run_learn_feed(&spec),
-        },
-        S5dCommand::Fpf { command } => match command {
-            FpfCommand::Sync { force, embed } => s5d::fpf::cmd_sync(force, embed),
-            FpfCommand::Search { query, limit, full } => s5d::fpf::cmd_search(&query, limit, full),
-            FpfCommand::Section { heading } => s5d::fpf::cmd_section(&heading),
-            FpfCommand::Status => s5d::fpf::cmd_status(),
-        },
         S5dCommand::Mcp => s5d::mcp::run_mcp_server(),
         S5dCommand::Install {
             s5d_path,
@@ -770,7 +560,7 @@ fn run_install(
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 
-fn run_init() -> anyhow::Result<()> {
+fn run_init(claude: bool, cursor: bool, codex: bool, gemini: bool, all: bool) -> anyhow::Result<()> {
     let cwd = std::env::current_dir()?;
     let (project, report) = s5d::S5dProject::init(&cwd)?;
 
@@ -790,77 +580,197 @@ fn run_init() -> anyhow::Result<()> {
         println!("    {} {}", "✓".green(), f.display());
     }
 
-    // Auto-register MCP server in project settings
-    println!("\n  {} MCP server:", "mcp".bold());
-    match run_install(None, false, false) {
-        Ok(()) => {
-            println!(
-                "\n  {} Restart your Claude Code / agent session to activate s5d MCP tools.",
-                "⚠".yellow()
-            );
-        }
-        Err(e) => {
-            println!(
-                "    {} Could not auto-register MCP: {}",
-                "⚠".yellow(),
-                e
-            );
-            println!("    Run `s5d install --claude-project` manually.");
+    // Determine which tools to register for
+    let no_flags = !claude && !cursor && !codex && !gemini && !all;
+    let do_claude = claude || all || no_flags; // default: register for Claude
+    let do_cursor = cursor || all;
+    let do_codex = codex || all;
+    let do_gemini = gemini || all;
+
+    let binary_str = std::env::current_exe()?.to_string_lossy().into_owned();
+
+    println!("\n  {} MCP server registration:", "mcp".bold());
+
+    // Claude Code → .mcp.json
+    if do_claude {
+        match register_mcp_json(&cwd.join(".mcp.json"), &binary_str) {
+            Ok(false) => println!("    {} Claude (.mcp.json) — already registered", "✓".green()),
+            Ok(true) => println!("    {} Claude (.mcp.json)", "✓".green()),
+            Err(e) => println!("    {} Claude: {}", "⚠".yellow(), e),
         }
     }
 
-    // Auto-add mcp__s5d__* permission to .claude/settings.local.json
-    let local_settings_path = cwd.join(".claude").join("settings.local.json");
-    let perm_entry = "mcp__s5d__*";
-    let needs_add = if local_settings_path.exists() {
-        let raw = std::fs::read_to_string(&local_settings_path).unwrap_or_default();
-        !raw.contains(perm_entry)
-    } else {
-        true
-    };
+    // Cursor → .cursor/mcp.json
+    if do_cursor {
+        let cursor_path = cwd.join(".cursor").join("mcp.json");
+        match register_mcp_json(&cursor_path, &binary_str) {
+            Ok(false) => println!("    {} Cursor (.cursor/mcp.json) — already registered", "✓".green()),
+            Ok(true) => println!("    {} Cursor (.cursor/mcp.json)", "✓".green()),
+            Err(e) => println!("    {} Cursor: {}", "⚠".yellow(), e),
+        }
+    }
 
-    if needs_add {
-        println!("\n  {} Permissions:", "perms".bold());
-        let mut settings: serde_json::Value = if local_settings_path.exists() {
-            let raw = std::fs::read_to_string(&local_settings_path)?;
-            serde_json::from_str(&raw).unwrap_or(serde_json::json!({}))
+    // Codex CLI → .codex/config.toml
+    if do_codex {
+        let codex_path = cwd.join(".codex").join("config.toml");
+        match register_mcp_toml(&codex_path, &binary_str) {
+            Ok(false) => println!("    {} Codex (.codex/config.toml) — already registered", "✓".green()),
+            Ok(true) => println!("    {} Codex (.codex/config.toml)", "✓".green()),
+            Err(e) => println!("    {} Codex: {}", "⚠".yellow(), e),
+        }
+    }
+
+    // Gemini CLI → .gemini/settings.json
+    if do_gemini {
+        let gemini_path = cwd.join(".gemini").join("settings.json");
+        match register_mcp_json(&gemini_path, &binary_str) {
+            Ok(false) => println!("    {} Gemini (.gemini/settings.json) — already registered", "✓".green()),
+            Ok(true) => println!("    {} Gemini (.gemini/settings.json)", "✓".green()),
+            Err(e) => println!("    {} Gemini: {}", "⚠".yellow(), e),
+        }
+    }
+
+    // Auto-add mcp__s5d__* permission to .claude/settings.local.json (Claude-specific)
+    if do_claude {
+        let local_settings_path = cwd.join(".claude").join("settings.local.json");
+        let perm_entry = "mcp__s5d__*";
+        let needs_add = if local_settings_path.exists() {
+            let raw = std::fs::read_to_string(&local_settings_path).unwrap_or_default();
+            !raw.contains(perm_entry)
         } else {
-            serde_json::json!({})
+            true
         };
 
-        let perms = settings
-            .as_object_mut()
-            .unwrap()
-            .entry("permissions")
-            .or_insert(serde_json::json!({}))
-            .as_object_mut()
-            .unwrap()
-            .entry("allow")
-            .or_insert(serde_json::json!([]))
-            .as_array_mut()
-            .unwrap();
+        if needs_add {
+            println!("\n  {} Permissions:", "perms".bold());
+            let mut settings: serde_json::Value = if local_settings_path.exists() {
+                let raw = std::fs::read_to_string(&local_settings_path)?;
+                serde_json::from_str(&raw).unwrap_or(serde_json::json!({}))
+            } else {
+                serde_json::json!({})
+            };
 
-        perms.push(serde_json::json!(perm_entry));
+            let perms = settings
+                .as_object_mut()
+                .unwrap()
+                .entry("permissions")
+                .or_insert(serde_json::json!({}))
+                .as_object_mut()
+                .unwrap()
+                .entry("allow")
+                .or_insert(serde_json::json!([]))
+                .as_array_mut()
+                .unwrap();
 
-        if let Some(parent) = local_settings_path.parent() {
-            std::fs::create_dir_all(parent)?;
+            perms.push(serde_json::json!(perm_entry));
+
+            if let Some(parent) = local_settings_path.parent() {
+                std::fs::create_dir_all(parent)?;
+            }
+            std::fs::write(&local_settings_path, serde_json::to_string_pretty(&settings)?)?;
+            println!(
+                "    {} Added {} to {}",
+                "✓".green(),
+                perm_entry,
+                local_settings_path.display()
+            );
         }
-        std::fs::write(&local_settings_path, serde_json::to_string_pretty(&settings)?)?;
-        println!(
-            "    {} Added {} to {}",
-            "✓".green(),
-            perm_entry,
-            local_settings_path.display()
-        );
     }
 
+    println!(
+        "\n  {} Restart your agent session to activate s5d MCP tools.",
+        "⚠".yellow()
+    );
+
     println!("\n  {} Next steps:", "→".blue());
-    println!("    1. s5d analyze <path> --product <name>   Build draft domain map");
-    println!("    2. s5d codebase index <path>             Build codebase index for trace/search");
-    println!("    3. s5d new <feature-id> --product <name> Create your first spec");
+    println!("    1. s5d new <feature-id> --product <name>   Create your first spec");
+    println!("    2. s5d validate <spec>                     Validate the spec");
+    println!("    3. s5d preview <spec>                      Preview the import");
     println!();
 
     Ok(())
+}
+
+/// Register s5d MCP server in a JSON config file (Claude, Cursor, Gemini format).
+/// Returns Ok(true) if written, Ok(false) if already registered.
+fn register_mcp_json(path: &std::path::Path, binary: &str) -> anyhow::Result<bool> {
+    let desired = serde_json::json!({
+        "command": binary,
+        "args": ["mcp"]
+    });
+
+    let mut settings: serde_json::Value = if path.exists() {
+        let raw = std::fs::read_to_string(path)?;
+        serde_json::from_str(&raw).unwrap_or(serde_json::json!({}))
+    } else {
+        serde_json::json!({})
+    };
+
+    let servers = settings
+        .as_object_mut()
+        .ok_or_else(|| anyhow::anyhow!("root is not an object"))?
+        .entry("mcpServers")
+        .or_insert(serde_json::json!({}))
+        .as_object_mut()
+        .ok_or_else(|| anyhow::anyhow!("mcpServers is not an object"))?;
+
+    if let Some(existing) = servers.get("s5d") {
+        if existing == &desired {
+            return Ok(false);
+        }
+    }
+
+    servers.insert("s5d".to_string(), desired);
+
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent)?;
+    }
+    std::fs::write(path, serde_json::to_string_pretty(&settings)?)?;
+    Ok(true)
+}
+
+/// Register s5d MCP server in a TOML config file (Codex CLI format).
+/// Returns Ok(true) if written, Ok(false) if already registered.
+fn register_mcp_toml(path: &std::path::Path, binary: &str) -> anyhow::Result<bool> {
+    use toml_edit::{DocumentMut, Item, Table, value};
+
+    let mut doc: DocumentMut = if path.exists() {
+        let raw = std::fs::read_to_string(path)?;
+        raw.parse::<DocumentMut>()?
+    } else {
+        DocumentMut::new()
+    };
+
+    // Check if [mcp_servers.s5d] already exists with correct values
+    if let Some(mcp) = doc.get("mcp_servers") {
+        if let Some(s5d) = mcp.get("s5d") {
+            if let Some(cmd) = s5d.get("command") {
+                if cmd.as_str() == Some(binary) {
+                    return Ok(false);
+                }
+            }
+        }
+    }
+
+    // Ensure [mcp_servers] table exists
+    if doc.get("mcp_servers").is_none() {
+        doc["mcp_servers"] = Item::Table(Table::new());
+    }
+    let mcp = doc["mcp_servers"].as_table_mut().unwrap();
+
+    // Create [mcp_servers.s5d]
+    if mcp.get("s5d").is_none() {
+        mcp["s5d"] = Item::Table(Table::new());
+    }
+    let s5d = mcp["s5d"].as_table_mut().unwrap();
+    s5d["command"] = value(binary);
+    s5d["args"] = value(toml_edit::Array::from_iter(["mcp"]));
+
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent)?;
+    }
+    std::fs::write(path, doc.to_string())?;
+    Ok(true)
 }
 
 // ── New ───────────────────────────────────────────────────────────────────────
@@ -956,10 +866,32 @@ fn run_new(
         }
     }
 
-    // Auto-render after creating spec
-    let _ = run_render(spec_path.to_str().unwrap_or(""), None, "mermaid", None);
-
     Ok(())
+}
+
+// ── Note (shorthand) ─────────────────────────────────────────────────────────
+
+fn run_note(text: &str, product: Option<&str>) -> anyhow::Result<()> {
+    if text.is_empty() {
+        anyhow::bail!("note text cannot be empty");
+    }
+
+    // Generate slug from text: lowercase, alphanumeric + dashes, max 40 chars
+    let slug: String = text
+        .to_lowercase()
+        .chars()
+        .map(|c| if c.is_alphanumeric() { c } else { '-' })
+        .collect::<String>()
+        .split('-')
+        .filter(|s| !s.is_empty())
+        .collect::<Vec<_>>()
+        .join("-");
+    let slug = if slug.len() > 40 { &slug[..40] } else { &slug };
+    let slug = slug.trim_end_matches('-');
+
+    let id = format!("note.{}", slug);
+
+    run_new(&id, "note", product, Some(text), Some(text), None)
 }
 
 // ── Validate ──────────────────────────────────────────────────────────────────
@@ -1154,6 +1086,7 @@ fn run_preview(spec_arg: &str) -> anyhow::Result<()> {
     let (project, spec_path, spec, spec_filename) = load_spec_context(spec_arg)?;
 
     let s5d_dir = project.s5d_dir();
+    let spec = s5d::infer::materialize_spec(&spec);
     // Clone alias table — do not persist changes
     let mut aliases = s5d::AliasTable::load(&s5d_dir)?;
     if let Some(ref meta) = spec.meta {
@@ -1197,6 +1130,7 @@ fn run_preview(spec_arg: &str) -> anyhow::Result<()> {
 
     record.preview = Some(s5d::PreviewResult {
         diff_sha256: diff_sha,
+        previewed_spec_sha256: spec_sha.clone(),
         actions: counts,
         log: None,
     });
@@ -1263,6 +1197,17 @@ fn run_approve(spec_arg: &str, reviewer: &str, require_owner: bool) -> anyhow::R
             record.status
         );
         std::process::exit(1);
+    }
+
+    // Check that spec hasn't changed since preview
+    if let Some(ref preview) = record.preview {
+        if !preview.previewed_spec_sha256.is_empty() && preview.previewed_spec_sha256 != spec_sha {
+            eprintln!(
+                "  {} spec modified since preview — re-run `s5d preview` before approving",
+                "error:".red()
+            );
+            std::process::exit(1);
+        }
     }
 
     let diff_sha = record
@@ -1392,13 +1337,14 @@ fn run_import(spec_arg: &str, verified_by: &Option<String>, force: bool) -> anyh
         std::process::exit(4);
     }
 
-    // Recompute diff and verify diff_sha256
+    // Recompute diff and verify diff_sha256 (materialize to match preview)
     let s5d_dir = project.s5d_dir();
+    let materialized = s5d::infer::materialize_spec(&spec);
     let mut aliases_check = s5d::AliasTable::load(&s5d_dir)?;
-    if let Some(ref meta) = spec.meta {
-        aliases_check.apply_renames(&spec.id, &meta.renames);
+    if let Some(ref meta) = materialized.meta {
+        aliases_check.apply_renames(&materialized.id, &meta.renames);
     }
-    let fresh_actions = s5d::compute_diff(&spec, &mut aliases_check);
+    let fresh_actions = s5d::compute_diff(&materialized, &mut aliases_check);
     let fresh_diff_sha = fresh_actions.sha256();
 
     if fresh_diff_sha != approval.diff_sha256 {
@@ -1426,9 +1372,6 @@ fn run_import(spec_arg: &str, verified_by: &Option<String>, force: bool) -> anyh
         counts.create, counts.link, counts.update, counts.delete
     );
     println!("  state_fingerprint: {}", fingerprint);
-
-    // Auto-render after successful import
-    let _ = run_render(spec_arg, None, "mermaid", None);
 
     Ok(())
 }
@@ -1590,76 +1533,6 @@ fn run_index_sync() -> anyhow::Result<()> {
 }
 
 // ── Analyze ───────────────────────────────────────────────────────────────────
-
-fn run_analyze(
-    path: &str,
-    product: Option<&str>,
-    id: &str,
-    output: Option<&str>,
-) -> anyhow::Result<()> {
-    let path = std::path::Path::new(path)
-        .canonicalize()
-        .map_err(|_| anyhow::anyhow!("path not found: {}", path))?;
-
-    let product_name = product.unwrap_or_else(|| {
-        path.file_name()
-            .and_then(|n| n.to_str())
-            .unwrap_or("Project")
-    });
-
-    let config = s5d::AnalysisConfig {
-        path: path.clone(),
-        product: product_name.to_string(),
-        spec_id: id.to_string(),
-    };
-
-    let result = s5d::analyze(&config)?;
-
-    println!("{} Scaffold generated: {}", "ok".green(), path.display());
-    println!(
-        "  Language: {}{}",
-        result.language,
-        result
-            .framework
-            .as_ref()
-            .map(|f| format!(" ({})", f))
-            .unwrap_or_default()
-    );
-    println!("  Domains:      {}", result.stats.domains_found);
-    println!("  Entities:     {}", result.stats.entities_found);
-    println!("  Capabilities: {}", result.stats.capabilities_found);
-    println!("  Components:   {}", result.stats.components_found);
-    println!("  Edges:        {}", result.stats.edges_found);
-
-    let yaml = serde_yaml::to_string(&result.spec)?;
-
-    if let Some(out_path) = output {
-        std::fs::write(out_path, &yaml)?;
-        println!("  Output: {}", out_path);
-        println!();
-        println!("  {} Next: review the draft spec, then run:", "hint".cyan());
-        println!("    s5d validate {}", out_path);
-        println!("    s5d graph-check {}", out_path);
-        println!(
-            "    # Or import directly: s5d preview {} && s5d approve {} && s5d import {}",
-            out_path, out_path, out_path
-        );
-    } else {
-        println!("\n{}", yaml);
-        println!();
-        println!(
-            "  {} Next: save the output with -o <file.s5d.yaml>, then:",
-            "hint".cyan()
-        );
-        println!(
-            "    s5d analyze {} --product {} -o draft.s5d.yaml",
-            path.display(),
-            product_name
-        );
-    }
-
-    Ok(())
-}
 
 // ── Bootstrap ─────────────────────────────────────────────────────────────────
 
@@ -1909,164 +1782,25 @@ fn run_reconcile(spec_arg: Option<&str>) -> anyhow::Result<()> {
 
 // ── ContractCheck ─────────────────────────────────────────────────────────────
 
-fn run_contract_check(spec_arg: &str) -> anyhow::Result<()> {
-    let (project, _spec_path, spec, _spec_filename) = load_spec_context(spec_arg)?;
-
-    let errors = s5d::check_contracts(&spec, &project.root);
-    if errors.is_empty() {
-        println!("{} {} contracts ok", "ok".green(), spec_arg);
-        Ok(())
-    } else {
-        for e in &errors {
-            eprintln!("  {} {}", "error:".red(), e);
-        }
-        std::process::exit(7);
-    }
-}
-
-// ── Generate Rules ────────────────────────────────────────────────────────────
-
-fn run_generate_rules(spec_arg: &str, format: &str) -> anyhow::Result<()> {
-    let (_project, _spec_path, spec, _spec_filename) = load_spec_context(spec_arg)?;
-
-    let rules = s5d::generate_rules(&spec);
-    if rules.is_empty() {
-        eprintln!(
-            "{} no rules generated (spec has no domains or classifications)",
-            "warn:".yellow()
-        );
-        return Ok(());
-    }
-
-    let output = match format {
-        "json" => s5d::format_rules_json(&rules, &spec.id),
-        _ => s5d::format_rules_yaml(&rules, &spec.id),
-    };
-    print!("{}", output);
-    eprintln!(
-        "\n{} {} rules generated from {}",
-        "ok".green(),
-        rules.len(),
-        spec.id
-    );
-    Ok(())
-}
-
-// ── Report ────────────────────────────────────────────────────────────────────
-
-fn run_report() -> anyhow::Result<()> {
-    let cwd = std::env::current_dir()?;
-    let project = s5d::S5dProject::find(&cwd).ok_or_else(|| anyhow::anyhow!("no .s5d/ found"))?;
-
-    let data = s5d::compute_report(&project)?;
-    let content = s5d::render_report(&data);
-
-    let report_path = project.s5d_dir().join("REPORT.md");
-    std::fs::write(&report_path, &content)?;
-
-    println!(
-        "{} Report written to: {}",
-        "ok".green(),
-        report_path.display()
-    );
-    println!();
-    println!("  Total specs:    {}", data.total_specs);
-    println!("  New (30d):      {}", data.leading.new_specs_30d);
-    println!(
-        "  Applied rate:   {:.0}%",
-        data.lagging.applied_rate * 100.0
-    );
-    println!("  Synced rate:    {:.0}%", data.lagging.synced_rate * 100.0);
-    println!("  Drift rate:     {:.0}%", data.anti.drift_rate * 100.0);
-    println!("  Stale specs:    {}", data.anti.stale_specs);
-    println!("  Operated:       {}", data.learn.operated_count);
-    println!("  Heuristics:     {}", data.learn.total_heuristics);
-    println!("  Follow-ups:     {}", data.learn.open_follow_ups);
-
-    Ok(())
-}
-
-// ── Learn ────────────────────────────────────────────────────────────────────
-
-fn run_learn_report() -> anyhow::Result<()> {
-    let cwd = std::env::current_dir()?;
-    let project = s5d::S5dProject::find(&cwd).ok_or_else(|| anyhow::anyhow!("no .s5d/ found"))?;
-
-    let report = s5d::aggregate_reflections(&project)?;
-
-    println!("  Operated specs: {}", report.operated_count);
-
-    if !report.heuristics.is_empty() {
-        println!();
-        println!("  Heuristics ({}):", report.heuristics.len());
-        for h in &report.heuristics {
-            println!("    {} [{}]", h.text, h.source_spec);
-        }
-    }
-
-    if !report.recurring_issues.is_empty() {
-        let recurring: Vec<_> = report
-            .recurring_issues
-            .iter()
-            .filter(|(_, c)| *c > 1)
-            .collect();
-        if !recurring.is_empty() {
-            println!();
-            println!("  Recurring issues:");
-            for (issue, count) in &recurring {
-                println!("    \"{}\" ({} specs)", issue, count);
-            }
-        }
-    }
-
-    if !report.open_follow_ups.is_empty() {
-        println!();
-        println!("  Follow-ups pending ({}):", report.open_follow_ups.len());
-        for fu in &report.open_follow_ups {
-            let priority = fu.priority.as_deref().unwrap_or("-");
-            println!("    {} [{}]  [{}]", fu.id, priority, fu.source_spec);
-        }
-    }
-
-    if report.operated_count == 0 {
-        println!();
-        println!("  No operated specs yet.");
-    }
-
-    Ok(())
-}
-
-fn run_learn_feed(spec_arg: &str) -> anyhow::Result<()> {
-    let (_project, _spec_path, spec, _spec_filename) = load_spec_context(spec_arg)?;
-    let cwd = std::env::current_dir()?;
-    let project = s5d::S5dProject::find(&cwd).ok_or_else(|| anyhow::anyhow!("no .s5d/ found"))?;
-
-    let feed = s5d::feed_heuristics(&project, &spec)?;
-
-    if feed.is_empty() {
-        println!("  No relevant heuristics from past specs.");
-        return Ok(());
-    }
-
-    println!("  Relevant heuristics ({}):", feed.len());
-    for h in &feed {
-        println!("    {} [{}]", h.text, h.source_spec);
-    }
-
-    Ok(())
-}
-
 // ── Show ──────────────────────────────────────────────────────────────────────
 
 fn run_show(spec_path: &str) -> anyhow::Result<()> {
-    let (_path, spec) = load_spec_yaml(spec_path)?;
+    let (path, spec) = load_spec_yaml(spec_path)?;
+
+    // Load record for decision/approval/gate truth
+    let effective_decision = if let Ok(abs) = path.canonicalize() {
+        if let Some(project) = s5d::S5dProject::find(&abs) {
+            let fname = abs.file_name().unwrap().to_string_lossy().into_owned();
+            project.load_record(&fname)?.and_then(|r| r.decision)
+        } else { None }
+    } else { None }
+    .or_else(|| spec.decision.clone());
 
     let is_decision = matches!(spec.tier, s5d::Tier::Decision);
 
     // Header
     let tier_label = format!("{}", spec.tier).to_uppercase();
-    let title = spec
-        .decision
+    let title = effective_decision
         .as_ref()
         .map(|d| d.title.as_str())
         .unwrap_or(&spec.id);
@@ -2074,7 +1808,7 @@ fn run_show(spec_path: &str) -> anyhow::Result<()> {
     println!("{}", "━".repeat(60));
 
     if is_decision {
-        show_decision(&spec);
+        show_decision(&spec, effective_decision.as_ref());
     } else {
         show_feature(&spec);
     }
@@ -2082,23 +1816,21 @@ fn run_show(spec_path: &str) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn show_decision(spec: &s5d::Spec) {
+fn show_decision(spec: &s5d::Spec, decision: Option<&s5d::DecisionRecord>) {
     // Problem/context
     if let Some(ref problem) = spec.problem {
         println!();
         println!("  {}: {}", "Signal".dimmed(), problem.signal());
     }
-    if let Some(ref dec) = spec.decision {
+    if let Some(ref dec) = decision {
         if !dec.context.is_empty() {
             println!("  {}: {}", "Context".dimmed(), dec.context);
         }
     }
     println!();
 
-    // Hypothesis tree
-    let winner_id = spec
-        .decision
-        .as_ref()
+    // Hypothesis tree — use decision from record (or spec fallback)
+    let winner_id = decision
         .map(|d| d.winner_id.as_str())
         .unwrap_or("");
 
@@ -2169,8 +1901,8 @@ fn show_decision(spec: &s5d::Spec) {
         }
     }
 
-    // Decision summary
-    if let Some(ref dec) = spec.decision {
+    // Decision summary — from record (or spec fallback)
+    if let Some(ref dec) = decision {
         println!();
         println!("  {}: {}", "Decision".cyan(), dec.decision);
         if !dec.consequences.is_empty() {
@@ -2389,18 +2121,22 @@ fn run_decide(
     consequences: &str,
     force: bool,
     confirmed_by: Option<&str>,
+    challenge_summary: Option<&str>,
+    challenge_mode: Option<&str>,
+    no_challenge: bool,
 ) -> anyhow::Result<()> {
     let (path, spec) = load_spec_yaml(spec_path)?;
 
-    // Load record — decision state lives in record, not spec
-    let record_path = path.with_file_name(
-        path.file_name().unwrap().to_string_lossy().replace(".s5d.yaml", ".record.yaml"),
-    );
-    let record: Option<s5d::Record> = if record_path.exists() {
-        Some(serde_yaml::from_str(&std::fs::read_to_string(&record_path)?)?)
-    } else {
-        None
-    };
+    // Resolve project and load record from correct path (.s5d/records/, not packages/)
+    let abs_path = path.canonicalize()?;
+    let project = s5d::S5dProject::find(&abs_path)
+        .ok_or_else(|| anyhow::anyhow!("no .s5d/ found — is this file inside an s5d project?"))?;
+    let spec_filename = abs_path
+        .file_name()
+        .ok_or_else(|| anyhow::anyhow!("cannot determine filename from path"))?
+        .to_string_lossy()
+        .into_owned();
+    let record: Option<s5d::Record> = project.load_record(&spec_filename)?;
 
     let checks = s5d::check_decide(&spec, &record, &confirmed_by.map(|s| s.to_string()));
     s5d::enforce_checks(&checks, force)?;
@@ -2460,6 +2196,35 @@ fn run_decide(
         }
     }
 
+    // ── Adversarial challenge gate (centralized) ────────────────────────────
+    let challenge = if no_challenge {
+        eprintln!(
+            "  {} Adversarial challenge skipped (--no-challenge)",
+            "warn:".yellow()
+        );
+        None
+    } else if let Some(summary) = challenge_summary {
+        let mode = challenge_mode.unwrap_or("standard").to_string();
+        Some(s5d::Challenge {
+            mode,
+            passed: true,
+            summary: summary.to_string(),
+            checks: vec![],
+        })
+    } else if force {
+        eprintln!(
+            "  {} No adversarial challenge provided — proceeding anyway (--force)",
+            "warn:".yellow()
+        );
+        None
+    } else {
+        None
+    };
+
+    if let Some(msg) = s5d::check_challenge(&challenge, &spec.tier, force, no_challenge) {
+        anyhow::bail!("{}", msg);
+    }
+
     let rejected_ids: Vec<String> = match rejected {
         Some(s) => s
             .split(',')
@@ -2484,22 +2249,12 @@ fn run_decide(
         expires_at: Some(expires.format("%Y-%m-%d").to_string()),
         do_list: vec![],
         dont_list: vec![],
+        challenge,
     };
 
     // Two-File Model: spec is immutable after approve; write decision to record
-    let abs_path = path.canonicalize()?;
-    let project = s5d::S5dProject::find(&abs_path)
-        .ok_or_else(|| anyhow::anyhow!("no .s5d/ found — is this file inside an s5d project?"))?;
-    let spec_filename = abs_path
-        .file_name()
-        .ok_or_else(|| anyhow::anyhow!("cannot determine filename from path"))?
-        .to_string_lossy()
-        .into_owned();
-
     let spec_sha = s5d::S5dProject::file_sha256(&abs_path)?;
-    let mut record = project
-        .load_record(&spec_filename)?
-        .unwrap_or_else(|| s5d::generate_record(&spec_filename, &spec_sha));
+    let mut record = record.unwrap_or_else(|| s5d::generate_record(&spec_filename, &spec_sha));
     record.decision = Some(decision_record);
     project.save_record(&spec_filename, &record)?;
 
@@ -2510,56 +2265,6 @@ fn run_decide(
         winner
     );
 
-    // Auto-render after decision
-    let _ = run_render(spec_path, None, "mermaid", None);
-
-    Ok(())
-}
-
-// ── Rename Domain ─────────────────────────────────────────────────────────────
-
-fn run_rename_domain(spec_path: &str, old_id: &str, new_id: &str) -> anyhow::Result<()> {
-    let path = std::path::Path::new(spec_path).canonicalize()?;
-    let content = std::fs::read_to_string(&path)?;
-    let mut spec: s5d::models::Spec = serde_yaml::from_str(&content)?;
-
-    s5d::infer::rename_domain_in_spec(&mut spec, old_id, new_id);
-
-    // Also rename in domains list
-    if let Some(ref mut artifacts) = spec.artifacts {
-        for domain in &mut artifacts.domains {
-            if domain.id == old_id {
-                domain.id = new_id.to_string();
-            }
-        }
-        // Deduplicate domains by id
-        let mut seen = std::collections::HashSet::new();
-        artifacts.domains.retain(|d| seen.insert(d.id.clone()));
-    }
-
-    // Deduplicate links
-    if let Some(ref mut links) = spec.links {
-        let mut seen = std::collections::HashSet::new();
-        links.feature_to_domain.retain(|b| {
-            let key = format!(
-                "{}:{}",
-                b.fields.get("feature").unwrap_or(&String::new()),
-                b.fields.get("domain").unwrap_or(&String::new())
-            );
-            seen.insert(key)
-        });
-    }
-
-    let yaml = serde_yaml::to_string(&spec)?;
-    std::fs::write(&path, yaml)?;
-
-    println!(
-        "{} Renamed domain: {} → {} in {}",
-        "ok".green(),
-        old_id,
-        new_id,
-        spec_path
-    );
     Ok(())
 }
 
@@ -2576,7 +2281,7 @@ fn run_reflect(
     heuristics: &[String],
     structured_issues_raw: &[String],
 ) -> anyhow::Result<()> {
-    let (project, spec_path, mut spec, spec_filename) = load_spec_context(spec_arg)?;
+    let (project, _spec_path, _spec, spec_filename) = load_spec_context(spec_arg)?;
 
     let mut record = project.load_record(&spec_filename)?.ok_or_else(|| {
         anyhow::anyhow!("no record found for {} — run preview first", spec_filename)
@@ -2648,38 +2353,6 @@ fn run_reflect(
 
     project.save_record(&spec_filename, &record)?;
 
-    // For decision specs: write production evidence back into winner hypothesis in spec YAML.
-    if !evidence_list.is_empty() {
-        if let Some(ref dec) = spec.decision.clone() {
-            let winner_id = dec.winner_id.clone();
-            let now_date = chrono::Utc::now().format("%Y-%m-%d").to_string();
-            if let Some(hyp) = spec.hypotheses.iter_mut().find(|h| h.id == winner_id) {
-                for (i, ev) in evidence_list.iter().enumerate() {
-                    hyp.evidence.push(s5d::HypothesisEvidence {
-                        id: format!("prod-{}-{}", now_date, i + 1),
-                        evidence_type: "external".to_string(),
-                        content: format!("Production observation: {}", ev.path),
-                        verdict: "pass".to_string(),
-                        valid_until: None,
-                        carrier_ref: Some(ev.path.clone()),
-                        formality: Some(1),
-                        claim_scope: vec!["operate".to_string()],
-                        congruence_level: None,
-                        reliability: None,
-                    });
-                }
-                let yaml = serde_yaml::to_string(&spec)
-                    .map_err(|e| anyhow::anyhow!("YAML serialization error: {}", e))?;
-                std::fs::write(&spec_path, yaml)?;
-                println!(
-                    "{} Production evidence written to winner hypothesis '{}'",
-                    "ok".green(),
-                    winner_id
-                );
-            }
-        }
-    }
-
     println!(
         "{} Lifecycle closed → operated. Reflect recorded.",
         "ok".green()
@@ -2687,26 +2360,20 @@ fn run_reflect(
     Ok(())
 }
 
-// ── Render ────────────────────────────────────────────────────────────────────
+// ── Route ────────────────────────────────────────────────────────────────────
 
-fn run_render(
-    spec_path: &str,
-    view: Option<&str>,
-    format: &str,
-    output: Option<&str>,
-) -> anyhow::Result<()> {
-    let (_, spec) = load_spec_yaml(spec_path)?;
-    let diagram = if format == "html" {
-        s5d::render::render_domain_html(&spec)
-    } else {
-        s5d::render::render(&spec, view)
-    };
-
-    if let Some(out_path) = output {
-        std::fs::write(out_path, &diagram)?;
-        println!("{} Rendered to {}", "ok".green(), out_path);
-    } else {
-        println!("{}", diagram);
+fn run_route(description: &str, format: &str) -> anyhow::Result<()> {
+    if description.is_empty() {
+        anyhow::bail!("description is required — describe the task to classify");
+    }
+    let result = s5d::route(description);
+    match format {
+        "json" => {
+            println!("{}", serde_json::to_string_pretty(&result)?);
+        }
+        _ => {
+            println!("{}", result);
+        }
     }
     Ok(())
 }
@@ -2738,6 +2405,33 @@ fn run_search(query: &str) -> anyhow::Result<()> {
                 }
             }
             println!();
+        }
+    }
+
+    // Also search records (.s5d/records/)
+    let records_dir = project.s5d_dir().join("records");
+    if records_dir.exists() {
+        if let Ok(entries) = std::fs::read_dir(&records_dir) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.extension().is_some_and(|e| e == "yaml") {
+                    let content = std::fs::read_to_string(&path).unwrap_or_default();
+                    if content.to_lowercase().contains(&query_lower) {
+                        found += 1;
+                        println!(
+                            "{} [record] {}",
+                            "match".green(),
+                            path.file_name().unwrap_or_default().to_string_lossy()
+                        );
+                        for (i, line) in content.lines().enumerate() {
+                            if line.to_lowercase().contains(&query_lower) {
+                                println!("  :{} {}", i + 1, line.trim());
+                            }
+                        }
+                        println!();
+                    }
+                }
+            }
         }
     }
 
@@ -2775,44 +2469,6 @@ fn run_search(query: &str) -> anyhow::Result<()> {
         println!("No matches found.");
     } else {
         println!("{} match(es) found.", found);
-    }
-    Ok(())
-}
-
-// ── GitStatus ────────────────────────────────────────────────────────────────
-
-fn run_git_status(spec_path: Option<&str>) -> anyhow::Result<()> {
-    use s5d::git_state;
-
-    if let Some(path) = spec_path {
-        let p = std::path::Path::new(path);
-        let state = git_state::check_git_state(p)?;
-        println!("Spec: {}", path);
-        println!("  Tracked: {}", state.spec_tracked);
-        println!("  On main: {}", state.on_main);
-        println!("  Merged:  {}", state.merged_to_main);
-        if let Some(msg) = &state.last_commit_msg {
-            println!("  Last commit: {}", msg);
-        }
-        println!("  → {}", git_state::suggested_phase(&state));
-    } else {
-        // Check all specs in .s5d/packages/
-        let cwd = std::env::current_dir()?;
-        let project =
-            s5d::S5dProject::find(&cwd).ok_or_else(|| anyhow::anyhow!("no .s5d/ found"))?;
-        let packages = project.s5d_dir().join("packages");
-        if packages.exists() {
-            for entry in std::fs::read_dir(&packages)? {
-                let entry = entry?;
-                let path = entry.path();
-                if path.extension().and_then(|e| e.to_str()) == Some("yaml") {
-                    let state = git_state::check_git_state(&path)?;
-                    let name = path.file_stem().unwrap_or_default().to_str().unwrap_or("");
-                    let phase = git_state::suggested_phase(&state);
-                    println!("  {} → {}", name, phase);
-                }
-            }
-        }
     }
     Ok(())
 }
@@ -2862,575 +2518,9 @@ fn load_spec_context(
     Ok((project, abs_path, spec, spec_filename))
 }
 
-// ── Codebase ──────────────────────────────────────────────────────────────────
 
-fn resolve_codebase_project(
-    path: &str,
-) -> anyhow::Result<(std::path::PathBuf, std::path::PathBuf)> {
-    let abs_path = std::path::Path::new(path)
-        .canonicalize()
-        .map_err(|_| anyhow::anyhow!("path not found: {}", path))?;
-    let project = s5d::S5dProject::find(&abs_path).ok_or_else(|| {
-        anyhow::anyhow!(
-            "no .s5d/ found for {} or its parent directories — run `s5d init` first",
-            abs_path.display()
-        )
-    })?;
-    let project_root = project.root.clone();
-    let db_path = project.s5d_dir().join("codebase.db");
-    Ok((project_root, db_path))
-}
 
-fn run_codebase_index(path: &str) -> anyhow::Result<()> {
-    let (project_root, db_path) = resolve_codebase_project(path)?;
-    let config = s5d::IndexConfig {
-        db_path,
-        ..Default::default()
-    };
-    let stats = s5d::index_codebase(&project_root, &config)?;
-    println!(
-        "{} Codebase indexed at: {}",
-        "✓".green(),
-        config.db_path.display()
-    );
-    println!("  Files:       {}", stats.files_indexed);
-    println!("  Chunks:      {}", stats.chunks_indexed);
-    println!("  Symbols:     {}", stats.symbols_found);
-    println!("  Embeddings:  {}", stats.embeddings_generated);
-    Ok(())
-}
 
-fn run_codebase_update(path: &str) -> anyhow::Result<()> {
-    let (project_root, db_path) = resolve_codebase_project(path)?;
-    let config = s5d::IndexConfig {
-        db_path,
-        ..Default::default()
-    };
-    let stats = s5d::update_codebase(&project_root, &config)?;
-    println!("{} Codebase index updated", "ok".green());
-    println!("  Files:       {}", stats.files_indexed);
-    println!("  Chunks:      {}", stats.chunks_indexed);
-    println!("  Symbols:     {}", stats.symbols_found);
-    println!("  Embeddings:  {}", stats.embeddings_generated);
-    Ok(())
-}
 
-fn run_codebase_search(query: &str, path: &str, top_k: usize) -> anyhow::Result<()> {
-    let (_project_root, db_path) = resolve_codebase_project(path)?;
-    if !db_path.exists() {
-        anyhow::bail!(
-            "no codebase index at {}; run `s5d codebase index` first",
-            db_path.display()
-        );
-    }
-    let index = s5d::CodebaseIndex::open(&db_path)?;
-    let results = s5d::codebase::search::search(
-        &index,
-        query,
-        s5d::codebase::search::SearchMode::Fts,
-        top_k,
-        None,
-    )?;
-    if results.is_empty() {
-        println!("No results for {:?}", query);
-        return Ok(());
-    }
-    for r in &results {
-        println!(
-            "{}:{}-{}  [score={:.4}]",
-            r.file_path, r.start_line, r.end_line, r.score
-        );
-        let preview: String = r.text.lines().take(3).collect::<Vec<_>>().join(" | ");
-        println!("  {}", preview);
-    }
-    Ok(())
-}
 
-fn run_suggest_domains(
-    path: &str,
-    depth: usize,
-    min_files: usize,
-    format: &str,
-) -> anyhow::Result<()> {
-    let (_project_root, db_path) = resolve_codebase_project(path)?;
-    if !db_path.exists() {
-        anyhow::bail!(
-            "no codebase index at {}; run `s5d codebase index` first",
-            db_path.display()
-        );
-    }
-    let index = s5d::CodebaseIndex::open(&db_path)?;
-    let report = s5d::codebase::suggest::suggest_domains(&index, depth, min_files)?;
 
-    if report.domains.is_empty() {
-        println!("No domains found. Ensure codebase is indexed with `s5d codebase index .`");
-        return Ok(());
-    }
-
-    if format == "json" {
-        // Simple JSON output
-        println!("{{");
-        println!("  \"total_files\": {},", report.total_files);
-        println!("  \"total_edges\": {},", report.total_edges);
-        println!("  \"domains\": [");
-        for (i, d) in report.domains.iter().enumerate() {
-            let comma = if i + 1 < report.domains.len() { "," } else { "" };
-            println!(
-                "    {{\"name\": {:?}, \"classification\": {:?}, \"files\": {}, \"symbols\": {}, \"ca\": {}, \"ce\": {}, \"instability\": {:.2}, \"cohesion\": {:.2}, \"confidence\": {:.2}}}{}",
-                d.name, d.classification, d.files.len(), d.symbols, d.ca, d.ce, d.instability, d.cohesion, d.confidence, comma
-            );
-        }
-        println!("  ],");
-        println!("  \"merge_candidates\": [");
-        for (i, m) in report.merge_candidates.iter().enumerate() {
-            let comma = if i + 1 < report.merge_candidates.len() { "," } else { "" };
-            println!(
-                "    {{\"a\": {:?}, \"b\": {:?}, \"mutual_edges\": {}, \"coupling_ratio\": {:.2}, \"reason\": {:?}}}{}",
-                m.module_a, m.module_b, m.mutual_edges, m.coupling_ratio, m.reason, comma
-            );
-        }
-        println!("  ]");
-        println!("}}");
-        return Ok(());
-    }
-
-    // Text output
-    println!(
-        "{} Coupling-based domain suggestion (depth={}, min_files={})\n",
-        "ok".green(),
-        depth,
-        min_files
-    );
-    println!(
-        "  Files: {}  Import edges: {}\n",
-        report.total_files, report.total_edges
-    );
-
-    // Header
-    println!(
-        "  {:<20} {:<12} {:>5} {:>5} {:>4} {:>4} {:>6} {:>7} {:>6}",
-        "Domain", "Class", "Files", "Syms", "Ca", "Ce", "I", "Coh", "Conf"
-    );
-    println!("  {}", "─".repeat(85));
-
-    for d in &report.domains {
-        let class_colored = match d.classification.as_str() {
-            "core" => d.classification.red().bold(),
-            "supporting" => d.classification.yellow(),
-            _ => d.classification.dimmed(),
-        };
-        println!(
-            "  {:<20} {:<12} {:>5} {:>5} {:>4} {:>4} {:>5.2} {:>6.2} {:>5.2}",
-            d.name,
-            class_colored,
-            d.files.len(),
-            d.symbols,
-            d.ca,
-            d.ce,
-            d.instability,
-            d.cohesion,
-            d.confidence
-        );
-    }
-
-    if !report.merge_candidates.is_empty() {
-        println!("\n  {} Merge candidates (high mutual coupling):", "warn:".yellow());
-        for m in &report.merge_candidates {
-            println!(
-                "    {} ↔ {} — {}",
-                m.module_a, m.module_b, m.reason
-            );
-        }
-    }
-
-    Ok(())
-}
-
-// ── Trace ────────────────────────────────────────────────────────────────────
-
-fn run_trace_build(spec_arg: &str) -> anyhow::Result<()> {
-    let (project, _spec_path, spec, _spec_filename) = load_spec_context(spec_arg)?;
-    let root = project.root.clone();
-    let db_path = root.join(".s5d/codebase.db");
-
-    if !db_path.exists() {
-        anyhow::bail!("codebase index not found — run `s5d codebase index .` first");
-    }
-
-    let index = s5d::CodebaseIndex::open(&db_path)?;
-    let links = s5d::build_trace(&index, &spec, &root)?;
-
-    println!("  trace links built: {}", links.len());
-
-    let mut by_source: std::collections::HashMap<&str, usize> = std::collections::HashMap::new();
-    for link in &links {
-        *by_source.entry(&link.source).or_insert(0) += 1;
-    }
-    for (source, count) in &by_source {
-        println!("    {}: {}", source, count);
-    }
-
-    Ok(())
-}
-
-fn run_trace_check(spec_arg: &str) -> anyhow::Result<()> {
-    let (project, _spec_path, spec, _spec_filename) = load_spec_context(spec_arg)?;
-    let db_path = project.root.clone().join(".s5d/codebase.db");
-
-    if !db_path.exists() {
-        anyhow::bail!("codebase index not found — run `s5d codebase index .` first");
-    }
-
-    let index = s5d::CodebaseIndex::open(&db_path)?;
-    let report = s5d::check_trace(&index, &spec)?;
-
-    if report.matched.is_empty() && report.unmatched_spec.is_empty() {
-        println!("  no trace data — run `s5d trace build` first");
-        return Ok(());
-    }
-
-    println!("  MATCHED ({}):", report.matched.len());
-    for link in &report.matched {
-        println!(
-            "    {} {} → {}:{} ({}  conf={:.2})",
-            link.artifact_kind,
-            link.artifact_id,
-            link.file_path,
-            link.line_start,
-            link.source,
-            link.confidence
-        );
-    }
-
-    if !report.unmatched_spec.is_empty() {
-        println!("\n  UNMATCHED ({}):", report.unmatched_spec.len());
-        for (kind, id) in &report.unmatched_spec {
-            println!("    {} {} — no code binding found", kind, id);
-        }
-    }
-
-    let total = report.matched.len() + report.unmatched_spec.len();
-    if total > 0 {
-        let coverage = report.matched.len() as f64 / total as f64 * 100.0;
-        println!(
-            "\n  coverage: {:.0}% ({}/{})",
-            coverage,
-            report.matched.len(),
-            total
-        );
-    }
-
-    Ok(())
-}
-
-fn run_trace_report(spec_filter: Option<&str>) -> anyhow::Result<()> {
-    let cwd = std::env::current_dir()?;
-    let project = s5d::S5dProject::find(&cwd).ok_or_else(|| anyhow::anyhow!("no .s5d/ found"))?;
-    let db_path = project.root.clone().join(".s5d/codebase.db");
-
-    if !db_path.exists() {
-        anyhow::bail!("codebase index not found — run `s5d codebase index .` first");
-    }
-
-    let index = s5d::CodebaseIndex::open(&db_path)?;
-
-    if let Some(spec_id) = spec_filter {
-        let links = index.get_trace_links_for_spec(spec_id)?;
-        if links.is_empty() {
-            println!("  no trace links for spec '{}'", spec_id);
-        } else {
-            println!("  trace links for '{}':", spec_id);
-            for link in &links {
-                println!(
-                    "    {} {} → {}:{} [{}  {:.2}]",
-                    link.artifact_kind,
-                    link.artifact_id,
-                    link.file_path,
-                    link.line_start,
-                    link.source,
-                    link.confidence
-                );
-            }
-        }
-    } else {
-        println!("  use --spec <id> to filter by spec");
-    }
-
-    Ok(())
-}
-
-fn run_trace_blast_radius(spec_arg: &str) -> anyhow::Result<()> {
-    let (project, _spec_path, spec, _spec_filename) = load_spec_context(spec_arg)?;
-    let db_path = project.root.clone().join(".s5d/codebase.db");
-
-    if !db_path.exists() {
-        anyhow::bail!("codebase index not found — run `s5d codebase index .` first");
-    }
-
-    let index = s5d::CodebaseIndex::open(&db_path)?;
-    let br = s5d::compute_blast_radius(&index, &spec)?;
-
-    println!("  Blast Radius for '{}':", spec.id);
-    println!();
-    println!(
-        "  Domains touched: {}",
-        if br.domains_touched.is_empty() {
-            "none".into()
-        } else {
-            br.domains_touched.join(", ")
-        }
-    );
-    println!(
-        "  Capabilities affected: {}",
-        if br.capabilities_affected.is_empty() {
-            "none".into()
-        } else {
-            br.capabilities_affected.join(", ")
-        }
-    );
-    println!(
-        "  Components affected: {}",
-        if br.components_affected.is_empty() {
-            "none".into()
-        } else {
-            br.components_affected.join(", ")
-        }
-    );
-    println!("  Files: {}", br.files.len());
-    println!("  Symbols: {}", br.symbols);
-
-    if !br.cross_domain_edges.is_empty() {
-        println!();
-        println!("  Cross-domain edges:");
-        for (from, to, archetype) in &br.cross_domain_edges {
-            println!("    {} → {} [{}]", from, to, archetype);
-        }
-    }
-
-    if let Some(ref wlnk) = br.weakest_link {
-        println!();
-        let kind_str = match &wlnk.kind {
-            s5d::WeakestLinkKind::UnmatchedArtifact => "UNMATCHED — no code binding".into(),
-            s5d::WeakestLinkKind::LowConfidenceMatch(c) => format!("LOW CONFIDENCE — {:.2}", c),
-            s5d::WeakestLinkKind::CrossDomainWithoutTrace => {
-                "CROSS-DOMAIN — missing trace on one side".into()
-            }
-        };
-        println!(
-            "  ⚠ Weakest link: {} {} — {}",
-            wlnk.artifact_kind, wlnk.artifact_id, kind_str
-        );
-    }
-
-    Ok(())
-}
-
-// ── Health check & metrics ───────────────────────────────────────────────────
-
-fn run_check(spec_arg: &str, threshold: u8, compare: bool, format: &str) -> anyhow::Result<()> {
-    let (project, _spec_path, spec, spec_filename) = load_spec_context(spec_arg)?;
-
-    let report = s5d::compute_health_report(&spec);
-
-    // Save snapshot for future comparisons
-    let spec_id = spec_filename.replace(".s5d.yaml", "");
-    let _ = s5d::save_snapshot(&project.s5d_dir(), &spec_id, &report);
-
-    if format == "json" {
-        println!("{}", serde_json::to_string_pretty(&report)?);
-    } else {
-        println!(
-            "  {} {} health score: {}",
-            if report.aggregate_score >= threshold {
-                "ok".green()
-            } else {
-                "FAIL".red()
-            },
-            spec_arg,
-            format_score(report.aggregate_score)
-        );
-
-        if !report.cycles.is_empty() {
-            println!("  Cycles:");
-            for scc in &report.cycles {
-                println!("    {} {}", "●".red(), scc.join(" → "));
-            }
-        }
-
-        if !report.violations.is_empty() {
-            println!("  Violations:");
-            for v in &report.violations {
-                println!("    {} [{}] {} (−{})", "●".yellow(), v.kind, v.message, v.penalty);
-            }
-        }
-
-        println!();
-        println!(
-            "  {:<40} {:>4} {:>4} {:>6} {:>6}",
-            "Domain", "Ca", "Ce", "I", "Score"
-        );
-        println!("  {}", "─".repeat(64));
-        for dm in &report.domain_metrics {
-            println!(
-                "  {:<40} {:>4} {:>4} {:>6.2} {:>6}",
-                dm.domain_id,
-                dm.ca,
-                dm.ce,
-                dm.instability,
-                format_score(dm.health_score)
-            );
-        }
-    }
-
-    if compare {
-        match s5d::load_snapshot(&project.s5d_dir(), &spec_id)? {
-            Some(baseline) => {
-                let deg = s5d::detect_degradation(&report, &baseline);
-                println!();
-                println!(
-                    "  Degradation: {} → {} ({}{})",
-                    baseline.aggregate_score,
-                    report.aggregate_score,
-                    if deg.delta >= 0 { "+" } else { "" },
-                    deg.delta
-                );
-                println!("  Status: {}", format_status(&deg.status));
-                for dd in &deg.domain_deltas {
-                    if dd.delta != 0 {
-                        println!(
-                            "    {} {}: {} → {} ({})",
-                            status_icon(&dd.status),
-                            dd.domain_id,
-                            dd.score_before,
-                            dd.score_after,
-                            format_delta(dd.delta)
-                        );
-                    }
-                }
-            }
-            None => {
-                println!();
-                println!("  {} no baseline found, snapshot saved for next comparison", "info:".cyan());
-            }
-        }
-    }
-
-    if report.aggregate_score < threshold {
-        std::process::exit(1);
-    }
-
-    Ok(())
-}
-
-fn run_metrics(spec_arg: &str, format: &str) -> anyhow::Result<()> {
-    let (_project, _spec_path, spec, _spec_filename) = load_spec_context(spec_arg)?;
-
-    let report = s5d::compute_health_report(&spec);
-
-    if format == "json" {
-        println!("{}", serde_json::to_string_pretty(&report.domain_metrics)?);
-    } else {
-        println!(
-            "  {:<40} {:>4} {:>4} {:>6} {:>6} Violations",
-            "Domain", "Ca", "Ce", "I", "Score"
-        );
-        println!("  {}", "─".repeat(80));
-        for dm in &report.domain_metrics {
-            let violations_str = if dm.violations.is_empty() {
-                "—".into()
-            } else {
-                dm.violations.join(", ")
-            };
-            println!(
-                "  {:<40} {:>4} {:>4} {:>6.2} {:>6} {}",
-                dm.domain_id,
-                dm.ca,
-                dm.ce,
-                dm.instability,
-                format_score(dm.health_score),
-                violations_str
-            );
-        }
-        println!();
-        println!("  Aggregate health score: {}", format_score(report.aggregate_score));
-    }
-
-    Ok(())
-}
-
-fn format_score(score: u8) -> colored::ColoredString {
-    use colored::Colorize;
-    let s = score.to_string();
-    if score >= 80 {
-        s.green()
-    } else if score >= 60 {
-        s.yellow()
-    } else {
-        s.red()
-    }
-}
-
-fn format_status(status: &str) -> colored::ColoredString {
-    use colored::Colorize;
-    match status {
-        "improved" => status.green(),
-        "stable" => status.normal(),
-        "degraded" => status.yellow(),
-        "critical" => status.red(),
-        _ => status.normal(),
-    }
-}
-
-fn status_icon(status: &str) -> &str {
-    match status {
-        "improved" => "↑",
-        "stable" => "=",
-        "degraded" => "↓",
-        "critical" => "⚠",
-        "removed" => "✕",
-        _ => "?",
-    }
-}
-
-fn format_delta(delta: i16) -> String {
-    if delta >= 0 {
-        format!("+{delta}")
-    } else {
-        format!("{delta}")
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::resolve_codebase_project;
-
-    #[test]
-    fn resolve_codebase_project_finds_parent_s5d() {
-        let dir = tempfile::TempDir::new().unwrap();
-        let root = dir.path();
-        std::fs::create_dir_all(root.join(".s5d")).unwrap();
-        let nested = root.join("apps").join("svc");
-        std::fs::create_dir_all(&nested).unwrap();
-
-        let (project_root, db_path) = resolve_codebase_project(nested.to_str().unwrap()).unwrap();
-        let expected_root = root.canonicalize().unwrap();
-
-        assert_eq!(project_root, expected_root);
-        assert_eq!(db_path, expected_root.join(".s5d").join("codebase.db"));
-    }
-
-    #[test]
-    fn resolve_codebase_project_fails_without_s5d() {
-        let dir = tempfile::TempDir::new().unwrap();
-        let nested = dir.path().join("apps").join("svc");
-        std::fs::create_dir_all(&nested).unwrap();
-
-        let err = resolve_codebase_project(nested.to_str().unwrap()).unwrap_err();
-        let msg = err.to_string();
-        assert!(
-            msg.contains("no .s5d/ found for"),
-            "unexpected error message: {}",
-            msg
-        );
-    }
-}
