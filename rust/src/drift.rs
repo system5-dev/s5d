@@ -34,7 +34,8 @@ pub fn check_drift(
     };
 
     let aliases = AliasTable::load(&s5d_dir)?;
-    let actual_fp = compute_state_fingerprint(spec, &aliases);
+    let spec = crate::infer::materialize_spec(spec);
+    let actual_fp = compute_state_fingerprint(&spec, &aliases);
 
     if actual_fp == *expected_fp {
         Ok(DriftResult::Synced)
@@ -69,11 +70,12 @@ pub fn reconcile(
     if let Some(ref meta) = spec.meta {
         aliases.apply_renames(&spec.id, &meta.renames);
     }
-    let actions = compute_diff(spec, &mut aliases);
+    let spec = crate::infer::materialize_spec(spec);
+    let actions = compute_diff(&spec, &mut aliases);
 
     aliases.save(&s5d_dir)?;
 
-    let fingerprint = compute_state_fingerprint(spec, &aliases);
+    let fingerprint = compute_state_fingerprint(&spec, &aliases);
 
     let mut ledger = project.load_ledger()?;
     ledger.entries.push(LedgerEntry {

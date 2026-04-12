@@ -107,47 +107,17 @@ pub fn merge_links(existing: &mut Links, inferred: &Links) {
     );
 }
 
-/// Rename a domain ID across the entire spec — capabilities, components, entities, links, edges.
-pub fn rename_domain_in_spec(spec: &mut Spec, old_id: &str, new_id: &str) {
-    if let Some(ref mut artifacts) = spec.artifacts {
-        // Capabilities
-        for cap in &mut artifacts.capabilities {
-            if cap.domain == old_id {
-                cap.domain = new_id.to_string();
-            }
-        }
-        // Entities
-        for entity in &mut artifacts.entities {
-            if entity.domain == old_id {
-                entity.domain = new_id.to_string();
-            }
-        }
-        // Components
-        for comp in &mut artifacts.components {
-            if comp.domain == old_id {
-                comp.domain = new_id.to_string();
-            }
-        }
+/// Clone the spec and merge inferred links into it.
+/// Use this everywhere that needs a "materialized" spec (preview, import, drift, reconcile).
+pub fn materialize_spec(spec: &Spec) -> Spec {
+    let mut spec = spec.clone();
+    let inferred = infer_links(&spec);
+    if spec.links.is_none() {
+        spec.links = Some(inferred);
+    } else if let Some(ref mut links) = spec.links {
+        merge_links(links, &inferred);
     }
-    // Links — feature_to_domain and edges
-    if let Some(ref mut links) = spec.links {
-        for binding in &mut links.feature_to_domain {
-            if binding.fields.get("domain").map(|s| s.as_str()) == Some(old_id) {
-                binding
-                    .fields
-                    .insert("domain".to_string(), new_id.to_string());
-            }
-        }
-        for edge in &mut links.edges {
-            // Edges use "domain:capability" format — replace domain part
-            if edge.from.starts_with(&format!("{}:", old_id)) {
-                edge.from = edge.from.replacen(old_id, new_id, 1);
-            }
-            if edge.to.starts_with(&format!("{}:", old_id)) {
-                edge.to = edge.to.replacen(old_id, new_id, 1);
-            }
-        }
-    }
+    spec
 }
 
 fn merge_bindings(existing: &mut Vec<Binding>, inferred: &[Binding], keys: &[&str]) {

@@ -15,7 +15,7 @@ fn read_repo_file(rel: &str) -> String {
 #[test]
 fn skill_references_all_reference_docs() {
     let skill = read_repo_file("skills/s5d/SKILL.md");
-    for doc in ["fpf.md", "metamodel.md", "session-protocol.md"] {
+    for doc in ["metamodel.md", "session-protocol.md"] {
         assert!(
             skill.contains(doc),
             "SKILL.md must reference: {}",
@@ -26,20 +26,13 @@ fn skill_references_all_reference_docs() {
 
 #[test]
 fn reference_docs_exist() {
-    for doc in ["skills/s5d/fpf.md", "skills/s5d/metamodel.md", "skills/s5d/session-protocol.md"] {
+    for doc in ["skills/s5d/metamodel.md", "skills/s5d/session-protocol.md"] {
         assert!(
             repo_root().join(doc).exists(),
             "reference doc missing: {}",
             doc
         );
     }
-}
-
-#[test]
-fn fpf_reference_has_rag_commands() {
-    let fpf = read_repo_file("skills/s5d/fpf.md");
-    assert!(fpf.contains("fpf_search"), "fpf.md must reference fpf_search MCP tool");
-    assert!(fpf.contains("fpf_sync"), "fpf.md must reference fpf_sync MCP tool");
 }
 
 #[test]

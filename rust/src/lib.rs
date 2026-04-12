@@ -1,54 +1,37 @@
-pub mod analyze;
-pub mod blast_radius;
-pub mod codebase;
-pub mod fpf;
-pub mod contracts;
+#![recursion_limit = "512"]
+
+// ── Core ─────────────────────────────────────────────────────────────────────
+// Modules on the critical path: intent → validate → approve → apply → drift → rollback
+
 pub mod drift;
 pub mod gates;
-pub mod git_state;
 pub mod graph;
-pub mod health;
 pub mod identity;
 pub mod import;
-pub mod infer;
-pub mod learn;
 pub mod mcp;
 pub mod models;
 pub mod phase_gates;
 pub mod project;
-pub mod render;
-pub mod rules;
-pub mod report;
+pub mod router;
 pub mod template;
 pub mod validate;
 
-pub use analyze::{analyze, AnalysisConfig, AnalysisResult};
-pub use blast_radius::{compute_blast_radius, BlastRadius, WeakestLink, WeakestLinkKind};
-pub use codebase::trace::{build_trace, check_trace};
-pub use codebase::{
-    index as index_codebase, update as update_codebase, CodebaseIndex, IndexConfig, IndexStats,
-};
-pub use contracts::check_contracts;
 pub use drift::{check_drift, reconcile, DriftResult};
 pub use gates::run_gates;
 pub use graph::{check_domain_layering, graph_check, tarjan_scc};
-pub use health::{compute_health_report, detect_degradation, load_snapshot, save_snapshot};
 pub use identity::{AliasEntry, AliasTable};
 pub use import::{compute_diff, compute_state_fingerprint, execute_import, DiffActions};
-pub use learn::{
-    aggregate_reflections, feed_heuristics, FollowUpEntry, HeuristicEntry, LearnReport,
-};
 pub use models::*;
 pub use phase_gates::{
-    check_add_hypothesis, check_approve, check_decide, check_import, enforce_checks, PhaseCheck,
-    Severity,
+    check_add_hypothesis, check_approve, check_challenge, check_decide, check_import,
+    enforce_checks, PhaseCheck, Severity,
 };
 pub use project::S5dProject;
-pub use render::render;
-pub use rules::{generate_rules, format_yaml as format_rules_yaml, format_json as format_rules_json, ArchRule, RuleKind};
-pub use report::{compute_report, render_report};
+pub use router::{route, RouteMode, RouteResult};
 pub use template::*;
 pub use validate::validate_spec;
+
+pub mod infer;
 
 /// Validate that an ID is safe for use in file paths.
 /// Rejects IDs containing path separators, `..`, null bytes, or empty strings.
@@ -1075,6 +1058,7 @@ mod tests {
                 expires_at: Some("2026-06-16".into()),
                 do_list: vec!["Use Redis for all shared cache".into()],
                 dont_list: vec!["Don't use in-process cache for shared state".into()],
+                challenge: None,
             }),
             note_rationale: None,
             expires_at: None,

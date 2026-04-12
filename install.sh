@@ -24,7 +24,7 @@ echo "Installing S5D..."
 
 # 1. Skills — symlink into vendor-agnostic location + agent runtimes
 #    Source of truth: $SCRIPT_DIR/skills/
-SKILLS="s5d"
+SKILLS="s5d fpf"
 
 link_skill() {
     local target_dir="$1"
@@ -97,13 +97,13 @@ elif command -v cargo &> /dev/null; then
     echo "✓ Binary built and installed"
 else
     echo "⚠ No prebuilt binary for $ARCH and no Rust toolchain. Skills installed, CLI skipped."
-    echo "  Install Rust (rustup.rs) and re-run, or use /s5d-cli skill for file-only mode."
+    echo "  Install Rust (rustup.rs) and re-run. Skills are installed, CLI skipped."
 fi
 
 echo ""
 echo "What was installed:"
 echo "  s5d binary — CLI for decisions, features, gates"
-echo "  s5d skills — /s5d and sub-skills for agent runtimes"
+echo "  s5d skills — /s5d and /fpf for agent runtimes"
 echo ""
 echo "MCP server is registered per-project by 's5d init' (.mcp.json)."
 echo "Marketplace installs (Claude/Gemini/Codex) register MCP globally via manifest."

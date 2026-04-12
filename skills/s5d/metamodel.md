@@ -441,108 +441,31 @@ All rules enforced by `validate`. Violations block preview and approve.
 
 ---
 
-## Health Scoring
-
-Health scoring quantifies architectural quality per domain and aggregates to a system-level score.
-
-### Coupling Metrics (per domain)
-- **Ca** (Afferent Coupling) = number of edges pointing TO this domain (incoming dependencies)
-- **Ce** (Efferent Coupling) = number of edges pointing FROM this domain (outgoing dependencies)
-- **Instability I** = `Ce / (Ca + Ce)`. If `Ca + Ce == 0`: `I = 0.0`
-  - I → 0.0: stable (many dependents, few dependencies — good for `core`)
-  - I → 1.0: unstable (no dependents, many dependencies — expected for leaf domains)
-
-### Per-Domain Health Score
-Starts at 100. Deductions are additive:
-
-| Condition | Deduction |
-|-----------|-----------|
-| Domain is member of a directed cycle | −15 |
-| Domain participates in a layering violation | −10 |
-| Fragile: `I > 0.8 AND Ce > 3` | −5 |
-| Hub: `Ca > 5` | −3 |
-| Scattered: `Ce > 5` | −3 |
-
-### Aggregate Health
-`health(system) = min(health(domain) for domain in domains)`
-
-This applies the weakest-link principle: system quality is bounded by its worst-performing domain. A single severely degraded domain brings the whole system score down.
-
-### Delta Classification (score change between versions)
-| Delta | Classification |
-|-------|---------------|
-| `> +5` | improved |
-| `−5 .. +5` | stable |
-| `−15 .. −5` | degraded |
-| `< −15` | critical |
-
----
-
-## Trace Confidence
-
-Components bind to capabilities via `paths`. The confidence of that binding depends on how it was established.
-
-| Method | Confidence | Mechanism |
-|--------|-----------|-----------|
-| Annotated | 0.95 | `@s5d` annotation found in source code at the path |
-| Inferred | 0.70 | Symbol name in the file matches capability or entity name in the codebase index |
-| Path-based | 0.50 | `component.paths` matches the file — no symbol or annotation match |
-
-### Annotation Format
-
-Any comment style is valid:
+## Metamodel Invariants
 
 ```
-// @s5d:<artifact_kind>:<artifact_id>
-# @s5d:<artifact_kind>:<artifact_id>
-/* @s5d:<artifact_kind>:<artifact_id> */
--- @s5d:<artifact_kind>:<artifact_id>
-```
-
-Examples:
-```rust
-// @s5d:capability:cap.AuthorizePayment
-// @s5d:entity:ent.Order
-```
-
----
-
-## Metamodel Invariants (Formal Notation)
-
-```
-// When domains are declared, every capability must belong to one of them
 forall cap in capabilities where domains.len() > 0:
   cap.domain in domains
 
-// Core domains cannot depend on Generic domains (layering)
 forall edge in edges:
   NOT (classify(edge.from) == generic AND classify(edge.to) == core)
 
-// Component-capability bindings must stay inside one domain
 forall binding in links.component_to_capability:
   component(binding.component).domain == capability(binding.capability).domain
 
-// Single-feature invariant
 features.len() == 1 AND features[0].id == spec.id
 
-// Aggregate health = weakest link
-health(system) == min(health(domain) for domain in domains)
-
-// No cycles in directed edges
 forall cycle in SCC(directed_edges): cycle.len() <= 1
   where directed_edges = edges.filter(
     e => e.archetype NOT IN {shared_kernel, partnership, separate_ways}
   )
 
-// Concern supersystem must be declared
 forall c in concerns where c.supersystem != null:
   c.supersystem in supersystems
 
-// Metric supersystem must be declared
 forall m in metrics where m.supersystem != null:
   m.supersystem in supersystems
 
-// Contract completeness
 forall c in contracts where c.path != null:
   c.sha256 != null
 ```

@@ -39,17 +39,70 @@ pub fn run_gates(
         let cmd_template = match config.gate_commands.get(&gate.kind) {
             Some(cmd) => cmd.clone(),
             None => {
-                results.push(GateResult {
-                    kind: gate.kind.clone(),
-                    status: "skipped".into(),
-                    attempt: count_attempts(&results, &gate.kind) + 1,
-                    timestamp: Utc::now().to_rfc3339(),
-                    log: Some(format!("no command configured for gate '{}'", gate.kind)),
-                    exit_code: None,
-                    evidence_path: None,
-                    command: None,
-                    duration_ms: None,
-                });
+                // Built-in gates: schema and graph run internal validation
+                let builtin_result = match gate.kind.as_str() {
+                    "schema" => {
+                        let errors = crate::validate_spec(spec);
+                        let attempt = count_attempts(&results, &gate.kind) + 1;
+                        let start = Instant::now();
+                        let (status, log) = if errors.is_empty() {
+                            ("passed".into(), "schema validation passed (built-in)".to_string())
+                        } else {
+                            ("failed".into(), format!("schema validation failed (built-in):\n{}", errors.join("\n")))
+                        };
+                        let ev_path = save_evidence(&evidence_dir, &gate.kind, attempt, &log);
+                        Some(GateResult {
+                            kind: gate.kind.clone(),
+                            status,
+                            attempt,
+                            timestamp: Utc::now().to_rfc3339(),
+                            log: Some(log),
+                            exit_code: None,
+                            evidence_path: ev_path,
+                            command: None,
+                            duration_ms: Some(start.elapsed().as_millis() as u64),
+                        })
+                    }
+                    "graph" => {
+                        let errors = crate::graph_check(spec);
+                        let attempt = count_attempts(&results, &gate.kind) + 1;
+                        let start = Instant::now();
+                        let (status, log) = if errors.is_empty() {
+                            ("passed".into(), "graph check passed (built-in)".to_string())
+                        } else {
+                            ("failed".into(), format!("graph check failed (built-in):\n{}", errors.join("\n")))
+                        };
+                        let ev_path = save_evidence(&evidence_dir, &gate.kind, attempt, &log);
+                        Some(GateResult {
+                            kind: gate.kind.clone(),
+                            status,
+                            attempt,
+                            timestamp: Utc::now().to_rfc3339(),
+                            log: Some(log),
+                            exit_code: None,
+                            evidence_path: ev_path,
+                            command: None,
+                            duration_ms: Some(start.elapsed().as_millis() as u64),
+                        })
+                    }
+                    _ => None,
+                };
+
+                if let Some(result) = builtin_result {
+                    results.push(result);
+                } else {
+                    results.push(GateResult {
+                        kind: gate.kind.clone(),
+                        status: "skipped".into(),
+                        attempt: count_attempts(&results, &gate.kind) + 1,
+                        timestamp: Utc::now().to_rfc3339(),
+                        log: Some(format!("no command configured for gate '{}'", gate.kind)),
+                        exit_code: None,
+                        evidence_path: None,
+                        command: None,
+                        duration_ms: None,
+                    });
+                }
                 continue;
             }
         };

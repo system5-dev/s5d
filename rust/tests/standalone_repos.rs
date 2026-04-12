@@ -162,23 +162,6 @@ fn seed_rust_workspace(repo: &StandaloneRepo) {
     repo.write("crates/payments/src/models.rs", "pub struct Payment {}\n");
 }
 
-fn seed_python_monorepo(repo: &StandaloneRepo) {
-    repo.write("pyproject.toml", "[project]\nname = \"myapp\"\n");
-    repo.write(
-        "services/agents/src/models.py",
-        "from pydantic import BaseModel\n\nclass AgentConfig(BaseModel):\n    pass\nclass AgentResult(BaseModel):\n    pass\n",
-    );
-    repo.write(
-        "services/api/src/routes.py",
-        "from fastapi import APIRouter\nrouter = APIRouter()\n\n@router.get('/claims')\nasync def list_claims():\n    pass\n",
-    );
-    repo.write(
-        "ui/package.json",
-        "{\"name\": \"ui\", \"dependencies\": {}}",
-    );
-    repo.write("shared/core.py", "# shared utilities\n");
-}
-
 fn seed_searchable_rust_repo(repo: &StandaloneRepo) {
     repo.write(
         "Cargo.toml",
@@ -202,105 +185,12 @@ fn init_bootstraps_project_layout_for_standalone_repo() {
     assert!(repo.path().join(".s5d").join("records").is_dir());
     assert!(repo.path().join(".s5d").join(".locks").is_dir());
     assert!(out.stdout.contains("S5D initialized"));
-    assert!(out.stdout.contains("s5d analyze <path> --product <name>"));
+    assert!(out.stdout.contains("s5d new <feature-id> --product <name>"));
 
     let status = run_ok(repo.path(), ["status"]);
     assert!(status
         .stdout
         .contains("No specs. Run `s5d new <id>` to create one."));
-}
-
-#[test]
-fn analyze_rust_workspace_writes_valid_draft_spec() {
-    let repo = StandaloneRepo::new();
-    seed_rust_workspace(&repo);
-
-    let out = run_ok(
-        repo.path(),
-        ["analyze", ".", "--product", "Shop", "-o", "draft.s5d.yaml"],
-    );
-
-    assert!(out.stdout.contains("Language: Rust"), "{}", out.summary());
-    let draft_path = repo.path().join("draft.s5d.yaml");
-    assert!(draft_path.is_file());
-
-    // Draft scaffold is valid YAML and parseable, but won't pass full validate
-    // (no capabilities/components yet — agent fills those)
-    let spec: s5d::Spec = load_yaml(&draft_path);
-    let artifacts = spec
-        .artifacts
-        .expect("analyze draft must contain artifacts");
-    assert_eq!(spec.product, "shop");
-    assert_eq!(artifacts.products[0].name, "Shop");
-    assert!(artifacts.domains.len() >= 2);
-}
-
-#[test]
-fn analyze_python_monorepo_writes_valid_draft_spec() {
-    let repo = StandaloneRepo::new();
-    seed_python_monorepo(&repo);
-
-    let out = run_ok(
-        repo.path(),
-        [
-            "analyze",
-            ".",
-            "--product",
-            "MyApp",
-            "-o",
-            "analysis.s5d.yaml",
-        ],
-    );
-
-    assert!(out.stdout.contains("Language: Python"), "{}", out.summary());
-    let draft_path = repo.path().join("analysis.s5d.yaml");
-
-    // Draft scaffold is parseable but won't pass full validate (no capabilities yet)
-    let spec: s5d::Spec = load_yaml(&draft_path);
-    let artifacts = spec
-        .artifacts
-        .expect("analyze draft must contain artifacts");
-    assert!(artifacts.domains.len() >= 4);
-    assert_eq!(artifacts.entities.len(), 0, "scaffold: entities filled by AI skill");
-}
-
-#[test]
-fn codebase_index_and_search_work_from_nested_directory() {
-    let repo = StandaloneRepo::new();
-    seed_searchable_rust_repo(&repo);
-    run_ok(repo.path(), ["init"]);
-
-    let nested = repo.path().join("apps").join("mobile");
-    let index_out = run_ok(&nested, ["codebase", "index", "."]);
-    assert!(
-        index_out.stdout.contains(".s5d/codebase.db"),
-        "{}",
-        index_out.summary()
-    );
-    assert!(repo.path().join(".s5d").join("codebase.db").is_file());
-
-    let search_out = run_ok(
-        &nested,
-        [
-            "codebase",
-            "search",
-            "standalonee2emarker",
-            "--path",
-            ".",
-            "--top-k",
-            "5",
-        ],
-    );
-    assert!(
-        search_out.stdout.contains("src/lib.rs"),
-        "{}",
-        search_out.summary()
-    );
-    assert!(
-        search_out.stdout.contains("standalonee2emarker"),
-        "{}",
-        search_out.summary()
-    );
 }
 
 #[test]
@@ -375,6 +265,7 @@ fn import_stays_blocked_when_declared_gate_only_skips() {
     let repo = StandaloneRepo::new();
     seed_searchable_rust_repo(&repo);
     run_ok(repo.path(), ["init"]);
+    // Use lightweight tier (gets a schema gate which now runs built-in)
     run_ok(
         repo.path(),
         [
@@ -388,6 +279,15 @@ fn import_stays_blocked_when_declared_gate_only_skips() {
     );
     let spec_path = only_spec_path(&repo);
     let spec_str = spec_path.to_str().unwrap();
+
+    // Add a custom gate kind that has no built-in handler and no configured command.
+    // Schema/graph now run built-in validation, so we need a different kind to test skip behavior.
+    let mut spec: s5d::Spec = load_yaml(&spec_path);
+    spec.gates = vec![s5d::Gate {
+        kind: "custom_check".to_string(),
+    }];
+    let yaml = serde_yaml::to_string(&spec).unwrap();
+    std::fs::write(&spec_path, yaml).unwrap();
 
     run_ok(repo.path(), ["preview", spec_str]);
     run_ok(repo.path(), ["approve", spec_str, "--reviewer", "Roman"]);
@@ -408,7 +308,7 @@ fn import_stays_blocked_when_declared_gate_only_skips() {
     assert!(record
         .gate_results
         .iter()
-        .any(|result| result.kind == "schema" && result.status == "skipped"));
+        .any(|result| result.kind == "custom_check" && result.status == "skipped"));
 }
 
 #[test]
@@ -526,62 +426,6 @@ fn decision_has_expiry_and_do_dont() {
         expires.starts_with("20"),
         "expires_at should be a date: {}",
         expires
-    );
-}
-
-#[test]
-fn analyze_produces_scaffold_without_entities() {
-    let repo = StandaloneRepo::new();
-    seed_searchable_rust_repo(&repo);
-    run_ok(repo.path(), ["init"]);
-
-    let analyze = run_ok(
-        repo.path(),
-        [
-            "analyze",
-            ".",
-            "--product",
-            "TestProject",
-            "-o",
-            repo.path().join("draft.s5d.yaml").to_str().unwrap(),
-        ],
-    );
-    assert!(
-        analyze.stdout.contains("Scaffold generated") || analyze.stdout.contains("Analyzed"),
-        "{}",
-        analyze.summary()
-    );
-
-    // Scaffold should have domains but 0 entities (agent fills those)
-    assert!(
-        analyze.stdout.contains("Entities:") && analyze.stdout.contains("0"),
-        "analyze should produce scaffold with 0 entities: {}",
-        analyze.summary()
-    );
-}
-
-#[test]
-fn codebase_search_requires_existing_index() {
-    let repo = StandaloneRepo::new();
-    seed_searchable_rust_repo(&repo);
-    run_ok(repo.path(), ["init"]);
-
-    let search = run_fail(
-        repo.path(),
-        [
-            "codebase",
-            "search",
-            "standalonee2emarker",
-            "--path",
-            ".",
-            "--top-k",
-            "3",
-        ],
-    );
-    assert!(
-        search.stderr.contains("no codebase index at"),
-        "{}",
-        search.summary()
     );
 }
 

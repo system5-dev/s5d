@@ -84,6 +84,33 @@ pub fn check_decide(spec: &Spec, record: &Option<Record>, confirmed_by: &Option<
     checks
 }
 
+/// Validate that adversarial challenge has been provided.
+/// Returns None if OK, Some(message) if challenge is missing/insufficient.
+pub fn check_challenge(
+    challenge: &Option<crate::Challenge>,
+    tier: &crate::Tier,
+    force: bool,
+    no_challenge: bool,
+) -> Option<String> {
+    if no_challenge || force {
+        return None;
+    }
+    if challenge.is_none() {
+        return Some(
+            "adversarial challenge required — use --challenge-summary, --no-challenge, or --force"
+                .to_string(),
+        );
+    }
+    let ch = challenge.as_ref().unwrap();
+    if matches!(tier, crate::Tier::Standard | crate::Tier::High) && ch.mode == "tactical" {
+        return Some(
+            "standard/high tier requires standard challenge mode (5 probes), not tactical (1 probe)"
+                .to_string(),
+        );
+    }
+    None
+}
+
 pub fn check_add_hypothesis(spec: &Spec, new_id: &str) -> Vec<PhaseCheck> {
     let mut checks = Vec::new();
 
@@ -278,6 +305,7 @@ mod tests {
             expires_at: None,
             do_list: vec![],
             dont_list: vec![],
+            challenge: None,
         });
 
         let checks = check_decide(&spec, &Some(record), &Some("roman".into()));
