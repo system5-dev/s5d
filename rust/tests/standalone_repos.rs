@@ -1956,7 +1956,7 @@ fn decide_rejects_winner_without_spec_ref() {
 // ── Reconcile test ──────────────────────────────────────────────────────────
 
 #[test]
-fn reconcile_restores_synced_status_after_drift() {
+fn reconcile_fails_closed_on_deleted_alias() {
     let repo = StandaloneRepo::new();
     run_ok(repo.path(), ["init"]);
     let spec_str = setup_standard_spec(&repo, "feat.rec1");
@@ -1970,32 +1970,54 @@ fn reconcile_restores_synced_status_after_drift() {
     run_ok(repo.path(), ["run-gates", &spec_str]);
     run_ok(repo.path(), ["import", &spec_str]);
 
-    // Manually corrupt alias table to cause drift
+    // Delete one package alias entry — UUID is lost, can't restore
     let s5d_dir = repo.path().join(".s5d");
     let mut aliases = s5d::AliasTable::load(&s5d_dir).unwrap();
-    if let Some(entry) = aliases.packages.first_mut() {
-        entry.uuid = "00000000-0000-0000-0000-000000000000".into();
+    if !aliases.packages.is_empty() {
+        aliases.packages.remove(0);
     }
     aliases.save(&s5d_dir).unwrap();
 
-    // Drift-check should show drifted
-    let drift = run_s5d(repo.path(), ["drift-check", &spec_str]);
+    // Reconcile should fail closed — deleted UUID can't be regenerated
+    let result = run_fail(repo.path(), ["reconcile", &spec_str]);
     assert!(
-        drift.stdout.contains("drifted") || drift.stderr.contains("drifted"),
-        "should detect drift:\n{}",
-        drift.summary()
+        result.stderr.contains("cannot be restored")
+            || result.stderr.contains("Re-run"),
+        "reconcile should fail closed on deleted alias:\n{}",
+        result.summary()
     );
+}
 
-    // Reconcile should fix it
-    run_ok(repo.path(), ["reconcile", &spec_str]);
+#[test]
+fn reconcile_fails_closed_on_corrupted_uuid() {
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+    let spec_str = setup_standard_spec(&repo, "feat.rec2");
 
-    // Record should be synced
-    let record_path = record_path_for(&only_spec_path(&repo));
-    let record: s5d::Record = load_yaml(&record_path);
-    assert_eq!(
-        record.sync_status,
-        s5d::SyncStatus::Synced,
-        "record should be synced after reconcile"
+    // Full lifecycle
+    run_ok(repo.path(), ["preview", &spec_str]);
+    run_ok(
+        repo.path(),
+        ["approve", &spec_str, "--reviewer", "TestReviewer"],
+    );
+    run_ok(repo.path(), ["run-gates", &spec_str]);
+    run_ok(repo.path(), ["import", &spec_str]);
+
+    // Corrupt a UUID — reconcile can't fix this from spec alone
+    let s5d_dir = repo.path().join(".s5d");
+    let mut aliases = s5d::AliasTable::load(&s5d_dir).unwrap();
+    if let Some(entry) = aliases.packages.first_mut() {
+        entry.uuid = "corrupted-0000-0000-0000-000000000000".into();
+    }
+    aliases.save(&s5d_dir).unwrap();
+
+    // Reconcile should fail closed — can't restore imported baseline
+    let result = run_fail(repo.path(), ["reconcile", &spec_str]);
+    assert!(
+        result.stderr.contains("cannot be restored")
+            || result.stderr.contains("Re-run"),
+        "reconcile should fail closed on corrupted UUID:\n{}",
+        result.summary()
     );
 }
 
