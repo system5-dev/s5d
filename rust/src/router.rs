@@ -115,7 +115,7 @@ const MULTI_DOMAIN_SIGNALS: &[&str] = &[
 
 /// Classify a request description into a routing decision.
 ///
-/// Rule-based, top-to-bottom, first match wins — mirrors SKILL.md Step 0 Phase A.
+/// Rule-based, top-to-bottom, first match wins.
 pub fn route(description: &str) -> RouteResult {
     let lower = description.to_lowercase();
 
@@ -255,7 +255,7 @@ mod tests {
 
     #[test]
     fn test_decision_always_step1() {
-        // Even with execute signal, decision tier always starts at Step 1
+        // Even with execute signal, decision tier always starts at Frame
         let r = route("Implement: how should we handle caching?");
         assert_eq!(r.tier, Some(crate::Tier::Decision));
         assert_eq!(r.entry_step, Some(1));

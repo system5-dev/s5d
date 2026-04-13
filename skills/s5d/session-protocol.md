@@ -67,7 +67,7 @@ Resume: re-read WAL + spec + record. Check if spec/preview changed while waiting
 
 ### WAL Saves vs. Ship Commits
 
-WAL saves = local state persistence, no permission needed. Local working commits during Build = allowed. Push/deploy = explicit human permission (Step 6).
+WAL saves = local state persistence, no permission needed. Local working commits during Build = allowed. Push/deploy = explicit human permission.
 
 ### Recovery (Dirty WAL)
 

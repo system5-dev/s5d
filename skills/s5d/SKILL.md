@@ -1,12 +1,21 @@
 ---
 name: s5d
-description: "S5D — spec transaction engine. Route → Frame → Decide → Spec → Build → Verify → Ship → Learn."
+description: "S5D — thin decision-and-validation layer for repo changes with AI. Think → record → verify → trace to code → roll back."
 argument-hint: "[question, feature request, or problem description]"
 ---
 
 # S5D
 
-Spec transaction engine with approval/drift/reconcile for repo-based work.
+A thin decision-and-validation layer for changes in a repository with AI participation. Not a methodology. Four things on top of normal development:
+
+1. **Explicit choice** — compare alternatives before committing to one (>=3 hypotheses, different in kind).
+2. **Reuse architecture** — describe changes in terms of the existing codebase, not a new vocabulary (DDD decomposition: domains, capabilities, components).
+3. **Record decisions** — write down what was decided and why, with integrity (approval chain, SHA256 binding, ledger).
+4. **Verify in code** — check that the code still matches the decision, and roll back when it doesn't (drift-check, reconcile, rollback).
+
+If a term doesn't serve one of these four, it doesn't belong. If an artifact isn't read by a human or a gate, it doesn't belong. If a simple change can't pass through almost in a straight line, the system is lying about its simplicity.
+
+The flow sequences these four:
 
 ```
 Route → Frame → Decide → Spec → Build → Verify → Ship → Learn
@@ -35,7 +44,7 @@ Applies only to work grounded in an existing repository. No codebase, no S5D.
 
 ## Cross-cutting
 
-**WAL** — see [session-protocol.md](session-protocol.md). WAL saves are local writes (no permission needed). Ship commits (Step 6) require human permission.
+**WAL** — see [session-protocol.md](session-protocol.md). WAL saves are local writes (no permission needed). Ship commits require human permission.
 
 **spec:// URI** — `spec://<module>/<document>#<section>`. Use in WAL, commits, REVIEW markers.
 
@@ -138,9 +147,7 @@ s5d reflect <feature-spec> --summary "Shipped cleanly" \
 
 ---
 
-## Step 0 — Route & Bootstrap
-
-### Phase A — Route
+## Route & Bootstrap
 
 Classify before touching tools. First match wins.
 
@@ -155,22 +162,20 @@ Classify before touching tools. First match wins.
 
 **Mode:**
 - "Evaluate/compare" → `prepare` (analyze + frame, stop for human)
-- "Implement X" with clear architecture → `execute` (auto-waiver Steps 1–2)
+- "Implement X" with clear architecture → `execute` (auto-waiver Frame+Decide)
 - No signal → `prepare`
 
 Emit routing explicitly:
 ```
-Route: tier=standard, mode=prepare, entry=Step 1
+Route: tier=standard, mode=prepare, entry=Frame
 Reason: touches auth + payments, needs framing
 ```
-
-### Phase B — Bootstrap
 
 `s5d_init` if no `.s5d/` directory. Proceed to entry point.
 
 ---
 
-## Step 1 — Frame
+## Frame
 
 State what's anomalous. Define acceptance BEFORE options.
 
@@ -178,7 +183,7 @@ State what's anomalous. Define acceptance BEFORE options.
 
 ---
 
-## Step 2 — Decide
+## Decide
 
 >=3 hypotheses, different in kind. For each: predictions, decomposition, F-G-R, WLNK.
 
@@ -192,7 +197,7 @@ If a probe reveals a fatal flaw, stop — revisit hypotheses.
 
 ---
 
-## Step 3 — Spec
+## Spec
 
 Problem → acceptance scenarios (>=3 GWT) → implementation hypotheses (>=2) → winner → DO/DON'T.
 
@@ -200,7 +205,7 @@ Problem → acceptance scenarios (>=3 GWT) → implementation hypotheses (>=2) �
 
 ---
 
-## Step 4 — Build
+## Build
 
 `s5d_preview` → `s5d_approve` (**human name required, non-waivable**).
 
@@ -210,19 +215,19 @@ After approval: `s5d_run_gates` → implement. Local commits allowed. REVIEW mar
 
 ---
 
-## Step 5 — Verify
+## Verify
 
 Tests → `s5d_import` (SHA256 chain). Human reviews diff. Import rejects on hash mismatch → re-preview, re-approve.
 
 ---
 
-## Step 6 — Ship
+## Ship
 
 Push and deploy require explicit human permission per action.
 
 ---
 
-## Step 7 — Learn
+## Learn
 
 `s5d_reflect`. Update WAL. Record reusable heuristics.
 
@@ -234,5 +239,5 @@ Only way to skip a step:
 ```
 WAIVER: <step> | Reason: <why> | Condition: <when required again> | Approved: <name>
 ```
-Non-waivable: Step 2 human confirmation, Step 4 approve.
-Route-to-Step-3 is an auto-waiver for Steps 1–2. Record it explicitly.
+Non-waivable: Decide human confirmation, Build approve.
+Route-to-Spec is an auto-waiver for Frame and Decide. Record it explicitly.
