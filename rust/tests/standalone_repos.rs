@@ -1652,6 +1652,469 @@ auto_noted: false
     );
 }
 
+// ── Integrity: SHA chain tests ───────────────────────────────────────────────
+
+/// Helper: create a standard spec with valid artifacts, validate, and return spec path string.
+fn setup_standard_spec(repo: &StandaloneRepo, feature_id: &str) -> String {
+    run_ok(
+        repo.path(),
+        ["new", feature_id, "--tier", "standard", "--product", "shop"],
+    );
+    let spec_path = only_spec_path(repo);
+    let mut spec: s5d::Spec = load_yaml(&spec_path);
+    let artifacts = spec.artifacts.as_mut().unwrap();
+    artifacts.domains.push(s5d::Domain {
+        id: "dom.core".into(),
+        product: "shop".into(),
+        name: "Core".into(),
+        classification: Some("core".into()),
+        description: None,
+        team: None,
+        maturity_level: None,
+    });
+    artifacts.capabilities.push(s5d::Capability {
+        id: "cap.Do".into(),
+        domain: "dom.core".into(),
+        name: "DoThing".into(),
+        description: None,
+        since: None,
+    });
+    artifacts.containers.push(s5d::Container {
+        id: "ctr.api".into(),
+        name: "API".into(),
+        system: String::new(),
+        technology: None,
+    });
+    artifacts.components.push(s5d::Component {
+        id: "comp.handler".into(),
+        domain: "dom.core".into(),
+        feature: feature_id.into(),
+        container: "ctr.api".into(),
+        name: "Handler".into(),
+        paths: vec!["src/handler.rs".into()],
+    });
+    fs::write(&spec_path, serde_yaml::to_string(&spec).unwrap()).unwrap();
+    let spec_str = spec_path.to_str().unwrap().to_string();
+    run_ok(repo.path(), ["validate", &spec_str]);
+    spec_str
+}
+
+#[test]
+fn approve_rejects_spec_modified_since_preview() {
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+    let spec_str = setup_standard_spec(&repo, "feat.sha1");
+
+    // Preview
+    run_ok(repo.path(), ["preview", &spec_str]);
+
+    // Modify spec after preview (add a description to change the SHA)
+    let spec_path = only_spec_path(&repo);
+    let mut spec: s5d::Spec = load_yaml(&spec_path);
+    spec.context = Some("modified after preview".into());
+    fs::write(&spec_path, serde_yaml::to_string(&spec).unwrap()).unwrap();
+
+    // Approve should reject — spec changed since preview
+    let result = run_fail(
+        repo.path(),
+        ["approve", &spec_str, "--reviewer", "TestReviewer"],
+    );
+    assert!(
+        result.stderr.contains("modified since preview")
+            || result.stderr.contains("spec_sha")
+            || result.stderr.contains("re-run preview"),
+        "approve should reject stale preview:\n{}",
+        result.summary()
+    );
+}
+
+#[test]
+fn import_rejects_spec_modified_since_approval() {
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+    let spec_str = setup_standard_spec(&repo, "feat.sha2");
+
+    // Full happy path up to approve
+    run_ok(repo.path(), ["preview", &spec_str]);
+    run_ok(
+        repo.path(),
+        ["approve", &spec_str, "--reviewer", "TestReviewer"],
+    );
+    run_ok(repo.path(), ["run-gates", &spec_str]);
+
+    // Modify spec after approval
+    let spec_path = only_spec_path(&repo);
+    let mut spec: s5d::Spec = load_yaml(&spec_path);
+    spec.context = Some("modified after approval".into());
+    fs::write(&spec_path, serde_yaml::to_string(&spec).unwrap()).unwrap();
+
+    // Import should reject — spec changed since approval
+    let result = run_fail(repo.path(), ["import", &spec_str]);
+    assert!(
+        result.stderr.contains("modified")
+            || result.stderr.contains("spec_sha")
+            || result.stderr.contains("changed"),
+        "import should reject stale approval:\n{}",
+        result.summary()
+    );
+}
+
+// ── Rollback tests ──────────────────────────────────────────────────────────
+
+#[test]
+fn rollback_after_import_tombstones_aliases_and_removes_index() {
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+    let spec_str = setup_standard_spec(&repo, "feat.rb1");
+
+    // Full lifecycle
+    run_ok(repo.path(), ["preview", &spec_str]);
+    run_ok(
+        repo.path(),
+        ["approve", &spec_str, "--reviewer", "TestReviewer"],
+    );
+    run_ok(repo.path(), ["run-gates", &spec_str]);
+    run_ok(repo.path(), ["import", &spec_str]);
+
+    // Verify import created entries
+    let s5d_dir = repo.path().join(".s5d");
+    let aliases: s5d::AliasTable =
+        s5d::AliasTable::load(&s5d_dir).unwrap();
+    let active_before = aliases
+        .packages
+        .iter()
+        .filter(|e| !e.deprecated)
+        .count();
+    assert!(active_before > 0, "should have active aliases after import");
+
+    let index: s5d::Index = load_yaml(&s5d_dir.join("index.yaml"));
+    assert!(
+        !index.features.is_empty(),
+        "index should have entries after import"
+    );
+
+    // Rollback
+    run_ok(repo.path(), ["rollback", &spec_str]);
+
+    // Check aliases are tombstoned
+    let aliases_after: s5d::AliasTable =
+        s5d::AliasTable::load(&s5d_dir).unwrap();
+    let active_after = aliases_after
+        .packages
+        .iter()
+        .filter(|e| e.package_id.as_deref() == Some("feat.rb1") && !e.deprecated)
+        .count();
+    assert_eq!(active_after, 0, "all package aliases should be deprecated after rollback");
+
+    // Check index is empty
+    let index_after: s5d::Index = load_yaml(&s5d_dir.join("index.yaml"));
+    assert!(
+        index_after.features.is_empty(),
+        "index should be empty after rollback"
+    );
+
+    // Check record status
+    let record_path = record_path_for(&only_spec_path(&repo));
+    let record: s5d::Record = load_yaml(&record_path);
+    assert_eq!(
+        record.status,
+        s5d::SpecStatus::Deprecated,
+        "record should be deprecated after rollback"
+    );
+}
+
+#[test]
+fn rollback_without_successful_import_fails() {
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+    let spec_str = setup_standard_spec(&repo, "feat.rb2");
+
+    // Only preview+approve, no import
+    run_ok(repo.path(), ["preview", &spec_str]);
+    run_ok(
+        repo.path(),
+        ["approve", &spec_str, "--reviewer", "TestReviewer"],
+    );
+
+    // Rollback should fail — nothing to roll back
+    let result = run_fail(repo.path(), ["rollback", &spec_str]);
+    assert!(
+        result.stderr.contains("no successful import"),
+        "rollback without import should fail:\n{}",
+        result.summary()
+    );
+}
+
+// ── Decision spec_ref gate ──────────────────────────────────────────────────
+
+#[test]
+fn decide_rejects_winner_without_spec_ref() {
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+
+    // Create decision spec
+    run_ok(
+        repo.path(),
+        [
+            "new",
+            "decision.test",
+            "--tier",
+            "decision",
+            "--product",
+            "shop",
+            "--question",
+            "Which approach?",
+        ],
+    );
+    let spec_path = only_spec_path(&repo);
+    let spec_str = spec_path.to_str().unwrap().to_string();
+
+    // Add 3 hypotheses with evidence to pass methodological checks
+    for (title, content) in [
+        ("Option A", "First approach"),
+        ("Option B", "Second approach"),
+        ("Option C", "Third approach"),
+    ] {
+        run_ok(
+            repo.path(),
+            [
+                "add-hypothesis",
+                &spec_str,
+                "--title",
+                title,
+                "--content",
+                content,
+                "--scope",
+                "test",
+            ],
+        );
+    }
+
+    // Add evidence to each hypothesis
+    for hyp_id in ["option-a", "option-b", "option-c"] {
+        run_ok(
+            repo.path(),
+            [
+                "add-evidence",
+                &spec_str,
+                "--hypothesis-id",
+                hyp_id,
+                "--evidence-type",
+                "internal",
+                "--content",
+                "test evidence",
+                "--verdict",
+                "pass",
+            ],
+        );
+    }
+
+    // Add acceptance criteria to problem card via YAML manipulation
+    let spec_path_now = only_spec_path(&repo);
+    let content = fs::read_to_string(&spec_path_now).unwrap();
+    let mut doc: serde_yaml::Value = serde_yaml::from_str(&content).unwrap();
+    if let Some(problem) = doc.get_mut("problem") {
+        if let Some(map) = problem.as_mapping_mut() {
+            map.insert(
+                serde_yaml::Value::String("acceptance".into()),
+                serde_yaml::Value::String("test acceptance".into()),
+            );
+        }
+    }
+    fs::write(&spec_path_now, serde_yaml::to_string(&doc).unwrap()).unwrap();
+
+    // Try to decide — methodological checks pass, but spec_ref is missing
+    let result = run_fail(
+        repo.path(),
+        [
+            "decide",
+            &spec_str,
+            "--title",
+            "Pick A",
+            "--winner",
+            "option-a",
+            "--context",
+            "test",
+            "--decision",
+            "go with A",
+            "--rationale",
+            "because",
+            "--consequences",
+            "none",
+            "--confirmed-by",
+            "TestReviewer",
+        ],
+    );
+    assert!(
+        result.stderr.contains("spec_ref")
+            || result.stderr.contains("feature spec"),
+        "decide should reject winner without spec_ref:\n{}",
+        result.summary()
+    );
+}
+
+// ── Reconcile test ──────────────────────────────────────────────────────────
+
+#[test]
+fn reconcile_restores_synced_status_after_drift() {
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+    let spec_str = setup_standard_spec(&repo, "feat.rec1");
+
+    // Full lifecycle
+    run_ok(repo.path(), ["preview", &spec_str]);
+    run_ok(
+        repo.path(),
+        ["approve", &spec_str, "--reviewer", "TestReviewer"],
+    );
+    run_ok(repo.path(), ["run-gates", &spec_str]);
+    run_ok(repo.path(), ["import", &spec_str]);
+
+    // Manually corrupt alias table to cause drift
+    let s5d_dir = repo.path().join(".s5d");
+    let mut aliases = s5d::AliasTable::load(&s5d_dir).unwrap();
+    if let Some(entry) = aliases.packages.first_mut() {
+        entry.uuid = "00000000-0000-0000-0000-000000000000".into();
+    }
+    aliases.save(&s5d_dir).unwrap();
+
+    // Drift-check should show drifted
+    let drift = run_s5d(repo.path(), ["drift-check", &spec_str]);
+    assert!(
+        drift.stdout.contains("drifted") || drift.stderr.contains("drifted"),
+        "should detect drift:\n{}",
+        drift.summary()
+    );
+
+    // Reconcile should fix it
+    run_ok(repo.path(), ["reconcile", &spec_str]);
+
+    // Record should be synced
+    let record_path = record_path_for(&only_spec_path(&repo));
+    let record: s5d::Record = load_yaml(&record_path);
+    assert_eq!(
+        record.sync_status,
+        s5d::SyncStatus::Synced,
+        "record should be synced after reconcile"
+    );
+}
+
+// ── Shared global rollback risk ─────────────────────────────────────────────
+
+#[test]
+#[ignore] // KNOWN BUG: rollback tombstones global aliases by owning_package,
+           // breaking other specs that share the same global artifact.
+           // Fix: rollback should check if other non-deprecated specs reference
+           // the global alias before tombstoning it.
+fn rollback_of_first_spec_does_not_break_second_spec_sharing_global_artifact() {
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+
+    // Create two specs that share a global artifact (Product "shop")
+    // Spec 1
+    run_ok(
+        repo.path(),
+        [
+            "new",
+            "feat.spec1",
+            "--tier",
+            "lightweight",
+            "--product",
+            "shop",
+        ],
+    );
+    let spec1_path = only_spec_path(&repo);
+    let spec1_str = spec1_path.to_str().unwrap().to_string();
+    {
+        let mut spec: s5d::Spec = load_yaml(&spec1_path);
+        let arts = spec.artifacts.as_mut().unwrap();
+        arts.capabilities.push(s5d::Capability {
+            id: "cap.A".into(),
+            domain: "".into(),
+            name: "CapA".into(),
+            description: None,
+            since: None,
+        });
+        fs::write(&spec1_path, serde_yaml::to_string(&spec).unwrap()).unwrap();
+    }
+    run_ok(repo.path(), ["validate", &spec1_str]);
+    run_ok(repo.path(), ["preview", &spec1_str]);
+    run_ok(
+        repo.path(),
+        ["approve", &spec1_str, "--reviewer", "R"],
+    );
+    run_ok(repo.path(), ["run-gates", &spec1_str]);
+    run_ok(repo.path(), ["import", &spec1_str]);
+
+    // Spec 2 (in same repo, shares Product "shop")
+    run_ok(
+        repo.path(),
+        [
+            "new",
+            "feat.spec2",
+            "--tier",
+            "lightweight",
+            "--product",
+            "shop",
+        ],
+    );
+    // Find spec2 (there are now two specs)
+    let specs_dir = repo.path().join(".s5d").join("packages");
+    let spec2_path = fs::read_dir(&specs_dir)
+        .unwrap()
+        .map(|e| e.unwrap().path())
+        .find(|p| p.to_string_lossy().contains("feat.spec2"))
+        .expect("spec2 should exist");
+    let spec2_str = spec2_path.to_str().unwrap().to_string();
+    {
+        let mut spec: s5d::Spec = load_yaml(&spec2_path);
+        let arts = spec.artifacts.as_mut().unwrap();
+        arts.capabilities.push(s5d::Capability {
+            id: "cap.B".into(),
+            domain: "".into(),
+            name: "CapB".into(),
+            description: None,
+            since: None,
+        });
+        fs::write(&spec2_path, serde_yaml::to_string(&spec).unwrap()).unwrap();
+    }
+    run_ok(repo.path(), ["validate", &spec2_str]);
+    run_ok(repo.path(), ["preview", &spec2_str]);
+    run_ok(
+        repo.path(),
+        ["approve", &spec2_str, "--reviewer", "R"],
+    );
+    run_ok(repo.path(), ["run-gates", &spec2_str]);
+    run_ok(repo.path(), ["import", &spec2_str]);
+
+    // Both imported. Now rollback spec1.
+    run_ok(repo.path(), ["rollback", &spec1_str]);
+
+    // The shared Product "shop" global alias should NOT be tombstoned
+    // because spec2 still uses it.
+    let s5d_dir = repo.path().join(".s5d");
+    let aliases = s5d::AliasTable::load(&s5d_dir).unwrap();
+
+    let shop_product_alive = aliases.global.iter().any(|e| {
+        e.artifact_id == "shop"
+            && e.artifact_type == "Product"
+            && !e.deprecated
+    });
+
+    assert!(
+        shop_product_alive,
+        "shared Product 'shop' global alias should NOT be tombstoned when spec2 still uses it.\n\
+         Global aliases: {:?}",
+        aliases
+            .global
+            .iter()
+            .filter(|e| e.artifact_id == "shop")
+            .collect::<Vec<_>>()
+    );
+}
+
+// ── Original tests continue ─────────────────────────────────────────────────
+
 #[test]
 fn contract_validation_missing_format_and_content() {
     let repo = StandaloneRepo::new();
