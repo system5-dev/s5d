@@ -90,7 +90,7 @@ fn core_tools() -> Vec<Value> {
                 "required": ["id"],
                 "properties": {
                     "id": {"type": "string", "description": "Feature ID (e.g. feat.orders.tracking)"},
-                    "tier": {"type": "string", "description": "Assurance tier: decision|standard|lightweight|high|note (default: standard)"},
+                    "tier": {"type": "string", "description": "Spec tier: decision|standard|lightweight|high|note (default: standard)"},
                     "product": {"type": "string", "description": "Product name"},
                     "question": {"type": "string", "description": "Decision question (required for tier=decision)"},
                     "rationale": {"type": "string", "description": "Note rationale (required for tier=note)"}
@@ -221,7 +221,7 @@ fn core_tools() -> Vec<Value> {
                     "title": {"type": "string", "description": "Hypothesis title"},
                     "content": {"type": "string", "description": "Hypothesis content/description"},
                     "scope": {"type": "string", "description": "Scope — where this applies"},
-                    "kind": {"type": "string", "description": "Kind: system or episteme (default: system)"}
+                    "kind": {"type": "string", "description": "Kind: system (default) or episteme (knowledge/methodology)"}
                 }
             }
         }),
@@ -237,9 +237,9 @@ fn core_tools() -> Vec<Value> {
                     "evidence_type": {"type": "string", "description": "Evidence type: internal, external, gate:test, etc."},
                     "content": {"type": "string", "description": "Evidence content"},
                     "verdict": {"type": "string", "description": "Verdict: pass, fail, refine"},
-                    "formality": {"type": "integer", "description": "F-G-R Formality: rigor of evidence method (1-5)"},
-                    "claim_scope": {"type": "string", "description": "F-G-R ClaimScope: what the claim covers (comma-separated)"},
-                    "reliability": {"type": "number", "description": "F-G-R Reliability: probability claim is true (0.0-1.0)"}
+                    "formality": {"type": "integer", "description": "Rigor of evidence method (1-5)"},
+                    "claim_scope": {"type": "string", "description": "What the claim covers (comma-separated)"},
+                    "reliability": {"type": "number", "description": "Confidence that the claim is true (0.0-1.0)"}
                 }
             }
         }),

@@ -1,6 +1,6 @@
 ---
 name: s5d
-description: "S5D — thin decision-and-validation layer for repo changes with AI. Think → record → verify → trace to code → roll back."
+description: "S5D — thin decision-and-validation layer for repo changes with AI. Think → record → verify → drift-check → roll back."
 argument-hint: "[question, feature request, or problem description]"
 ---
 
@@ -185,11 +185,11 @@ State what's anomalous. Define acceptance BEFORE options.
 
 ## Decide
 
->=3 hypotheses, different in kind. For each: predictions, decomposition, F-G-R, WLNK.
+>=3 hypotheses, different in kind. For each: predictions, decomposition, rigor rating, weakest-link analysis.
 
 **Challenge probes before `s5d_decide`:**
 - Lightweight: 1 probe — strongest counter-argument
-- Standard/High: 5 probes — counter-argument, tail failure, evidence weakness, WLNK, SoTA check
+- Standard/High: 5 probes — counter-argument, tail failure, evidence weakness, weakest link, existing alternatives
 
 If a probe reveals a fatal flaw, stop — revisit hypotheses.
 
