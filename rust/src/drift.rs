@@ -66,6 +66,20 @@ pub fn reconcile(
         }
     }
 
+    // Find the expected fingerprint from the last successful import/reconcile
+    let ledger = project.load_ledger()?;
+    let expected_fp = ledger
+        .entries
+        .iter()
+        .rev()
+        .find(|e| {
+            e.package_id == spec.id
+                && (e.action == "import" || e.action == "reconcile")
+                && e.status == "success"
+        })
+        .map(|e| e.state_fingerprint.clone())
+        .ok_or_else(|| anyhow::anyhow!("no successful import found for {} — cannot reconcile", spec.id))?;
+
     let mut aliases = AliasTable::load(&s5d_dir)?;
     if let Some(ref meta) = spec.meta {
         aliases.apply_renames(&spec.id, &meta.renames);
@@ -76,6 +90,20 @@ pub fn reconcile(
     aliases.save(&s5d_dir)?;
 
     let fingerprint = compute_state_fingerprint(&spec, &aliases);
+
+    // Fail closed: if compute_diff couldn't restore the expected fingerprint,
+    // the alias state is corrupted in a way we can't fix from spec alone.
+    // User must re-run the full pipeline (preview → approve → import).
+    if fingerprint != expected_fp {
+        anyhow::bail!(
+            "reconcile failed: alias state cannot be restored to imported baseline.\n\
+             expected: {}\n\
+             actual:   {}\n\
+             Alias UUIDs may be corrupted. Re-run: preview → approve → import.",
+            expected_fp,
+            fingerprint
+        );
+    }
 
     let mut ledger = project.load_ledger()?;
     ledger.entries.push(LedgerEntry {
