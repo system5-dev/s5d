@@ -647,6 +647,7 @@ fn tool_s5d_validate(args: &Value) -> anyhow::Result<String> {
     let spec_path = args["spec"]
         .as_str()
         .ok_or_else(|| anyhow::anyhow!("missing required argument: spec"))?;
+    validate_spec_path(spec_path)?;
     let path = std::path::Path::new(spec_path);
     if !path.exists() {
         anyhow::bail!("file not found: {}", spec_path);
