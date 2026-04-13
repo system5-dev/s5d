@@ -70,13 +70,15 @@ Available as a plugin for Claude Code, Gemini CLI, and Codex.
 
 ## Tiers
 
-| Tier | When | Built-in gates |
-|------|------|----------------|
+| Tier | When | Default gates |
+|------|------|---------------|
 | Note | Capture context | None |
 | Decision | Compare alternatives | None |
 | Lightweight | Simple feature | Schema |
 | Standard | Regular feature | Schema + Graph |
-| High | Auth / payment / PII | Schema + Graph + all declared |
+| High | Auth / payment / PII | Schema + Graph |
+
+Schema and graph gates run built-in validation. Add `lint`, `test`, `contract` gates to your spec when you've configured commands for them in `.s5d/config.yaml`.
 
 ## Documentation
 

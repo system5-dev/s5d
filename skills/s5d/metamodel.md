@@ -481,12 +481,12 @@ Tiers determine which artifacts are required and which gates are enforced.
 | `note` | None | None | note_rationale present |
 | `decision` | None (problem + hypotheses + evidence) | None | confirmed_by, no duplicate hypotheses |
 | `lightweight` | capabilities | schema | schema gate |
-| `standard` | domains + capabilities + components | schema, graph, lint | schema gate |
-| `high` | domains + capabilities + components + `"privacy"` keyword in context field | schema, graph, lint, test, contract | schema gate, privacy keyword check |
+| `standard` | domains + capabilities + components | schema, graph | schema gate |
+| `high` | domains + capabilities + components + `"privacy"` keyword in context field | schema, graph | schema gate, privacy keyword check |
 
 **Note tier:** Just rationale. No artifact validation. Useful for capturing context without structural commitment.
 
-**Decision tier:** Problem signal required. Must not contain an artifacts block. Hypotheses and evidence live in the spec YAML; human confirmation (`confirmed_by`) is captured when `s5d_decide` writes the record file. Evidence formality can be stored as 0–9 in raw YAML; command surfaces accept 1–5 (see fpf.md).
+**Decision tier:** Problem signal required. Must not contain an artifacts block. Hypotheses and evidence live in the spec YAML; human confirmation (`confirmed_by`) is captured when `s5d_decide` writes the record file. Evidence formality can be stored as 0–9 in raw YAML; command surfaces accept 1–5.
 
 **Lightweight tier:** Minimal structural spec. Capabilities required so that component tracing is possible. Used for early feature shaping.
 
