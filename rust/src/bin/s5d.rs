@@ -37,7 +37,7 @@ enum S5dCommand {
     New {
         /// Feature ID (e.g., "feat.orders.tracking")
         feature_id: String,
-        /// Assurance tier
+        /// Spec tier
         #[arg(long, default_value = "standard")]
         tier: String,
         /// Product name
@@ -77,7 +77,7 @@ enum S5dCommand {
         /// Scope — where this applies
         #[arg(long)]
         scope: String,
-        /// Kind: system or episteme
+        /// Kind: system (default) or episteme (knowledge/methodology)
         #[arg(long, default_value = "system")]
         kind: String,
         /// Rationale JSON (anomaly, approach, alternatives)
@@ -103,14 +103,11 @@ enum S5dCommand {
         /// Carrier reference (test file path, URL, etc.)
         #[arg(long)]
         carrier_ref: Option<String>,
-        #[arg(long, help = "F-G-R Formality: rigor of evidence method (1-5)")]
+        #[arg(long, help = "Rigor of evidence method (1-5)")]
         formality: Option<u8>,
-        #[arg(
-            long,
-            help = "F-G-R ClaimScope: what the claim covers (comma-separated)"
-        )]
+        #[arg(long, help = "What the claim covers (comma-separated)")]
         claim_scope: Option<String>,
-        #[arg(long, help = "F-G-R Reliability: probability claim is true (0.0-1.0)")]
+        #[arg(long, help = "Confidence that the claim is true (0.0-1.0)")]
         reliability: Option<f64>,
     },
     /// Record a decision in a decision spec

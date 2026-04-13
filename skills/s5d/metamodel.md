@@ -1,6 +1,6 @@
 # Metamodel Reference
 
-Structural vocabulary for architectural decomposition. Every system decomposes into these artifacts. This document is normative: agent behavior, validation gates, and health scoring derive from the definitions below.
+Structural vocabulary for architectural decomposition. Every system decomposes into these artifacts. Validation gates derive from the definitions below.
 
 ---
 
@@ -284,7 +284,7 @@ This traversal goes through links: `use_case_to_capability` link kind connects a
 
 ## Domain Edge Archetypes
 
-Eight archetypes cover every inter-domain relationship. Choosing the wrong archetype produces misleading health scores and incorrect cycle detection.
+Eight archetypes cover every inter-domain relationship. Choosing the wrong archetype produces incorrect cycle detection and layering violations.
 
 | Archetype | Direction | Definition | When to use |
 |-----------|-----------|------------|-------------|
