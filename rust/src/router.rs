@@ -55,6 +55,7 @@ impl std::fmt::Display for RouteResult {
 const OUT_OF_SCOPE_SIGNALS: &[&str] = &[
     "bugfix",
     "bug fix",
+    "fix typo",
     "typo",
     "config change",
     "config-only",
@@ -63,8 +64,23 @@ const OUT_OF_SCOPE_SIGNALS: &[&str] = &[
     "spec status",
 ];
 
+/// Patterns like "fix <small-thing>" that are likely out of scope.
+const FIX_SMALL_SIGNALS: &[&str] = &[
+    "off-by-one",
+    "null check",
+    "nil check",
+    "npe",
+    "null pointer",
+    "missing return",
+    "wrong index",
+    "fence post",
+    "fencepost",
+    "one-liner",
+];
+
 const DECISION_SIGNALS: &[&str] = &[
-    "how should we",
+    "should we",
+    "how should",
     "which approach",
     "compare",
     "tradeoff",
@@ -74,6 +90,8 @@ const DECISION_SIGNALS: &[&str] = &[
     "adr",
     "choose between",
     "decision",
+    " vs ",
+    " versus ",
 ];
 
 const HIGH_SIGNALS: &[&str] = &[
@@ -129,6 +147,20 @@ pub fn route(description: &str) -> RouteResult {
                 entry_step: None,
                 waiver: None,
                 reason: format!("matched out-of-scope signal: \"{}\"", signal),
+            };
+        }
+    }
+
+    // Small fix patterns — "fix <small thing>" or just "<small thing>" alone
+    for signal in FIX_SMALL_SIGNALS {
+        if lower.contains(signal) {
+            return RouteResult {
+                in_scope: false,
+                tier: None,
+                mode: None,
+                entry_step: None,
+                waiver: None,
+                reason: format!("small fix pattern: \"{}\"", signal),
             };
         }
     }
@@ -282,5 +314,26 @@ mod tests {
         let r = route("bugfix: null pointer");
         let s = r.to_string();
         assert!(s.contains("out-of-scope"));
+    }
+
+    #[test]
+    fn test_fix_small_out_of_scope() {
+        let r = route("fix off-by-one in pagination");
+        assert!(!r.in_scope, "fix off-by-one should be out of scope");
+
+        let r = route("add null check to user lookup");
+        assert!(!r.in_scope, "add null check should be out of scope");
+    }
+
+    #[test]
+    fn test_should_we_decision() {
+        let r = route("should we use Redis or Postgres for session storage?");
+        assert_eq!(r.tier, Some(crate::Tier::Decision));
+    }
+
+    #[test]
+    fn test_vs_decision() {
+        let r = route("Redis vs Postgres for caching");
+        assert_eq!(r.tier, Some(crate::Tier::Decision));
     }
 }
