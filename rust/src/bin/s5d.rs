@@ -1391,7 +1391,16 @@ fn run_rollback(spec_arg: &str) -> anyhow::Result<()> {
         anyhow::bail!("no successful import found for {} to roll back", spec.id);
     }
 
-    // Tombstone all alias entries for this package
+    // Collect global artifact IDs still referenced by other specs
+    let other_specs = project.discover_specs()?;
+    let mut referenced_globals = std::collections::HashSet::new();
+    for (_, other) in &other_specs {
+        if other.id != spec.id {
+            referenced_globals.extend(s5d::import::collect_global_artifact_ids(other));
+        }
+    }
+
+    // Tombstone alias entries for this package
     let mut aliases = s5d::AliasTable::load(&s5d_dir)?;
     for entry in &mut aliases.packages {
         if entry.package_id.as_deref() == Some(&spec.id) && !entry.deprecated {
@@ -1400,7 +1409,11 @@ fn run_rollback(spec_arg: &str) -> anyhow::Result<()> {
     }
     for entry in &mut aliases.global {
         if entry.owning_package.as_deref() == Some(&spec.id) && !entry.deprecated {
-            entry.deprecated = true;
+            // Skip if another spec still references this global artifact
+            let key = (entry.artifact_type.clone(), entry.artifact_id.clone());
+            if !referenced_globals.contains(&key) {
+                entry.deprecated = true;
+            }
         }
     }
     aliases.save(&s5d_dir)?;

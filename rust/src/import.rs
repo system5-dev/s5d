@@ -245,6 +245,29 @@ fn count_links(bindings: &[Binding], link_type: &str, actions: &mut DiffActions)
     }
 }
 
+/// Collect all (artifact_type, artifact_id) pairs that would be global aliases for a spec.
+pub fn collect_global_artifact_ids(spec: &Spec) -> std::collections::HashSet<(String, String)> {
+    let mut ids = std::collections::HashSet::new();
+    if let Some(ref arts) = spec.artifacts {
+        for p in &arts.products {
+            ids.insert(("Product".into(), p.id.clone()));
+        }
+        for d in &arts.domains {
+            ids.insert(("Domain".into(), d.id.clone()));
+        }
+        for s in &arts.systems {
+            ids.insert(("SoftwareSystem".into(), s.id.clone()));
+        }
+        for c in &arts.containers {
+            ids.insert(("Container".into(), c.id.clone()));
+        }
+        for r in &arts.roles {
+            ids.insert(("Role".into(), r.id.clone()));
+        }
+    }
+    ids
+}
+
 pub fn compute_state_fingerprint(spec: &Spec, aliases: &AliasTable) -> String {
     let mut hasher = Sha256::new();
     if let Ok(yaml) = serde_yaml::to_string(spec) {

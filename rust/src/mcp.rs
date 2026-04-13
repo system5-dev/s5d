@@ -1481,6 +1481,15 @@ fn tool_s5d_rollback(args: &Value) -> anyhow::Result<String> {
         anyhow::bail!("no successful import found for {} to roll back", spec.id);
     }
 
+    // Collect global artifact IDs still referenced by other specs
+    let other_specs = project.discover_specs()?;
+    let mut referenced_globals = std::collections::HashSet::new();
+    for (_, other) in &other_specs {
+        if other.id != spec.id {
+            referenced_globals.extend(crate::import::collect_global_artifact_ids(other));
+        }
+    }
+
     let mut aliases = crate::AliasTable::load(&s5d_dir)?;
     for entry in &mut aliases.packages {
         if entry.package_id.as_deref() == Some(&spec.id) && !entry.deprecated {
@@ -1489,7 +1498,10 @@ fn tool_s5d_rollback(args: &Value) -> anyhow::Result<String> {
     }
     for entry in &mut aliases.global {
         if entry.owning_package.as_deref() == Some(&spec.id) && !entry.deprecated {
-            entry.deprecated = true;
+            let key = (entry.artifact_type.clone(), entry.artifact_id.clone());
+            if !referenced_globals.contains(&key) {
+                entry.deprecated = true;
+            }
         }
     }
     aliases.save(&s5d_dir)?;
