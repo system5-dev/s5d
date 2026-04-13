@@ -261,15 +261,15 @@ pub fn default_gates_for_tier(tier: &crate::models::Tier) -> Vec<crate::models::
         Tier::Lightweight => vec![Gate {
             kind: "schema".to_string(),
         }],
+        // Default gates only include kinds with built-in handlers (schema, graph).
+        // lint, test, contract require user-configured commands in config.yaml —
+        // add them to spec.gates manually when commands are set up.
         Tier::Standard => vec![
             Gate {
                 kind: "schema".to_string(),
             },
             Gate {
                 kind: "graph".to_string(),
-            },
-            Gate {
-                kind: "lint".to_string(),
             },
         ],
         Tier::High => vec![
@@ -278,15 +278,6 @@ pub fn default_gates_for_tier(tier: &crate::models::Tier) -> Vec<crate::models::
             },
             Gate {
                 kind: "graph".to_string(),
-            },
-            Gate {
-                kind: "lint".to_string(),
-            },
-            Gate {
-                kind: "test".to_string(),
-            },
-            Gate {
-                kind: "contract".to_string(),
             },
         ],
     }
