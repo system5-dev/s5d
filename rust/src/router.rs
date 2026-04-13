@@ -151,17 +151,21 @@ pub fn route(description: &str) -> RouteResult {
         }
     }
 
-    // Small fix patterns — "fix <small thing>" or just "<small thing>" alone
-    for signal in FIX_SMALL_SIGNALS {
-        if lower.contains(signal) {
-            return RouteResult {
-                in_scope: false,
-                tier: None,
-                mode: None,
-                entry_step: None,
-                waiver: None,
-                reason: format!("small fix pattern: \"{}\"", signal),
-            };
+    // Small fix patterns — but only if no high-risk signal is present.
+    // "fix null pointer in auth token validation" should route high, not out-of-scope.
+    let has_high_signal = HIGH_SIGNALS.iter().any(|s| lower.contains(s));
+    if !has_high_signal {
+        for signal in FIX_SMALL_SIGNALS {
+            if lower.contains(signal) {
+                return RouteResult {
+                    in_scope: false,
+                    tier: None,
+                    mode: None,
+                    entry_step: None,
+                    waiver: None,
+                    reason: format!("small fix pattern: \"{}\"", signal),
+                };
+            }
         }
     }
 
@@ -335,5 +339,13 @@ mod tests {
     fn test_vs_decision() {
         let r = route("Redis vs Postgres for caching");
         assert_eq!(r.tier, Some(crate::Tier::Decision));
+    }
+
+    #[test]
+    fn test_high_signal_overrides_small_fix() {
+        // "null pointer" is a small-fix signal, but "auth" is high-risk — high wins
+        let r = route("fix null pointer in auth token validation");
+        assert!(r.in_scope, "high-risk signal should override small-fix");
+        assert_eq!(r.tier, Some(crate::Tier::High));
     }
 }
