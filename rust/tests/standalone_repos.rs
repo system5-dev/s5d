@@ -2002,10 +2002,6 @@ fn reconcile_restores_synced_status_after_drift() {
 // ── Shared global rollback risk ─────────────────────────────────────────────
 
 #[test]
-#[ignore] // KNOWN BUG: rollback tombstones global aliases by owning_package,
-           // breaking other specs that share the same global artifact.
-           // Fix: rollback should check if other non-deprecated specs reference
-           // the global alias before tombstoning it.
 fn rollback_of_first_spec_does_not_break_second_spec_sharing_global_artifact() {
     let repo = StandaloneRepo::new();
     run_ok(repo.path(), ["init"]);
