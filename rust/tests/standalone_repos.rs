@@ -2109,6 +2109,84 @@ fn rollback_of_first_spec_does_not_break_second_spec_sharing_global_artifact() {
     );
 }
 
+// ── Shared global drift visibility ───────────────────────────────────────────
+
+#[test]
+fn shared_global_drift_visible_for_non_owner_spec() {
+    // Two specs share Product "shared". Spec1 owns the global alias.
+    // Corrupt the shared global UUID. Drift-check on spec2 (non-owner)
+    // should detect the drift.
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+
+    // Spec 1 — owner of Product "shared"
+    run_ok(
+        repo.path(),
+        ["new", "feat.owner", "--tier", "lightweight", "--product", "shared"],
+    );
+    let spec1_path = only_spec_path(&repo);
+    let spec1_str = spec1_path.to_str().unwrap().to_string();
+    {
+        let mut spec: s5d::Spec = load_yaml(&spec1_path);
+        let arts = spec.artifacts.as_mut().unwrap();
+        arts.capabilities.push(s5d::Capability {
+            id: "cap.A".into(), domain: "".into(), name: "A".into(),
+            description: None, since: None,
+        });
+        fs::write(&spec1_path, serde_yaml::to_string(&spec).unwrap()).unwrap();
+    }
+    run_ok(repo.path(), ["validate", &spec1_str]);
+    run_ok(repo.path(), ["preview", &spec1_str]);
+    run_ok(repo.path(), ["approve", &spec1_str, "--reviewer", "R"]);
+    run_ok(repo.path(), ["run-gates", &spec1_str]);
+    run_ok(repo.path(), ["import", &spec1_str]);
+
+    // Spec 2 — non-owner, shares Product "shared"
+    run_ok(
+        repo.path(),
+        ["new", "feat.consumer", "--tier", "lightweight", "--product", "shared"],
+    );
+    let specs_dir = repo.path().join(".s5d").join("packages");
+    let spec2_path = fs::read_dir(&specs_dir)
+        .unwrap()
+        .map(|e| e.unwrap().path())
+        .find(|p| p.to_string_lossy().contains("feat.consumer"))
+        .expect("spec2 should exist");
+    let spec2_str = spec2_path.to_str().unwrap().to_string();
+    {
+        let mut spec: s5d::Spec = load_yaml(&spec2_path);
+        let arts = spec.artifacts.as_mut().unwrap();
+        arts.capabilities.push(s5d::Capability {
+            id: "cap.B".into(), domain: "".into(), name: "B".into(),
+            description: None, since: None,
+        });
+        fs::write(&spec2_path, serde_yaml::to_string(&spec).unwrap()).unwrap();
+    }
+    run_ok(repo.path(), ["validate", &spec2_str]);
+    run_ok(repo.path(), ["preview", &spec2_str]);
+    run_ok(repo.path(), ["approve", &spec2_str, "--reviewer", "R"]);
+    run_ok(repo.path(), ["run-gates", &spec2_str]);
+    run_ok(repo.path(), ["import", &spec2_str]);
+
+    // Both imported. Corrupt the shared Product global alias UUID.
+    let s5d_dir = repo.path().join(".s5d");
+    let mut aliases = s5d::AliasTable::load(&s5d_dir).unwrap();
+    for entry in &mut aliases.global {
+        if entry.artifact_id == "shared" && entry.artifact_type == "Product" {
+            entry.uuid = "corrupted-0000-0000-0000-000000000000".into();
+        }
+    }
+    aliases.save(&s5d_dir).unwrap();
+
+    // Drift-check on spec2 (non-owner) should detect drift
+    let drift = run_s5d(repo.path(), ["drift-check", &spec2_str]);
+    assert!(
+        drift.stdout.contains("drifted") || drift.stderr.contains("drifted"),
+        "non-owner spec should detect drift in shared global artifact:\n{}",
+        drift.summary()
+    );
+}
+
 // ── Original tests continue ─────────────────────────────────────────────────
 
 #[test]

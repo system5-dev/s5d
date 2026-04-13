@@ -274,12 +274,19 @@ pub fn compute_state_fingerprint(spec: &Spec, aliases: &AliasTable) -> String {
         hasher.update(yaml.as_bytes());
     }
     let package_id = &spec.id;
+
+    // Include ALL global aliases that this spec references (not just owned).
+    // A spec "references" a global artifact if it declares it in artifacts.
+    let referenced_globals = collect_global_artifact_ids(spec);
     for entry in &aliases.global {
-        if entry.owning_package.as_deref() == Some(package_id) {
-            hasher.update(format!(
-                "G:{}:{}:{}\n",
-                entry.artifact_id, entry.artifact_type, entry.uuid
-            ));
+        if !entry.deprecated {
+            let key = (entry.artifact_type.clone(), entry.artifact_id.clone());
+            if referenced_globals.contains(&key) {
+                hasher.update(format!(
+                    "G:{}:{}:{}\n",
+                    entry.artifact_id, entry.artifact_type, entry.uuid
+                ));
+            }
         }
     }
     for entry in &aliases.packages {
