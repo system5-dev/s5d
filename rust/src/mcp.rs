@@ -298,7 +298,7 @@ fn core_tools() -> Vec<Value> {
         }),
         json!({
             "name": "s5d_route",
-            "description": "Classify a request into tier, mode, and entry point (Step 0 Phase A router)",
+            "description": "Classify a request into tier, mode, and entry point",
             "inputSchema": {
                 "type": "object",
                 "required": ["description"],
@@ -371,7 +371,7 @@ fn validate_spec_path(spec_arg: &str) -> anyhow::Result<()> {
     }
     if !spec_arg.ends_with(".s5d.yaml") {
         anyhow::bail!(
-            "spec path must end with .s5d.yaml or .s5d.yml, got: {}",
+            "spec path must end with .s5d.yaml, got: {}",
             spec_arg
         );
     }

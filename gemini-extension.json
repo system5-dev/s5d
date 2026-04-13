@@ -1,6 +1,6 @@
 {
   "name": "s5d",
-  "version": "3.0.0",
-  "description": "S5D — unified SDLC for AI coding agents. Bootstrap, Frame, Decide, Spec, Build, Verify, Ship, Learn.",
+  "version": "0.1.0",
+  "description": "S5D — decision and validation layer for repo changes. Preview, approve, import, drift-check, rollback.",
   "contextFileName": "S5D.md"
 }

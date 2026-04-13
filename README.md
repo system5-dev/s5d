@@ -1,80 +1,89 @@
-# S5D — Software Architecture Decision & Feature Framework
+# S5D
 
-Three layers. One path. Modular skills.
+> **Status: alpha / experimental**
 
-S5D is an opinionated software-architecture profile built on FPF. It applies to decisions and features grounded in an existing repository. No codebase, no S5D.
+A thin decision-and-validation layer for changes in a repository with AI participation.
 
-**Layer 1 — FPF**: thinking discipline. Frame before solving. Evidence before claiming.
-**Layer 2 — Reasoning cycle**: Frame → Hypothesize → Evidence → Audit → Decide.
-**Layer 3 — Metamodel**: architectural decomposition. Domains → Capabilities → Entities → Components.
+Not a methodology. Not a replacement for git, tests, or planning tools. Four things on top of normal development:
 
-## Skills
+1. **Explicit choice** — compare alternatives before committing to one.
+2. **Reuse architecture** — describe changes in terms of the existing codebase.
+3. **Record decisions** — write down what was decided, with integrity.
+4. **Verify in code** — check that the code still matches the decision. Roll back when it doesn't.
 
-| Skill | What it does |
-|-------|-------------|
-| `/s5d` | Unified SDLC — decisions, features, traceability, gates, lifecycle |
-| `/fpf` | FPF reasoning — problem framing, variants, evidence, ADI cycle |
+## How it works
 
-## Install
+Two files per change: a **spec** (what you intend) and a **record** (what happened). The CLI enforces a SHA256 chain between them:
 
-### Claude Code
 ```
-/plugin install s5d@system5-dev/s5d
+spec → preview → approve → import → drift-check
+                                         ↓
+                                    reconcile / rollback
 ```
 
-### Gemini CLI
+## Quick start
+
 ```bash
-gemini extensions install https://github.com/system5-dev/s5d
-```
-
-### OpenAI Codex
-Add to `.agents/plugins/marketplace.json`:
-```json
-{"plugins": [{"name": "s5d", "source": "github:system5-dev/s5d"}]}
-```
-
-### Universal (all agents)
-```bash
+# Install
 curl -fsSL https://raw.githubusercontent.com/system5-dev/s5d/main/install.sh | bash
+
+# Initialize in your repo
+s5d init
+
+# Create a spec
+s5d new feat.my-feature --product myapp
+
+# Edit the spec YAML, then:
+s5d validate .s5d/packages/feat.my-feature__*.s5d.yaml
+s5d preview .s5d/packages/feat.my-feature__*.s5d.yaml
+s5d approve .s5d/packages/feat.my-feature__*.s5d.yaml --reviewer yourname
+
+# Implement your code, then:
+s5d run-gates .s5d/packages/feat.my-feature__*.s5d.yaml
+s5d import .s5d/packages/feat.my-feature__*.s5d.yaml
+
+# Later: verify nothing drifted
+s5d drift-check
 ```
 
-## Usage
+## Non-goals
 
+- Not a replacement for git
+- Not a replacement for tests
+- Not a planning or project management system
+- Not required for small fixes (bugfix <30 LOC, config-only, docs-only — just do them)
+- Not a code generator
+
+## Agent integration
+
+S5D works as an MCP server (experimental) for AI coding agents:
+
+```bash
+# Claude Code
+s5d init --claude
+
+# All supported agents
+s5d init --all
 ```
-/s5d should I use PostgreSQL or SQLite?
-/s5d add authentication to the API
-/fpf evaluate these three deployment strategies
-```
 
-Use S5D when the question is architectural and tied to a real codebase.
-
-## The pendulum
-
-Descend from the reasoning cycle into Metamodel to decompose hypotheses into domains/capabilities, return with decomposition AS evidence, then decide.
-
-## Feature lifecycle
-
-```
-Spec → Preview → Approve → Test Contract → Execute → Verify (gates) → Reflect
-```
+Available as a plugin for Claude Code, Gemini CLI, and Codex.
 
 ## Tiers
 
-| Tier | When | Gates |
-|------|------|-------|
-| Note | Trivial, reversible | None |
-| Decision | Hard to reverse, trade-offs | N/A |
+| Tier | When | Built-in gates |
+|------|------|----------------|
+| Note | Capture context | None |
+| Decision | Compare alternatives | None |
 | Lightweight | Simple feature | Schema |
-| Standard | Regular feature | Schema + Graph + Lint |
-| High | Critical feature | Schema + Graph + Lint + Test + Contract |
+| Standard | Regular feature | Schema + Graph |
+| High | Auth / payment / PII | Schema + Graph + all declared |
 
-## Based on
+## Documentation
 
-- [FPF — First Principles Framework](https://github.com/ailev/FPF) by Anatoly Levenchuk
-- S5D Metamodel by Roman Voronin + Ivan Podobed
+- `skills/s5d/SKILL.md` — command reference and flow
+- `skills/s5d/metamodel.md` — artifact definitions and validation rules
+- `skills/s5d/session-protocol.md` — WAL format, conflict resolution
 
-## Requirements
+## License
 
-- Claude Code, Gemini CLI, Codex, or any agent runtime that supports skills
-- Existing repository and codebase context
-- `s5d` CLI binary (installed automatically)
+MIT

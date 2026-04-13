@@ -2,7 +2,7 @@ use clap::{Parser, Subcommand};
 use colored::Colorize;
 
 #[derive(Parser)]
-#[command(name = "s5d", about = "S5D — protocol for high-assurance repo changes")]
+#[command(name = "s5d", about = "S5D — decision and validation layer for repo changes")]
 struct Cli {
     #[command(subcommand)]
     command: S5dCommand,
@@ -249,7 +249,7 @@ enum S5dCommand {
         #[arg(long = "issue")]
         structured_issues: Vec<String>,
     },
-    /// Classify a request into tier, mode, and entry point (Step 0 Phase A)
+    /// Classify a request into tier, mode, and entry point
     Route {
         /// Request description to classify
         description: Vec<String>,
@@ -267,7 +267,7 @@ enum S5dCommand {
         /// Path to bootstrap manifest YAML
         manifest: String,
     },
-    /// Print Comparability Gauge ID
+    /// Print environment fingerprint (tool versions hash)
     Cg,
     /// Start stdio MCP server (for Claude Code integration)
     Mcp,

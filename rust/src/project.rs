@@ -31,10 +31,11 @@ impl S5dProject {
     pub fn init(at: &Path) -> anyhow::Result<(Self, InitReport)> {
         let s5d = at.join(".s5d");
         if s5d.exists() {
-            // Idempotent: return existing project with empty report
+            // Idempotent: repair missing subdirs, return existing project
             let project = Self {
                 root: at.to_path_buf(),
             };
+            project.ensure_dirs()?;
             let report = InitReport {
                 root: at.to_path_buf(),
                 dirs_created: vec![],
