@@ -674,6 +674,15 @@ fn run_init(claude: bool, cursor: bool, codex: bool, gemini: bool, all: bool) ->
         }
     }
 
+    println!("\n  {} Agent instructions:", "agents".bold());
+    match ensure_agents_md(&cwd.join("AGENTS.md")) {
+        Ok(AgentsUpdate::Created) => println!("    {} AGENTS.md — created", "✓".green()),
+        Ok(AgentsUpdate::Inserted) => println!("    {} AGENTS.md — s5d block appended", "✓".green()),
+        Ok(AgentsUpdate::Replaced) => println!("    {} AGENTS.md — s5d block updated", "✓".green()),
+        Ok(AgentsUpdate::Unchanged) => println!("    {} AGENTS.md — already up to date", "✓".green()),
+        Err(e) => println!("    {} AGENTS.md: {}", "⚠".yellow(), e),
+    }
+
     println!(
         "\n  {} Restart your agent session to activate s5d MCP tools.",
         "⚠".yellow()
@@ -686,6 +695,78 @@ fn run_init(claude: bool, cursor: bool, codex: bool, gemini: bool, all: bool) ->
     println!();
 
     Ok(())
+}
+
+// ── AGENTS.md block ──────────────────────────────────────────────────────────
+
+const AGENTS_BEGIN: &str = "<!-- s5d:begin -->";
+const AGENTS_END: &str = "<!-- s5d:end -->";
+
+fn agents_block() -> String {
+    format!(
+        "{}\n## S5D — Decision & Validation Layer\n\n\
+This repo uses **S5D** (https://github.com/system5-dev/s5d) — a thin layer over git \
+for recording architectural decisions and verifying that code still matches them.\n\n\
+**Use S5D for non-trivial changes.** Skip for: bug fixes <30 LOC, config-only, docs-only.\n\n\
+**Flow:** `s5d_new` → edit spec → `s5d_validate` → `s5d_preview` → `s5d_approve` \
+→ implement → `s5d_run_gates` → `s5d_import` → `s5d_drift_check`.\n\n\
+**MCP tools** (prefer over shell CLI when available):\n\
+- `s5d_route` — classify a request into tier/mode/entry\n\
+- `s5d_new` / `s5d_note` — create spec / quick note\n\
+- `s5d_validate` / `s5d_preview` — dry-run checks before approval\n\
+- `s5d_approve` / `s5d_import` — commit decision, bind SHA256 chain\n\
+- `s5d_drift_check` / `s5d_reconcile` / `s5d_rollback` — verify & recover\n\
+- `s5d_show` / `s5d_status` — inspect specs and project state\n\n\
+Specs live in `.s5d/packages/`. Run `s5d --help` or read `skills/s5d/SKILL.md` for full reference.\n{}",
+        AGENTS_BEGIN, AGENTS_END
+    )
+}
+
+#[derive(Debug, PartialEq)]
+enum AgentsUpdate {
+    Created,
+    Inserted,
+    Replaced,
+    Unchanged,
+}
+
+fn ensure_agents_md(path: &std::path::Path) -> anyhow::Result<AgentsUpdate> {
+    let block = agents_block();
+
+    if !path.exists() {
+        std::fs::write(path, format!("{}\n", block))?;
+        return Ok(AgentsUpdate::Created);
+    }
+
+    let existing = std::fs::read_to_string(path)?;
+
+    if let (Some(start), Some(end_rel)) = (
+        existing.find(AGENTS_BEGIN),
+        existing[existing.find(AGENTS_BEGIN).unwrap_or(0)..].find(AGENTS_END),
+    ) {
+        let end = start + end_rel + AGENTS_END.len();
+        if &existing[start..end] == block {
+            return Ok(AgentsUpdate::Unchanged);
+        }
+        let mut updated = String::with_capacity(existing.len() + block.len());
+        updated.push_str(&existing[..start]);
+        updated.push_str(&block);
+        updated.push_str(&existing[end..]);
+        std::fs::write(path, updated)?;
+        return Ok(AgentsUpdate::Replaced);
+    }
+
+    let mut updated = existing;
+    if !updated.ends_with('\n') {
+        updated.push('\n');
+    }
+    if !updated.is_empty() && !updated.ends_with("\n\n") {
+        updated.push('\n');
+    }
+    updated.push_str(&block);
+    updated.push('\n');
+    std::fs::write(path, updated)?;
+    Ok(AgentsUpdate::Inserted)
 }
 
 /// Register s5d MCP server in a JSON config file (Claude, Cursor, Gemini format).
@@ -2528,9 +2609,70 @@ fn load_spec_context(
     Ok((project, abs_path, spec, spec_filename))
 }
 
+#[cfg(test)]
+mod agents_md_tests {
+    use super::*;
+    use tempfile::tempdir;
 
+    #[test]
+    fn creates_file_when_absent() {
+        let dir = tempdir().unwrap();
+        let path = dir.path().join("AGENTS.md");
+        assert_eq!(ensure_agents_md(&path).unwrap(), AgentsUpdate::Created);
+        let body = std::fs::read_to_string(&path).unwrap();
+        assert!(body.contains(AGENTS_BEGIN));
+        assert!(body.contains(AGENTS_END));
+        assert!(body.contains("s5d_route"));
+    }
 
+    #[test]
+    fn appends_when_no_markers() {
+        let dir = tempdir().unwrap();
+        let path = dir.path().join("AGENTS.md");
+        std::fs::write(&path, "# Project\n\nExisting content.\n").unwrap();
+        assert_eq!(ensure_agents_md(&path).unwrap(), AgentsUpdate::Inserted);
+        let body = std::fs::read_to_string(&path).unwrap();
+        assert!(body.starts_with("# Project\n"));
+        assert!(body.contains("Existing content."));
+        assert!(body.contains(AGENTS_BEGIN));
+    }
 
+    #[test]
+    fn idempotent_on_second_run() {
+        let dir = tempdir().unwrap();
+        let path = dir.path().join("AGENTS.md");
+        ensure_agents_md(&path).unwrap();
+        assert_eq!(ensure_agents_md(&path).unwrap(), AgentsUpdate::Unchanged);
+    }
+
+    #[test]
+    fn replaces_stale_block() {
+        let dir = tempdir().unwrap();
+        let path = dir.path().join("AGENTS.md");
+        let stale = format!("# X\n\n{}\nold stuff\n{}\n", AGENTS_BEGIN, AGENTS_END);
+        std::fs::write(&path, &stale).unwrap();
+        assert_eq!(ensure_agents_md(&path).unwrap(), AgentsUpdate::Replaced);
+        let body = std::fs::read_to_string(&path).unwrap();
+        assert!(body.starts_with("# X\n"));
+        assert!(!body.contains("old stuff"));
+        assert!(body.contains("s5d_route"));
+    }
+
+    #[test]
+    fn preserves_surrounding_content_on_replace() {
+        let dir = tempdir().unwrap();
+        let path = dir.path().join("AGENTS.md");
+        let stale = format!(
+            "# Top\n\n{}\nold\n{}\n\n## Footer section\n",
+            AGENTS_BEGIN, AGENTS_END
+        );
+        std::fs::write(&path, &stale).unwrap();
+        ensure_agents_md(&path).unwrap();
+        let body = std::fs::read_to_string(&path).unwrap();
+        assert!(body.contains("# Top"));
+        assert!(body.contains("## Footer section"));
+    }
+}
 
 
 
