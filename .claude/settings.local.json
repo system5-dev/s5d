@@ -12,7 +12,8 @@
       "mcp__diana-gw-beliefs__belief__search",
       "mcp__diana-gw-beliefs__belief__observe",
       "mcp__diana-gw-diana-daemon__system_clipboard",
-      "mcp__diana-gw-diana-daemon__voice_speak"
+      "mcp__diana-gw-diana-daemon__voice_speak",
+      "mcp__diana-gw-diana-daemon__ui_bubble_show"
     ]
   },
   "enableAllProjectMcpServers": true,

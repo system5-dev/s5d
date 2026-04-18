@@ -268,7 +268,9 @@ enum S5dCommand {
     Cg,
     /// Start stdio MCP server (for Claude Code integration)
     Mcp,
-    /// Register s5d MCP server in project .mcp.json
+    /// Register s5d MCP server for supported assistants.
+    /// Default: project-level for Claude (.mcp.json). Use flags to target
+    /// other assistants or --global to install at user level.
     Install {
         /// Explicit path to s5d binary (default: current executable)
         #[arg(long)]
@@ -279,6 +281,24 @@ enum S5dCommand {
         /// Remove the s5d MCP entry
         #[arg(long)]
         uninstall: bool,
+        /// Register for Claude Code
+        #[arg(long)]
+        claude: bool,
+        /// Register for Cursor
+        #[arg(long)]
+        cursor: bool,
+        /// Register for Codex CLI
+        #[arg(long)]
+        codex: bool,
+        /// Register for Gemini CLI
+        #[arg(long)]
+        gemini: bool,
+        /// Register for all supported assistants
+        #[arg(long)]
+        all: bool,
+        /// Install at user/global level (~/.claude, ~/.codex, ~/.gemini) instead of project
+        #[arg(long)]
+        global: bool,
     },
 }
 
@@ -424,20 +444,40 @@ fn main() -> anyhow::Result<()> {
             s5d_path,
             dry_run,
             uninstall,
-        } => run_install(s5d_path.as_deref(), dry_run, uninstall),
+            claude,
+            cursor,
+            codex,
+            gemini,
+            all,
+            global,
+        } => run_install(
+            s5d_path.as_deref(),
+            dry_run,
+            uninstall,
+            claude,
+            cursor,
+            codex,
+            gemini,
+            all,
+            global,
+        ),
     }
 }
 
 // ── Install ───────────────────────────────────────────────────────────────────
 
+#[allow(clippy::too_many_arguments)]
 fn run_install(
     s5d_path: Option<&str>,
     dry_run: bool,
     uninstall: bool,
+    claude: bool,
+    cursor: bool,
+    codex: bool,
+    gemini: bool,
+    all: bool,
+    global: bool,
 ) -> anyhow::Result<()> {
-    // Always write to project-level .mcp.json (vendor-agnostic)
-    let settings_path = std::path::PathBuf::from(".mcp.json");
-
     // Resolve s5d binary path
     let binary_path = if let Some(p) = s5d_path {
         std::path::PathBuf::from(p)
@@ -446,113 +486,180 @@ fn run_install(
     };
     let binary_str = binary_path.to_string_lossy().into_owned();
 
-    // Read or create settings
-    let mut settings: serde_json::Value = if settings_path.exists() {
-        let raw = std::fs::read_to_string(&settings_path)?;
-        serde_json::from_str(&raw).unwrap_or(serde_json::Value::Object(Default::default()))
-    } else {
-        serde_json::Value::Object(Default::default())
-    };
+    // No flags → default Claude at project level (legacy behavior).
+    let no_flags = !claude && !cursor && !codex && !gemini && !all;
+    let do_claude = claude || all || no_flags;
+    let do_cursor = cursor || all;
+    let do_codex = codex || all;
+    let do_gemini = gemini || all;
 
-    // Build desired entry (needed for comparison before mutating)
-    let desired = serde_json::json!({
-        "type": "stdio",
-        "command": binary_str,
-        "args": ["mcp"]
-    });
+    // Resolve target paths based on --global vs project.
+    let home = std::env::var("HOME")
+        .map(std::path::PathBuf::from)
+        .map_err(|_| anyhow::anyhow!("HOME env var not set"))?;
+    let cwd = std::env::current_dir()?;
 
-    // Mutate settings in a block so the borrow ends before serialization
-    enum Action {
-        Write,
-        DryRun(String),
-        AlreadyDone,
-        NotFound,
+    struct Target {
+        name: &'static str,
+        path: std::path::PathBuf,
+        kind: TargetKind,
     }
-    let action = {
-        let mcp_servers = settings
-            .as_object_mut()
-            .ok_or_else(|| anyhow::anyhow!("settings.json root is not an object"))?
-            .entry("mcpServers")
-            .or_insert(serde_json::Value::Object(Default::default()))
-            .as_object_mut()
-            .ok_or_else(|| anyhow::anyhow!("mcpServers is not an object"))?;
+    enum TargetKind {
+        Json, // mcpServers.<name> in JSON
+        Toml, // [mcp_servers.<name>] in TOML
+    }
 
-        if uninstall {
-            if mcp_servers.remove("s5d").is_some() {
-                if dry_run {
-                    Action::DryRun("remove".to_string())
-                } else {
-                    Action::Write
-                }
+    let mut targets: Vec<Target> = Vec::new();
+    if do_claude {
+        targets.push(Target {
+            name: "Claude",
+            path: if global {
+                home.join(".claude/settings.json")
             } else {
-                Action::NotFound
-            }
-        } else if let Some(existing) = mcp_servers.get("s5d") {
-            if existing == &desired {
-                Action::AlreadyDone
-            } else if dry_run {
-                Action::DryRun("write".to_string())
+                cwd.join(".mcp.json")
+            },
+            kind: TargetKind::Json,
+        });
+    }
+    if do_cursor {
+        targets.push(Target {
+            name: "Cursor",
+            path: if global {
+                home.join(".cursor/mcp.json")
             } else {
-                mcp_servers.insert("s5d".to_string(), desired.clone());
-                Action::Write
+                cwd.join(".cursor/mcp.json")
+            },
+            kind: TargetKind::Json,
+        });
+    }
+    if do_codex {
+        targets.push(Target {
+            name: "Codex",
+            path: if global {
+                home.join(".codex/config.toml")
+            } else {
+                cwd.join(".codex/config.toml")
+            },
+            kind: TargetKind::Toml,
+        });
+    }
+    if do_gemini {
+        targets.push(Target {
+            name: "Gemini",
+            path: if global {
+                home.join(".gemini/settings.json")
+            } else {
+                cwd.join(".gemini/settings.json")
+            },
+            kind: TargetKind::Json,
+        });
+    }
+
+    let scope = if global { "global" } else { "project" };
+    let verb = if uninstall { "Uninstalling" } else { "Installing" };
+    println!(
+        "{} s5d MCP server ({} scope)",
+        format!("{}", verb).bold(),
+        scope
+    );
+
+    for t in &targets {
+        let rel = t.path.strip_prefix(&home).ok()
+            .map(|p| format!("~/{}", p.display()))
+            .unwrap_or_else(|| t.path.display().to_string());
+
+        if dry_run {
+            println!("    {} {} — {} (dry-run)", "•".cyan(), t.name, rel);
+            continue;
+        }
+
+        let result: anyhow::Result<bool> = if uninstall {
+            match &t.kind {
+                TargetKind::Json => unregister_mcp_json(&t.path),
+                TargetKind::Toml => unregister_mcp_toml(&t.path),
             }
-        } else if dry_run {
-            Action::DryRun("write".to_string())
         } else {
-            mcp_servers.insert("s5d".to_string(), desired.clone());
-            Action::Write
-        }
-    };
+            match &t.kind {
+                TargetKind::Json => register_mcp_json(&t.path, &binary_str),
+                TargetKind::Toml => register_mcp_toml(&t.path, &binary_str),
+            }
+        };
 
-    match action {
-        Action::Write => {
-            if let Some(parent) = settings_path.parent() {
-                std::fs::create_dir_all(parent)?;
-            }
-            let out = serde_json::to_string_pretty(&settings)?;
-            std::fs::write(&settings_path, out)?;
-            if uninstall {
-                println!("{} Removed s5d MCP server", "ok".green());
-                println!("   Settings: {}", settings_path.display());
-                println!();
-                println!("   Restart Claude Code to deactivate.");
-            } else {
-                println!("{} Registered s5d MCP server", "ok".green());
-                println!("   Settings: {}", settings_path.display());
-                println!("   Command:  {} mcp", binary_str);
-                println!();
-                println!("   Restart Claude Code to activate.");
-            }
+        match result {
+            Ok(false) => println!(
+                "    {} {} — {} (already {})",
+                "✓".green(),
+                t.name,
+                rel,
+                if uninstall { "removed" } else { "registered" }
+            ),
+            Ok(true) => println!("    {} {} — {}", "✓".green(), t.name, rel),
+            Err(e) => println!("    {} {} — {}: {}", "⚠".yellow(), t.name, rel, e),
         }
-        Action::AlreadyDone => {
-            println!("{} s5d already registered, no change", "ok".green());
-            println!("   Settings: {}", settings_path.display());
-            println!("   Command:  {} mcp", binary_str);
-        }
-        Action::NotFound => {
-            println!(
-                "{} s5d MCP entry not found, nothing to remove",
-                "ok".green()
-            );
-        }
-        Action::DryRun(kind) => {
-            if kind == "remove" {
-                println!("{} Would remove s5d MCP entry", "dry-run".yellow());
-                println!("   Settings: {}", settings_path.display());
-            } else {
-                println!(
-                    "{} Would write to {}",
-                    "dry-run".yellow(),
-                    settings_path.display()
-                );
-                println!("   mcpServers.s5d:");
-                println!("     type:    stdio");
-                println!("     command: {}", binary_str);
-                println!("     args:    [\"mcp\"]");
-            }
-        }
+    }
+
+    if !dry_run && !uninstall {
+        println!();
+        println!("   Command: {} mcp", binary_str);
+        println!();
+        println!("   {} Restart your agent session to activate.", "⚠".yellow());
     }
     Ok(())
+}
+
+/// Remove s5d entry from a JSON config file. Returns Ok(true) if modified.
+fn unregister_mcp_json(path: &std::path::Path) -> anyhow::Result<bool> {
+    if !path.exists() {
+        return Ok(false);
+    }
+    let raw = std::fs::read_to_string(path)?;
+    let mut settings: serde_json::Value =
+        serde_json::from_str(&raw).unwrap_or(serde_json::json!({}));
+    let servers = match settings
+        .as_object_mut()
+        .and_then(|o| o.get_mut("mcpServers"))
+        .and_then(|v| v.as_object_mut())
+    {
+        Some(s) => s,
+        None => return Ok(false),
+    };
+    if servers.remove("s5d").is_none() {
+        return Ok(false);
+    }
+    std::fs::write(path, serde_json::to_string_pretty(&settings)?)?;
+    Ok(true)
+}
+
+/// Remove s5d entry from a TOML config file (Codex). Returns Ok(true) if modified.
+fn unregister_mcp_toml(path: &std::path::Path) -> anyhow::Result<bool> {
+    if !path.exists() {
+        return Ok(false);
+    }
+    let raw = std::fs::read_to_string(path)?;
+    // Naive line-based removal: drop [mcp_servers.s5d] block until next [section] or EOF.
+    let mut out = String::with_capacity(raw.len());
+    let mut skipping = false;
+    let mut modified = false;
+    for line in raw.lines() {
+        let trimmed = line.trim_start();
+        if trimmed.starts_with("[mcp_servers.s5d]") {
+            skipping = true;
+            modified = true;
+            continue;
+        }
+        if skipping && trimmed.starts_with('[') && !trimmed.starts_with("[mcp_servers.s5d]") {
+            skipping = false;
+        }
+        if !skipping {
+            out.push_str(line);
+            out.push('\n');
+        }
+    }
+    if !modified {
+        return Ok(false);
+    }
+    std::fs::write(path, out)?;
+    Ok(true)
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
