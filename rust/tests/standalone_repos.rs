@@ -379,6 +379,96 @@ fn write_architecture_lint_spec(repo: &StandaloneRepo, allow_billing_to_auth: bo
     spec_path
 }
 
+fn write_codebase_governance_spec(repo: &StandaloneRepo) -> PathBuf {
+    let spec_dir = repo.path().join(".s5d").join("packages");
+    fs::create_dir_all(&spec_dir).unwrap();
+    let spec_path = spec_dir.join("feat.app.self-governance__20260423.s5d.yaml");
+
+    let spec = s5d::Spec {
+        s5d: "1.0".into(),
+        id: "feat.app.self-governance".into(),
+        version: "1.0.0".into(),
+        product: "app".into(),
+        tier: s5d::Tier::Standard,
+        allow_update: false,
+        meta: None,
+        context: Some("Self-governance fixture".into()),
+        workflow: None,
+        artifacts: Some(s5d::Artifacts {
+            products: vec![s5d::Product {
+                id: "app".into(),
+                name: "App".into(),
+                organization: None,
+            }],
+            domains: vec![s5d::Domain {
+                id: "dom.app".into(),
+                product: "app".into(),
+                name: "App".into(),
+                classification: Some("core".into()),
+                description: None,
+                team: None,
+                maturity_level: None,
+            }],
+            capabilities: vec![s5d::Capability {
+                id: "cap.app.source".into(),
+                domain: "dom.app".into(),
+                name: "Source".into(),
+                description: None,
+                since: None,
+            }],
+            features: vec![s5d::Feature {
+                id: "feat.app.self-governance".into(),
+                product: "app".into(),
+                name: "Self Governance".into(),
+                description: None,
+            }],
+            systems: vec![s5d::SoftwareSystem {
+                id: "sys.app".into(),
+                product: "app".into(),
+                name: "App".into(),
+            }],
+            containers: vec![s5d::Container {
+                id: "ctr.app".into(),
+                system: "sys.app".into(),
+                name: "Rust App".into(),
+                technology: Some("Rust".into()),
+            }],
+            components: vec![s5d::Component {
+                id: "comp.app".into(),
+                feature: "feat.app.self-governance".into(),
+                domain: "dom.app".into(),
+                container: "ctr.app".into(),
+                name: "App Source".into(),
+                paths: vec!["app/src".into()],
+            }],
+            ..Default::default()
+        }),
+        links: Some(s5d::Links::default()),
+        contracts: vec![],
+        gates: vec![
+            s5d::Gate {
+                kind: "schema".into(),
+            },
+            s5d::Gate {
+                kind: "graph".into(),
+            },
+            s5d::Gate {
+                kind: "architecture".into(),
+            },
+        ],
+        roc: None,
+        problem: None,
+        hypotheses: vec![],
+        decision: None,
+        note_rationale: None,
+        expires_at: None,
+        auto_noted: false,
+    };
+
+    fs::write(&spec_path, serde_yaml::to_string(&spec).unwrap()).unwrap();
+    spec_path
+}
+
 #[test]
 fn init_bootstraps_project_layout_for_standalone_repo() {
     let repo = StandaloneRepo::new();
@@ -1217,6 +1307,43 @@ fn init_installs_rust_pre_commit_hook_and_hook_blocks_architecture_drift() {
             && result.stderr.contains("dom.billing")
             && result.stderr.contains("dom.auth"),
         "hook should block staged architecture drift:\n{}",
+        result.summary()
+    );
+}
+
+#[test]
+fn codebase_sync_check_and_hook_block_stale_snapshot() {
+    let repo = StandaloneRepo::new();
+    repo.write("app/src/lib.rs", "pub fn ok() {}\n");
+    init_git_repo(&repo);
+
+    run_ok(repo.path(), ["init"]);
+    write_codebase_governance_spec(&repo);
+
+    let sync = run_ok(repo.path(), ["codebase", "sync"]);
+    assert!(
+        sync.stdout.contains("1 governed, 0 partial, 0 blind"),
+        "codebase sync should mark the module governed:\n{}",
+        sync.summary()
+    );
+    let coverage = fs::read_to_string(repo.path().join(".s5d/codebase/coverage.yaml")).unwrap();
+    assert!(
+        coverage.contains("status: governed") && coverage.contains("feat.app.self-governance"),
+        "coverage snapshot should link the governed module to the spec:\n{}",
+        coverage
+    );
+
+    run_ok(repo.path(), ["codebase", "check"]);
+    run_git_ok(repo.path(), ["add", "."]);
+    run_ok(repo.path(), ["hook", "pre-commit"]);
+
+    repo.write("app/src/extra.rs", "pub fn added() {}\n");
+    run_git_ok(repo.path(), ["add", "app/src/extra.rs"]);
+
+    let result = run_fail(repo.path(), ["hook", "pre-commit"]);
+    assert!(
+        result.stderr.contains(".s5d/codebase snapshot is stale"),
+        "hook should block stale codebase coverage:\n{}",
         result.summary()
     );
 }

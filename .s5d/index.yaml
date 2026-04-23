@@ -1,6 +1,16 @@
 features:
-- id: feat.s5d.test-logging
-  spec_path: packages/feat.s5d.test-logging__20260411.s5d.yaml
-  status: applied
+- id: decision.redbook-expansion
+  spec_path: packages/decision.redbook-expansion__20260410.s5d.yaml
+  status: proposed
+  product: s5d
+  version: 1.0.0
+- id: decision.skill-decomposition
+  spec_path: packages/decision.skill-decomposition__20260407.s5d.yaml
+  status: proposed
+  product: s5d
+  version: 1.0.0
+- id: feat.s5d.self-governance
+  spec_path: packages/feat.s5d.self-governance__20260423.s5d.yaml
+  status: proposed
   product: s5d
   version: 1.0.0
