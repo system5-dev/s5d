@@ -3,6 +3,7 @@
 // ── Core ─────────────────────────────────────────────────────────────────────
 // Modules on the critical path: intent → validate → approve → apply → drift → rollback
 
+pub mod arch;
 pub mod drift;
 pub mod gates;
 pub mod graph;
@@ -12,10 +13,12 @@ pub mod mcp;
 pub mod models;
 pub mod phase_gates;
 pub mod project;
+pub mod ralph;
 pub mod router;
 pub mod template;
 pub mod validate;
 
+pub use arch::{architecture_check, ArchitectureCheckReport, ComponentCoverage, SourceDependency};
 pub use drift::{check_drift, reconcile, DriftResult};
 pub use gates::run_gates;
 pub use graph::{check_domain_layering, graph_check, tarjan_scc};
@@ -27,6 +30,7 @@ pub use phase_gates::{
     enforce_checks, PhaseCheck, Severity,
 };
 pub use project::S5dProject;
+pub use ralph::{build_ralph_task_package, RalphPreset};
 pub use router::{route, RouteMode, RouteResult};
 pub use template::*;
 pub use validate::validate_spec;
@@ -449,6 +453,7 @@ mod tests {
             problem: None,
             hypotheses: vec![],
             decision: None,
+            workflow: None,
             note_rationale: None,
             expires_at: None,
             auto_noted: false,
@@ -478,7 +483,7 @@ mod tests {
         let (project, report) = S5dProject::init(dir.path()).unwrap();
 
         assert_eq!(report.root, dir.path());
-        assert_eq!(report.dirs_created.len(), 3);
+        assert_eq!(report.dirs_created.len(), 4);
         assert_eq!(report.files_created.len(), 3);
 
         // Verify all dirs exist
@@ -493,6 +498,7 @@ mod tests {
         // Verify structure
         assert!(project.s5d_dir().join("packages").is_dir());
         assert!(project.s5d_dir().join("records").is_dir());
+        assert!(project.s5d_dir().join("tasks").is_dir());
         assert!(project.s5d_dir().join(".locks").is_dir());
         assert!(project.s5d_dir().join("config.yaml").is_file());
         assert!(project.s5d_dir().join("ledger.yaml").is_file());
@@ -503,12 +509,21 @@ mod tests {
     fn test_init_twice_is_idempotent() {
         let dir = TempDir::new().unwrap();
         let (_, first_report) = S5dProject::init(dir.path()).unwrap();
-        assert!(!first_report.dirs_created.is_empty(), "first init should create dirs");
+        assert!(
+            !first_report.dirs_created.is_empty(),
+            "first init should create dirs"
+        );
 
         // Second init should succeed with empty report (idempotent)
         let (_, second_report) = S5dProject::init(dir.path()).unwrap();
-        assert!(second_report.dirs_created.is_empty(), "second init should create nothing");
-        assert!(second_report.files_created.is_empty(), "second init should create nothing");
+        assert!(
+            second_report.dirs_created.is_empty(),
+            "second init should create nothing"
+        );
+        assert!(
+            second_report.files_created.is_empty(),
+            "second init should create nothing"
+        );
     }
 
     #[test]
@@ -517,12 +532,29 @@ mod tests {
         let (project, _) = S5dProject::init(dir.path()).unwrap();
 
         // Delete a subdirectory
-        std::fs::remove_dir_all(project.s5d_dir().join("records")).unwrap();
-        assert!(!project.s5d_dir().join("records").exists());
+        std::fs::remove_dir_all(project.s5d_dir().join("tasks")).unwrap();
+        assert!(!project.s5d_dir().join("tasks").exists());
 
         // ensure_dirs recovers it
         project.ensure_dirs().unwrap();
-        assert!(project.s5d_dir().join("records").is_dir());
+        assert!(project.s5d_dir().join("tasks").is_dir());
+    }
+
+    #[test]
+    fn test_project_lock_blocks_concurrent_mutation() {
+        let dir = TempDir::new().unwrap();
+        let (project, _) = S5dProject::init(dir.path()).unwrap();
+
+        let lock = project.acquire_lock("import.feat.locked").unwrap();
+        let second = project.acquire_lock("import.feat.locked");
+        assert!(
+            second.is_err(),
+            "second lock acquisition should fail while held"
+        );
+        drop(lock);
+
+        let third = project.acquire_lock("import.feat.locked");
+        assert!(third.is_ok(), "lock should be acquirable after release");
     }
 
     #[test]
@@ -1062,6 +1094,7 @@ mod tests {
             }),
             note_rationale: None,
             expires_at: None,
+            workflow: None,
             auto_noted: false,
         };
 
@@ -1144,6 +1177,7 @@ mod tests {
             problem: None,
             hypotheses: vec![],
             decision: None,
+            workflow: None,
             note_rationale: None,
             expires_at: None,
             auto_noted: false,
@@ -1202,6 +1236,7 @@ mod tests {
             problem: None,
             hypotheses: vec![],
             decision: None,
+            workflow: None,
             note_rationale: None,
             expires_at: None,
             auto_noted: false,
@@ -1256,6 +1291,7 @@ mod tests {
                 renames: vec![],
             }),
             context: None,
+            workflow: None,
             artifacts: None,
             links: None,
             contracts: vec![],
@@ -1289,6 +1325,104 @@ mod tests {
         );
         assert_eq!(loaded.expires_at.as_deref(), Some("2027-03-18"));
         assert!(loaded.artifacts.is_none());
+    }
+
+    #[test]
+    fn test_feature_workflow_template_validates() {
+        let mut spec = generate_spec("feat.workflow-template", Tier::Lightweight, "Prod");
+        spec.artifacts
+            .as_mut()
+            .unwrap()
+            .capabilities
+            .push(Capability {
+                id: "cap.prototype-loop".into(),
+                domain: "dom.workflow".into(),
+                name: "PrototypeLoop".into(),
+                description: None,
+                since: None,
+            });
+
+        let errors = validate_spec(&spec);
+        assert!(
+            errors.is_empty(),
+            "feature template workflow should validate, got: {:?}",
+            errors
+        );
+    }
+
+    #[test]
+    fn test_invalid_workflow_mode_fails_validation() {
+        let mut spec = generate_spec("feat.workflow-invalid", Tier::Lightweight, "Prod");
+        spec.artifacts
+            .as_mut()
+            .unwrap()
+            .capabilities
+            .push(Capability {
+                id: "cap.prototype-loop".into(),
+                domain: "dom.workflow".into(),
+                name: "PrototypeLoop".into(),
+                description: None,
+                since: None,
+            });
+        spec.workflow.as_mut().unwrap().mode = Some("bogus".into());
+
+        let errors = validate_spec(&spec);
+        assert!(
+            errors
+                .iter()
+                .any(|e| e.contains("workflow.mode: invalid value")),
+            "expected workflow mode validation error, got: {:?}",
+            errors
+        );
+    }
+
+    #[test]
+    fn test_state_fingerprint_is_stable_across_map_insertion_order() {
+        let mut spec_a = generate_spec("feat.fingerprint", Tier::Standard, "Prod");
+        let mut spec_b = spec_a.clone();
+
+        let workflow_a = spec_a.workflow.as_mut().unwrap();
+        workflow_a.role_map = HashMap::from([
+            ("owner".into(), "human".into()),
+            ("implementer".into(), "coder".into()),
+            ("reviewer".into(), "reviewer".into()),
+            ("verifier".into(), "reviewer".into()),
+        ]);
+
+        let workflow_b = spec_b.workflow.as_mut().unwrap();
+        workflow_b.role_map = HashMap::from([
+            ("verifier".into(), "reviewer".into()),
+            ("reviewer".into(), "reviewer".into()),
+            ("implementer".into(), "coder".into()),
+            ("owner".into(), "human".into()),
+        ]);
+
+        let mut binding_a = HashMap::new();
+        binding_a.insert("feature".into(), "feat.fingerprint".into());
+        binding_a.insert("domain".into(), "dom.workflow".into());
+
+        let mut binding_b = HashMap::new();
+        binding_b.insert("domain".into(), "dom.workflow".into());
+        binding_b.insert("feature".into(), "feat.fingerprint".into());
+
+        spec_a
+            .links
+            .as_mut()
+            .unwrap()
+            .feature_to_domain
+            .push(Binding { fields: binding_a });
+        spec_b
+            .links
+            .as_mut()
+            .unwrap()
+            .feature_to_domain
+            .push(Binding { fields: binding_b });
+
+        let aliases = AliasTable::default();
+        let fp_a = compute_state_fingerprint(&spec_a, &aliases);
+        let fp_b = compute_state_fingerprint(&spec_b, &aliases);
+
+        assert_eq!(fp_a, fp_b, "fingerprint should ignore HashMap order");
     }
 
     #[test]

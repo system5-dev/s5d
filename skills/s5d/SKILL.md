@@ -13,6 +13,8 @@ A thin decision-and-validation layer for changes in a repository with AI partici
 3. **Record decisions** — write down what was decided and why, with integrity (approval chain, SHA256 binding, ledger).
 4. **Verify in code** — check that the code still matches the decision, and roll back when it doesn't (drift-check, reconcile, rollback).
 
+Optional on top of that: a workflow shell for teams that want S5D to support an existing process without replacing it. Specs can carry workflow mode, role map, phased execution, review policy, and explicit outcome verdicts backed by telemetry refs.
+
 If a term doesn't serve one of these four, it doesn't belong. If an artifact isn't read by a human or a gate, it doesn't belong. If a simple change can't pass through almost in a straight line, the system is lying about its simplicity.
 
 The flow sequences these four:
@@ -59,7 +61,7 @@ Applies only to work grounded in an existing repository. No codebase, no S5D.
 Every active spec has two mutable surfaces:
 
 - `.s5d/packages/<spec-id>__<date>.s5d.yaml` — authored intent: problem, artifacts, links, contracts, gates.
-- `.s5d/records/<spec-id>__<date>.record.yaml` — runtime state: preview diff, approvals, gate results, import fingerprint, decision record, reflection.
+- `.s5d/records/<spec-id>__<date>.record.yaml` — runtime state: preview diff, approvals, gate results, import fingerprint, decision record, reflection, outcome verdict.
 
 `s5d_new` creates both. `s5d_add_hypothesis` / `s5d_add_evidence` edit spec YAML. All other commands update the record file.
 
@@ -72,6 +74,9 @@ Every active spec has two mutable surfaces:
 | Action | MCP | CLI | Hard preconditions |
 |---|---|---|---|
 | Bootstrap workspace | `s5d_init` | `s5d init [--claude] [--all]` | Safe to re-run. |
+| Rust pre-commit hook | — | `s5d hook pre-commit` | Read-only. Runs on staged specs/source. Installed by `s5d init` when `.git/` exists. |
+| Self-update check | — | `s5d update check` | Read-only. Plugin SessionStart runs `s5d update check --hook`. |
+| Self-update apply | — | `s5d update apply` | Fast-forwards the S5D checkout, relinks skills, replaces installed binary. |
 | Create scaffold | `s5d_new` | `s5d new` | Scaffold only — does not populate problem/artifacts. CLI `--hypothesis-id` auto-links `spec_ref`. |
 | Quick note | `s5d_note` | `s5d note` | Shorthand for `s5d new note.<slug> --tier note`. |
 | Add hypothesis | `s5d_add_hypothesis` | `s5d add-hypothesis` | Decision tier only. Duplicate IDs rejected. |
@@ -84,8 +89,22 @@ Every active spec has two mutable surfaces:
 | Waive gate | `s5d_waiver` | MCP only | Gate kind must exist in spec. |
 | Import | `s5d_import` | `s5d import [--verified-by] [--force]` | Requires: approved, spec hash match, diff hash match, all gates passed/waived. |
 | Decide | `s5d_decide` | `s5d decide --confirmed-by <name>` | Decision tier. Winner must have `spec_ref`. Human confirmation required. |
-| Reflect | `s5d_reflect` | `s5d reflect --summary ... --heuristic ...` | Writes to record only (not spec). |
+| Reflect | `s5d_reflect` | `s5d reflect --summary ... --heuristic ... [--verdict ...] [--measurement-window ...] [--telemetry ...]` | Writes to record only (not spec). |
 | Route | `s5d_route` | `s5d route` | Classifies into tier + mode + entry point. |
+
+### Workflow Shell Commands
+
+| Action | MCP | CLI | Hard preconditions |
+|---|---|---|---|
+| List phases | `s5d_phase_list` | `s5d phase list <spec>` | Spec must have a `workflow` block and an existing `.record.yaml`. |
+| Start phase | `s5d_phase_start` | `s5d phase start <spec> --id <phase>` | Spec must be approved or later. No other phase may already be active. |
+| Accept phase | `s5d_phase_accept` | `s5d phase accept <spec> --id <phase> --reviewer <name>` | Phase must already be active. Human reviewer required. |
+| Emit Ralph task package | `s5d_execute_loop` | `s5d execute loop <spec> --phase <id> --engine ralph [--mode init|bugfix]` | Phase must be active. Workflow engine must match and currently only `ralph` is supported. Each run persists a task artifact under `.s5d/tasks/`. |
+
+Ralph run modes stay runtime-only for now:
+- `init` — warm up repository context from docs, tests, environment setup, and test-suite output
+- `bugfix` — regression-first bugfix loop: failing test, minimal fix, targeted run, full suite, root-cause summary
+- default with no `--mode` — inferred from the phase; `prototype` warms context, everything else stays generic
 
 ### Recovery Commands
 

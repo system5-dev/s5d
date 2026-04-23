@@ -31,7 +31,11 @@ impl PhaseCheck {
     }
 }
 
-pub fn check_decide(spec: &Spec, record: &Option<Record>, confirmed_by: &Option<String>) -> Vec<PhaseCheck> {
+pub fn check_decide(
+    spec: &Spec,
+    record: &Option<Record>,
+    confirmed_by: &Option<String>,
+) -> Vec<PhaseCheck> {
     let mut checks = Vec::new();
 
     // Structural: --confirmed-by required
@@ -72,10 +76,10 @@ pub fn check_decide(spec: &Spec, record: &Option<Record>, confirmed_by: &Option<
     }
 
     // Methodological: problem card has acceptance criteria
-    let has_acceptance = spec
-        .problem
-        .as_ref()
-        .is_some_and(|p| p.as_card().is_some_and(|c| c.acceptance.as_ref().is_some_and(|a| !a.is_empty())));
+    let has_acceptance = spec.problem.as_ref().is_some_and(|p| {
+        p.as_card()
+            .is_some_and(|c| c.acceptance.as_ref().is_some_and(|a| !a.is_empty()))
+    });
     checks.push(PhaseCheck::methodological(
         has_acceptance,
         "problem card should have acceptance criteria defined before deciding",
@@ -219,6 +223,7 @@ mod tests {
             allow_update: false,
             meta: None,
             context: None,
+            workflow: None,
             artifacts: None,
             links: None,
             contracts: vec![],
@@ -285,6 +290,8 @@ mod tests {
             status: crate::models::SpecStatus::Proposed,
             sync_status: crate::models::SyncStatus::Unknown,
             status_history: vec![],
+            active_phase: None,
+            phase_history: vec![],
             approvals: vec![],
             preview: None,
             reflection: None,

@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::path::Path;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AliasTable {
     #[serde(default)]
     pub global: Vec<AliasEntry>,
@@ -10,7 +10,7 @@ pub struct AliasTable {
     pub packages: Vec<AliasEntry>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AliasEntry {
     pub uuid: String,
     pub artifact_id: String,
@@ -41,7 +41,7 @@ impl AliasTable {
 
     pub fn save(&self, s5d_dir: &Path) -> anyhow::Result<()> {
         let path = s5d_dir.join("aliases.yaml");
-        std::fs::write(&path, serde_yaml::to_string(self)?)?;
+        crate::project::atomic_write_string(&path, &serde_yaml::to_string(self)?)?;
         Ok(())
     }
 

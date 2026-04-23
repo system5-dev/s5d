@@ -17,6 +17,8 @@ pub struct Spec {
     #[serde(default)]
     pub context: Option<String>,
     #[serde(default)]
+    pub workflow: Option<Workflow>,
+    #[serde(default)]
     pub artifacts: Option<Artifacts>,
     #[serde(default)]
     pub links: Option<Links>,
@@ -382,6 +384,80 @@ pub struct Roc {
     pub escalation: Option<String>,
 }
 
+// ── Workflow ──────────────────────────────────────────────────────────────────
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Workflow {
+    #[serde(default)]
+    pub mode: Option<String>,
+    #[serde(default)]
+    pub target_architecture: Option<TargetArchitecture>,
+    #[serde(default)]
+    pub delivery_strategy: Option<DeliveryStrategy>,
+    #[serde(default)]
+    pub resources: Option<WorkflowResources>,
+    #[serde(default)]
+    pub role_map: HashMap<String, String>,
+    #[serde(default)]
+    pub review_policy: Option<ReviewPolicy>,
+    #[serde(default)]
+    pub execution_mode: Option<ExecutionMode>,
+    #[serde(default)]
+    pub phases: Vec<WorkflowPhase>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TargetArchitecture {
+    pub summary: String,
+    #[serde(default)]
+    pub invariants: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DeliveryStrategy {
+    pub summary: String,
+    #[serde(default)]
+    pub rationale: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WorkflowResources {
+    #[serde(default)]
+    pub declared: bool,
+    #[serde(default)]
+    pub constraints: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReviewPolicy {
+    #[serde(default)]
+    pub cross_model_required: bool,
+    #[serde(default)]
+    pub required_on: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExecutionMode {
+    pub engine: String,
+    #[serde(default)]
+    pub max_iterations: Option<u32>,
+    #[serde(default)]
+    pub stop_conditions: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WorkflowPhase {
+    pub id: String,
+    pub title: String,
+    pub scope: String,
+    #[serde(default)]
+    pub roles: Vec<String>,
+    #[serde(default)]
+    pub acceptance: Vec<String>,
+    #[serde(default)]
+    pub rollback: Vec<String>,
+}
+
 // ── Decision tier types ───────────────────────────────────────────────────────
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -600,6 +676,10 @@ pub struct Record {
     #[serde(default)]
     pub status_history: Vec<StatusEntry>,
     #[serde(default)]
+    pub active_phase: Option<String>,
+    #[serde(default)]
+    pub phase_history: Vec<WorkflowPhaseRecord>,
+    #[serde(default)]
     pub approvals: Vec<Approval>,
     #[serde(default)]
     pub preview: Option<PreviewResult>,
@@ -663,10 +743,45 @@ impl std::fmt::Display for SyncStatus {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum WorkflowPhaseStatus {
+    Planned,
+    Active,
+    Verified,
+    Accepted,
+    RolledBack,
+}
+
+impl std::fmt::Display for WorkflowPhaseStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            WorkflowPhaseStatus::Planned => write!(f, "planned"),
+            WorkflowPhaseStatus::Active => write!(f, "active"),
+            WorkflowPhaseStatus::Verified => write!(f, "verified"),
+            WorkflowPhaseStatus::Accepted => write!(f, "accepted"),
+            WorkflowPhaseStatus::RolledBack => write!(f, "rolled_back"),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StatusEntry {
     pub status: SpecStatus,
     pub timestamp: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WorkflowPhaseRecord {
+    pub phase_id: String,
+    pub status: WorkflowPhaseStatus,
+    pub timestamp: String,
+    #[serde(default)]
+    pub reviewer: Option<String>,
+    #[serde(default)]
+    pub engine: Option<String>,
+    #[serde(default)]
+    pub notes: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -701,6 +816,12 @@ pub struct PreviewActions {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Reflection {
+    #[serde(default)]
+    pub verdict: Option<String>,
+    #[serde(default)]
+    pub measurement_window: Option<String>,
+    #[serde(default)]
+    pub telemetry_refs: Vec<String>,
     #[serde(default)]
     pub summary: Option<String>,
     #[serde(default)]
@@ -835,4 +956,3 @@ pub struct IndexEntry {
     pub product: String,
     pub version: String,
 }
-

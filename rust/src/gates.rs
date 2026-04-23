@@ -1,7 +1,9 @@
 use crate::models::*;
 use chrono::Utc;
+use std::io::Read;
 use std::path::Path;
 use std::process::{Command, Stdio};
+use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
 
 /// Maximum log output size (10 KB). Truncated if exceeded.
@@ -46,9 +48,18 @@ pub fn run_gates(
                         let attempt = count_attempts(&results, &gate.kind) + 1;
                         let start = Instant::now();
                         let (status, log) = if errors.is_empty() {
-                            ("passed".into(), "schema validation passed (built-in)".to_string())
+                            (
+                                "passed".into(),
+                                "schema validation passed (built-in)".to_string(),
+                            )
                         } else {
-                            ("failed".into(), format!("schema validation failed (built-in):\n{}", errors.join("\n")))
+                            (
+                                "failed".into(),
+                                format!(
+                                    "schema validation failed (built-in):\n{}",
+                                    errors.join("\n")
+                                ),
+                            )
                         };
                         let ev_path = save_evidence(&evidence_dir, &gate.kind, attempt, &log);
                         Some(GateResult {
@@ -70,7 +81,48 @@ pub fn run_gates(
                         let (status, log) = if errors.is_empty() {
                             ("passed".into(), "graph check passed (built-in)".to_string())
                         } else {
-                            ("failed".into(), format!("graph check failed (built-in):\n{}", errors.join("\n")))
+                            (
+                                "failed".into(),
+                                format!("graph check failed (built-in):\n{}", errors.join("\n")),
+                            )
+                        };
+                        let ev_path = save_evidence(&evidence_dir, &gate.kind, attempt, &log);
+                        Some(GateResult {
+                            kind: gate.kind.clone(),
+                            status,
+                            attempt,
+                            timestamp: Utc::now().to_rfc3339(),
+                            log: Some(log),
+                            exit_code: None,
+                            evidence_path: ev_path,
+                            command: None,
+                            duration_ms: Some(start.elapsed().as_millis() as u64),
+                        })
+                    }
+                    "architecture" => {
+                        let attempt = count_attempts(&results, &gate.kind) + 1;
+                        let start = Instant::now();
+                        let check = crate::architecture_check(spec, project_root);
+                        let (status, log) = match check {
+                            Ok(report) if report.errors.is_empty() => (
+                                "passed".into(),
+                                format!(
+                                    "architecture check passed (built-in): {} component(s), {} dependency edge(s)",
+                                    report.components.len(),
+                                    report.dependencies.len()
+                                ),
+                            ),
+                            Ok(report) => (
+                                "failed".into(),
+                                format!(
+                                    "architecture check failed (built-in):\n{}",
+                                    report.errors.join("\n")
+                                ),
+                            ),
+                            Err(error) => (
+                                "failed".into(),
+                                format!("architecture check failed (built-in): {}", error),
+                            ),
                         };
                         let ev_path = save_evidence(&evidence_dir, &gate.kind, attempt, &log);
                         Some(GateResult {
@@ -135,20 +187,16 @@ pub fn run_gates(
         let gate_result = match command.spawn() {
             Ok(mut child) => {
                 let timeout_dur = Duration::from_secs(timeout_secs as u64);
+                let mut stdout_handle = child.stdout.take().map(spawn_pipe_reader);
+                let mut stderr_handle = child.stderr.take().map(spawn_pipe_reader);
 
                 loop {
                     match child.try_wait() {
                         Ok(Some(status)) => {
                             let duration_ms = start.elapsed().as_millis() as u64;
                             let status_str = if status.success() { "passed" } else { "failed" };
-                            let mut stdout_buf = String::new();
-                            let mut stderr_buf = String::new();
-                            if let Some(ref mut out) = child.stdout {
-                                let _ = std::io::Read::read_to_string(out, &mut stdout_buf);
-                            }
-                            if let Some(ref mut err) = child.stderr {
-                                let _ = std::io::Read::read_to_string(err, &mut stderr_buf);
-                            }
+                            let stdout_buf = join_pipe_reader(stdout_handle.take());
+                            let stderr_buf = join_pipe_reader(stderr_handle.take());
 
                             let full_log = format!(
                                 "exit: {}\nstdout:\n{}\nstderr:\n{}",
@@ -156,12 +204,8 @@ pub fn run_gates(
                             );
 
                             // Write full evidence to disk
-                            let ev_path = save_evidence(
-                                &evidence_dir,
-                                &gate.kind,
-                                attempt,
-                                &full_log,
-                            );
+                            let ev_path =
+                                save_evidence(&evidence_dir, &gate.kind, attempt, &full_log);
 
                             let mut truncated_log = full_log.clone();
                             truncate_log(&mut truncated_log);
@@ -183,14 +227,14 @@ pub fn run_gates(
                                 let duration_ms = start.elapsed().as_millis() as u64;
                                 let _ = child.kill();
                                 let _ = child.wait();
-                                let timeout_log =
-                                    format!("killed after {}s timeout", timeout_secs);
-                                let ev_path = save_evidence(
-                                    &evidence_dir,
-                                    &gate.kind,
-                                    attempt,
-                                    &timeout_log,
+                                let stdout_buf = join_pipe_reader(stdout_handle.take());
+                                let stderr_buf = join_pipe_reader(stderr_handle.take());
+                                let timeout_log = format!(
+                                    "killed after {}s timeout\nstdout:\n{}\nstderr:\n{}",
+                                    timeout_secs, stdout_buf, stderr_buf
                                 );
+                                let ev_path =
+                                    save_evidence(&evidence_dir, &gate.kind, attempt, &timeout_log);
                                 break GateResult {
                                     kind: gate.kind.clone(),
                                     status: "timeout".into(),
@@ -207,13 +251,16 @@ pub fn run_gates(
                         }
                         Err(e) => {
                             let duration_ms = start.elapsed().as_millis() as u64;
-                            let err_log = format!("wait error: {}", e);
-                            let ev_path = save_evidence(
-                                &evidence_dir,
-                                &gate.kind,
-                                attempt,
-                                &err_log,
+                            let _ = child.kill();
+                            let _ = child.wait();
+                            let stdout_buf = join_pipe_reader(stdout_handle.take());
+                            let stderr_buf = join_pipe_reader(stderr_handle.take());
+                            let err_log = format!(
+                                "wait error: {}\nstdout:\n{}\nstderr:\n{}",
+                                e, stdout_buf, stderr_buf
                             );
+                            let ev_path =
+                                save_evidence(&evidence_dir, &gate.kind, attempt, &err_log);
                             break GateResult {
                                 kind: gate.kind.clone(),
                                 status: "failed".into(),
@@ -232,8 +279,7 @@ pub fn run_gates(
             Err(e) => {
                 let duration_ms = start.elapsed().as_millis() as u64;
                 let err_log = format!("execution error: {}", e);
-                let ev_path =
-                    save_evidence(&evidence_dir, &gate.kind, attempt, &err_log);
+                let ev_path = save_evidence(&evidence_dir, &gate.kind, attempt, &err_log);
                 GateResult {
                     kind: gate.kind.clone(),
                     status: "failed".into(),
@@ -252,6 +298,23 @@ pub fn run_gates(
     }
 
     Ok(results)
+}
+
+fn spawn_pipe_reader<R>(mut reader: R) -> JoinHandle<String>
+where
+    R: Read + Send + 'static,
+{
+    thread::spawn(move || {
+        let mut bytes = Vec::new();
+        let _ = reader.read_to_end(&mut bytes);
+        String::from_utf8_lossy(&bytes).into_owned()
+    })
+}
+
+fn join_pipe_reader(handle: Option<JoinHandle<String>>) -> String {
+    handle
+        .and_then(|reader| reader.join().ok())
+        .unwrap_or_default()
 }
 
 pub fn default_gates_for_tier(tier: &crate::models::Tier) -> Vec<crate::models::Gate> {
@@ -285,12 +348,7 @@ pub fn default_gates_for_tier(tier: &crate::models::Tier) -> Vec<crate::models::
 
 /// Save full gate output to .s5d/evidence/{spec_id}/{kind}_{attempt}.log
 /// Returns relative path on success, None on failure.
-fn save_evidence(
-    evidence_dir: &Path,
-    kind: &str,
-    attempt: u32,
-    content: &str,
-) -> Option<String> {
+fn save_evidence(evidence_dir: &Path, kind: &str, attempt: u32, content: &str) -> Option<String> {
     if std::fs::create_dir_all(evidence_dir).is_err() {
         return None;
     }

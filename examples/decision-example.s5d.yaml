@@ -20,36 +20,59 @@ context: |
   - Must handle 10K+ records efficiently
 
 problem:
-  question: "PostgreSQL, SQLite, or SQLite+FTS5 for beliefs storage?"
+  signal: "Choose storage for belief-based memory."
+  constraints:
+    - "Local-first"
+    - "Fast full-text search"
+    - "Zero operational overhead"
+  targets:
+    - "Reliable 10K+ record queries"
+  indicators:
+    - "Query latency"
+    - "Operational complexity"
+  acceptance: "Select a storage option with evidence for local operation and search performance."
+  blast_radius: "Beliefs memory persistence and retrieval"
+  reversibility: "moderate"
+  status: addressed
 
 hypotheses:
   - id: postgres
     title: "PostgreSQL"
     content: "Battle-tested, scalable, rich querying. But requires running a server process."
+    scope: "beliefs storage"
+    kind: system
     layer: L1
     evidence:
-      - type: analysis
+      - id: 20260319-analysis-postgres
+        type: analysis
         content: "Requires pg process, ~100MB RAM, backup strategy needed"
         verdict: FAIL
 
   - id: sqlite-plain
     title: "SQLite (plain)"
     content: "Zero-config, local file, fast. But no full-text search built-in."
+    scope: "beliefs storage"
+    kind: system
     layer: L1
     evidence:
-      - type: analysis
+      - id: 20260319-analysis-sqlite-plain
+        type: analysis
         content: "No FTS = need external search. LIKE queries O(n) on 10K rows."
         verdict: FAIL
 
   - id: sqlite-fts5
     title: "SQLite + FTS5"
     content: "Full-text search via FTS5 virtual table. BM25 ranking. Zero ops."
+    scope: "beliefs storage"
+    kind: system
     layer: L2
     evidence:
-      - type: benchmark
+      - id: 20260319-benchmark-sqlite-fts5
+        type: benchmark
         content: "10K beliefs: insert <1ms, query <5ms, FTS5 BM25 ranking works"
         verdict: PASS
-      - type: analysis
+      - id: 20260319-analysis-sqlite-fts5
+        type: analysis
         content: "Single file, zero ops, works offline, 50KB overhead for FTS index"
         verdict: PASS
 

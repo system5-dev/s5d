@@ -14,7 +14,10 @@ pub fn validate_spec(spec: &Spec) -> Vec<String> {
     // For feature tiers, decision state lives in record only — spec.decision must be null
     // For decision tier, spec.decision is written by `s5d decide` (legacy compat)
     if spec.decision.is_some() && !matches!(spec.tier, Tier::Decision) {
-        errors.push("spec.decision must be null for feature tiers — decision state lives in .record.yaml".into());
+        errors.push(
+            "spec.decision must be null for feature tiers — decision state lives in .record.yaml"
+                .into(),
+        );
     }
 
     if matches!(spec.tier, Tier::Note) {
@@ -22,6 +25,10 @@ pub fn validate_spec(spec: &Spec) -> Vec<String> {
             errors.push("Note tier requires note_rationale".into());
         }
         return errors;
+    }
+
+    if let Some(ref workflow) = spec.workflow {
+        validate_workflow(workflow, &mut errors);
     }
 
     // Check for duplicate hypothesis IDs (applies to all tiers with hypotheses)
@@ -66,10 +73,7 @@ pub fn validate_spec(spec: &Spec) -> Vec<String> {
 
     // artifacts MUST exist for feature tiers — no draft bypass
     if spec.artifacts.is_none() {
-        errors.push(format!(
-            "tier {:?} requires artifacts section",
-            spec.tier
-        ));
+        errors.push(format!("tier {:?} requires artifacts section", spec.tier));
         return errors;
     }
 
@@ -93,7 +97,10 @@ pub fn validate_spec(spec: &Spec) -> Vec<String> {
             validate_id(&d.id, "domain", &mut errors);
             // classification is REQUIRED
             match &d.classification {
-                None => errors.push(format!("domain {}: classification is required (core, supporting, generic)", d.id)),
+                None => errors.push(format!(
+                    "domain {}: classification is required (core, supporting, generic)",
+                    d.id
+                )),
                 Some(cl) => {
                     let valid = ["core", "supporting", "generic"];
                     if !valid.contains(&cl.to_lowercase().as_str()) {
@@ -129,7 +136,10 @@ pub fn validate_spec(spec: &Spec) -> Vec<String> {
         for c in &artifacts.components {
             validate_id(&c.id, "component", &mut errors);
             if c.paths.is_empty() {
-                errors.push(format!("component {}: paths is required and must not be empty", c.id));
+                errors.push(format!(
+                    "component {}: paths is required and must not be empty",
+                    c.id
+                ));
             }
         }
         for r in &artifacts.roles {
@@ -149,18 +159,29 @@ pub fn validate_spec(spec: &Spec) -> Vec<String> {
         match spec.tier {
             Tier::Standard | Tier::High => {
                 if artifacts.domains.is_empty() {
-                    errors.push("metamodel: spec has no domains — required for standard/high tier".into());
+                    errors.push(
+                        "metamodel: spec has no domains — required for standard/high tier".into(),
+                    );
                 }
                 if artifacts.capabilities.is_empty() {
-                    errors.push("metamodel: spec has no capabilities — required for standard/high tier".into());
+                    errors.push(
+                        "metamodel: spec has no capabilities — required for standard/high tier"
+                            .into(),
+                    );
                 }
                 if artifacts.components.is_empty() {
-                    errors.push("metamodel: spec has no components — required for standard/high tier".into());
+                    errors.push(
+                        "metamodel: spec has no components — required for standard/high tier"
+                            .into(),
+                    );
                 }
             }
             Tier::Lightweight => {
                 if artifacts.capabilities.is_empty() {
-                    errors.push("metamodel: spec has no capabilities — required for lightweight tier".into());
+                    errors.push(
+                        "metamodel: spec has no capabilities — required for lightweight tier"
+                            .into(),
+                    );
                 }
             }
             _ => {}
@@ -169,9 +190,12 @@ pub fn validate_spec(spec: &Spec) -> Vec<String> {
         // P0-3: Reference integrity — all refs must resolve to declared artifacts
         let domain_ids: std::collections::HashSet<&str> =
             artifacts.domains.iter().map(|d| d.id.as_str()).collect();
-        let capability_ids: std::collections::HashSet<&str> =
-            artifacts.capabilities.iter().map(|c| c.id.as_str()).collect();
-        let entity_ids: std::collections::HashSet<&str> =
+        let _capability_ids: std::collections::HashSet<&str> = artifacts
+            .capabilities
+            .iter()
+            .map(|c| c.id.as_str())
+            .collect();
+        let _entity_ids: std::collections::HashSet<&str> =
             artifacts.entities.iter().map(|e| e.id.as_str()).collect();
         let container_ids: std::collections::HashSet<&str> =
             artifacts.containers.iter().map(|c| c.id.as_str()).collect();
@@ -307,24 +331,49 @@ pub fn validate_spec(spec: &Spec) -> Vec<String> {
             .unwrap_or_default();
 
         // Build typed ID sets for link validation
-        let link_feature_ids: std::collections::HashSet<&str> = spec.artifacts.as_ref()
-            .map(|a| a.features.iter().map(|f| f.id.as_str()).collect()).unwrap_or_default();
-        let link_capability_ids: std::collections::HashSet<&str> = spec.artifacts.as_ref()
-            .map(|a| a.capabilities.iter().map(|c| c.id.as_str()).collect()).unwrap_or_default();
-        let link_entity_ids: std::collections::HashSet<&str> = spec.artifacts.as_ref()
-            .map(|a| a.entities.iter().map(|e| e.id.as_str()).collect()).unwrap_or_default();
-        let link_component_ids: std::collections::HashSet<&str> = spec.artifacts.as_ref()
-            .map(|a| a.components.iter().map(|c| c.id.as_str()).collect()).unwrap_or_default();
-        let link_container_ids: std::collections::HashSet<&str> = spec.artifacts.as_ref()
-            .map(|a| a.containers.iter().map(|c| c.id.as_str()).collect()).unwrap_or_default();
-        let link_concern_ids: std::collections::HashSet<&str> = spec.artifacts.as_ref()
-            .map(|a| a.concerns.iter().map(|c| c.id.as_str()).collect()).unwrap_or_default();
-        let link_metric_ids: std::collections::HashSet<&str> = spec.artifacts.as_ref()
-            .map(|a| a.metrics.iter().map(|m| m.id.as_str()).collect()).unwrap_or_default();
-        let link_usecase_ids: std::collections::HashSet<&str> = spec.artifacts.as_ref()
-            .map(|a| a.use_cases.iter().map(|u| u.id.as_str()).collect()).unwrap_or_default();
+        let link_feature_ids: std::collections::HashSet<&str> = spec
+            .artifacts
+            .as_ref()
+            .map(|a| a.features.iter().map(|f| f.id.as_str()).collect())
+            .unwrap_or_default();
+        let link_capability_ids: std::collections::HashSet<&str> = spec
+            .artifacts
+            .as_ref()
+            .map(|a| a.capabilities.iter().map(|c| c.id.as_str()).collect())
+            .unwrap_or_default();
+        let link_entity_ids: std::collections::HashSet<&str> = spec
+            .artifacts
+            .as_ref()
+            .map(|a| a.entities.iter().map(|e| e.id.as_str()).collect())
+            .unwrap_or_default();
+        let link_component_ids: std::collections::HashSet<&str> = spec
+            .artifacts
+            .as_ref()
+            .map(|a| a.components.iter().map(|c| c.id.as_str()).collect())
+            .unwrap_or_default();
+        let link_container_ids: std::collections::HashSet<&str> = spec
+            .artifacts
+            .as_ref()
+            .map(|a| a.containers.iter().map(|c| c.id.as_str()).collect())
+            .unwrap_or_default();
+        let link_concern_ids: std::collections::HashSet<&str> = spec
+            .artifacts
+            .as_ref()
+            .map(|a| a.concerns.iter().map(|c| c.id.as_str()).collect())
+            .unwrap_or_default();
+        let link_metric_ids: std::collections::HashSet<&str> = spec
+            .artifacts
+            .as_ref()
+            .map(|a| a.metrics.iter().map(|m| m.id.as_str()).collect())
+            .unwrap_or_default();
+        let link_usecase_ids: std::collections::HashSet<&str> = spec
+            .artifacts
+            .as_ref()
+            .map(|a| a.use_cases.iter().map(|u| u.id.as_str()).collect())
+            .unwrap_or_default();
 
         // Typed link validation — each binding must reference the correct artifact type
+        #[allow(clippy::too_many_arguments)]
         fn validate_typed_binding(
             bindings: &[crate::models::Binding],
             link_name: &str,
@@ -364,36 +413,115 @@ pub fn validate_spec(spec: &Spec) -> Vec<String> {
             }
         }
 
-        validate_typed_binding(&links.feature_to_domain, "feature_to_domain",
-            "feature", &link_feature_ids, "feature", "domain", &link_domain_ids, "domain", &mut errors);
-        validate_typed_binding(&links.use_case_to_capability, "use_case_to_capability",
-            "use_case", &link_usecase_ids, "use_case", "capability", &link_capability_ids, "capability", &mut errors);
-        validate_typed_binding(&links.use_case_to_entity, "use_case_to_entity",
-            "use_case", &link_usecase_ids, "use_case", "entity", &link_entity_ids, "entity", &mut errors);
-        validate_typed_binding(&links.component_to_capability, "component_to_capability",
-            "component", &link_component_ids, "component", "capability", &link_capability_ids, "capability", &mut errors);
-        validate_typed_binding(&links.component_to_entity, "component_to_entity",
-            "component", &link_component_ids, "component", "entity", &link_entity_ids, "entity", &mut errors);
-        validate_typed_binding(&links.component_to_container, "component_to_container",
-            "component", &link_component_ids, "component", "container", &link_container_ids, "container", &mut errors);
-        validate_typed_binding(&links.container_to_capability, "container_to_capability",
-            "container", &link_container_ids, "container", "capability", &link_capability_ids, "capability", &mut errors);
-        validate_typed_binding(&links.concern_to_metric, "concern_to_metric",
-            "concern", &link_concern_ids, "concern", "metric", &link_metric_ids, "metric", &mut errors);
+        validate_typed_binding(
+            &links.feature_to_domain,
+            "feature_to_domain",
+            "feature",
+            &link_feature_ids,
+            "feature",
+            "domain",
+            &link_domain_ids,
+            "domain",
+            &mut errors,
+        );
+        validate_typed_binding(
+            &links.use_case_to_capability,
+            "use_case_to_capability",
+            "use_case",
+            &link_usecase_ids,
+            "use_case",
+            "capability",
+            &link_capability_ids,
+            "capability",
+            &mut errors,
+        );
+        validate_typed_binding(
+            &links.use_case_to_entity,
+            "use_case_to_entity",
+            "use_case",
+            &link_usecase_ids,
+            "use_case",
+            "entity",
+            &link_entity_ids,
+            "entity",
+            &mut errors,
+        );
+        validate_typed_binding(
+            &links.component_to_capability,
+            "component_to_capability",
+            "component",
+            &link_component_ids,
+            "component",
+            "capability",
+            &link_capability_ids,
+            "capability",
+            &mut errors,
+        );
+        validate_typed_binding(
+            &links.component_to_entity,
+            "component_to_entity",
+            "component",
+            &link_component_ids,
+            "component",
+            "entity",
+            &link_entity_ids,
+            "entity",
+            &mut errors,
+        );
+        validate_typed_binding(
+            &links.component_to_container,
+            "component_to_container",
+            "component",
+            &link_component_ids,
+            "component",
+            "container",
+            &link_container_ids,
+            "container",
+            &mut errors,
+        );
+        validate_typed_binding(
+            &links.container_to_capability,
+            "container_to_capability",
+            "container",
+            &link_container_ids,
+            "container",
+            "capability",
+            &link_capability_ids,
+            "capability",
+            &mut errors,
+        );
+        validate_typed_binding(
+            &links.concern_to_metric,
+            "concern_to_metric",
+            "concern",
+            &link_concern_ids,
+            "concern",
+            "metric",
+            &link_metric_ids,
+            "metric",
+            &mut errors,
+        );
 
         // Semantic: component and capability must be in same domain
         if let Some(ref arts) = spec.artifacts {
-            let comp_domain: std::collections::HashMap<&str, &str> =
-                arts.components.iter().map(|c| (c.id.as_str(), c.domain.as_str())).collect();
-            let cap_domain: std::collections::HashMap<&str, &str> =
-                arts.capabilities.iter().map(|c| (c.id.as_str(), c.domain.as_str())).collect();
+            let comp_domain: std::collections::HashMap<&str, &str> = arts
+                .components
+                .iter()
+                .map(|c| (c.id.as_str(), c.domain.as_str()))
+                .collect();
+            let cap_domain: std::collections::HashMap<&str, &str> = arts
+                .capabilities
+                .iter()
+                .map(|c| (c.id.as_str(), c.domain.as_str()))
+                .collect();
             for b in &links.component_to_capability {
                 if let (Some(comp_id), Some(cap_id)) =
                     (b.fields.get("component"), b.fields.get("capability"))
                 {
-                    if let (Some(&cd), Some(&capd)) =
-                        (comp_domain.get(comp_id.as_str()), cap_domain.get(cap_id.as_str()))
-                    {
+                    if let (Some(&cd), Some(&capd)) = (
+                        comp_domain.get(comp_id.as_str()),
+                        cap_domain.get(cap_id.as_str()),
+                    ) {
                         if cd != capd {
                             errors.push(format!(
                                 "component_to_capability: component '{}' (domain {}) must match capability '{}' (domain {})",
@@ -464,7 +592,9 @@ pub fn validate_spec(spec: &Spec) -> Vec<String> {
         if !valid_contract_formats.contains(&contract.format.to_lowercase().as_str()) {
             errors.push(format!(
                 "contract {}: invalid format '{}' (expected: {})",
-                contract.id, contract.format, valid_contract_formats.join(", ")
+                contract.id,
+                contract.format,
+                valid_contract_formats.join(", ")
             ));
         }
         // must have path or inline (at least one)
@@ -498,6 +628,7 @@ pub fn validate_spec(spec: &Spec) -> Vec<String> {
         "test",
         "typecheck",
         "policy",
+        "architecture",
     ];
     for gate in &spec.gates {
         if !valid_gates.contains(&gate.kind.as_str()) {
@@ -516,6 +647,94 @@ pub fn validate_spec(spec: &Spec) -> Vec<String> {
     }
 
     errors
+}
+
+fn validate_workflow(workflow: &Workflow, errors: &mut Vec<String>) {
+    if let Some(ref mode) = workflow.mode {
+        let valid = ["research", "plan", "implement", "operate"];
+        if !valid.contains(&mode.to_lowercase().as_str()) {
+            errors.push(format!(
+                "workflow.mode: invalid value '{}' (expected: research, plan, implement, operate)",
+                mode
+            ));
+        }
+    }
+
+    if let Some(ref target) = workflow.target_architecture {
+        if target.summary.trim().is_empty() {
+            errors.push("workflow.target_architecture.summary must not be empty".into());
+        }
+    }
+
+    if let Some(ref strategy) = workflow.delivery_strategy {
+        if strategy.summary.trim().is_empty() {
+            errors.push("workflow.delivery_strategy.summary must not be empty".into());
+        }
+    }
+
+    for (role, owner) in &workflow.role_map {
+        if role.trim().is_empty() {
+            errors.push("workflow.role_map contains an empty role key".into());
+        }
+        if owner.trim().is_empty() {
+            errors.push(format!(
+                "workflow.role_map.{} must not map to an empty owner",
+                role
+            ));
+        }
+    }
+
+    if let Some(ref execution_mode) = workflow.execution_mode {
+        let valid = ["manual", "ralph"];
+        if !valid.contains(&execution_mode.engine.to_lowercase().as_str()) {
+            errors.push(format!(
+                "workflow.execution_mode.engine: invalid value '{}' (expected: manual, ralph)",
+                execution_mode.engine
+            ));
+        }
+        if execution_mode.stop_conditions.is_empty() {
+            errors.push("workflow.execution_mode.stop_conditions must not be empty".into());
+        }
+    }
+
+    let mut seen_phase_ids = std::collections::HashSet::new();
+    for phase in &workflow.phases {
+        if phase.id.trim().is_empty() {
+            errors.push("workflow.phases[].id must not be empty".into());
+        } else if !seen_phase_ids.insert(phase.id.as_str()) {
+            errors.push(format!("duplicate workflow phase ID: {}", phase.id));
+        }
+        if phase.title.trim().is_empty() {
+            errors.push(format!(
+                "workflow phase {}: title must not be empty",
+                phase.id
+            ));
+        }
+        if phase.scope.trim().is_empty() {
+            errors.push(format!(
+                "workflow phase {}: scope must not be empty",
+                phase.id
+            ));
+        }
+        if phase.roles.is_empty() {
+            errors.push(format!(
+                "workflow phase {}: roles must not be empty",
+                phase.id
+            ));
+        }
+        if phase.acceptance.is_empty() {
+            errors.push(format!(
+                "workflow phase {}: acceptance must not be empty",
+                phase.id
+            ));
+        }
+        if phase.rollback.is_empty() {
+            errors.push(format!(
+                "workflow phase {}: rollback must not be empty",
+                phase.id
+            ));
+        }
+    }
 }
 
 fn is_valid_id(id: &str) -> bool {

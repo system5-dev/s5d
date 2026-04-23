@@ -2,7 +2,10 @@ use clap::{Parser, Subcommand};
 use colored::Colorize;
 
 #[derive(Parser)]
-#[command(name = "s5d", about = "S5D — decision and validation layer for repo changes")]
+#[command(
+    name = "s5d",
+    about = "S5D — decision and validation layer for repo changes"
+)]
 struct Cli {
     #[command(subcommand)]
     command: S5dCommand,
@@ -161,6 +164,14 @@ enum S5dCommand {
         /// Path to .s5d.yaml file
         spec: String,
     },
+    /// Architecture linter — spec shape, graph rules, component paths, and source dependencies
+    Check {
+        /// Path to .s5d.yaml file
+        spec: String,
+        /// Output format: text or json
+        #[arg(long, default_value = "text")]
+        format: String,
+    },
     /// Dry-run import diff
     Preview {
         /// Path to .s5d.yaml file
@@ -210,6 +221,16 @@ enum S5dCommand {
         /// Path to .s5d.yaml file (optional: check all if omitted)
         spec: Option<String>,
     },
+    /// Phase lifecycle for workflow-driven execution
+    Phase {
+        #[command(subcommand)]
+        command: PhaseCommand,
+    },
+    /// Execute a bounded loop inside an approved phase
+    Execute {
+        #[command(subcommand)]
+        command: ExecuteCommand,
+    },
     /// Re-import to fix drift (desired-state restore, bypasses diff_sha256)
     Reconcile {
         /// Path to .s5d.yaml file (optional: reconcile all drifted if omitted)
@@ -224,6 +245,12 @@ enum S5dCommand {
     Reflect {
         /// Path to .s5d.yaml file
         spec: String,
+        /// Outcome verdict: confirmed, refuted, inconclusive, iterate, kill
+        #[arg(long)]
+        verdict: Option<String>,
+        /// Measurement window used for the verdict
+        #[arg(long)]
+        measurement_window: Option<String>,
         /// Summary of what happened in production
         #[arg(long)]
         summary: String,
@@ -239,6 +266,9 @@ enum S5dCommand {
         /// Production evidence: paths, URLs, or metric descriptions (repeatable)
         #[arg(long = "evidence")]
         evidence: Vec<String>,
+        /// Telemetry references backing the verdict (repeatable)
+        #[arg(long = "telemetry")]
+        telemetry_refs: Vec<String>,
         /// Reusable rules learned from this spec (repeatable)
         #[arg(long = "heuristic")]
         heuristics: Vec<String>,
@@ -258,6 +288,16 @@ enum S5dCommand {
     Index {
         #[command(subcommand)]
         command: IndexCommand,
+    },
+    /// Git hook entrypoints implemented in Rust
+    Hook {
+        #[command(subcommand)]
+        command: HookCommand,
+    },
+    /// Check for and apply S5D binary/skill updates
+    Update {
+        #[command(subcommand)]
+        command: UpdateCommand,
     },
     /// Seed alias table from bootstrap manifest
     Bootstrap {
@@ -310,10 +350,91 @@ enum IndexCommand {
     Sync,
 }
 
+#[derive(Subcommand)]
+enum HookCommand {
+    /// Run the S5D pre-commit check over staged specs and architecture-gated source
+    PreCommit,
+}
+
+#[derive(Subcommand)]
+enum UpdateCommand {
+    /// Check whether the installed S5D checkout differs from origin
+    Check {
+        /// Emit plugin hook JSON and never fail on network/setup errors
+        #[arg(long)]
+        hook: bool,
+        /// Emit machine-readable JSON
+        #[arg(long)]
+        json: bool,
+    },
+    /// Update the checkout, relink skills, and replace the installed binary
+    Apply {
+        /// Show what would be updated without writing files
+        #[arg(long)]
+        dry_run: bool,
+    },
+}
+
+#[derive(Subcommand)]
+enum PhaseCommand {
+    /// List workflow phases and current phase state
+    List {
+        /// Path to .s5d.yaml file
+        spec: String,
+    },
+    /// Mark a workflow phase as active
+    Start {
+        /// Path to .s5d.yaml file
+        spec: String,
+        /// Workflow phase ID
+        #[arg(long)]
+        id: String,
+    },
+    /// Human acceptance for a workflow phase
+    Accept {
+        /// Path to .s5d.yaml file
+        spec: String,
+        /// Workflow phase ID
+        #[arg(long)]
+        id: String,
+        /// Reviewer who accepts the phase
+        #[arg(long)]
+        reviewer: String,
+    },
+}
+
+#[derive(Subcommand)]
+enum ExecuteCommand {
+    /// Emit a bounded task package for a workflow phase
+    Loop {
+        /// Path to .s5d.yaml file
+        spec: String,
+        /// Workflow phase ID
+        #[arg(long)]
+        phase: String,
+        /// Execution engine name
+        #[arg(long, default_value = "ralph")]
+        engine: String,
+        /// Optional Ralph run mode (default inferred from phase)
+        #[arg(long)]
+        mode: Option<String>,
+    },
+}
+
 fn main() -> anyhow::Result<()> {
+    if invoked_as_git_hook("pre-commit") {
+        return run_hook_pre_commit();
+    }
+
     let cli = Cli::parse();
     match cli.command {
-        S5dCommand::Init { claude, cursor, codex, gemini, all } => run_init(claude, cursor, codex, gemini, all),
+        S5dCommand::Init {
+            claude,
+            cursor,
+            codex,
+            gemini,
+            all,
+        } => run_init(claude, cursor, codex, gemini, all),
         S5dCommand::New {
             feature_id,
             tier,
@@ -334,7 +455,11 @@ fn main() -> anyhow::Result<()> {
         S5dCommand::Status => run_status(),
         S5dCommand::Cg => run_cg(),
         S5dCommand::Preview { spec } => run_preview(&spec),
-        S5dCommand::Approve { spec, reviewer, require_owner } => run_approve(&spec, &reviewer, require_owner),
+        S5dCommand::Approve {
+            spec,
+            reviewer,
+            require_owner,
+        } => run_approve(&spec, &reviewer, require_owner),
         S5dCommand::RunGates { spec } => run_gates(&spec),
         S5dCommand::Import {
             spec,
@@ -346,9 +471,30 @@ fn main() -> anyhow::Result<()> {
             IndexCommand::Check => run_index_check(),
             IndexCommand::Sync => run_index_sync(),
         },
+        S5dCommand::Hook { command } => match command {
+            HookCommand::PreCommit => run_hook_pre_commit(),
+        },
+        S5dCommand::Update { command } => match command {
+            UpdateCommand::Check { hook, json } => run_update_check(hook, json),
+            UpdateCommand::Apply { dry_run } => run_update_apply(dry_run),
+        },
         S5dCommand::Bootstrap { manifest } => run_bootstrap(&manifest),
         S5dCommand::GraphCheck { spec } => run_graph_check(&spec),
+        S5dCommand::Check { spec, format } => run_check(&spec, &format),
         S5dCommand::DriftCheck { spec } => run_drift_check(spec.as_deref()),
+        S5dCommand::Phase { command } => match command {
+            PhaseCommand::List { spec } => run_phase_list(&spec),
+            PhaseCommand::Start { spec, id } => run_phase_start(&spec, &id),
+            PhaseCommand::Accept { spec, id, reviewer } => run_phase_accept(&spec, &id, &reviewer),
+        },
+        S5dCommand::Execute { command } => match command {
+            ExecuteCommand::Loop {
+                spec,
+                phase,
+                engine,
+                mode,
+            } => run_execute_loop(&spec, &phase, &engine, mode.as_deref()),
+        },
         S5dCommand::Reconcile { spec } => run_reconcile(spec.as_deref()),
         S5dCommand::AddHypothesis {
             spec,
@@ -418,24 +564,33 @@ fn main() -> anyhow::Result<()> {
             no_challenge,
         ),
         S5dCommand::Show { spec } => run_show(&spec),
-        S5dCommand::Route { description, format } => run_route(&description.join(" "), &format),
+        S5dCommand::Route {
+            description,
+            format,
+        } => run_route(&description.join(" "), &format),
         S5dCommand::Search { query } => run_search(&query),
         S5dCommand::Reflect {
             spec,
+            verdict,
+            measurement_window,
             summary,
             worked,
             issues,
             follow_ups,
             evidence,
+            telemetry_refs,
             heuristics,
             structured_issues,
         } => run_reflect(
             &spec,
+            verdict.as_deref(),
+            measurement_window.as_deref(),
             &summary,
             &worked,
             &issues,
             &follow_ups,
             &evidence,
+            &telemetry_refs,
             &heuristics,
             &structured_issues,
         ),
@@ -556,15 +711,22 @@ fn run_install(
     }
 
     let scope = if global { "global" } else { "project" };
-    let verb = if uninstall { "Uninstalling" } else { "Installing" };
+    let verb = if uninstall {
+        "Uninstalling"
+    } else {
+        "Installing"
+    };
     println!(
         "{} s5d MCP server ({} scope)",
-        format!("{}", verb).bold(),
+        verb.to_string().bold(),
         scope
     );
 
     for t in &targets {
-        let rel = t.path.strip_prefix(&home).ok()
+        let rel = t
+            .path
+            .strip_prefix(&home)
+            .ok()
             .map(|p| format!("~/{}", p.display()))
             .unwrap_or_else(|| t.path.display().to_string());
 
@@ -602,7 +764,10 @@ fn run_install(
         println!();
         println!("   Command: {} mcp", binary_str);
         println!();
-        println!("   {} Restart your agent session to activate.", "⚠".yellow());
+        println!(
+            "   {} Restart your agent session to activate.",
+            "⚠".yellow()
+        );
     }
     Ok(())
 }
@@ -662,9 +827,659 @@ fn unregister_mcp_toml(path: &std::path::Path) -> anyhow::Result<bool> {
     Ok(true)
 }
 
+// ── Git Hooks ────────────────────────────────────────────────────────────────
+
+enum HookInstallResult {
+    Installed(std::path::PathBuf),
+    AlreadyInstalled(std::path::PathBuf),
+    ExistingHook(std::path::PathBuf),
+    NoGit,
+}
+
+fn invoked_as_git_hook(name: &str) -> bool {
+    std::env::args_os()
+        .next()
+        .and_then(|arg| {
+            std::path::PathBuf::from(arg)
+                .file_name()
+                .map(|name| name.to_owned())
+        })
+        .and_then(|file_name| file_name.to_str().map(|name| name.to_string()))
+        .is_some_and(|file_name| file_name == name)
+}
+
+fn install_pre_commit_hook(
+    project_root: &std::path::Path,
+    binary: &str,
+) -> anyhow::Result<HookInstallResult> {
+    let Some(git_dir) = resolve_git_dir(project_root)? else {
+        return Ok(HookInstallResult::NoGit);
+    };
+    let hooks_dir = git_dir.join("hooks");
+    std::fs::create_dir_all(&hooks_dir)?;
+    let hook_path = hooks_dir.join("pre-commit");
+    let binary_path = std::path::PathBuf::from(binary);
+
+    if hook_path.exists() || hook_path.symlink_metadata().is_ok() {
+        if points_to_binary(&hook_path, &binary_path) {
+            return Ok(HookInstallResult::AlreadyInstalled(hook_path));
+        }
+        if is_replaceable_s5d_hook(&hook_path) {
+            std::fs::remove_file(&hook_path)?;
+            install_binary_hook(&binary_path, &hook_path)?;
+            return Ok(HookInstallResult::Installed(hook_path));
+        }
+        return Ok(HookInstallResult::ExistingHook(hook_path));
+    }
+
+    install_binary_hook(&binary_path, &hook_path)?;
+    Ok(HookInstallResult::Installed(hook_path))
+}
+
+fn is_replaceable_s5d_hook(hook_path: &std::path::Path) -> bool {
+    if let Ok(target) = std::fs::read_link(hook_path) {
+        if target.to_string_lossy().contains("s5d-validate.sh") {
+            return true;
+        }
+    }
+
+    std::fs::read_to_string(hook_path)
+        .map(|content| {
+            content.contains("S5D pre-commit validation hook")
+                || content.contains("s5d hook pre-commit")
+        })
+        .unwrap_or(false)
+}
+
+fn resolve_git_dir(project_root: &std::path::Path) -> anyhow::Result<Option<std::path::PathBuf>> {
+    let dot_git = project_root.join(".git");
+    if dot_git.is_dir() {
+        return Ok(Some(dot_git));
+    }
+    if dot_git.is_file() {
+        let raw = std::fs::read_to_string(&dot_git)?;
+        if let Some(path) = raw.trim().strip_prefix("gitdir:") {
+            let git_dir = std::path::PathBuf::from(path.trim());
+            return Ok(Some(if git_dir.is_absolute() {
+                git_dir
+            } else {
+                project_root.join(git_dir)
+            }));
+        }
+    }
+    Ok(None)
+}
+
+fn points_to_binary(hook_path: &std::path::Path, binary_path: &std::path::Path) -> bool {
+    let Ok(target) = std::fs::read_link(hook_path) else {
+        return false;
+    };
+    let target = if target.is_absolute() {
+        target
+    } else {
+        hook_path
+            .parent()
+            .unwrap_or_else(|| std::path::Path::new("."))
+            .join(target)
+    };
+    match (target.canonicalize(), binary_path.canonicalize()) {
+        (Ok(target), Ok(binary)) => target == binary,
+        _ => false,
+    }
+}
+
+#[cfg(unix)]
+fn install_binary_hook(
+    binary_path: &std::path::Path,
+    hook_path: &std::path::Path,
+) -> anyhow::Result<()> {
+    std::os::unix::fs::symlink(binary_path, hook_path)?;
+    Ok(())
+}
+
+#[cfg(not(unix))]
+fn install_binary_hook(
+    binary_path: &std::path::Path,
+    hook_path: &std::path::Path,
+) -> anyhow::Result<()> {
+    std::fs::copy(binary_path, hook_path)?;
+    Ok(())
+}
+
+fn run_hook_pre_commit() -> anyhow::Result<()> {
+    let cwd = std::env::current_dir()?;
+    let Some(project) = s5d::S5dProject::find(&cwd) else {
+        return Ok(());
+    };
+
+    let staged = git_staged_files(&project.root)?;
+    if staged.is_empty() {
+        return Ok(());
+    }
+
+    let staged_specs: std::collections::HashSet<String> = staged
+        .iter()
+        .filter(|path| path.ends_with(".s5d.yaml"))
+        .cloned()
+        .collect();
+    let has_source_changes = staged.iter().any(|path| is_source_path(path));
+
+    let specs = project.discover_specs()?;
+    let mut failures = Vec::new();
+    let mut checked_specs = 0usize;
+    let mut checked_architecture = std::collections::HashSet::new();
+
+    for (path, spec) in &specs {
+        let rel = display_project_path(&project.root, path);
+        let is_staged_spec = staged_specs.contains(&rel);
+        if is_staged_spec {
+            checked_specs += 1;
+            for error in s5d::validate_spec(spec) {
+                failures.push(format!("{}: {}", rel, error));
+            }
+            for error in s5d::graph_check(spec) {
+                failures.push(format!("{}: {}", rel, error));
+            }
+        }
+
+        if (is_staged_spec || has_source_changes)
+            && spec.gates.iter().any(|gate| gate.kind == "architecture")
+            && checked_architecture.insert(rel.clone())
+        {
+            let report = s5d::architecture_check(spec, &project.root)?;
+            for error in report.errors {
+                failures.push(format!("{}: {}", rel, error));
+            }
+        }
+    }
+
+    if checked_specs > 0 || !checked_architecture.is_empty() {
+        println!(
+            "s5d pre-commit: checked {} staged spec(s), {} architecture spec(s)",
+            checked_specs,
+            checked_architecture.len()
+        );
+    }
+
+    if failures.is_empty() {
+        return Ok(());
+    }
+
+    eprintln!("s5d pre-commit blocked commit:");
+    for failure in failures {
+        eprintln!("  - {}", failure);
+    }
+    std::process::exit(1);
+}
+
+fn git_staged_files(project_root: &std::path::Path) -> anyhow::Result<Vec<String>> {
+    let output = std::process::Command::new("git")
+        .args(["diff", "--cached", "--name-only", "--diff-filter=ACMR"])
+        .current_dir(project_root)
+        .output()?;
+    if !output.status.success() {
+        anyhow::bail!(
+            "git diff --cached failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+    Ok(String::from_utf8_lossy(&output.stdout)
+        .lines()
+        .map(str::trim)
+        .filter(|line| !line.is_empty())
+        .map(ToOwned::to_owned)
+        .collect())
+}
+
+fn is_source_path(path: &str) -> bool {
+    let Some(extension) = std::path::Path::new(path)
+        .extension()
+        .and_then(|ext| ext.to_str())
+    else {
+        return false;
+    };
+    matches!(
+        extension,
+        "rs" | "py"
+            | "ts"
+            | "tsx"
+            | "js"
+            | "jsx"
+            | "go"
+            | "java"
+            | "kt"
+            | "swift"
+            | "c"
+            | "cc"
+            | "cpp"
+            | "h"
+            | "hpp"
+    )
+}
+
+fn display_project_path(project_root: &std::path::Path, path: &std::path::Path) -> String {
+    path.strip_prefix(project_root)
+        .unwrap_or(path)
+        .to_string_lossy()
+        .to_string()
+}
+
+// ── Update ───────────────────────────────────────────────────────────────────
+
+const S5D_SKILLS: &[&str] = &["s5d", "fpf"];
+
+#[derive(serde::Serialize)]
+struct UpdateCheck {
+    repo_root: Option<String>,
+    current_version: String,
+    current_commit: Option<String>,
+    remote_commit: Option<String>,
+    latest_tag: Option<String>,
+    latest_version: Option<String>,
+    update_available: bool,
+    reason: Option<String>,
+}
+
+fn run_update_check(hook: bool, json: bool) -> anyhow::Result<()> {
+    let check = match check_for_update() {
+        Ok(check) => check,
+        Err(error) if hook => {
+            let check = UpdateCheck {
+                repo_root: None,
+                current_version: env!("CARGO_PKG_VERSION").to_string(),
+                current_commit: None,
+                remote_commit: None,
+                latest_tag: None,
+                latest_version: None,
+                update_available: false,
+                reason: Some(error.to_string()),
+            };
+            if json {
+                println!("{}", serde_json::to_string_pretty(&check)?);
+            }
+            return Ok(());
+        }
+        Err(error) => return Err(error),
+    };
+
+    if hook {
+        if check.update_available {
+            let latest = check
+                .latest_tag
+                .as_deref()
+                .or(check.remote_commit.as_deref())
+                .unwrap_or("newer upstream");
+            let message = format!(
+                "S5D update available: {} -> {}. Run: s5d update apply",
+                check.current_version, latest
+            );
+            println!("{}", serde_json::json!({ "systemMessage": message }));
+        }
+        return Ok(());
+    }
+
+    if json {
+        println!("{}", serde_json::to_string_pretty(&check)?);
+        return Ok(());
+    }
+
+    println!("S5D update check");
+    println!("  current: {}", check.current_version);
+    if let Some(ref root) = check.repo_root {
+        println!("  repo: {}", root);
+    }
+    if let Some(ref commit) = check.current_commit {
+        println!("  local: {}", short_commit(commit));
+    }
+    if let Some(ref commit) = check.remote_commit {
+        println!("  remote: {}", short_commit(commit));
+    }
+    if let Some(ref tag) = check.latest_tag {
+        println!("  latest tag: {}", tag);
+    }
+    if check.update_available {
+        println!("  update: available");
+        println!("  run: s5d update apply");
+    } else {
+        println!("  update: current");
+    }
+    Ok(())
+}
+
+fn run_update_apply(dry_run: bool) -> anyhow::Result<()> {
+    let repo_root = locate_s5d_repo_root().ok_or_else(|| {
+        anyhow::anyhow!("cannot locate S5D checkout. Re-run install.sh from a cloned s5d repo.")
+    })?;
+    let destination = update_binary_destination(&repo_root)?;
+
+    println!("S5D update apply");
+    println!("  repo: {}", repo_root.display());
+    println!("  binary: {}", destination.display());
+
+    if dry_run {
+        println!("  dry-run: would fetch, fast-forward, relink skills, and replace binary");
+        return Ok(());
+    }
+
+    run_git_command(&repo_root, &["fetch", "--tags", "--prune"])?;
+    run_git_command(&repo_root, &["pull", "--ff-only"])?;
+    install_skills_from_repo(&repo_root)?;
+    install_binary_from_repo(&repo_root, &destination)?;
+    println!("{} S5D updated", "ok".green());
+    Ok(())
+}
+
+fn check_for_update() -> anyhow::Result<UpdateCheck> {
+    let repo_root =
+        locate_s5d_repo_root().ok_or_else(|| anyhow::anyhow!("cannot locate S5D checkout"))?;
+    let current_commit = git_output(&repo_root, &["rev-parse", "HEAD"]).ok();
+    let remote_commit = git_output(
+        &repo_root,
+        &[
+            "-c",
+            "http.lowSpeedLimit=1",
+            "-c",
+            "http.lowSpeedTime=5",
+            "ls-remote",
+            "origin",
+            "HEAD",
+        ],
+    )
+    .ok()
+    .and_then(|out| out.split_whitespace().next().map(str::to_string));
+    let latest_tag = latest_remote_tag(&repo_root).ok().flatten();
+    let latest_version = latest_tag
+        .as_deref()
+        .and_then(|tag| tag.strip_prefix('v'))
+        .map(str::to_string);
+
+    let version_update = latest_version
+        .as_deref()
+        .is_some_and(|latest| version_greater(latest, env!("CARGO_PKG_VERSION")));
+    let commit_update = current_commit
+        .as_deref()
+        .zip(remote_commit.as_deref())
+        .is_some_and(|(current, remote)| current != remote);
+
+    Ok(UpdateCheck {
+        repo_root: Some(repo_root.display().to_string()),
+        current_version: env!("CARGO_PKG_VERSION").to_string(),
+        current_commit,
+        remote_commit,
+        latest_tag,
+        latest_version,
+        update_available: version_update || commit_update,
+        reason: None,
+    })
+}
+
+fn locate_s5d_repo_root() -> Option<std::path::PathBuf> {
+    if let Ok(root) = std::env::var("S5D_ROOT") {
+        let root = std::path::PathBuf::from(root);
+        if is_s5d_repo_root(&root) {
+            return Some(root);
+        }
+    }
+
+    if let Ok(exe) = std::env::current_exe() {
+        for ancestor in exe.ancestors() {
+            if is_s5d_repo_root(ancestor) {
+                return Some(ancestor.to_path_buf());
+            }
+        }
+    }
+
+    for skill_root in installed_skill_roots() {
+        if let Ok(canonical) = skill_root.canonicalize() {
+            for ancestor in canonical.ancestors() {
+                if is_s5d_repo_root(ancestor) {
+                    return Some(ancestor.to_path_buf());
+                }
+            }
+        }
+    }
+
+    None
+}
+
+fn installed_skill_roots() -> Vec<std::path::PathBuf> {
+    let Some(home) = home_dir() else {
+        return Vec::new();
+    };
+    vec![
+        home.join(".agents/skills/s5d"),
+        home.join(".claude/skills/s5d"),
+        home.join(".codex/skills/s5d"),
+        home.join(".gemini/skills/s5d"),
+        home.join(".diana/src/skills/s5d"),
+    ]
+}
+
+fn is_s5d_repo_root(path: &std::path::Path) -> bool {
+    path.join("install.sh").is_file()
+        && path.join("skills/s5d/SKILL.md").is_file()
+        && path.join("rust/Cargo.toml").is_file()
+}
+
+fn latest_remote_tag(repo_root: &std::path::Path) -> anyhow::Result<Option<String>> {
+    let out = git_output(
+        repo_root,
+        &[
+            "-c",
+            "http.lowSpeedLimit=1",
+            "-c",
+            "http.lowSpeedTime=5",
+            "ls-remote",
+            "--tags",
+            "--refs",
+            "origin",
+            "v*",
+        ],
+    )?;
+    Ok(out
+        .lines()
+        .filter_map(|line| line.split_whitespace().nth(1))
+        .filter_map(|reference| reference.strip_prefix("refs/tags/"))
+        .max_by(|a, b| compare_versions(version_part(a), version_part(b)))
+        .map(str::to_string))
+}
+
+fn git_output(repo_root: &std::path::Path, args: &[&str]) -> anyhow::Result<String> {
+    let output = std::process::Command::new("git")
+        .args(args)
+        .current_dir(repo_root)
+        .output()?;
+    if !output.status.success() {
+        anyhow::bail!("{}", String::from_utf8_lossy(&output.stderr).trim());
+    }
+    Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())
+}
+
+fn run_git_command(repo_root: &std::path::Path, args: &[&str]) -> anyhow::Result<()> {
+    let status = std::process::Command::new("git")
+        .args(args)
+        .current_dir(repo_root)
+        .status()?;
+    if !status.success() {
+        anyhow::bail!("git {} failed", args.join(" "));
+    }
+    Ok(())
+}
+
+fn install_skills_from_repo(repo_root: &std::path::Path) -> anyhow::Result<()> {
+    let Some(home) = home_dir() else {
+        anyhow::bail!("HOME is not set");
+    };
+
+    let mut targets = vec![home.join(".agents/skills")];
+    if home.join(".claude").is_dir() {
+        targets.push(home.join(".claude/skills"));
+    }
+    if home.join(".codex").is_dir() {
+        targets.push(home.join(".codex/skills"));
+    }
+    if home.join(".gemini").is_dir() {
+        targets.push(home.join(".gemini/skills"));
+    }
+    if home.join(".diana/src/skills").is_dir() {
+        targets.push(home.join(".diana/src/skills"));
+    }
+
+    for target in targets {
+        std::fs::create_dir_all(&target)?;
+        for skill in S5D_SKILLS {
+            replace_symlink(&repo_root.join("skills").join(skill), &target.join(skill))?;
+        }
+    }
+    Ok(())
+}
+
+fn install_binary_from_repo(
+    repo_root: &std::path::Path,
+    destination: &std::path::Path,
+) -> anyhow::Result<()> {
+    let source = if let Some(prebuilt) = prebuilt_binary(repo_root) {
+        prebuilt
+    } else {
+        let status = std::process::Command::new("cargo")
+            .args(["build", "--release"])
+            .current_dir(repo_root.join("rust"))
+            .status()?;
+        if !status.success() {
+            anyhow::bail!("cargo build --release failed");
+        }
+        repo_root.join("rust/target/release/s5d")
+    };
+
+    if let Some(parent) = destination.parent() {
+        std::fs::create_dir_all(parent)?;
+    }
+    let tmp = destination.with_extension("s5d-update-tmp");
+    std::fs::copy(&source, &tmp)?;
+    make_executable(&tmp)?;
+    std::fs::rename(&tmp, destination)?;
+    Ok(())
+}
+
+fn update_binary_destination(repo_root: &std::path::Path) -> anyhow::Result<std::path::PathBuf> {
+    if let Ok(path) = std::env::var("S5D_BIN_PATH") {
+        return Ok(std::path::PathBuf::from(path));
+    }
+    let current = std::env::current_exe()?;
+    if current.starts_with(repo_root.join("rust/target")) {
+        let Some(home) = home_dir() else {
+            anyhow::bail!("HOME is not set");
+        };
+        return Ok(home.join("bin/s5d"));
+    }
+    Ok(current)
+}
+
+fn prebuilt_binary(repo_root: &std::path::Path) -> Option<std::path::PathBuf> {
+    let os = match std::env::consts::OS {
+        "macos" => "darwin",
+        "linux" => "linux",
+        other => other,
+    };
+    let arch = match std::env::consts::ARCH {
+        "aarch64" => "arm64",
+        other => other,
+    };
+    let path = repo_root.join("bin").join(format!("s5d-{}-{}", os, arch));
+    path.is_file().then_some(path)
+}
+
+fn replace_symlink(source: &std::path::Path, target: &std::path::Path) -> anyhow::Result<()> {
+    if target.exists() || target.symlink_metadata().is_ok() {
+        if target.is_dir() && !target.is_symlink() {
+            std::fs::remove_dir_all(target)?;
+        } else {
+            std::fs::remove_file(target)?;
+        }
+    }
+    install_skill_link(source, target)
+}
+
+#[cfg(unix)]
+fn install_skill_link(source: &std::path::Path, target: &std::path::Path) -> anyhow::Result<()> {
+    std::os::unix::fs::symlink(source, target)?;
+    Ok(())
+}
+
+#[cfg(not(unix))]
+fn install_skill_link(source: &std::path::Path, target: &std::path::Path) -> anyhow::Result<()> {
+    copy_dir_all(source, target)
+}
+
+#[cfg(not(unix))]
+fn copy_dir_all(source: &std::path::Path, target: &std::path::Path) -> anyhow::Result<()> {
+    std::fs::create_dir_all(target)?;
+    for entry in std::fs::read_dir(source)? {
+        let entry = entry?;
+        let ty = entry.file_type()?;
+        let destination = target.join(entry.file_name());
+        if ty.is_dir() {
+            copy_dir_all(&entry.path(), &destination)?;
+        } else {
+            std::fs::copy(entry.path(), destination)?;
+        }
+    }
+    Ok(())
+}
+
+#[cfg(unix)]
+fn make_executable(path: &std::path::Path) -> anyhow::Result<()> {
+    use std::os::unix::fs::PermissionsExt;
+    let mut permissions = std::fs::metadata(path)?.permissions();
+    permissions.set_mode(0o755);
+    std::fs::set_permissions(path, permissions)?;
+    Ok(())
+}
+
+#[cfg(not(unix))]
+fn make_executable(_path: &std::path::Path) -> anyhow::Result<()> {
+    Ok(())
+}
+
+fn home_dir() -> Option<std::path::PathBuf> {
+    std::env::var_os("HOME").map(std::path::PathBuf::from)
+}
+
+fn version_part(tag: &str) -> &str {
+    tag.strip_prefix('v').unwrap_or(tag)
+}
+
+fn version_greater(left: &str, right: &str) -> bool {
+    compare_versions(left, right).is_gt()
+}
+
+fn compare_versions(left: &str, right: &str) -> std::cmp::Ordering {
+    let left_parts = parse_version(left);
+    let right_parts = parse_version(right);
+    left_parts.cmp(&right_parts)
+}
+
+fn parse_version(version: &str) -> Vec<u64> {
+    version
+        .split(|c: char| !c.is_ascii_digit())
+        .filter(|part| !part.is_empty())
+        .map(|part| part.parse::<u64>().unwrap_or(0))
+        .collect()
+}
+
+fn short_commit(commit: &str) -> &str {
+    commit.get(..8).unwrap_or(commit)
+}
+
 // ── Init ──────────────────────────────────────────────────────────────────────
 
-fn run_init(claude: bool, cursor: bool, codex: bool, gemini: bool, all: bool) -> anyhow::Result<()> {
+fn run_init(
+    claude: bool,
+    cursor: bool,
+    codex: bool,
+    gemini: bool,
+    all: bool,
+) -> anyhow::Result<()> {
     let cwd = std::env::current_dir()?;
     let (project, report) = s5d::S5dProject::init(&cwd)?;
 
@@ -698,7 +1513,10 @@ fn run_init(claude: bool, cursor: bool, codex: bool, gemini: bool, all: bool) ->
     // Claude Code → .mcp.json
     if do_claude {
         match register_mcp_json(&cwd.join(".mcp.json"), &binary_str) {
-            Ok(false) => println!("    {} Claude (.mcp.json) — already registered", "✓".green()),
+            Ok(false) => println!(
+                "    {} Claude (.mcp.json) — already registered",
+                "✓".green()
+            ),
             Ok(true) => println!("    {} Claude (.mcp.json)", "✓".green()),
             Err(e) => println!("    {} Claude: {}", "⚠".yellow(), e),
         }
@@ -708,7 +1526,10 @@ fn run_init(claude: bool, cursor: bool, codex: bool, gemini: bool, all: bool) ->
     if do_cursor {
         let cursor_path = cwd.join(".cursor").join("mcp.json");
         match register_mcp_json(&cursor_path, &binary_str) {
-            Ok(false) => println!("    {} Cursor (.cursor/mcp.json) — already registered", "✓".green()),
+            Ok(false) => println!(
+                "    {} Cursor (.cursor/mcp.json) — already registered",
+                "✓".green()
+            ),
             Ok(true) => println!("    {} Cursor (.cursor/mcp.json)", "✓".green()),
             Err(e) => println!("    {} Cursor: {}", "⚠".yellow(), e),
         }
@@ -718,7 +1539,10 @@ fn run_init(claude: bool, cursor: bool, codex: bool, gemini: bool, all: bool) ->
     if do_codex {
         let codex_path = cwd.join(".codex").join("config.toml");
         match register_mcp_toml(&codex_path, &binary_str) {
-            Ok(false) => println!("    {} Codex (.codex/config.toml) — already registered", "✓".green()),
+            Ok(false) => println!(
+                "    {} Codex (.codex/config.toml) — already registered",
+                "✓".green()
+            ),
             Ok(true) => println!("    {} Codex (.codex/config.toml)", "✓".green()),
             Err(e) => println!("    {} Codex: {}", "⚠".yellow(), e),
         }
@@ -728,7 +1552,10 @@ fn run_init(claude: bool, cursor: bool, codex: bool, gemini: bool, all: bool) ->
     if do_gemini {
         let gemini_path = cwd.join(".gemini").join("settings.json");
         match register_mcp_json(&gemini_path, &binary_str) {
-            Ok(false) => println!("    {} Gemini (.gemini/settings.json) — already registered", "✓".green()),
+            Ok(false) => println!(
+                "    {} Gemini (.gemini/settings.json) — already registered",
+                "✓".green()
+            ),
             Ok(true) => println!("    {} Gemini (.gemini/settings.json)", "✓".green()),
             Err(e) => println!("    {} Gemini: {}", "⚠".yellow(), e),
         }
@@ -771,7 +1598,10 @@ fn run_init(claude: bool, cursor: bool, codex: bool, gemini: bool, all: bool) ->
             if let Some(parent) = local_settings_path.parent() {
                 std::fs::create_dir_all(parent)?;
             }
-            std::fs::write(&local_settings_path, serde_json::to_string_pretty(&settings)?)?;
+            std::fs::write(
+                &local_settings_path,
+                serde_json::to_string_pretty(&settings)?,
+            )?;
             println!(
                 "    {} Added {} to {}",
                 "✓".green(),
@@ -784,10 +1614,43 @@ fn run_init(claude: bool, cursor: bool, codex: bool, gemini: bool, all: bool) ->
     println!("\n  {} Agent instructions:", "agents".bold());
     match ensure_agents_md(&cwd.join("AGENTS.md")) {
         Ok(AgentsUpdate::Created) => println!("    {} AGENTS.md — created", "✓".green()),
-        Ok(AgentsUpdate::Inserted) => println!("    {} AGENTS.md — s5d block appended", "✓".green()),
+        Ok(AgentsUpdate::Inserted) => {
+            println!("    {} AGENTS.md — s5d block appended", "✓".green())
+        }
         Ok(AgentsUpdate::Replaced) => println!("    {} AGENTS.md — s5d block updated", "✓".green()),
-        Ok(AgentsUpdate::Unchanged) => println!("    {} AGENTS.md — already up to date", "✓".green()),
+        Ok(AgentsUpdate::Unchanged) => {
+            println!("    {} AGENTS.md — already up to date", "✓".green())
+        }
         Err(e) => println!("    {} AGENTS.md: {}", "⚠".yellow(), e),
+    }
+
+    println!("\n  {} Git hooks:", "hooks".bold());
+    match install_pre_commit_hook(&cwd, &binary_str) {
+        Ok(HookInstallResult::Installed(path)) => {
+            println!("    {} pre-commit — {}", "✓".green(), path.display())
+        }
+        Ok(HookInstallResult::AlreadyInstalled(path)) => {
+            println!(
+                "    {} pre-commit — already installed ({})",
+                "✓".green(),
+                path.display()
+            )
+        }
+        Ok(HookInstallResult::ExistingHook(path)) => {
+            println!(
+                "    {} pre-commit exists — left unchanged ({})",
+                "⚠".yellow(),
+                path.display()
+            );
+            println!("      Run `s5d hook pre-commit` from that hook to chain S5D checks.");
+        }
+        Ok(HookInstallResult::NoGit) => {
+            println!(
+                "    {} no .git directory — hook not installed",
+                "skip".dimmed()
+            )
+        }
+        Err(e) => println!("    {} pre-commit: {}", "⚠".yellow(), e),
     }
 
     println!(
@@ -852,7 +1715,7 @@ fn ensure_agents_md(path: &std::path::Path) -> anyhow::Result<AgentsUpdate> {
         existing[existing.find(AGENTS_BEGIN).unwrap_or(0)..].find(AGENTS_END),
     ) {
         let end = start + end_rel + AGENTS_END.len();
-        if &existing[start..end] == block {
+        if existing[start..end] == block {
             return Ok(AgentsUpdate::Unchanged);
         }
         let mut updated = String::with_capacity(existing.len() + block.len());
@@ -917,7 +1780,7 @@ fn register_mcp_json(path: &std::path::Path, binary: &str) -> anyhow::Result<boo
 /// Register s5d MCP server in a TOML config file (Codex CLI format).
 /// Returns Ok(true) if written, Ok(false) if already registered.
 fn register_mcp_toml(path: &std::path::Path, binary: &str) -> anyhow::Result<bool> {
-    use toml_edit::{DocumentMut, Item, Table, value};
+    use toml_edit::{value, DocumentMut, Item, Table};
 
     let mut doc: DocumentMut = if path.exists() {
         let raw = std::fs::read_to_string(path)?;
@@ -1183,6 +2046,12 @@ fn run_status() -> anyhow::Result<()> {
             sync_colored
         );
 
+        if let Some(ref rec) = record {
+            if let Some(ref active_phase) = rec.active_phase {
+                println!("  {} {}", "Active phase:".dimmed(), active_phase);
+            }
+        }
+
         // Determine current phase and print next-action hint
         let phase: Option<s5d::Phase> = record.as_ref().and_then(|r| match &r.status {
             s5d::SpecStatus::Proposed => {
@@ -1242,6 +2111,238 @@ fn run_status() -> anyhow::Result<()> {
         }
     }
     println!();
+    Ok(())
+}
+
+fn workflow_required(spec: &s5d::Spec) -> anyhow::Result<&s5d::Workflow> {
+    spec.workflow.as_ref().ok_or_else(|| {
+        anyhow::anyhow!(
+            "spec has no workflow block — add workflow before using phase or execute commands"
+        )
+    })
+}
+
+fn workflow_phase_by_id<'a>(
+    workflow: &'a s5d::Workflow,
+    phase_id: &str,
+) -> anyhow::Result<&'a s5d::WorkflowPhase> {
+    workflow
+        .phases
+        .iter()
+        .find(|p| p.id == phase_id)
+        .ok_or_else(|| anyhow::anyhow!("workflow phase not found: {}", phase_id))
+}
+
+fn latest_phase_status(record: &s5d::Record, phase_id: &str) -> s5d::WorkflowPhaseStatus {
+    record
+        .phase_history
+        .iter()
+        .rev()
+        .find(|entry| entry.phase_id == phase_id)
+        .map(|entry| entry.status.clone())
+        .unwrap_or(s5d::WorkflowPhaseStatus::Planned)
+}
+
+fn append_phase_history(
+    record: &mut s5d::Record,
+    phase_id: &str,
+    status: s5d::WorkflowPhaseStatus,
+    reviewer: Option<String>,
+    engine: Option<String>,
+    notes: Option<String>,
+) {
+    record.phase_history.push(s5d::WorkflowPhaseRecord {
+        phase_id: phase_id.to_string(),
+        status,
+        timestamp: chrono::Utc::now().to_rfc3339(),
+        reviewer,
+        engine,
+        notes,
+    });
+}
+
+fn ensure_phase_execution_ready(
+    spec: &s5d::Spec,
+    record: &s5d::Record,
+    phase_id: &str,
+) -> anyhow::Result<()> {
+    if !matches!(
+        record.status,
+        s5d::SpecStatus::Approved | s5d::SpecStatus::Applied | s5d::SpecStatus::Operated
+    ) {
+        anyhow::bail!(
+            "phase execution requires approved or later spec state (current: {})",
+            record.status
+        );
+    }
+    let workflow = workflow_required(spec)?;
+    workflow_phase_by_id(workflow, phase_id)?;
+    Ok(())
+}
+
+fn run_phase_list(spec_path: &str) -> anyhow::Result<()> {
+    let (_path, spec) = load_spec_yaml(spec_path)?;
+    let cwd = std::env::current_dir()?;
+    let project = s5d::S5dProject::find(&cwd)
+        .or_else(|| s5d::S5dProject::find(std::path::Path::new(spec_path)))
+        .ok_or_else(|| anyhow::anyhow!("no .s5d/ found"))?;
+    let spec_filename = std::path::Path::new(spec_path)
+        .file_name()
+        .ok_or_else(|| anyhow::anyhow!("cannot determine filename"))?
+        .to_string_lossy()
+        .into_owned();
+    let record = project.load_record(&spec_filename)?.ok_or_else(|| {
+        anyhow::anyhow!("no record found for {} — run preview first", spec_filename)
+    })?;
+    let workflow = workflow_required(&spec)?;
+
+    println!("{}: {}", "PHASES".cyan().bold(), spec.id.bold());
+    println!("{}", "━".repeat(60));
+    for phase in &workflow.phases {
+        let status = latest_phase_status(&record, &phase.id);
+        let marker = if record.active_phase.as_deref() == Some(phase.id.as_str()) {
+            "▶"
+        } else {
+            "•"
+        };
+        println!(
+            "  {} {} [{}]",
+            marker,
+            phase.title.bold(),
+            format!("{}", status).dimmed()
+        );
+        println!("    {} {}", "id:".dimmed(), phase.id);
+        println!("    {} {}", "scope:".dimmed(), phase.scope);
+    }
+    Ok(())
+}
+
+fn run_phase_start(spec_path: &str, phase_id: &str) -> anyhow::Result<()> {
+    let (project, _spec_path, spec, spec_filename) = load_spec_context(spec_path)?;
+    let workflow = workflow_required(&spec)?;
+    let phase = workflow_phase_by_id(workflow, phase_id)?;
+    let mut record = project.load_record(&spec_filename)?.ok_or_else(|| {
+        anyhow::anyhow!("no record found for {} — run preview first", spec_filename)
+    })?;
+    ensure_phase_execution_ready(&spec, &record, phase_id)?;
+
+    if let Some(ref active_phase) = record.active_phase {
+        if active_phase != phase_id {
+            anyhow::bail!(
+                "phase '{}' is already active — accept or clear it before starting '{}'",
+                active_phase,
+                phase_id
+            );
+        }
+        anyhow::bail!("phase '{}' is already active", phase_id);
+    }
+
+    record.active_phase = Some(phase_id.to_string());
+    append_phase_history(
+        &mut record,
+        phase_id,
+        s5d::WorkflowPhaseStatus::Active,
+        None,
+        workflow
+            .execution_mode
+            .as_ref()
+            .map(|mode| mode.engine.clone()),
+        Some(format!("Started phase '{}'", phase.title)),
+    );
+    project.save_record(&spec_filename, &record)?;
+
+    println!("{} Active phase → {}", "ok".green(), phase_id);
+    println!("  {} {}", "Scope:".dimmed(), phase.scope);
+    Ok(())
+}
+
+fn run_phase_accept(spec_path: &str, phase_id: &str, reviewer: &str) -> anyhow::Result<()> {
+    let (project, _spec_path, spec, spec_filename) = load_spec_context(spec_path)?;
+    let workflow = workflow_required(&spec)?;
+    workflow_phase_by_id(workflow, phase_id)?;
+    let mut record = project.load_record(&spec_filename)?.ok_or_else(|| {
+        anyhow::anyhow!("no record found for {} — run preview first", spec_filename)
+    })?;
+    ensure_phase_execution_ready(&spec, &record, phase_id)?;
+
+    if record.active_phase.as_deref() != Some(phase_id) {
+        anyhow::bail!(
+            "phase '{}' is not active — start it before acceptance",
+            phase_id
+        );
+    }
+
+    record.active_phase = None;
+    append_phase_history(
+        &mut record,
+        phase_id,
+        s5d::WorkflowPhaseStatus::Accepted,
+        Some(reviewer.to_string()),
+        None,
+        Some("Human phase acceptance".into()),
+    );
+    project.save_record(&spec_filename, &record)?;
+
+    println!(
+        "{} Phase '{}' accepted by {}",
+        "ok".green(),
+        phase_id,
+        reviewer
+    );
+    Ok(())
+}
+
+fn run_execute_loop(
+    spec_path: &str,
+    phase_id: &str,
+    engine: &str,
+    mode: Option<&str>,
+) -> anyhow::Result<()> {
+    let (_project, _spec_path, spec, spec_filename) = load_spec_context(spec_path)?;
+    let workflow = workflow_required(&spec)?;
+    let phase = workflow_phase_by_id(workflow, phase_id)?;
+    let cwd = std::env::current_dir()?;
+    let project = s5d::S5dProject::find(&cwd)
+        .or_else(|| s5d::S5dProject::find(std::path::Path::new(spec_path)))
+        .ok_or_else(|| anyhow::anyhow!("no .s5d/ found"))?;
+    let record = project.load_record(&spec_filename)?.ok_or_else(|| {
+        anyhow::anyhow!("no record found for {} — run preview first", spec_filename)
+    })?;
+    ensure_phase_execution_ready(&spec, &record, phase_id)?;
+
+    if record.active_phase.as_deref() != Some(phase_id) {
+        anyhow::bail!("phase '{}' must be active before execute loop", phase_id);
+    }
+
+    let declared_engine = workflow
+        .execution_mode
+        .as_ref()
+        .map(|mode| mode.engine.as_str())
+        .unwrap_or("manual");
+    if engine != declared_engine {
+        anyhow::bail!(
+            "requested engine '{}' does not match workflow execution mode '{}'",
+            engine,
+            declared_engine
+        );
+    }
+    if engine != "ralph" {
+        anyhow::bail!(
+            "execute loop currently supports only engine=ralph (got '{}')",
+            engine
+        );
+    }
+
+    let preset = s5d::RalphPreset::resolve(mode, &phase.id)?;
+    let package = s5d::build_ralph_task_package(&spec, workflow, phase, preset)?;
+    let task_path = project.save_task_artifact(&spec_filename, &phase.id, preset.id(), &package)?;
+    let display_path = task_path
+        .strip_prefix(project.root.as_path())
+        .map(|path| path.display().to_string())
+        .unwrap_or_else(|_| task_path.display().to_string());
+    println!("{} {}", "Task artifact:".dimmed(), display_path);
+    println!();
+    println!("{}", package);
     Ok(())
 }
 
@@ -1357,7 +2458,9 @@ fn run_approve(spec_arg: &str, reviewer: &str, require_owner: bool) -> anyhow::R
                 reviewer,
                 domain_owners.join(", ")
             );
-            eprintln!("  Domain owners must approve their domains. Remove --require-owner to allow.");
+            eprintln!(
+                "  Domain owners must approve their domains. Remove --require-owner to allow."
+            );
             std::process::exit(1);
         } else {
             eprintln!(
@@ -1433,14 +2536,17 @@ fn run_gates(spec_arg: &str) -> anyhow::Result<()> {
     let results = s5d::run_gates(&spec, &config, spec_arg, &project.root, &project.s5d_dir())?;
 
     let passed = results.iter().filter(|r| r.status == "passed").count();
-    let failed = results.iter().filter(|r| r.status == "failed").count();
+    let failed = results
+        .iter()
+        .filter(|r| r.status != "passed" && r.status != "skipped")
+        .count();
     let skipped = results.iter().filter(|r| r.status == "skipped").count();
 
     for r in &results {
         let marker = match r.status.as_str() {
             "passed" => "pass".green(),
-            "failed" => "fail".red(),
-            _ => "skip".dimmed(),
+            "skipped" => "skip".dimmed(),
+            _ => "fail".red(),
         };
         println!("  [{}] gate:{} (attempt {})", marker, r.kind, r.attempt);
     }
@@ -1565,6 +2671,7 @@ fn run_import(spec_arg: &str, verified_by: &Option<String>, force: bool) -> anyh
 
 fn run_rollback(spec_arg: &str) -> anyhow::Result<()> {
     let (project, _spec_path, spec, spec_filename) = load_spec_context(spec_arg)?;
+    let _lock = project.acquire_lock(&format!("rollback.{}", spec.id))?;
 
     let s5d_dir = project.s5d_dir();
 
@@ -1834,6 +2941,67 @@ fn run_graph_check(spec_arg: &str) -> anyhow::Result<()> {
     }
 }
 
+// ── Check ─────────────────────────────────────────────────────────────────────
+
+fn run_check(spec_arg: &str, format: &str) -> anyhow::Result<()> {
+    let (project, _spec_path, spec, _spec_filename) = load_spec_context(spec_arg)?;
+    let report = s5d::architecture_check(&spec, &project.root)?;
+
+    match format {
+        "json" => {
+            println!("{}", serde_json::to_string_pretty(&report)?);
+        }
+        "text" => {
+            println!(
+                "{} Architecture check: {}",
+                "S5D".cyan().bold(),
+                spec.id.bold()
+            );
+            println!(
+                "  components: {}  dependencies: {}  warnings: {}  errors: {}",
+                report.components.len(),
+                report.dependencies.len(),
+                report.warnings.len(),
+                report.errors.len()
+            );
+
+            for component in &report.components {
+                println!(
+                    "  {} {} ({}) — {} file(s)",
+                    "component".dimmed(),
+                    component.component,
+                    component.domain,
+                    component.files.len()
+                );
+            }
+            for dependency in &report.dependencies {
+                println!(
+                    "  {} {} -> {} via {}",
+                    "edge".dimmed(),
+                    dependency.from_component,
+                    dependency.to_component,
+                    dependency.reference
+                );
+            }
+            for warning in &report.warnings {
+                eprintln!("  {} {}", "warn:".yellow(), warning);
+            }
+            for error in &report.errors {
+                eprintln!("  {} {}", "error:".red(), error);
+            }
+            if report.errors.is_empty() {
+                println!("{} {} architecture ok", "ok".green(), spec_arg);
+            }
+        }
+        other => anyhow::bail!("invalid --format '{}': expected text or json", other),
+    }
+
+    if !report.errors.is_empty() {
+        std::process::exit(3);
+    }
+    Ok(())
+}
+
 // ── DriftCheck ────────────────────────────────────────────────────────────────
 
 fn run_drift_check(spec_arg: Option<&str>) -> anyhow::Result<()> {
@@ -1986,13 +3154,20 @@ fn run_show(spec_path: &str) -> anyhow::Result<()> {
     let (path, spec) = load_spec_yaml(spec_path)?;
 
     // Load record for decision/approval/gate truth
-    let effective_decision = if let Ok(abs) = path.canonicalize() {
+    let record = if let Ok(abs) = path.canonicalize() {
         if let Some(project) = s5d::S5dProject::find(&abs) {
             let fname = abs.file_name().unwrap().to_string_lossy().into_owned();
-            project.load_record(&fname)?.and_then(|r| r.decision)
-        } else { None }
-    } else { None }
-    .or_else(|| spec.decision.clone());
+            project.load_record(&fname)?
+        } else {
+            None
+        }
+    } else {
+        None
+    };
+    let effective_decision = record
+        .as_ref()
+        .and_then(|r| r.decision.as_ref())
+        .or(spec.decision.as_ref());
 
     let is_decision = matches!(spec.tier, s5d::Tier::Decision);
 
@@ -2006,9 +3181,9 @@ fn run_show(spec_path: &str) -> anyhow::Result<()> {
     println!("{}", "━".repeat(60));
 
     if is_decision {
-        show_decision(&spec, effective_decision.as_ref());
+        show_decision(&spec, effective_decision);
     } else {
-        show_feature(&spec);
+        show_feature(&spec, record.as_ref());
     }
 
     Ok(())
@@ -2020,7 +3195,7 @@ fn show_decision(spec: &s5d::Spec, decision: Option<&s5d::DecisionRecord>) {
         println!();
         println!("  {}: {}", "Signal".dimmed(), problem.signal());
     }
-    if let Some(ref dec) = decision {
+    if let Some(dec) = decision {
         if !dec.context.is_empty() {
             println!("  {}: {}", "Context".dimmed(), dec.context);
         }
@@ -2028,9 +3203,7 @@ fn show_decision(spec: &s5d::Spec, decision: Option<&s5d::DecisionRecord>) {
     println!();
 
     // Hypothesis tree — use decision from record (or spec fallback)
-    let winner_id = decision
-        .map(|d| d.winner_id.as_str())
-        .unwrap_or("");
+    let winner_id = decision.map(|d| d.winner_id.as_str()).unwrap_or("");
 
     for (i, hyp) in spec.hypotheses.iter().enumerate() {
         let is_last = i == spec.hypotheses.len() - 1;
@@ -2100,7 +3273,7 @@ fn show_decision(spec: &s5d::Spec, decision: Option<&s5d::DecisionRecord>) {
     }
 
     // Decision summary — from record (or spec fallback)
-    if let Some(ref dec) = decision {
+    if let Some(dec) = decision {
         println!();
         println!("  {}: {}", "Decision".cyan(), dec.decision);
         if !dec.consequences.is_empty() {
@@ -2113,7 +3286,7 @@ fn show_decision(spec: &s5d::Spec, decision: Option<&s5d::DecisionRecord>) {
     }
 }
 
-fn show_feature(spec: &s5d::Spec) {
+fn show_feature(spec: &s5d::Spec, record: Option<&s5d::Record>) {
     println!("  {}: {}", "Tier".dimmed(), spec.tier);
     println!("  {}: {}", "Product".dimmed(), spec.product);
 
@@ -2122,6 +3295,21 @@ fn show_feature(spec: &s5d::Spec) {
             if let Some(ref status) = card.status {
                 println!("  {}: {}", "Status".dimmed(), status);
             }
+        }
+    }
+
+    if let Some(ref workflow) = spec.workflow {
+        if let Some(ref mode) = workflow.mode {
+            println!("  {}: {}", "Workflow".dimmed(), mode);
+        }
+        if !workflow.phases.is_empty() {
+            println!("  {}: {}", "Phases".dimmed(), workflow.phases.len());
+        }
+    }
+
+    if let Some(record) = record {
+        if let Some(ref active_phase) = record.active_phase {
+            println!("  {}: {}", "Active phase".dimmed(), active_phase);
         }
     }
 
@@ -2146,6 +3334,26 @@ fn show_feature(spec: &s5d::Spec) {
 
     if !spec.gates.is_empty() {
         println!("  {}: {}", "Gates".dimmed(), spec.gates.len());
+    }
+
+    if let Some(reflection) = record.and_then(|r| r.reflection.as_ref()) {
+        if let Some(ref verdict) = reflection.verdict {
+            println!(
+                "  {}: {}",
+                "Verdict".dimmed(),
+                colorize_outcome_verdict(verdict)
+            );
+        }
+        if let Some(ref window) = reflection.measurement_window {
+            println!("  {}: {}", "Measure".dimmed(), window);
+        }
+        if !reflection.telemetry_refs.is_empty() {
+            println!(
+                "  {}: {}",
+                "Telemetry".dimmed(),
+                reflection.telemetry_refs.len()
+            );
+        }
     }
 }
 
@@ -2471,11 +3679,14 @@ fn run_decide(
 #[allow(clippy::too_many_arguments)]
 fn run_reflect(
     spec_arg: &str,
+    verdict: Option<&str>,
+    measurement_window: Option<&str>,
     summary: &str,
     worked: &str,
     issues: &str,
     follow_ups: &str,
     evidence: &[String],
+    telemetry_refs: &[String],
     heuristics: &[String],
     structured_issues_raw: &[String],
 ) -> anyhow::Result<()> {
@@ -2525,14 +3736,28 @@ fn run_reflect(
             let parts: Vec<&str> = raw.splitn(4, '|').collect();
             s5d::Issue {
                 description: parts.first().unwrap_or(&"").to_string(),
-                root_cause: parts.get(1).filter(|s| !s.is_empty()).map(|s| s.to_string()),
-                fix: parts.get(2).filter(|s| !s.is_empty()).map(|s| s.to_string()),
-                severity: parts.get(3).filter(|s| !s.is_empty()).map(|s| s.to_string()),
+                root_cause: parts
+                    .get(1)
+                    .filter(|s| !s.is_empty())
+                    .map(|s| s.to_string()),
+                fix: parts
+                    .get(2)
+                    .filter(|s| !s.is_empty())
+                    .map(|s| s.to_string()),
+                severity: parts
+                    .get(3)
+                    .filter(|s| !s.is_empty())
+                    .map(|s| s.to_string()),
             }
         })
         .collect();
 
+    let normalized_verdict = verdict.map(normalize_outcome_verdict).transpose()?;
+
     record.reflection = Some(s5d::Reflection {
+        verdict: normalized_verdict,
+        measurement_window: measurement_window.map(|s| s.to_string()),
+        telemetry_refs: telemetry_refs.to_vec(),
         summary: Some(summary.to_string()),
         worked: worked_list,
         issues: issues_list,
@@ -2556,6 +3781,30 @@ fn run_reflect(
         "ok".green()
     );
     Ok(())
+}
+
+fn normalize_outcome_verdict(verdict: &str) -> anyhow::Result<String> {
+    let normalized = verdict.trim().to_lowercase();
+    let valid = ["confirmed", "refuted", "inconclusive", "iterate", "kill"];
+    if valid.contains(&normalized.as_str()) {
+        Ok(normalized)
+    } else {
+        anyhow::bail!(
+            "invalid verdict '{}' (use confirmed, refuted, inconclusive, iterate, kill)",
+            verdict
+        )
+    }
+}
+
+fn colorize_outcome_verdict(verdict: &str) -> colored::ColoredString {
+    match verdict {
+        "confirmed" => "CONFIRMED".green(),
+        "refuted" => "REFUTED".red(),
+        "inconclusive" => "INCONCLUSIVE".yellow(),
+        "iterate" => "ITERATE".yellow(),
+        "kill" => "KILL".red().bold(),
+        other => other.normal(),
+    }
 }
 
 // ── Route ────────────────────────────────────────────────────────────────────
@@ -2780,6 +4029,3 @@ mod agents_md_tests {
         assert!(body.contains("## Footer section"));
     }
 }
-
-
-

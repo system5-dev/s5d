@@ -58,7 +58,7 @@ fn handle_initialize() -> anyhow::Result<Value> {
     Ok(json!({
         "protocolVersion": "2024-11-05",
         "capabilities": {"tools": {}},
-        "serverInfo": {"name": "s5d", "version": "2.0.0"}
+        "serverInfo": {"name": "s5d", "version": env!("CARGO_PKG_VERSION")}
     }))
 }
 
@@ -290,9 +290,66 @@ fn core_tools() -> Vec<Value> {
                 "required": ["spec", "summary", "heuristic"],
                 "properties": {
                     "spec": {"type": "string", "description": "Path to .s5d.yaml file"},
+                    "verdict": {"type": "string", "description": "Outcome verdict: confirmed, refuted, inconclusive, iterate, kill"},
+                    "measurement_window": {"type": "string", "description": "Measurement window used for the verdict"},
                     "summary": {"type": "string", "description": "Summary of what happened in production"},
                     "heuristic": {"type": "string", "description": "Reusable rule learned from this spec"},
-                    "issues": {"type": "string", "description": "Issues encountered (comma-separated)"}
+                    "issues": {"type": "string", "description": "Issues encountered (comma-separated)"},
+                    "telemetry_refs": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Telemetry refs backing the verdict"
+                    }
+                }
+            }
+        }),
+        json!({
+            "name": "s5d_phase_list",
+            "description": "List workflow phases and current phase state for a spec",
+            "inputSchema": {
+                "type": "object",
+                "required": ["spec"],
+                "properties": {
+                    "spec": {"type": "string", "description": "Path to .s5d.yaml file"}
+                }
+            }
+        }),
+        json!({
+            "name": "s5d_phase_start",
+            "description": "Mark a workflow phase as active",
+            "inputSchema": {
+                "type": "object",
+                "required": ["spec", "phase_id"],
+                "properties": {
+                    "spec": {"type": "string", "description": "Path to .s5d.yaml file"},
+                    "phase_id": {"type": "string", "description": "Workflow phase ID"}
+                }
+            }
+        }),
+        json!({
+            "name": "s5d_phase_accept",
+            "description": "Record human phase acceptance for an active workflow phase",
+            "inputSchema": {
+                "type": "object",
+                "required": ["spec", "phase_id", "reviewer"],
+                "properties": {
+                    "spec": {"type": "string", "description": "Path to .s5d.yaml file"},
+                    "phase_id": {"type": "string", "description": "Workflow phase ID"},
+                    "reviewer": {"type": "string", "description": "Reviewer who accepts the phase"}
+                }
+            }
+        }),
+        json!({
+            "name": "s5d_execute_loop",
+            "description": "Emit a bounded Ralph task package for an active workflow phase",
+            "inputSchema": {
+                "type": "object",
+                "required": ["spec", "phase_id"],
+                "properties": {
+                    "spec": {"type": "string", "description": "Path to .s5d.yaml file"},
+                    "phase_id": {"type": "string", "description": "Workflow phase ID"},
+                    "engine": {"type": "string", "description": "Execution engine name (default: ralph)"},
+                    "mode": {"type": "string", "description": "Optional Ralph run mode: init, bugfix, or generic"}
                 }
             }
         }),
@@ -342,6 +399,10 @@ fn handle_tools_call(params: &Value) -> anyhow::Result<Value> {
         "s5d_add_hypothesis" => tool_s5d_add_hypothesis(args)?,
         "s5d_add_evidence" => tool_s5d_add_evidence(args)?,
         "s5d_reflect" => tool_s5d_reflect(args)?,
+        "s5d_phase_list" => tool_s5d_phase_list(args)?,
+        "s5d_phase_start" => tool_s5d_phase_start(args)?,
+        "s5d_phase_accept" => tool_s5d_phase_accept(args)?,
+        "s5d_execute_loop" => tool_s5d_execute_loop(args)?,
         "s5d_status" => tool_s5d_status(args)?,
         "s5d_show" => tool_s5d_show(args)?,
         "s5d_route" => tool_s5d_route(args)?,
@@ -360,8 +421,6 @@ fn handle_tools_call(params: &Value) -> anyhow::Result<Value> {
     Ok(json!({"content":[{"type":"text","text":text}]}))
 }
 
-
-
 // ── S5D lifecycle helpers ─────────────────────────────────────────────────────
 
 fn validate_spec_path(spec_arg: &str) -> anyhow::Result<()> {
@@ -370,10 +429,7 @@ fn validate_spec_path(spec_arg: &str) -> anyhow::Result<()> {
         anyhow::bail!("path traversal not allowed: {}", spec_arg);
     }
     if !spec_arg.ends_with(".s5d.yaml") {
-        anyhow::bail!(
-            "spec path must end with .s5d.yaml, got: {}",
-            spec_arg
-        );
+        anyhow::bail!("spec path must end with .s5d.yaml, got: {}", spec_arg);
     }
     Ok(())
 }
@@ -437,7 +493,10 @@ fn tool_s5d_init(args: &Value) -> anyhow::Result<String> {
     let (project, report) = crate::S5dProject::init(&cwd)?;
 
     let mut out = if report.dirs_created.is_empty() && report.files_created.is_empty() {
-        format!("S5D already initialized at: {}\n", project.s5d_dir().display())
+        format!(
+            "S5D already initialized at: {}\n",
+            project.s5d_dir().display()
+        )
     } else {
         let mut s = format!("S5D initialized at: {}\n", project.s5d_dir().display());
         for d in &report.dirs_created {
@@ -539,7 +598,7 @@ fn register_mcp_json_mcp(path: &std::path::Path, binary: &str) -> anyhow::Result
 
 /// Register s5d MCP server in a TOML config file (Codex CLI format, shared by MCP tool handlers).
 fn register_mcp_toml_mcp(path: &std::path::Path, binary: &str) -> anyhow::Result<bool> {
-    use toml_edit::{DocumentMut, Item, Table, value};
+    use toml_edit::{value, DocumentMut, Item, Table};
 
     let mut doc: DocumentMut = if path.exists() {
         let raw = std::fs::read_to_string(path)?;
@@ -759,9 +818,12 @@ fn tool_s5d_approve(args: &Value) -> anyhow::Result<String> {
     let (project, spec_path, _spec, spec_filename) = load_spec_context_mcp(spec_arg)?;
 
     let spec_sha = crate::S5dProject::file_sha256(&spec_path)?;
-    let mut record = project
-        .load_record(&spec_filename)?
-        .ok_or_else(|| anyhow::anyhow!("no record found for {} — run s5d_preview first", spec_filename))?;
+    let mut record = project.load_record(&spec_filename)?.ok_or_else(|| {
+        anyhow::anyhow!(
+            "no record found for {} — run s5d_preview first",
+            spec_filename
+        )
+    })?;
 
     if record.status != crate::SpecStatus::Previewed {
         anyhow::bail!(
@@ -773,9 +835,7 @@ fn tool_s5d_approve(args: &Value) -> anyhow::Result<String> {
     // Check that spec hasn't changed since preview
     if let Some(ref preview) = record.preview {
         if !preview.previewed_spec_sha256.is_empty() && preview.previewed_spec_sha256 != spec_sha {
-            anyhow::bail!(
-                "spec modified since preview — re-run s5d_preview before approving"
-            );
+            anyhow::bail!("spec modified since preview — re-run s5d_preview before approving");
         }
     }
 
@@ -816,17 +876,23 @@ fn tool_s5d_run_gates(args: &Value) -> anyhow::Result<String> {
     let results = crate::run_gates(&spec, &config, spec_arg, &project.root, &project.s5d_dir())?;
 
     let passed = results.iter().filter(|r| r.status == "passed").count();
-    let failed = results.iter().filter(|r| r.status == "failed").count();
+    let failed = results
+        .iter()
+        .filter(|r| r.status != "passed" && r.status != "skipped")
+        .count();
     let skipped = results.iter().filter(|r| r.status == "skipped").count();
 
     let mut out = String::new();
     for r in &results {
         let marker = match r.status.as_str() {
             "passed" => "pass",
-            "failed" => "fail",
-            _ => "skip",
+            "skipped" => "skip",
+            _ => "fail",
         };
-        out.push_str(&format!("  [{}] gate:{} (attempt {})\n", marker, r.kind, r.attempt));
+        out.push_str(&format!(
+            "  [{}] gate:{} (attempt {})\n",
+            marker, r.kind, r.attempt
+        ));
     }
     out.push_str(&format!(
         "passed: {}  failed: {}  skipped: {}",
@@ -923,7 +989,8 @@ fn tool_s5d_import(args: &Value) -> anyhow::Result<String> {
         project.save_record(&spec_filename, &record)?;
     }
 
-    let (actions, fingerprint) = crate::execute_import(&project, &spec_path, &spec, &spec_filename)?;
+    let (actions, fingerprint) =
+        crate::execute_import(&project, &spec_path, &spec, &spec_filename)?;
     let counts = actions.counts();
 
     Ok(format!(
@@ -983,7 +1050,8 @@ fn tool_s5d_decide(args: &Value) -> anyhow::Result<String> {
         );
     }
 
-    let winner_hyp = spec.hypotheses
+    let winner_hyp = spec
+        .hypotheses
         .iter()
         .find(|h| h.id == winner)
         .ok_or_else(|| anyhow::anyhow!("winner hypothesis not found: {}", winner))?;
@@ -1050,10 +1118,7 @@ fn tool_s5d_decide(args: &Value) -> anyhow::Result<String> {
     record.decision = Some(decision_record);
     project.save_record(&spec_filename, &record)?;
 
-    Ok(format!(
-        "Decision recorded: {} (winner: {})",
-        title, winner
-    ))
+    Ok(format!("Decision recorded: {} (winner: {})", title, winner))
 }
 
 // ── s5d_add_hypothesis ────────────────────────────────────────────────────────
@@ -1214,6 +1279,8 @@ fn tool_s5d_reflect(args: &Value) -> anyhow::Result<String> {
     let spec_arg = args["spec"]
         .as_str()
         .ok_or_else(|| anyhow::anyhow!("missing required argument: spec"))?;
+    let verdict = args["verdict"].as_str().map(|s| s.trim().to_lowercase());
+    let measurement_window = args["measurement_window"].as_str().map(|s| s.to_string());
     let summary = args["summary"]
         .as_str()
         .ok_or_else(|| anyhow::anyhow!("missing required argument: summary"))?;
@@ -1225,7 +1292,10 @@ fn tool_s5d_reflect(args: &Value) -> anyhow::Result<String> {
     let (project, _spec_path, _spec, spec_filename) = load_spec_context_mcp(spec_arg)?;
 
     let mut record = project.load_record(&spec_filename)?.ok_or_else(|| {
-        anyhow::anyhow!("no record found for {} — run s5d_preview first", spec_filename)
+        anyhow::anyhow!(
+            "no record found for {} — run s5d_preview first",
+            spec_filename
+        )
     })?;
 
     let issues_list: Vec<String> = issues_str
@@ -1233,10 +1303,32 @@ fn tool_s5d_reflect(args: &Value) -> anyhow::Result<String> {
         .map(|s| s.trim().to_string())
         .filter(|s| !s.is_empty())
         .collect();
+    let telemetry_refs: Vec<String> = args["telemetry_refs"]
+        .as_array()
+        .map(|arr| {
+            arr.iter()
+                .filter_map(|v| v.as_str())
+                .map(|s| s.to_string())
+                .collect()
+        })
+        .unwrap_or_default();
 
     let heuristics = vec![heuristic.to_string()];
 
+    if let Some(ref outcome) = verdict {
+        let valid = ["confirmed", "refuted", "inconclusive", "iterate", "kill"];
+        if !valid.contains(&outcome.as_str()) {
+            anyhow::bail!(
+                "invalid verdict '{}' (use confirmed, refuted, inconclusive, iterate, kill)",
+                outcome
+            );
+        }
+    }
+
     record.reflection = Some(crate::Reflection {
+        verdict,
+        measurement_window,
+        telemetry_refs,
         summary: Some(summary.to_string()),
         worked: vec![],
         issues: issues_list,
@@ -1257,22 +1349,254 @@ fn tool_s5d_reflect(args: &Value) -> anyhow::Result<String> {
     Ok("Lifecycle closed → operated. Reflect recorded.".to_string())
 }
 
+fn workflow_required_mcp(spec: &crate::Spec) -> anyhow::Result<&crate::Workflow> {
+    spec.workflow
+        .as_ref()
+        .ok_or_else(|| anyhow::anyhow!("spec has no workflow block"))
+}
+
+fn workflow_phase_by_id_mcp<'a>(
+    workflow: &'a crate::Workflow,
+    phase_id: &str,
+) -> anyhow::Result<&'a crate::WorkflowPhase> {
+    workflow
+        .phases
+        .iter()
+        .find(|p| p.id == phase_id)
+        .ok_or_else(|| anyhow::anyhow!("workflow phase not found: {}", phase_id))
+}
+
+fn latest_phase_status_mcp(record: &crate::Record, phase_id: &str) -> crate::WorkflowPhaseStatus {
+    record
+        .phase_history
+        .iter()
+        .rev()
+        .find(|entry| entry.phase_id == phase_id)
+        .map(|entry| entry.status.clone())
+        .unwrap_or(crate::WorkflowPhaseStatus::Planned)
+}
+
+fn append_phase_history_mcp(
+    record: &mut crate::Record,
+    phase_id: &str,
+    status: crate::WorkflowPhaseStatus,
+    reviewer: Option<String>,
+    engine: Option<String>,
+    notes: Option<String>,
+) {
+    record.phase_history.push(crate::WorkflowPhaseRecord {
+        phase_id: phase_id.to_string(),
+        status,
+        timestamp: chrono::Utc::now().to_rfc3339(),
+        reviewer,
+        engine,
+        notes,
+    });
+}
+
+fn ensure_phase_execution_ready_mcp(
+    spec: &crate::Spec,
+    record: &crate::Record,
+    phase_id: &str,
+) -> anyhow::Result<()> {
+    if !matches!(
+        record.status,
+        crate::SpecStatus::Approved | crate::SpecStatus::Applied | crate::SpecStatus::Operated
+    ) {
+        anyhow::bail!(
+            "phase execution requires approved or later spec state (current: {})",
+            record.status
+        );
+    }
+    let workflow = workflow_required_mcp(spec)?;
+    workflow_phase_by_id_mcp(workflow, phase_id)?;
+    Ok(())
+}
+
+fn tool_s5d_phase_list(args: &Value) -> anyhow::Result<String> {
+    let spec_arg = args["spec"]
+        .as_str()
+        .ok_or_else(|| anyhow::anyhow!("missing required argument: spec"))?;
+    let (project, _spec_path, spec, spec_filename) = load_spec_context_mcp(spec_arg)?;
+    let record = project.load_record(&spec_filename)?.ok_or_else(|| {
+        anyhow::anyhow!(
+            "no record found for {} — run s5d_preview first",
+            spec_filename
+        )
+    })?;
+    let workflow = workflow_required_mcp(&spec)?;
+
+    let mut out = String::new();
+    out.push_str(&format!("PHASES: {}\n", spec.id));
+    for phase in &workflow.phases {
+        let status = latest_phase_status_mcp(&record, &phase.id);
+        let marker = if record.active_phase.as_deref() == Some(phase.id.as_str()) {
+            "active"
+        } else {
+            "idle"
+        };
+        out.push_str(&format!(
+            "- {} [{}] ({})\n  id: {}\n  scope: {}\n",
+            phase.title, status, marker, phase.id, phase.scope
+        ));
+    }
+    Ok(out)
+}
+
+fn tool_s5d_phase_start(args: &Value) -> anyhow::Result<String> {
+    let spec_arg = args["spec"]
+        .as_str()
+        .ok_or_else(|| anyhow::anyhow!("missing required argument: spec"))?;
+    let phase_id = args["phase_id"]
+        .as_str()
+        .ok_or_else(|| anyhow::anyhow!("missing required argument: phase_id"))?;
+    let (project, _spec_path, spec, spec_filename) = load_spec_context_mcp(spec_arg)?;
+    let workflow = workflow_required_mcp(&spec)?;
+    let phase = workflow_phase_by_id_mcp(workflow, phase_id)?;
+    let mut record = project.load_record(&spec_filename)?.ok_or_else(|| {
+        anyhow::anyhow!(
+            "no record found for {} — run s5d_preview first",
+            spec_filename
+        )
+    })?;
+    ensure_phase_execution_ready_mcp(&spec, &record, phase_id)?;
+
+    if let Some(ref active_phase) = record.active_phase {
+        if active_phase == phase_id {
+            anyhow::bail!("phase '{}' is already active", phase_id);
+        }
+        anyhow::bail!(
+            "phase '{}' is already active — accept or clear it before starting '{}'",
+            active_phase,
+            phase_id
+        );
+    }
+
+    record.active_phase = Some(phase_id.to_string());
+    append_phase_history_mcp(
+        &mut record,
+        phase_id,
+        crate::WorkflowPhaseStatus::Active,
+        None,
+        workflow
+            .execution_mode
+            .as_ref()
+            .map(|mode| mode.engine.clone()),
+        Some(format!("Started phase '{}'", phase.title)),
+    );
+    project.save_record(&spec_filename, &record)?;
+
+    Ok(format!(
+        "Active phase -> {}\nScope: {}",
+        phase_id, phase.scope
+    ))
+}
+
+fn tool_s5d_phase_accept(args: &Value) -> anyhow::Result<String> {
+    let spec_arg = args["spec"]
+        .as_str()
+        .ok_or_else(|| anyhow::anyhow!("missing required argument: spec"))?;
+    let phase_id = args["phase_id"]
+        .as_str()
+        .ok_or_else(|| anyhow::anyhow!("missing required argument: phase_id"))?;
+    let reviewer = args["reviewer"]
+        .as_str()
+        .ok_or_else(|| anyhow::anyhow!("missing required argument: reviewer"))?;
+    let (project, _spec_path, spec, spec_filename) = load_spec_context_mcp(spec_arg)?;
+    let workflow = workflow_required_mcp(&spec)?;
+    workflow_phase_by_id_mcp(workflow, phase_id)?;
+    let mut record = project.load_record(&spec_filename)?.ok_or_else(|| {
+        anyhow::anyhow!(
+            "no record found for {} — run s5d_preview first",
+            spec_filename
+        )
+    })?;
+    ensure_phase_execution_ready_mcp(&spec, &record, phase_id)?;
+
+    if record.active_phase.as_deref() != Some(phase_id) {
+        anyhow::bail!(
+            "phase '{}' is not active — start it before acceptance",
+            phase_id
+        );
+    }
+
+    record.active_phase = None;
+    append_phase_history_mcp(
+        &mut record,
+        phase_id,
+        crate::WorkflowPhaseStatus::Accepted,
+        Some(reviewer.to_string()),
+        None,
+        Some("Human phase acceptance".into()),
+    );
+    project.save_record(&spec_filename, &record)?;
+
+    Ok(format!("Phase '{}' accepted by {}", phase_id, reviewer))
+}
+
+fn tool_s5d_execute_loop(args: &Value) -> anyhow::Result<String> {
+    let spec_arg = args["spec"]
+        .as_str()
+        .ok_or_else(|| anyhow::anyhow!("missing required argument: spec"))?;
+    let phase_id = args["phase_id"]
+        .as_str()
+        .ok_or_else(|| anyhow::anyhow!("missing required argument: phase_id"))?;
+    let engine = args["engine"].as_str().unwrap_or("ralph");
+    let mode = args["mode"].as_str();
+    let (project, _spec_path, spec, spec_filename) = load_spec_context_mcp(spec_arg)?;
+    let record = project.load_record(&spec_filename)?.ok_or_else(|| {
+        anyhow::anyhow!(
+            "no record found for {} — run s5d_preview first",
+            spec_filename
+        )
+    })?;
+    ensure_phase_execution_ready_mcp(&spec, &record, phase_id)?;
+
+    let workflow = workflow_required_mcp(&spec)?;
+    let phase = workflow_phase_by_id_mcp(workflow, phase_id)?;
+
+    if record.active_phase.as_deref() != Some(phase_id) {
+        anyhow::bail!("phase '{}' must be active before execute loop", phase_id);
+    }
+
+    let declared_engine = workflow
+        .execution_mode
+        .as_ref()
+        .map(|mode| mode.engine.as_str())
+        .unwrap_or("manual");
+    if engine != declared_engine {
+        anyhow::bail!(
+            "requested engine '{}' does not match workflow execution mode '{}'",
+            engine,
+            declared_engine
+        );
+    }
+    if engine != "ralph" {
+        anyhow::bail!("execute loop currently supports only engine=ralph");
+    }
+
+    let preset = crate::RalphPreset::resolve(mode, &phase.id)?;
+    let package = crate::build_ralph_task_package(&spec, workflow, phase, preset)?;
+    let task_path = project.save_task_artifact(&spec_filename, &phase.id, preset.id(), &package)?;
+    let display_path = task_path
+        .strip_prefix(project.root.as_path())
+        .map(|path| path.display().to_string())
+        .unwrap_or_else(|_| task_path.display().to_string());
+    Ok(format!("Task artifact: {}\n\n{}", display_path, package))
+}
+
 // ── s5d_status ────────────────────────────────────────────────────────────────
 
 fn tool_s5d_status(_args: &Value) -> anyhow::Result<String> {
     let cwd = std::env::current_dir()?;
-    let project =
-        crate::S5dProject::find(&cwd).ok_or_else(|| anyhow::anyhow!("no .s5d/ found"))?;
+    let project = crate::S5dProject::find(&cwd).ok_or_else(|| anyhow::anyhow!("no .s5d/ found"))?;
 
     let specs = project.discover_specs()?;
     if specs.is_empty() {
         return Ok("No specs. Run s5d_new to create one.".to_string());
     }
 
-    let mut out = format!(
-        "S5D Specs ({})\n",
-        project.root.display()
-    );
+    let mut out = format!("S5D Specs ({})\n", project.root.display());
     out.push_str(&format!(
         "{:<30} {:<12} {:<10} {:<10} Sync\n",
         "ID", "Version", "Tier", "Status"
@@ -1288,7 +1612,11 @@ fn tool_s5d_status(_args: &Value) -> anyhow::Result<String> {
         };
         out.push_str(&format!(
             "{:<30} {:<12} {:<10} {:<10} {}\n",
-            spec.id, spec.version, format!("{}", spec.tier), status, sync
+            spec.id,
+            spec.version,
+            format!("{}", spec.tier),
+            status,
+            sync
         ));
     }
 
@@ -1307,9 +1635,17 @@ fn tool_s5d_show(args: &Value) -> anyhow::Result<String> {
     let effective_decision = if let Ok(abs) = path.canonicalize() {
         if let Some(project) = crate::S5dProject::find(&abs) {
             let fname = abs.file_name().unwrap().to_string_lossy().into_owned();
-            project.load_record(&fname).ok().flatten().and_then(|r| r.decision)
-        } else { None }
-    } else { None }
+            project
+                .load_record(&fname)
+                .ok()
+                .flatten()
+                .and_then(|r| r.decision)
+        } else {
+            None
+        }
+    } else {
+        None
+    }
     .or_else(|| spec.decision.clone());
 
     let is_decision = matches!(spec.tier, crate::Tier::Decision);
@@ -1430,7 +1766,11 @@ fn tool_s5d_waiver(args: &Value) -> anyhow::Result<String> {
         anyhow::bail!(
             "No gate kind '{}' declared in spec. Declared gates: {}",
             gate,
-            spec.gates.iter().map(|g| g.kind.as_str()).collect::<Vec<_>>().join(", ")
+            spec.gates
+                .iter()
+                .map(|g| g.kind.as_str())
+                .collect::<Vec<_>>()
+                .join(", ")
         );
     }
 
@@ -1442,7 +1782,12 @@ fn tool_s5d_waiver(args: &Value) -> anyhow::Result<String> {
     record.gate_results.push(crate::GateResult {
         kind: gate.to_string(),
         status: "waived".to_string(),
-        attempt: record.gate_results.iter().filter(|r| r.kind == gate).count() as u32 + 1,
+        attempt: record
+            .gate_results
+            .iter()
+            .filter(|r| r.kind == gate)
+            .count() as u32
+            + 1,
         timestamp: chrono::Utc::now().to_rfc3339(),
         log: Some(format!(
             "WAIVER — reason: {}. Condition to lift: {}. Approved by: {}.",
@@ -1469,6 +1814,7 @@ fn tool_s5d_rollback(args: &Value) -> anyhow::Result<String> {
         .as_str()
         .ok_or_else(|| anyhow::anyhow!("missing required argument: spec"))?;
     let (project, _spec_path, spec, spec_filename) = load_spec_context_mcp(spec_arg)?;
+    let _lock = project.acquire_lock(&format!("rollback.{}", spec.id))?;
 
     let s5d_dir = project.s5d_dir();
     let mut ledger = project.load_ledger()?;
@@ -1706,9 +2052,15 @@ fn tool_s5d_note(args: &Value) -> anyhow::Result<String> {
     let record = crate::generate_record(&spec_filename, &sha);
     project.save_record(&spec_filename, &record)?;
 
-    let record_path = project.s5d_dir().join("records")
+    let record_path = project
+        .s5d_dir()
+        .join("records")
         .join(spec_filename.replace(".s5d.yaml", ".record.yaml"));
 
-    Ok(format!("Note created: {}\n  spec: {}\n  record: {}",
-        id, spec_path.display(), record_path.display()))
+    Ok(format!(
+        "Note created: {}\n  spec: {}\n  record: {}",
+        id,
+        spec_path.display(),
+        record_path.display()
+    ))
 }

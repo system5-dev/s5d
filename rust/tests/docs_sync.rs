@@ -16,11 +16,7 @@ fn read_repo_file(rel: &str) -> String {
 fn skill_references_all_reference_docs() {
     let skill = read_repo_file("skills/s5d/SKILL.md");
     for doc in ["metamodel.md", "session-protocol.md"] {
-        assert!(
-            skill.contains(doc),
-            "SKILL.md must reference: {}",
-            doc
-        );
+        assert!(skill.contains(doc), "SKILL.md must reference: {}", doc);
     }
 }
 
@@ -63,4 +59,28 @@ fn session_protocol_has_core_concepts() {
 fn docs_state_existing_codebase_scope() {
     let readme = read_repo_file("README.md");
     assert!(readme.contains("existing repository") || readme.contains("repository"));
+}
+
+#[test]
+fn workflow_shell_commands_are_documented() {
+    let readme = read_repo_file("README.md");
+    let skill = read_repo_file("skills/s5d/SKILL.md");
+
+    for term in [
+        "s5d phase start",
+        "s5d execute loop",
+        "--verdict",
+        "--measurement-window",
+        "--telemetry",
+        "--mode",
+        ".s5d/tasks/",
+        "ralph-init",
+        "ralph-bugfix",
+    ] {
+        assert!(
+            readme.contains(term) || skill.contains(term),
+            "workflow-shell docs must mention: {}",
+            term
+        );
+    }
 }

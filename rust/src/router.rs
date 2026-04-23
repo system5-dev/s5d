@@ -39,10 +39,22 @@ impl std::fmt::Display for RouteResult {
         if !self.in_scope {
             return write!(f, "Route: out-of-scope\nReason: {}", self.reason);
         }
-        let tier = self.tier.as_ref().map(|t| t.to_string()).unwrap_or_default();
-        let mode = self.mode.as_ref().map(|m| m.to_string()).unwrap_or_default();
+        let tier = self
+            .tier
+            .as_ref()
+            .map(|t| t.to_string())
+            .unwrap_or_default();
+        let mode = self
+            .mode
+            .as_ref()
+            .map(|m| m.to_string())
+            .unwrap_or_default();
         let step = self.entry_step.unwrap_or(0);
-        write!(f, "Route: tier={}, mode={}, entry=Step {}", tier, mode, step)?;
+        write!(
+            f,
+            "Route: tier={}, mode={}, entry=Step {}",
+            tier, mode, step
+        )?;
         if let Some(waiver) = &self.waiver {
             write!(f, "\nWaiver: {}", waiver)?;
         }

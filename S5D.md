@@ -72,6 +72,9 @@ Every active spec has two mutable surfaces:
 | Action | MCP | CLI | Hard preconditions |
 |---|---|---|---|
 | Bootstrap workspace | `s5d_init` | `s5d init [--claude] [--all]` | Safe to re-run. |
+| Rust pre-commit hook | — | `s5d hook pre-commit` | Read-only. Runs on staged specs/source. Installed by `s5d init` when `.git/` exists. |
+| Self-update check | — | `s5d update check` | Read-only. Plugin SessionStart runs `s5d update check --hook`. |
+| Self-update apply | — | `s5d update apply` | Fast-forwards the S5D checkout, relinks skills, replaces installed binary. |
 | Create scaffold | `s5d_new` | `s5d new` | Scaffold only — does not populate problem/artifacts. CLI `--hypothesis-id` auto-links `spec_ref`. |
 | Quick note | `s5d_note` | `s5d note` | Shorthand for `s5d new note.<slug> --tier note`. |
 | Add hypothesis | `s5d_add_hypothesis` | `s5d add-hypothesis` | Decision tier only. Duplicate IDs rejected. |
