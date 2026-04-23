@@ -2,6 +2,7 @@ use crate::identity::AliasTable;
 use crate::models::*;
 use crate::project::S5dProject;
 use chrono::Utc;
+use serde_json::Value;
 use sha2::{Digest, Sha256};
 use std::path::Path;
 
@@ -270,34 +271,94 @@ pub fn collect_global_artifact_ids(spec: &Spec) -> std::collections::HashSet<(St
 
 pub fn compute_state_fingerprint(spec: &Spec, aliases: &AliasTable) -> String {
     let mut hasher = Sha256::new();
-    if let Ok(yaml) = serde_yaml::to_string(spec) {
-        hasher.update(yaml.as_bytes());
+    if let Ok(value) = serde_json::to_value(spec) {
+        hash_canonical_json(&mut hasher, &value);
+        hasher.update(b"\n");
     }
     let package_id = &spec.id;
 
     // Include ALL global aliases that this spec references (not just owned).
     // A spec "references" a global artifact if it declares it in artifacts.
     let referenced_globals = collect_global_artifact_ids(spec);
-    for entry in &aliases.global {
-        if !entry.deprecated {
+    let mut global_entries: Vec<String> = aliases
+        .global
+        .iter()
+        .filter(|entry| !entry.deprecated)
+        .filter(|entry| {
             let key = (entry.artifact_type.clone(), entry.artifact_id.clone());
-            if referenced_globals.contains(&key) {
-                hasher.update(format!(
-                    "G:{}:{}:{}\n",
-                    entry.artifact_id, entry.artifact_type, entry.uuid
-                ));
-            }
-        }
+            referenced_globals.contains(&key)
+        })
+        .map(|entry| {
+            format!(
+                "G:{}:{}:{}\n",
+                entry.artifact_type, entry.artifact_id, entry.uuid
+            )
+        })
+        .collect();
+    global_entries.sort();
+    for entry in global_entries {
+        hasher.update(entry.as_bytes());
     }
-    for entry in &aliases.packages {
-        if entry.package_id.as_deref() == Some(package_id) {
-            hasher.update(format!(
+
+    let mut package_entries: Vec<String> = aliases
+        .packages
+        .iter()
+        .filter(|entry| entry.package_id.as_deref() == Some(package_id))
+        .map(|entry| {
+            format!(
                 "P:{}:{}:{}\n",
-                entry.artifact_id, entry.artifact_type, entry.uuid
-            ));
-        }
+                entry.artifact_type, entry.artifact_id, entry.uuid
+            )
+        })
+        .collect();
+    package_entries.sort();
+    for entry in package_entries {
+        hasher.update(entry.as_bytes());
     }
     format!("sha256:{:x}", hasher.finalize())
+}
+
+fn hash_canonical_json(hasher: &mut Sha256, value: &Value) {
+    match value {
+        Value::Null => hasher.update(b"null"),
+        Value::Bool(flag) => {
+            if *flag {
+                hasher.update(b"true");
+            } else {
+                hasher.update(b"false");
+            }
+        }
+        Value::Number(number) => hasher.update(number.to_string().as_bytes()),
+        Value::String(text) => {
+            let encoded = serde_json::to_string(text).expect("string serialization cannot fail");
+            hasher.update(encoded.as_bytes());
+        }
+        Value::Array(items) => {
+            hasher.update(b"[");
+            for (idx, item) in items.iter().enumerate() {
+                if idx > 0 {
+                    hasher.update(b",");
+                }
+                hash_canonical_json(hasher, item);
+            }
+            hasher.update(b"]");
+        }
+        Value::Object(map) => {
+            hasher.update(b"{");
+            let mut keys: Vec<&str> = map.keys().map(String::as_str).collect();
+            keys.sort_unstable();
+            for (idx, key) in keys.iter().enumerate() {
+                if idx > 0 {
+                    hasher.update(b",");
+                }
+                let encoded = serde_json::to_string(key).expect("key serialization cannot fail");
+                hasher.update(encoded.as_bytes());
+                hasher.update(b":");
+                hash_canonical_json(hasher, &map[*key]);
+            }
+            hasher.update(b"}");
+        }
+    }
 }
 
 pub fn execute_import(
@@ -306,6 +367,7 @@ pub fn execute_import(
     spec: &Spec,
     spec_filename: &str,
 ) -> anyhow::Result<(DiffActions, String)> {
+    let _lock = project.acquire_lock(&format!("import.{}", spec.id))?;
     let s5d_dir = project.s5d_dir();
 
     let mut aliases = AliasTable::load(&s5d_dir)?;

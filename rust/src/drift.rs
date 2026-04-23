@@ -53,6 +53,7 @@ pub fn reconcile(
     spec_path: &std::path::Path,
     spec_filename: &str,
 ) -> anyhow::Result<(DiffActions, String)> {
+    let _lock = project.acquire_lock(&format!("reconcile.{}", spec.id))?;
     let s5d_dir = project.s5d_dir();
 
     let record = project
@@ -78,18 +79,21 @@ pub fn reconcile(
                 && e.status == "success"
         })
         .map(|e| e.state_fingerprint.clone())
-        .ok_or_else(|| anyhow::anyhow!("no successful import found for {} — cannot reconcile", spec.id))?;
+        .ok_or_else(|| {
+            anyhow::anyhow!(
+                "no successful import found for {} — cannot reconcile",
+                spec.id
+            )
+        })?;
 
     let mut aliases = AliasTable::load(&s5d_dir)?;
     if let Some(ref meta) = spec.meta {
         aliases.apply_renames(&spec.id, &meta.renames);
     }
     let spec = crate::infer::materialize_spec(spec);
-    let actions = compute_diff(&spec, &mut aliases);
-
-    aliases.save(&s5d_dir)?;
-
-    let fingerprint = compute_state_fingerprint(&spec, &aliases);
+    let mut aliases_candidate = aliases.clone();
+    let actions = compute_diff(&spec, &mut aliases_candidate);
+    let fingerprint = compute_state_fingerprint(&spec, &aliases_candidate);
 
     // Fail closed: if compute_diff couldn't restore the expected fingerprint,
     // the alias state is corrupted in a way we can't fix from spec alone.
@@ -104,6 +108,8 @@ pub fn reconcile(
             fingerprint
         );
     }
+
+    aliases_candidate.save(&s5d_dir)?;
 
     let mut ledger = project.load_ledger()?;
     ledger.entries.push(LedgerEntry {

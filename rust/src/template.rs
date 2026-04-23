@@ -26,6 +26,74 @@ pub fn generate_spec(id: &str, tier: Tier, product: &str) -> Spec {
             renames: vec![],
         }),
         context: Some("## Problem\n\n## Goal\n\n## Privacy\nClassification: Internal\n".into()),
+        workflow: Some(Workflow {
+            mode: Some("plan".into()),
+            target_architecture: Some(TargetArchitecture {
+                summary: "Describe the steady-state design this change should reach".into(),
+                invariants: vec![],
+            }),
+            delivery_strategy: Some(DeliveryStrategy {
+                summary:
+                    "Describe how this change moves current code toward the target architecture"
+                        .into(),
+                rationale: None,
+            }),
+            resources: None,
+            role_map: std::collections::HashMap::from([
+                ("owner".into(), "human".into()),
+                ("implementer".into(), "coder".into()),
+                ("reviewer".into(), "reviewer".into()),
+                ("verifier".into(), "reviewer".into()),
+            ]),
+            review_policy: Some(ReviewPolicy {
+                cross_model_required: false,
+                required_on: vec![],
+            }),
+            execution_mode: Some(ExecutionMode {
+                engine: "manual".into(),
+                max_iterations: None,
+                stop_conditions: vec![
+                    "Phase acceptance reached".into(),
+                    "Approved scope exhausted".into(),
+                    "New decision required".into(),
+                ],
+            }),
+            phases: vec![
+                WorkflowPhase {
+                    id: "prototype".into(),
+                    title: "Prototype".into(),
+                    scope: "Reduce unknowns before committed implementation".into(),
+                    roles: vec!["owner".into(), "implementer".into()],
+                    acceptance: vec![
+                        "Critical feasibility questions answered".into(),
+                        "Telemetry approach identified".into(),
+                    ],
+                    rollback: vec!["Discard spike output if assumptions fail".into()],
+                },
+                WorkflowPhase {
+                    id: "build".into(),
+                    title: "Build".into(),
+                    scope: "Implement approved scope and pass local gates".into(),
+                    roles: vec!["implementer".into(), "reviewer".into()],
+                    acceptance: vec![
+                        "Declared gates pass".into(),
+                        "Change matches approved scope".into(),
+                    ],
+                    rollback: vec!["Revert or reconcile if gates or review fail".into()],
+                },
+                WorkflowPhase {
+                    id: "measure".into(),
+                    title: "Measure".into(),
+                    scope: "Collect telemetry and close the loop with an explicit verdict".into(),
+                    roles: vec!["owner".into(), "verifier".into()],
+                    acceptance: vec![
+                        "Telemetry collected against success criteria".into(),
+                        "Outcome verdict recorded".into(),
+                    ],
+                    rollback: vec!["Iterate or kill if evidence stays weak".into()],
+                },
+            ],
+        }),
         artifacts: Some(Artifacts {
             products: vec![Product {
                 id: product.into(),
@@ -71,6 +139,7 @@ pub fn generate_decision_spec(id: &str, product: &str, question: &str) -> Spec {
             renames: vec![],
         }),
         context: None,
+        workflow: None,
         artifacts: None,
         links: None,
         contracts: vec![],
@@ -115,6 +184,7 @@ pub fn generate_note_spec(id: &str, product: &str, title: &str, rationale: &str)
             renames: vec![],
         }),
         context: None,
+        workflow: None,
         artifacts: None,
         links: None,
         contracts: vec![],
@@ -140,6 +210,8 @@ pub fn generate_record(spec_filename: &str, spec_sha256: &str) -> Record {
             status: SpecStatus::Proposed,
             timestamp: now,
         }],
+        active_phase: None,
+        phase_history: vec![],
         approvals: vec![],
         preview: None,
         reflection: None,

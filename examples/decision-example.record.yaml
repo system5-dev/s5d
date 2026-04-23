@@ -1,5 +1,7 @@
 spec_ref: decision.db-choice__20260319.s5d.yaml
+spec_sha256: 7fc59488c59a36c9dc0bea37ce1f12d89b1aaa25c33bc7fcae0d48e41b193993
 status: applied
+sync_status: synced
 status_history:
   - status: proposed
     timestamp: "2026-03-19T10:00:00Z"
@@ -8,12 +10,32 @@ status_history:
 
 decision:
   title: "SQLite + FTS5"
-  winner: sqlite-fts5
+  winner_id: sqlite-fts5
+  rejected_ids: [postgres, sqlite-plain]
+  context: "Beliefs memory needs local-first persistence with full-text search and no server process."
+  decision: "Use SQLite + FTS5 for beliefs storage."
   rationale: "Zero operational overhead, benchmark confirms <5ms queries, local-first aligns with architecture principles"
-  timestamp: "2026-03-19T10:15:00Z"
+  consequences: "Memory storage remains local-file based; future multi-user/server needs require re-evaluation."
+  decided_at: "2026-03-19T10:15:00Z"
+  confirmed_by: roman
+  expires_at: "2026-06-17"
+  do_list: []
+  dont_list: []
 
 reflection:
+  verdict: confirmed
+  measurement_window: "decision review"
+  telemetry_refs: []
   summary: "Decision took 15 minutes. All three options evaluated with evidence."
   worked: ["Benchmark gave clear signal", "FTS5 BM25 ranking perfect for beliefs"]
   issues: ["No graph relationships — may need later"]
-  follow_ups: ["Monitor query performance at 50K beliefs"]
+  structured_issues: []
+  follow_ups:
+    - id: monitor-50k-beliefs
+      priority: low
+      description: "Monitor query performance at 50K beliefs"
+  evidence: []
+  heuristics: ["Benchmark local storage choices before promoting infrastructure."]
+gate_results: []
+approvals: []
+phase_history: []

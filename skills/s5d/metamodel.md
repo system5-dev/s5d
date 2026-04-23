@@ -36,13 +36,50 @@ Transport: attached to Edge (`rest | grpc | messaging | graphql | websocket`)
 
 Agents author YAML, not Rust field names. Use the serialized YAML shape below:
 
-- Top-level keys: `s5d`, `id`, `version`, `product`, `tier`, `allow_update`, `meta`, `context`, `artifacts`, `links`, `contracts`, `gates`, `roc`, `problem`, `hypotheses`, `decision`, `note_rationale`, `expires_at`, `auto_noted`
+- Top-level keys: `s5d`, `id`, `version`, `product`, `tier`, `allow_update`, `meta`, `context`, `workflow`, `artifacts`, `links`, `contracts`, `gates`, `roc`, `problem`, `hypotheses`, `decision`, `note_rationale`, `expires_at`, `auto_noted`
 - `decision`: For decision tier — written by `s5d decide` CLI. For all other tiers: must be null (runtime state lives in .record.yaml).
 - Structural artifacts live under `artifacts:`
+- Optional workflow/process-support data lives under `workflow:`
 - Relationship tables live under `links:`
 - Mutable lifecycle state lives in `.s5d/records/*.record.yaml`, not in the spec YAML
 
 If approval, decision, gate, or reflection state looks "missing", inspect the matching `.record.yaml` before assuming the spec is wrong.
+
+### Workflow Shell
+
+`workflow` is optional. It lets S5D support an existing process without pretending to become the process itself.
+
+Current fields:
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `mode` | enum | `research`, `plan`, `implement`, `operate` |
+| `target_architecture.summary` | string | required if `target_architecture` exists |
+| `target_architecture.invariants` | list | optional |
+| `delivery_strategy.summary` | string | required if `delivery_strategy` exists |
+| `delivery_strategy.rationale` | string | optional |
+| `role_map` | map | role name → owner / agent type |
+| `review_policy.cross_model_required` | bool | optional |
+| `review_policy.required_on` | list | optional |
+| `execution_mode.engine` | enum | `manual` or `ralph` |
+| `execution_mode.stop_conditions` | list | required if `execution_mode` exists |
+| `phases[]` | list | optional phase plan entries |
+
+Each `workflow.phases[]` entry requires:
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `id` | string | unique within the workflow |
+| `title` | string | non-empty |
+| `scope` | string | non-empty |
+| `roles` | list | non-empty |
+| `acceptance` | list | non-empty |
+| `rollback` | list | non-empty |
+
+Reflection in `.record.yaml` may now additionally record:
+- `verdict`: `confirmed`, `refuted`, `inconclusive`, `iterate`, `kill`
+- `measurement_window`: free-form measurement window string
+- `telemetry_refs[]`: dashboard/query/log references backing the verdict
 
 ---
 
@@ -367,6 +404,10 @@ All rules enforced by `validate`. Violations block preview and approve.
 ### Spec-Level
 - `s5d` must be `"1.0"`
 - Template `version` currently starts at `"1.0.0"`; treat it as the spec package version, not the protocol selector
+- If `workflow.mode` exists, it must be one of `research`, `plan`, `implement`, `operate`
+- If `workflow.execution_mode.engine` exists, it must be `manual` or `ralph`
+- `workflow.phases[].id` must be unique
+- `workflow.phases[]` entries require non-empty `title`, `scope`, `roles`, `acceptance`, and `rollback`
 
 ### Tier: Note
 - Must have `note_rationale`
@@ -417,7 +458,7 @@ All rules enforced by `validate`. Violations block preview and approve.
 - `contract.binds_to` must be non-empty
 
 ### Gate Kinds
-- Valid kinds: `schema`, `graph`, `contract`, `lint`, `test`, `typecheck`, `policy`
+- Valid kinds: `schema`, `graph`, `architecture`, `contract`, `lint`, `test`, `typecheck`, `policy`
 
 ### Concern/Metric Supersystem Reference
 - If `concern.supersystem` is set, it must reference a declared supersystem id
@@ -493,6 +534,10 @@ Tiers determine which artifacts are required and which gates are enforced.
 **Standard tier:** Full metamodel. Domains, capabilities, and components all required. Graph validation runs, catching cycle and layering violations.
 
 **High tier:** Standard + privacy keyword required in spec `context` field + test and contract gates enforced. The privacy check is a keyword gate — validation scans for the literal word `"privacy"` to ensure it was considered. Used for features touching user data or compliance-sensitive paths.
+
+**Workflow shell:** Optional on feature tiers. Use it when S5D needs to support a delivery/discovery process with explicit phases, roles, review policy, and outcome tracking. The workflow shell does not replace the core S5D reasoning model.
+
+**Ralph runtime modes:** `s5d execute loop ... --mode init|bugfix` specializes the emitted task package without expanding the persisted spec schema. Generated task packages are saved under `.s5d/tasks/`.
 
 ---
 

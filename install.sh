@@ -3,22 +3,30 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 BIN_DIR="${HOME}/bin"
+REQUIRED_PATHS=(
+    "$SCRIPT_DIR/skills"
+    "$SCRIPT_DIR/rust"
+    "$SCRIPT_DIR/hooks"
+)
 
-# ── Auto-update: pull latest if in a git repo ────────────────────────────────
-if [ -d "$SCRIPT_DIR/.git" ]; then
-    CURRENT=$(git -C "$SCRIPT_DIR" rev-parse --short HEAD 2>/dev/null || echo "unknown")
-    echo "→ Pulling latest from git..."
-    git -C "$SCRIPT_DIR" pull --ff-only 2>/dev/null && {
-        UPDATED=$(git -C "$SCRIPT_DIR" rev-parse --short HEAD 2>/dev/null || echo "unknown")
-        if [ "$CURRENT" != "$UPDATED" ]; then
-            echo "  ✓ Updated $CURRENT → $UPDATED"
-            # Re-exec with the updated install.sh
-            exec "$SCRIPT_DIR/install.sh" "$@"
-        else
-            echo "  ✓ Already up to date ($CURRENT)"
-        fi
-    } || echo "  ⚠ git pull failed (offline?), installing from local copy"
-fi
+for required in "${REQUIRED_PATHS[@]}"; do
+    if [ ! -e "$required" ]; then
+        cat >&2 <<EOF
+ERROR: install.sh must be run from a checked-out S5D repository copy.
+
+This script does not support 'curl | bash' because it needs the local repo files:
+  - skills/
+  - rust/
+  - hooks/
+
+Safe install:
+  git clone https://github.com/system5-dev/s5d.git
+  cd s5d
+  ./install.sh
+EOF
+        exit 1
+    fi
+done
 
 echo "Installing S5D..."
 
@@ -108,7 +116,12 @@ echo ""
 echo "MCP server is registered per-project by 's5d init' (.mcp.json)."
 echo "Marketplace installs (Claude/Gemini/Codex) register MCP globally via manifest."
 echo ""
-echo "Optional: install pre-commit hook in any project:"
-echo "  cp $SCRIPT_DIR/hooks/s5d-validate.sh <project>/.git/hooks/pre-commit"
+echo "Rust pre-commit hook:"
+echo "  s5d init installs .git/hooks/pre-commit when run inside a git repo"
+echo "  manual entrypoint: s5d hook pre-commit"
+echo ""
+echo "Self-update:"
+echo "  s5d update check"
+echo "  s5d update apply"
 echo ""
 echo "Usage: /s5d <problem>  or  s5d --help"

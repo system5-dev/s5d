@@ -1,7 +1,10 @@
-use std::fs;
+use std::fs::{self, File, OpenOptions};
+use std::io::Write;
 use std::path::{Path, PathBuf};
 
+use chrono::Utc;
 use sha2::{Digest, Sha256};
+use uuid::Uuid;
 
 use crate::models::*;
 
@@ -13,6 +16,16 @@ pub struct InitReport {
     pub root: PathBuf,
     pub dirs_created: Vec<PathBuf>,
     pub files_created: Vec<PathBuf>,
+}
+
+pub struct ProjectLock {
+    path: PathBuf,
+}
+
+impl Drop for ProjectLock {
+    fn drop(&mut self) {
+        let _ = fs::remove_file(&self.path);
+    }
 }
 
 impl S5dProject {
@@ -50,7 +63,7 @@ impl S5dProject {
             files_created: vec![],
         };
 
-        for dir in &["packages", "records", ".locks"] {
+        for dir in &["packages", "records", "tasks", ".locks"] {
             let path = s5d.join(dir);
             fs::create_dir_all(&path)?;
             report.dirs_created.push(path);
@@ -99,8 +112,52 @@ impl S5dProject {
         let s5d = self.s5d_dir();
         fs::create_dir_all(s5d.join("packages"))?;
         fs::create_dir_all(s5d.join("records"))?;
+        fs::create_dir_all(s5d.join("tasks"))?;
         fs::create_dir_all(s5d.join(".locks"))?;
         Ok(())
+    }
+
+    pub fn save_task_artifact(
+        &self,
+        spec_filename: &str,
+        phase_id: &str,
+        mode: &str,
+        content: &str,
+    ) -> anyhow::Result<PathBuf> {
+        let tasks_dir = self.s5d_dir().join("tasks");
+        fs::create_dir_all(&tasks_dir)?;
+
+        let spec_stem = spec_filename
+            .strip_suffix(".s5d.yaml")
+            .unwrap_or(spec_filename);
+        let timestamp = Utc::now().format("%Y%m%dT%H%M%SZ");
+        let task_name = format!(
+            "{}__{}__{}__{}.ralph.md",
+            spec_stem, phase_id, mode, timestamp
+        );
+        let path = tasks_dir.join(task_name);
+        atomic_write_string(&path, content)?;
+        Ok(path)
+    }
+
+    pub fn acquire_lock(&self, name: &str) -> anyhow::Result<ProjectLock> {
+        let locks_dir = self.s5d_dir().join(".locks");
+        fs::create_dir_all(&locks_dir)?;
+        let safe = sanitize_lock_name(name);
+        let path = locks_dir.join(format!("{}.lock", safe));
+        let mut file = OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&path)
+            .map_err(|err| anyhow::anyhow!("failed to acquire lock '{}': {}", safe, err))?;
+        writeln!(
+            file,
+            "pid={}\nstarted_at={}",
+            std::process::id(),
+            Utc::now().to_rfc3339()
+        )?;
+        file.sync_all()?;
+        Ok(ProjectLock { path })
     }
 
     pub fn discover_specs(&self) -> anyhow::Result<Vec<(PathBuf, Spec)>> {
@@ -129,7 +186,7 @@ impl S5dProject {
     pub fn save_record(&self, spec_filename: &str, record: &Record) -> anyhow::Result<()> {
         let record_name = spec_filename.replace(".s5d.yaml", ".record.yaml");
         let path = self.s5d_dir().join("records").join(&record_name);
-        fs::write(&path, serde_yaml::to_string(record)?)?;
+        atomic_write_string(&path, &serde_yaml::to_string(record)?)?;
         Ok(())
     }
 
@@ -154,7 +211,7 @@ impl S5dProject {
 
     pub fn save_ledger(&self, ledger: &Ledger) -> anyhow::Result<()> {
         let path = self.s5d_dir().join("ledger.yaml");
-        fs::write(&path, serde_yaml::to_string(ledger)?)?;
+        atomic_write_string(&path, &serde_yaml::to_string(ledger)?)?;
         Ok(())
     }
 
@@ -169,7 +226,7 @@ impl S5dProject {
 
     pub fn save_index(&self, index: &Index) -> anyhow::Result<()> {
         let path = self.s5d_dir().join("index.yaml");
-        fs::write(&path, serde_yaml::to_string(index)?)?;
+        atomic_write_string(&path, &serde_yaml::to_string(index)?)?;
         Ok(())
     }
 
@@ -177,5 +234,62 @@ impl S5dProject {
         let path = self.s5d_dir().join("config.yaml");
         let content = fs::read_to_string(&path)?;
         Ok(serde_yaml::from_str(&content)?)
+    }
+}
+
+pub fn atomic_write_string(path: &Path, content: &str) -> anyhow::Result<()> {
+    atomic_write_bytes(path, content.as_bytes())
+}
+
+pub fn atomic_write_bytes(path: &Path, bytes: &[u8]) -> anyhow::Result<()> {
+    let parent = path.parent().ok_or_else(|| {
+        anyhow::anyhow!(
+            "cannot atomically write path without parent: {}",
+            path.display()
+        )
+    })?;
+    fs::create_dir_all(parent)?;
+
+    let file_name = path
+        .file_name()
+        .and_then(|name| name.to_str())
+        .ok_or_else(|| anyhow::anyhow!("cannot determine filename for {}", path.display()))?;
+    let tmp_name = format!(
+        ".{}.tmp.{}.{}",
+        file_name,
+        std::process::id(),
+        Uuid::new_v4()
+    );
+    let tmp_path = parent.join(tmp_name);
+
+    let mut file = File::create(&tmp_path)?;
+    file.write_all(bytes)?;
+    file.sync_all()?;
+    drop(file);
+
+    fs::rename(&tmp_path, path)?;
+
+    if let Ok(dir_handle) = File::open(parent) {
+        let _ = dir_handle.sync_all();
+    }
+
+    Ok(())
+}
+
+fn sanitize_lock_name(name: &str) -> String {
+    let sanitized: String = name
+        .chars()
+        .map(|ch| {
+            if ch.is_ascii_alphanumeric() || matches!(ch, '_' | '-' | '.') {
+                ch
+            } else {
+                '_'
+            }
+        })
+        .collect();
+    if sanitized.is_empty() {
+        "default".into()
+    } else {
+        sanitized
     }
 }

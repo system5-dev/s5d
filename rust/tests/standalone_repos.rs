@@ -72,6 +72,45 @@ where
     }
 }
 
+fn run_git<I, S>(cwd: &Path, args: I) -> CmdOutcome
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<OsStr>,
+{
+    let output = Command::new("git")
+        .args(args)
+        .current_dir(cwd)
+        .output()
+        .unwrap();
+
+    CmdOutcome {
+        success: output.status.success(),
+        stdout: String::from_utf8_lossy(&output.stdout).into_owned(),
+        stderr: String::from_utf8_lossy(&output.stderr).into_owned(),
+    }
+}
+
+#[track_caller]
+fn run_git_ok<I, S>(cwd: &Path, args: I) -> CmdOutcome
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<OsStr>,
+{
+    let outcome = run_git(cwd, args);
+    assert!(
+        outcome.success,
+        "git command failed:\n{}",
+        outcome.summary()
+    );
+    outcome
+}
+
+fn init_git_repo(repo: &StandaloneRepo) {
+    run_git_ok(repo.path(), ["init"]);
+    run_git_ok(repo.path(), ["config", "user.email", "s5d@example.test"]);
+    run_git_ok(repo.path(), ["config", "user.name", "S5D Test"]);
+}
+
 #[track_caller]
 fn run_ok<I, S>(cwd: &Path, args: I) -> CmdOutcome
 where
@@ -135,6 +174,10 @@ fn record_path_for(spec_path: &Path) -> PathBuf {
         .join(spec_name.replace(".s5d.yaml", ".record.yaml"))
 }
 
+fn only_task_path(repo: &StandaloneRepo) -> PathBuf {
+    only_matching_file(&repo.path().join(".s5d").join("tasks"), ".ralph.md")
+}
+
 fn load_yaml<T: serde::de::DeserializeOwned>(path: &Path) -> T {
     serde_yaml::from_str(&fs::read_to_string(path).unwrap()).unwrap()
 }
@@ -143,6 +186,20 @@ fn configure_gate_command(repo: &StandaloneRepo, gate: &str, command: Vec<String
     let config_path = repo.path().join(".s5d").join("config.yaml");
     let mut config: s5d::S5dConfig = load_yaml(&config_path);
     config.gate_commands.insert(gate.to_string(), command);
+    fs::write(config_path, serde_yaml::to_string(&config).unwrap()).unwrap();
+}
+
+fn configure_gate_timeout(repo: &StandaloneRepo, timeout_s: u32) {
+    let config_path = repo.path().join(".s5d").join("config.yaml");
+    let mut config: s5d::S5dConfig = load_yaml(&config_path);
+    let mut gate_runner = config.gate_runner.unwrap_or(s5d::GateRunner {
+        cwd: None,
+        timeout_s: None,
+        env_inherit: None,
+        env_deny: vec![],
+    });
+    gate_runner.timeout_s = Some(timeout_s);
+    config.gate_runner = Some(gate_runner);
     fs::write(config_path, serde_yaml::to_string(&config).unwrap()).unwrap();
 }
 
@@ -174,6 +231,154 @@ fn seed_searchable_rust_repo(repo: &StandaloneRepo) {
     repo.mkdir("apps/mobile");
 }
 
+fn seed_architecture_lint_repo(repo: &StandaloneRepo) {
+    repo.write(
+        "Cargo.toml",
+        "[package]\nname = \"shop\"\nversion = \"0.1.0\"\nedition = \"2021\"\n",
+    );
+    repo.write("src/lib.rs", "pub mod auth;\npub mod billing;\n");
+    repo.write("src/auth/mod.rs", "pub mod tokens;\n");
+    repo.write("src/auth/tokens.rs", "pub struct Token;\n");
+    repo.write("src/billing/mod.rs", "pub mod service;\n");
+    repo.write(
+        "src/billing/service.rs",
+        "use crate::auth::tokens::Token;\n\npub fn charge(_: Token) {}\n",
+    );
+}
+
+fn write_architecture_lint_spec(repo: &StandaloneRepo, allow_billing_to_auth: bool) -> PathBuf {
+    let spec_dir = repo.path().join(".s5d").join("packages");
+    fs::create_dir_all(&spec_dir).unwrap();
+    let spec_path = spec_dir.join("feat.shop.billing-boundary__20260423.s5d.yaml");
+
+    let mut links = s5d::Links::default();
+    if allow_billing_to_auth {
+        links.edges.push(s5d::Edge {
+            from: "dom.billing".into(),
+            to: "dom.auth".into(),
+            archetype: "customer_supplier".into(),
+            description: Some("Billing may depend on auth tokens".into()),
+            downstream_capability: None,
+            waiver: None,
+            transport_ref: None,
+        });
+    }
+
+    let spec = s5d::Spec {
+        s5d: "1.0".into(),
+        id: "feat.shop.billing-boundary".into(),
+        version: "1.0.0".into(),
+        product: "shop".into(),
+        tier: s5d::Tier::Standard,
+        allow_update: false,
+        meta: None,
+        context: Some("Architecture lint fixture".into()),
+        workflow: None,
+        artifacts: Some(s5d::Artifacts {
+            products: vec![s5d::Product {
+                id: "shop".into(),
+                name: "Shop".into(),
+                organization: None,
+            }],
+            domains: vec![
+                s5d::Domain {
+                    id: "dom.auth".into(),
+                    product: "shop".into(),
+                    name: "Auth".into(),
+                    classification: Some("supporting".into()),
+                    description: None,
+                    team: None,
+                    maturity_level: None,
+                },
+                s5d::Domain {
+                    id: "dom.billing".into(),
+                    product: "shop".into(),
+                    name: "Billing".into(),
+                    classification: Some("core".into()),
+                    description: None,
+                    team: None,
+                    maturity_level: None,
+                },
+            ],
+            capabilities: vec![
+                s5d::Capability {
+                    id: "cap.auth.tokens".into(),
+                    domain: "dom.auth".into(),
+                    name: "Tokens".into(),
+                    description: None,
+                    since: None,
+                },
+                s5d::Capability {
+                    id: "cap.billing.charge".into(),
+                    domain: "dom.billing".into(),
+                    name: "Charge".into(),
+                    description: None,
+                    since: None,
+                },
+            ],
+            features: vec![s5d::Feature {
+                id: "feat.shop.billing-boundary".into(),
+                product: "shop".into(),
+                name: "Billing Boundary".into(),
+                description: None,
+            }],
+            systems: vec![s5d::SoftwareSystem {
+                id: "sys.shop".into(),
+                product: "shop".into(),
+                name: "Shop".into(),
+            }],
+            containers: vec![s5d::Container {
+                id: "ctr.backend".into(),
+                system: "sys.shop".into(),
+                name: "Backend".into(),
+                technology: Some("Rust".into()),
+            }],
+            components: vec![
+                s5d::Component {
+                    id: "comp.auth".into(),
+                    feature: "feat.shop.billing-boundary".into(),
+                    domain: "dom.auth".into(),
+                    container: "ctr.backend".into(),
+                    name: "Auth".into(),
+                    paths: vec!["src/auth".into()],
+                },
+                s5d::Component {
+                    id: "comp.billing".into(),
+                    feature: "feat.shop.billing-boundary".into(),
+                    domain: "dom.billing".into(),
+                    container: "ctr.backend".into(),
+                    name: "Billing".into(),
+                    paths: vec!["src/billing".into()],
+                },
+            ],
+            ..Default::default()
+        }),
+        links: Some(links),
+        contracts: vec![],
+        gates: vec![
+            s5d::Gate {
+                kind: "schema".into(),
+            },
+            s5d::Gate {
+                kind: "graph".into(),
+            },
+            s5d::Gate {
+                kind: "architecture".into(),
+            },
+        ],
+        roc: None,
+        problem: None,
+        hypotheses: vec![],
+        decision: None,
+        note_rationale: None,
+        expires_at: None,
+        auto_noted: false,
+    };
+
+    fs::write(&spec_path, serde_yaml::to_string(&spec).unwrap()).unwrap();
+    spec_path
+}
+
 #[test]
 fn init_bootstraps_project_layout_for_standalone_repo() {
     let repo = StandaloneRepo::new();
@@ -183,6 +388,7 @@ fn init_bootstraps_project_layout_for_standalone_repo() {
 
     assert!(repo.path().join(".s5d").join("packages").is_dir());
     assert!(repo.path().join(".s5d").join("records").is_dir());
+    assert!(repo.path().join(".s5d").join("tasks").is_dir());
     assert!(repo.path().join(".s5d").join(".locks").is_dir());
     assert!(out.stdout.contains("S5D initialized"));
     assert!(out.stdout.contains("s5d new <feature-id> --product <name>"));
@@ -261,6 +467,224 @@ fn lightweight_feature_flow_passes_with_configured_schema_gate() {
 }
 
 #[test]
+fn workflow_phase_lifecycle_emits_ralph_task_package_and_records_outcome() {
+    let repo = StandaloneRepo::new();
+    seed_searchable_rust_repo(&repo);
+    run_ok(repo.path(), ["init"]);
+
+    run_ok(
+        repo.path(),
+        [
+            "new",
+            "feat.billing.operator-loop",
+            "--tier",
+            "lightweight",
+            "--product",
+            "Billing",
+        ],
+    );
+
+    let spec_path = only_spec_path(&repo);
+    let spec_str = spec_path.to_str().unwrap();
+
+    {
+        let mut spec: s5d::Spec = load_yaml(&spec_path);
+        if let Some(ref mut artifacts) = spec.artifacts {
+            artifacts.capabilities.push(s5d::Capability {
+                id: "cap.RunOperatorLoop".into(),
+                domain: "billing".into(),
+                name: "RunOperatorLoop".into(),
+                description: Some("Emit bounded Ralph task packages".into()),
+                since: None,
+            });
+        }
+        let workflow = spec
+            .workflow
+            .as_mut()
+            .expect("feature template should carry workflow shell");
+        workflow.mode = Some("implement".into());
+        if let Some(ref mut execution_mode) = workflow.execution_mode {
+            execution_mode.engine = "ralph".into();
+            execution_mode.max_iterations = Some(3);
+        }
+        fs::write(&spec_path, serde_yaml::to_string(&spec).unwrap()).unwrap();
+    }
+
+    run_ok(repo.path(), ["preview", spec_str]);
+    run_ok(repo.path(), ["approve", spec_str, "--reviewer", "Roman"]);
+
+    let phases = run_ok(repo.path(), ["phase", "list", spec_str]);
+    assert!(phases.stdout.contains("Prototype"), "{}", phases.summary());
+    assert!(phases.stdout.contains("prototype"), "{}", phases.summary());
+
+    let execute_before_start = run_fail(
+        repo.path(),
+        [
+            "execute",
+            "loop",
+            spec_str,
+            "--phase",
+            "prototype",
+            "--engine",
+            "ralph",
+        ],
+    );
+    assert!(
+        execute_before_start
+            .stderr
+            .contains("must be active before execute loop"),
+        "{}",
+        execute_before_start.summary()
+    );
+
+    let start = run_ok(
+        repo.path(),
+        ["phase", "start", spec_str, "--id", "prototype"],
+    );
+    assert!(start.stdout.contains("Active phase"), "{}", start.summary());
+
+    let status = run_ok(repo.path(), ["status"]);
+    assert!(
+        status.stdout.contains("Active phase:"),
+        "{}",
+        status.summary()
+    );
+    assert!(status.stdout.contains("prototype"), "{}", status.summary());
+
+    let execute = run_ok(
+        repo.path(),
+        [
+            "execute",
+            "loop",
+            spec_str,
+            "--phase",
+            "prototype",
+            "--engine",
+            "ralph",
+        ],
+    );
+    assert!(
+        execute.stdout.contains("RALPH TASK PACKAGE"),
+        "{}",
+        execute.summary()
+    );
+    assert!(
+        execute.stdout.contains("Task artifact:"),
+        "{}",
+        execute.summary()
+    );
+    assert!(
+        execute.stdout.contains("Preset: ralph-init"),
+        "{}",
+        execute.summary()
+    );
+    assert!(
+        execute.stdout.contains("Phase: Prototype (prototype)"),
+        "{}",
+        execute.summary()
+    );
+    assert!(
+        execute.stdout.contains("Acceptance:"),
+        "{}",
+        execute.summary()
+    );
+    assert!(
+        execute.stdout.contains(
+            "Read user-facing docs and representative tests before inferring from code only"
+        ),
+        "{}",
+        execute.summary()
+    );
+    assert!(
+        execute.stdout.contains("Escalate Immediately If:"),
+        "{}",
+        execute.summary()
+    );
+    let task_path = only_task_path(&repo);
+    let task_content = fs::read_to_string(&task_path).unwrap();
+    assert!(
+        task_content.contains("RALPH TASK PACKAGE"),
+        "{}",
+        task_content
+    );
+    assert!(
+        task_content.contains("Preset: ralph-init"),
+        "{}",
+        task_content
+    );
+
+    let accept = run_ok(
+        repo.path(),
+        [
+            "phase",
+            "accept",
+            spec_str,
+            "--id",
+            "prototype",
+            "--reviewer",
+            "Roman",
+        ],
+    );
+    assert!(
+        accept.stdout.contains("accepted by Roman"),
+        "{}",
+        accept.summary()
+    );
+
+    let gates = run_ok(repo.path(), ["run-gates", spec_str]);
+    assert!(gates.stdout.contains("gate:schema"), "{}", gates.summary());
+
+    let import = run_ok(repo.path(), ["import", spec_str, "--verified-by", "Diana"]);
+    assert!(import.stdout.contains("Imported"), "{}", import.summary());
+
+    let reflect = run_ok(
+        repo.path(),
+        [
+            "reflect",
+            spec_str,
+            "--summary",
+            "Telemetry stayed inside target bounds",
+            "--verdict",
+            "confirmed",
+            "--measurement-window",
+            "7d post-ship",
+            "--telemetry",
+            "grafana://billing-operator-loop",
+            "--heuristic",
+            "Keep Ralph scopes phase-bounded",
+        ],
+    );
+    assert!(
+        reflect.stdout.contains("Reflect recorded"),
+        "{}",
+        reflect.summary()
+    );
+
+    let record: s5d::Record = load_yaml(&record_path_for(&spec_path));
+    assert_eq!(record.status, s5d::SpecStatus::Operated);
+    assert_eq!(record.active_phase, None);
+    assert!(record.phase_history.iter().any(|entry| {
+        entry.phase_id == "prototype" && entry.status == s5d::WorkflowPhaseStatus::Active
+    }));
+    assert!(record.phase_history.iter().any(|entry| {
+        entry.phase_id == "prototype"
+            && entry.status == s5d::WorkflowPhaseStatus::Accepted
+            && entry.reviewer.as_deref() == Some("Roman")
+    }));
+
+    let reflection = record.reflection.expect("reflection should be recorded");
+    assert_eq!(reflection.verdict.as_deref(), Some("confirmed"));
+    assert_eq!(
+        reflection.measurement_window.as_deref(),
+        Some("7d post-ship")
+    );
+    assert_eq!(
+        reflection.telemetry_refs,
+        vec!["grafana://billing-operator-loop".to_string()]
+    );
+}
+
+#[test]
 fn import_stays_blocked_when_declared_gate_only_skips() {
     let repo = StandaloneRepo::new();
     seed_searchable_rust_repo(&repo);
@@ -312,13 +736,84 @@ fn import_stays_blocked_when_declared_gate_only_skips() {
 }
 
 #[test]
+fn timeout_gate_is_recorded_and_blocks_import() {
+    let repo = StandaloneRepo::new();
+    seed_searchable_rust_repo(&repo);
+    run_ok(repo.path(), ["init"]);
+    configure_gate_command(
+        &repo,
+        "lint",
+        vec!["/bin/sh".into(), "-c".into(), "sleep 2".into()],
+    );
+    configure_gate_timeout(&repo, 1);
+
+    run_ok(
+        repo.path(),
+        [
+            "new",
+            "feat.billing.timeoutgate",
+            "--tier",
+            "lightweight",
+            "--product",
+            "Billing",
+        ],
+    );
+    let spec_path = only_spec_path(&repo);
+    let spec_str = spec_path.to_str().unwrap();
+
+    let mut spec: s5d::Spec = load_yaml(&spec_path);
+    if let Some(ref mut artifacts) = spec.artifacts {
+        artifacts.capabilities.push(s5d::Capability {
+            id: "cap.TimeoutGate".into(),
+            domain: "billing".into(),
+            name: "TimeoutGate".into(),
+            description: None,
+            since: None,
+        });
+    }
+    spec.gates = vec![s5d::Gate {
+        kind: "lint".to_string(),
+    }];
+    fs::write(&spec_path, serde_yaml::to_string(&spec).unwrap()).unwrap();
+
+    run_ok(repo.path(), ["preview", spec_str]);
+    run_ok(repo.path(), ["approve", spec_str, "--reviewer", "Roman"]);
+
+    let gates = run_fail(repo.path(), ["run-gates", spec_str]);
+    assert!(gates.stdout.contains("failed: 1"), "{}", gates.summary());
+    assert!(gates.stdout.contains("gate:lint"), "{}", gates.summary());
+
+    let record: s5d::Record = load_yaml(&record_path_for(&spec_path));
+    assert!(
+        record
+            .gate_results
+            .iter()
+            .any(|result| result.kind == "lint" && result.status == "timeout"),
+        "timeout gate result should be recorded"
+    );
+
+    let import = run_fail(repo.path(), ["import", spec_str, "--verified-by", "Diana"]);
+    assert!(
+        import
+            .stderr
+            .contains("all declared gates must pass before import"),
+        "{}",
+        import.summary()
+    );
+}
+
+#[test]
 fn init_is_idempotent() {
     let repo = StandaloneRepo::new();
     seed_searchable_rust_repo(&repo);
 
     // First init creates .s5d/
     let first = run_ok(repo.path(), ["init"]);
-    assert!(first.stdout.contains("S5D initialized"), "{}", first.summary());
+    assert!(
+        first.stdout.contains("S5D initialized"),
+        "{}",
+        first.summary()
+    );
     assert!(repo.path().join(".s5d").exists());
 
     // Second init should succeed (not error)
@@ -410,7 +905,11 @@ fn decision_has_expiry_and_do_dont() {
             "--force",
         ],
     );
-    assert!(decide.stdout.contains("Decision recorded"), "{}", decide.summary());
+    assert!(
+        decide.stdout.contains("Decision recorded"),
+        "{}",
+        decide.summary()
+    );
 
     // Check record has expires_at
     let record: s5d::Record = load_yaml(&record_path_for(&spec_path));
@@ -620,9 +1119,7 @@ fn contract_metamodel_gate_blocks_empty_spec() {
         repo.path(),
         [
             "validate",
-            &format!(
-                ".s5d/packages/feat.testproduct.empty__20260410.s5d.yaml"
-            ),
+            ".s5d/packages/feat.testproduct.empty__20260410.s5d.yaml",
         ],
     );
     assert!(
@@ -631,7 +1128,9 @@ fn contract_metamodel_gate_blocks_empty_spec() {
         result.summary()
     );
     assert!(
-        result.stderr.contains("metamodel: spec has no capabilities"),
+        result
+            .stderr
+            .contains("metamodel: spec has no capabilities"),
         "should block on missing capabilities:\n{}",
         result.summary()
     );
@@ -658,6 +1157,115 @@ fn contract_metamodel_gate_passes_complete_spec() {
             ".s5d/packages/feat.testproduct.complete__20260410.s5d.yaml",
         ],
     );
+}
+
+#[test]
+fn architecture_check_blocks_undeclared_cross_domain_import() {
+    let repo = StandaloneRepo::new();
+    seed_architecture_lint_repo(&repo);
+    run_ok(repo.path(), ["init"]);
+
+    let spec_path = write_architecture_lint_spec(&repo, false);
+    let spec_str = spec_path.to_str().unwrap();
+
+    let result = run_fail(repo.path(), ["check", spec_str]);
+    assert!(
+        result.stderr.contains("architecture:")
+            && result.stderr.contains("dom.billing")
+            && result.stderr.contains("dom.auth"),
+        "architecture check should explain the forbidden dependency:\n{}",
+        result.summary()
+    );
+}
+
+#[test]
+fn architecture_check_allows_declared_domain_edge() {
+    let repo = StandaloneRepo::new();
+    seed_architecture_lint_repo(&repo);
+    run_ok(repo.path(), ["init"]);
+
+    let spec_path = write_architecture_lint_spec(&repo, true);
+    let spec_str = spec_path.to_str().unwrap();
+
+    let result = run_ok(repo.path(), ["check", spec_str]);
+    assert!(
+        result.stdout.contains("architecture ok"),
+        "architecture check should pass with declared edge:\n{}",
+        result.summary()
+    );
+}
+
+#[test]
+fn init_installs_rust_pre_commit_hook_and_hook_blocks_architecture_drift() {
+    let repo = StandaloneRepo::new();
+    seed_architecture_lint_repo(&repo);
+    init_git_repo(&repo);
+
+    run_ok(repo.path(), ["init"]);
+    let hook_path = repo.path().join(".git").join("hooks").join("pre-commit");
+    assert!(
+        hook_path.symlink_metadata().is_ok(),
+        "init should install a Rust-backed pre-commit hook"
+    );
+
+    write_architecture_lint_spec(&repo, false);
+    run_git_ok(repo.path(), ["add", "."]);
+
+    let result = run_fail(repo.path(), ["hook", "pre-commit"]);
+    assert!(
+        result.stderr.contains("s5d pre-commit blocked commit")
+            && result.stderr.contains("dom.billing")
+            && result.stderr.contains("dom.auth"),
+        "hook should block staged architecture drift:\n{}",
+        result.summary()
+    );
+}
+
+#[test]
+fn update_check_reports_remote_head_drift_without_network() {
+    let remote = StandaloneRepo::new();
+    init_git_repo(&remote);
+    remote.write("install.sh", "#!/bin/sh\n");
+    remote.write("skills/s5d/SKILL.md", "name: s5d\n");
+    remote.write("skills/fpf/SKILL.md", "name: fpf\n");
+    remote.write(
+        "rust/Cargo.toml",
+        "[package]\nname = \"s5d\"\nversion = \"0.1.0\"\nedition = \"2021\"\n",
+    );
+    run_git_ok(remote.path(), ["add", "."]);
+    run_git_ok(remote.path(), ["commit", "-m", "initial"]);
+
+    let clone = StandaloneRepo::new();
+    run_git_ok(
+        clone.path(),
+        [
+            "clone",
+            remote.path().to_str().unwrap(),
+            clone.path().join("s5d").to_str().unwrap(),
+        ],
+    );
+    let clone_root = clone.path().join("s5d");
+
+    remote.write("skills/s5d/SKILL.md", "name: s5d\nupdated: true\n");
+    run_git_ok(remote.path(), ["add", "."]);
+    run_git_ok(remote.path(), ["commit", "-m", "skill update"]);
+
+    let output = Command::new(s5d_bin())
+        .args(["update", "check", "--json"])
+        .env("S5D_ROOT", &clone_root)
+        .current_dir(&clone_root)
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "update check failed:\nstdout:\n{}\nstderr:\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+
+    let json: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(json["update_available"], true, "{}", json);
+    assert!(json["remote_commit"].as_str().is_some(), "{}", json);
 }
 
 // ── Test 3: Lightweight tier only requires capabilities (not domains/components) ──
@@ -837,7 +1445,9 @@ auto_noted: false
         ],
     );
     assert!(
-        result.stderr.contains("metamodel: spec has no capabilities"),
+        result
+            .stderr
+            .contains("metamodel: spec has no capabilities"),
         "lightweight without capabilities should fail:\n{}",
         result.summary()
     );
@@ -866,10 +1476,7 @@ fn contract_decision_tier_exempt_from_metamodel() {
 
     let spec_path = only_spec_path(&repo);
     // Decision tier → no artifacts needed → should validate fine
-    run_ok(
-        repo.path(),
-        ["validate", spec_path.to_str().unwrap()],
-    );
+    run_ok(repo.path(), ["validate", spec_path.to_str().unwrap()]);
 }
 
 // ── Test 6: Graph cycle detection blocks validation ──
@@ -1229,7 +1836,9 @@ fn contract_full_lifecycle_end_to_end() {
     // Import
     let import = run_ok(repo.path(), ["import", &spec_str]);
     assert!(
-        import.stdout.contains("imported") || import.stdout.contains("state_fingerprint") || import.stdout.contains("Import"),
+        import.stdout.contains("imported")
+            || import.stdout.contains("state_fingerprint")
+            || import.stdout.contains("Import"),
         "import should succeed:\n{}",
         import.summary()
     );
@@ -1778,13 +2387,8 @@ fn rollback_after_import_tombstones_aliases_and_removes_index() {
 
     // Verify import created entries
     let s5d_dir = repo.path().join(".s5d");
-    let aliases: s5d::AliasTable =
-        s5d::AliasTable::load(&s5d_dir).unwrap();
-    let active_before = aliases
-        .packages
-        .iter()
-        .filter(|e| !e.deprecated)
-        .count();
+    let aliases: s5d::AliasTable = s5d::AliasTable::load(&s5d_dir).unwrap();
+    let active_before = aliases.packages.iter().filter(|e| !e.deprecated).count();
     assert!(active_before > 0, "should have active aliases after import");
 
     let index: s5d::Index = load_yaml(&s5d_dir.join("index.yaml"));
@@ -1797,14 +2401,16 @@ fn rollback_after_import_tombstones_aliases_and_removes_index() {
     run_ok(repo.path(), ["rollback", &spec_str]);
 
     // Check aliases are tombstoned
-    let aliases_after: s5d::AliasTable =
-        s5d::AliasTable::load(&s5d_dir).unwrap();
+    let aliases_after: s5d::AliasTable = s5d::AliasTable::load(&s5d_dir).unwrap();
     let active_after = aliases_after
         .packages
         .iter()
         .filter(|e| e.package_id.as_deref() == Some("feat.rb1") && !e.deprecated)
         .count();
-    assert_eq!(active_after, 0, "all package aliases should be deprecated after rollback");
+    assert_eq!(
+        active_after, 0,
+        "all package aliases should be deprecated after rollback"
+    );
 
     // Check index is empty
     let index_after: s5d::Index = load_yaml(&s5d_dir.join("index.yaml"));
@@ -1946,8 +2552,7 @@ fn decide_rejects_winner_without_spec_ref() {
         ],
     );
     assert!(
-        result.stderr.contains("spec_ref")
-            || result.stderr.contains("feature spec"),
+        result.stderr.contains("spec_ref") || result.stderr.contains("feature spec"),
         "decide should reject winner without spec_ref:\n{}",
         result.summary()
     );
@@ -1981,8 +2586,7 @@ fn reconcile_fails_closed_on_deleted_alias() {
     // Reconcile should fail closed — deleted UUID can't be regenerated
     let result = run_fail(repo.path(), ["reconcile", &spec_str]);
     assert!(
-        result.stderr.contains("cannot be restored")
-            || result.stderr.contains("Re-run"),
+        result.stderr.contains("cannot be restored") || result.stderr.contains("Re-run"),
         "reconcile should fail closed on deleted alias:\n{}",
         result.summary()
     );
@@ -2010,14 +2614,20 @@ fn reconcile_fails_closed_on_corrupted_uuid() {
         entry.uuid = "corrupted-0000-0000-0000-000000000000".into();
     }
     aliases.save(&s5d_dir).unwrap();
+    let before = aliases.clone();
 
     // Reconcile should fail closed — can't restore imported baseline
     let result = run_fail(repo.path(), ["reconcile", &spec_str]);
     assert!(
-        result.stderr.contains("cannot be restored")
-            || result.stderr.contains("Re-run"),
+        result.stderr.contains("cannot be restored") || result.stderr.contains("Re-run"),
         "reconcile should fail closed on corrupted UUID:\n{}",
         result.summary()
+    );
+
+    let after = s5d::AliasTable::load(&s5d_dir).unwrap();
+    assert_eq!(
+        before, after,
+        "failed reconcile must not persist candidate alias state"
     );
 }
 
@@ -2057,10 +2667,7 @@ fn rollback_of_first_spec_does_not_break_second_spec_sharing_global_artifact() {
     }
     run_ok(repo.path(), ["validate", &spec1_str]);
     run_ok(repo.path(), ["preview", &spec1_str]);
-    run_ok(
-        repo.path(),
-        ["approve", &spec1_str, "--reviewer", "R"],
-    );
+    run_ok(repo.path(), ["approve", &spec1_str, "--reviewer", "R"]);
     run_ok(repo.path(), ["run-gates", &spec1_str]);
     run_ok(repo.path(), ["import", &spec1_str]);
 
@@ -2098,10 +2705,7 @@ fn rollback_of_first_spec_does_not_break_second_spec_sharing_global_artifact() {
     }
     run_ok(repo.path(), ["validate", &spec2_str]);
     run_ok(repo.path(), ["preview", &spec2_str]);
-    run_ok(
-        repo.path(),
-        ["approve", &spec2_str, "--reviewer", "R"],
-    );
+    run_ok(repo.path(), ["approve", &spec2_str, "--reviewer", "R"]);
     run_ok(repo.path(), ["run-gates", &spec2_str]);
     run_ok(repo.path(), ["import", &spec2_str]);
 
@@ -2113,11 +2717,10 @@ fn rollback_of_first_spec_does_not_break_second_spec_sharing_global_artifact() {
     let s5d_dir = repo.path().join(".s5d");
     let aliases = s5d::AliasTable::load(&s5d_dir).unwrap();
 
-    let shop_product_alive = aliases.global.iter().any(|e| {
-        e.artifact_id == "shop"
-            && e.artifact_type == "Product"
-            && !e.deprecated
-    });
+    let shop_product_alive = aliases
+        .global
+        .iter()
+        .any(|e| e.artifact_id == "shop" && e.artifact_type == "Product" && !e.deprecated);
 
     assert!(
         shop_product_alive,
@@ -2144,7 +2747,14 @@ fn shared_global_drift_visible_for_non_owner_spec() {
     // Spec 1 — owner of Product "shared"
     run_ok(
         repo.path(),
-        ["new", "feat.owner", "--tier", "lightweight", "--product", "shared"],
+        [
+            "new",
+            "feat.owner",
+            "--tier",
+            "lightweight",
+            "--product",
+            "shared",
+        ],
     );
     let spec1_path = only_spec_path(&repo);
     let spec1_str = spec1_path.to_str().unwrap().to_string();
@@ -2152,8 +2762,11 @@ fn shared_global_drift_visible_for_non_owner_spec() {
         let mut spec: s5d::Spec = load_yaml(&spec1_path);
         let arts = spec.artifacts.as_mut().unwrap();
         arts.capabilities.push(s5d::Capability {
-            id: "cap.A".into(), domain: "".into(), name: "A".into(),
-            description: None, since: None,
+            id: "cap.A".into(),
+            domain: "".into(),
+            name: "A".into(),
+            description: None,
+            since: None,
         });
         fs::write(&spec1_path, serde_yaml::to_string(&spec).unwrap()).unwrap();
     }
@@ -2166,7 +2779,14 @@ fn shared_global_drift_visible_for_non_owner_spec() {
     // Spec 2 — non-owner, shares Product "shared"
     run_ok(
         repo.path(),
-        ["new", "feat.consumer", "--tier", "lightweight", "--product", "shared"],
+        [
+            "new",
+            "feat.consumer",
+            "--tier",
+            "lightweight",
+            "--product",
+            "shared",
+        ],
     );
     let specs_dir = repo.path().join(".s5d").join("packages");
     let spec2_path = fs::read_dir(&specs_dir)
@@ -2179,8 +2799,11 @@ fn shared_global_drift_visible_for_non_owner_spec() {
         let mut spec: s5d::Spec = load_yaml(&spec2_path);
         let arts = spec.artifacts.as_mut().unwrap();
         arts.capabilities.push(s5d::Capability {
-            id: "cap.B".into(), domain: "".into(), name: "B".into(),
-            description: None, since: None,
+            id: "cap.B".into(),
+            domain: "".into(),
+            name: "B".into(),
+            description: None,
+            since: None,
         });
         fs::write(&spec2_path, serde_yaml::to_string(&spec).unwrap()).unwrap();
     }
