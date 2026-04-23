@@ -1,0 +1,15 @@
+spec_ref: feat.s5d.self-governance__20260423.s5d.yaml
+spec_sha256: sha256:a72840a81669d163898d0d6b0e12f14c5e6badb93a2f420bb5607c4e9c4afebb
+status: proposed
+sync_status: unknown
+status_history:
+- status: proposed
+  timestamp: 2026-04-23T12:42:24.808881+00:00
+active_phase: null
+phase_history: []
+approvals: []
+preview: null
+reflection: null
+gate_results: []
+decision: null
+verified_by: null

@@ -40,6 +40,10 @@ s5d init
 s5d update check
 s5d update apply
 
+# Optional: keep codebase ownership coverage current
+s5d codebase sync
+s5d codebase check
+
 # Create a spec
 s5d new feat.my-feature --product myapp
 
@@ -113,7 +117,7 @@ Available as a plugin for Claude Code, Gemini CLI, and Codex.
 | Standard | Regular feature | Schema + Graph |
 | High | Auth / payment / PII | Schema + Graph |
 
-Schema and graph gates run built-in validation. Add `lint`, `test`, `contract` gates to your spec when you've configured commands for them in `.s5d/config.yaml`.
+Schema, graph, and architecture gates run built-in validation. Add `architecture` to a spec to check component paths and declared source dependencies. Use `s5d codebase sync/check` when you track `.s5d/codebase/*` coverage snapshots. Add `lint`, `test`, `contract` gates to your spec when you've configured commands for them in `.s5d/config.yaml`.
 
 `install.sh` must be run from a checked-out repository copy. `curl | bash` is intentionally unsupported.
 

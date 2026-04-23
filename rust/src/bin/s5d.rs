@@ -289,6 +289,11 @@ enum S5dCommand {
         #[command(subcommand)]
         command: IndexCommand,
     },
+    /// Codebase ownership and coverage snapshot
+    Codebase {
+        #[command(subcommand)]
+        command: CodebaseCommand,
+    },
     /// Git hook entrypoints implemented in Rust
     Hook {
         #[command(subcommand)]
@@ -347,6 +352,14 @@ enum IndexCommand {
     /// Check index.yaml consistency
     Check,
     /// Rebuild index.yaml from packages/
+    Sync,
+}
+
+#[derive(Subcommand)]
+enum CodebaseCommand {
+    /// Check .s5d/codebase/*.yaml against current source and specs
+    Check,
+    /// Rebuild .s5d/codebase/*.yaml from current source and specs
     Sync,
 }
 
@@ -470,6 +483,10 @@ fn main() -> anyhow::Result<()> {
         S5dCommand::Index { command } => match command {
             IndexCommand::Check => run_index_check(),
             IndexCommand::Sync => run_index_sync(),
+        },
+        S5dCommand::Codebase { command } => match command {
+            CodebaseCommand::Check => run_codebase_check(),
+            CodebaseCommand::Sync => run_codebase_sync(),
         },
         S5dCommand::Hook { command } => match command {
             HookCommand::PreCommit => run_hook_pre_commit(),
@@ -963,11 +980,13 @@ fn run_hook_pre_commit() -> anyhow::Result<()> {
         .cloned()
         .collect();
     let has_source_changes = staged.iter().any(|path| is_source_path(path));
+    let has_s5d_changes = staged.iter().any(|path| path.starts_with(".s5d/"));
 
     let specs = project.discover_specs()?;
     let mut failures = Vec::new();
     let mut checked_specs = 0usize;
     let mut checked_architecture = std::collections::HashSet::new();
+    let mut checked_codebase = false;
 
     for (path, spec) in &specs {
         let rel = display_project_path(&project.root, path);
@@ -993,11 +1012,28 @@ fn run_hook_pre_commit() -> anyhow::Result<()> {
         }
     }
 
-    if checked_specs > 0 || !checked_architecture.is_empty() {
+    if (has_source_changes || has_s5d_changes) && codebase_snapshot_exists(&project) {
+        checked_codebase = true;
+        let expected = s5d::build_codebase_snapshot(&project)?;
+        match s5d::load_codebase_snapshot(&project)? {
+            Some(actual) if actual == expected => {}
+            Some(_) => failures.push(
+                ".s5d/codebase snapshot is stale. Fix: run `s5d codebase sync` and stage the result."
+                    .to_string(),
+            ),
+            None => failures.push(
+                ".s5d/codebase snapshot is missing. Fix: run `s5d codebase sync` and stage the result."
+                    .to_string(),
+            ),
+        }
+    }
+
+    if checked_specs > 0 || !checked_architecture.is_empty() || checked_codebase {
         println!(
-            "s5d pre-commit: checked {} staged spec(s), {} architecture spec(s)",
+            "s5d pre-commit: checked {} staged spec(s), {} architecture spec(s), codebase={}",
             checked_specs,
-            checked_architecture.len()
+            checked_architecture.len(),
+            if checked_codebase { "yes" } else { "no" }
         );
     }
 
@@ -1010,6 +1046,11 @@ fn run_hook_pre_commit() -> anyhow::Result<()> {
         eprintln!("  - {}", failure);
     }
     std::process::exit(1);
+}
+
+fn codebase_snapshot_exists(project: &s5d::S5dProject) -> bool {
+    let codebase = project.s5d_dir().join("codebase");
+    codebase.join("modules.yaml").exists() || codebase.join("coverage.yaml").exists()
 }
 
 fn git_staged_files(project_root: &std::path::Path) -> anyhow::Result<Vec<String>> {
@@ -2834,6 +2875,56 @@ fn run_index_sync() -> anyhow::Result<()> {
     project.save_index(&index)?;
 
     println!("{} index.yaml rebuilt ({} entries)", "ok".green(), count);
+    Ok(())
+}
+
+// ── Codebase coverage ────────────────────────────────────────────────────────
+
+fn run_codebase_sync() -> anyhow::Result<()> {
+    let cwd = std::env::current_dir()?;
+    let project = s5d::S5dProject::find(&cwd).ok_or_else(|| anyhow::anyhow!("no .s5d/ found"))?;
+    let snapshot = s5d::build_codebase_snapshot(&project)?;
+    s5d::write_codebase_snapshot(&project, &snapshot)?;
+
+    println!(
+        "{} .s5d/codebase rebuilt ({} module(s): {} governed, {} partial, {} blind)",
+        "ok".green(),
+        snapshot.coverage.total_modules,
+        snapshot.coverage.governed,
+        snapshot.coverage.partial,
+        snapshot.coverage.blind
+    );
+    Ok(())
+}
+
+fn run_codebase_check() -> anyhow::Result<()> {
+    let cwd = std::env::current_dir()?;
+    let project = s5d::S5dProject::find(&cwd).ok_or_else(|| anyhow::anyhow!("no .s5d/ found"))?;
+    let expected = s5d::build_codebase_snapshot(&project)?;
+    let Some(actual) = s5d::load_codebase_snapshot(&project)? else {
+        eprintln!(
+            "  {} .s5d/codebase snapshot missing — run `s5d codebase sync`",
+            "error:".red()
+        );
+        std::process::exit(1);
+    };
+
+    if actual == expected {
+        println!(
+            "{} .s5d/codebase is current ({} module(s): {} governed, {} partial, {} blind)",
+            "ok".green(),
+            expected.coverage.total_modules,
+            expected.coverage.governed,
+            expected.coverage.partial,
+            expected.coverage.blind
+        );
+    } else {
+        eprintln!(
+            "  {} .s5d/codebase is stale — run `s5d codebase sync`",
+            "error:".red()
+        );
+        std::process::exit(1);
+    }
     Ok(())
 }
 

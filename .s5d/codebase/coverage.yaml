@@ -1,0 +1,14 @@
+product: s5d
+total_modules: 1
+governed: 1
+partial: 0
+blind: 0
+modules:
+- module:
+    name: rust
+    path: rust
+    language: Rust
+    file_count: 20
+  status: governed
+  specs:
+  - feat.s5d.self-governance

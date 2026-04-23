@@ -4,6 +4,7 @@
 // Modules on the critical path: intent → validate → approve → apply → drift → rollback
 
 pub mod arch;
+pub mod codebase;
 pub mod drift;
 pub mod gates;
 pub mod graph;
@@ -19,6 +20,10 @@ pub mod template;
 pub mod validate;
 
 pub use arch::{architecture_check, ArchitectureCheckReport, ComponentCoverage, SourceDependency};
+pub use codebase::{
+    build_codebase_snapshot, load_codebase_snapshot, write_codebase_snapshot, CodebaseCoverage,
+    CodebaseModule, CodebaseSnapshot, CoverageStatus, ModuleCoverage,
+};
 pub use drift::{check_drift, reconcile, DriftResult};
 pub use gates::run_gates;
 pub use graph::{check_domain_layering, graph_check, tarjan_scc};

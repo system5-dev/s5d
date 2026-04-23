@@ -1,0 +1,483 @@
+s5d: '1.0'
+id: feat.s5d.self-governance
+version: 1.0.0
+product: s5d
+tier: standard
+allow_update: true
+meta:
+  title: self-governance
+  authors:
+  - Diana
+  date: 2026-04-23
+  tickets:
+  - RAN-298
+  adrs: []
+  renames: []
+context: |
+  ## Problem
+  S5D now validates architecture, installs Rust-backed hooks, and updates its own skill/binary, but the S5D repository itself was not yet governed by an S5D feature spec.
+
+  ## Goal
+  Make the Rust implementation of S5D explicitly owned by S5D artifacts, and make architecture drift visible through the architecture gate and codebase coverage.
+
+  ## Privacy
+  Classification: Internal
+workflow:
+  mode: implement
+  target_architecture:
+    summary: "S5D dogfoods S5D: every Rust source file is owned by a component, architecture-gated specs declare cross-domain dependencies, and codebase coverage records the governed module state."
+    invariants:
+    - Every Rust source file under rust/src and rust/tests is owned by exactly one component path.
+    - Cross-domain source imports are allowed only when represented by links.edges.
+    - The Rust module is not allowed to remain blind in .s5d/codebase/coverage.yaml.
+    - Git hooks and update checks stay implemented in Rust, not shell hook logic.
+  delivery_strategy:
+    summary: Introduce a canonical self-governance spec first, then keep codebase coverage synchronized from that spec.
+    rationale: This promotes the existing generated codebase snapshot into an auditable S5D artifact instead of committing stale local output.
+  resources: null
+  role_map:
+    owner: human
+    implementer: coder
+    reviewer: reviewer
+    verifier: reviewer
+  review_policy:
+    cross_model_required: false
+    required_on:
+    - architecture_gate_changes
+  execution_mode:
+    engine: manual
+    max_iterations: null
+    stop_conditions:
+    - Architecture gate passes
+    - Codebase coverage reports rust as governed
+    - New architectural dependency requires explicit edge review
+  phases:
+  - id: model
+    title: Model
+    scope: Declare S5D's Rust domains, capabilities, components, and dependency edges.
+    roles:
+    - owner
+    - implementer
+    acceptance:
+    - Self-governance spec validates and graph-checks.
+    - Component paths cover Rust source files without overlap.
+    rollback:
+    - Remove the self-governance spec and regenerate index/coverage.
+  - id: enforce
+    title: Enforce
+    scope: Run the architecture gate and codebase coverage check against the declared model.
+    roles:
+    - implementer
+    - verifier
+    acceptance:
+    - s5d check passes for this spec.
+    - s5d codebase check passes after sync.
+    rollback:
+    - Revert coverage artifacts if the model proves inaccurate.
+artifacts:
+  products:
+  - id: s5d
+    name: S5D
+    organization: system5-dev
+  domains:
+  - id: s5d-core
+    product: s5d
+    name: Core Model
+    classification: core
+    description: Canonical S5D data model and crate surface.
+    team: s5d
+    maturity_level: custom
+  - id: s5d-validation
+    product: s5d
+    name: Validation
+    classification: core
+    description: Schema, graph, and inference rules over specs.
+    team: s5d
+    maturity_level: custom
+  - id: s5d-state
+    product: s5d
+    name: Project State
+    classification: core
+    description: Project discovery, identity, import, drift, reconciliation, and codebase coverage snapshots.
+    team: s5d
+    maturity_level: custom
+  - id: s5d-execution
+    product: s5d
+    name: Execution
+    classification: core
+    description: Gates, workflow phases, routing, and task package creation.
+    team: s5d
+    maturity_level: custom
+  - id: s5d-architecture
+    product: s5d
+    name: Architecture Enforcement
+    classification: core
+    description: Source-to-spec ownership and dependency checks.
+    team: s5d
+    maturity_level: genesis
+  - id: s5d-adapters
+    product: s5d
+    name: Agent and CLI Adapters
+    classification: core
+    description: CLI and MCP interfaces over the S5D library.
+    team: s5d
+    maturity_level: custom
+  - id: s5d-tests
+    product: s5d
+    name: Regression Tests
+    classification: core
+    description: Integration and documentation sync tests for S5D behavior.
+    team: s5d
+    maturity_level: custom
+  capabilities:
+  - id: cap.s5d.model
+    domain: s5d-core
+    name: MaintainCanonicalModel
+    description: Define the serializable model, crate exports, and safe ID rules.
+    since: 1.0.0
+  - id: cap.s5d.validate
+    domain: s5d-validation
+    name: ValidateSpecs
+    description: Validate schema, graph references, and inferred links.
+    since: 1.0.0
+  - id: cap.s5d.state
+    domain: s5d-state
+    name: ManageProjectState
+    description: Manage project files, alias identity, import, drift, reconciliation, and codebase coverage.
+    since: 1.0.0
+  - id: cap.s5d.execute
+    domain: s5d-execution
+    name: RunWorkflowAndGates
+    description: Execute built-in gates, phase checks, routing, and task package generation.
+    since: 1.0.0
+  - id: cap.s5d.architecture
+    domain: s5d-architecture
+    name: EnforceArchitecture
+    description: Check source ownership and declared cross-domain dependencies.
+    since: 1.0.0
+  - id: cap.s5d.adapters
+    domain: s5d-adapters
+    name: ServeAgentsAndCLI
+    description: Expose S5D behavior through CLI and MCP entrypoints.
+    since: 1.0.0
+  - id: cap.s5d.regression
+    domain: s5d-tests
+    name: GuardRegressions
+    description: Verify CLI, hook, update, docs, and architecture behavior in tests.
+    since: 1.0.0
+  entities:
+  - id: ent.s5d.spec
+    domain: s5d-core
+    name: Spec
+  - id: ent.s5d.record
+    domain: s5d-state
+    name: Record
+  - id: ent.s5d.project
+    domain: s5d-state
+    name: S5dProject
+  - id: ent.s5d.arch-report
+    domain: s5d-architecture
+    name: ArchitectureCheckReport
+  features:
+  - id: feat.s5d.self-governance
+    product: s5d
+    name: self-governance
+    description: S5D repository is governed by S5D specs and architecture checks.
+  use_cases:
+  - id: uc.s5d.verify-self
+    feature: feat.s5d.self-governance
+    name: Verify S5D against its own architecture model
+  systems:
+  - id: sys.s5d
+    product: s5d
+    name: S5D Repository
+  containers:
+  - id: ctr.s5d.rust-crate
+    system: sys.s5d
+    name: Rust CLI and Library
+    technology: Rust
+  components:
+  - id: comp.s5d.core
+    feature: feat.s5d.self-governance
+    domain: s5d-core
+    container: ctr.s5d.rust-crate
+    name: Core model and library surface
+    paths:
+    - rust/src/lib.rs
+    - rust/src/models.rs
+  - id: comp.s5d.validation
+    feature: feat.s5d.self-governance
+    domain: s5d-validation
+    container: ctr.s5d.rust-crate
+    name: Spec validation and graph rules
+    paths:
+    - rust/src/validate.rs
+    - rust/src/graph.rs
+    - rust/src/infer.rs
+  - id: comp.s5d.state
+    feature: feat.s5d.self-governance
+    domain: s5d-state
+    container: ctr.s5d.rust-crate
+    name: Project state, import lifecycle, and codebase coverage
+    paths:
+    - rust/src/project.rs
+    - rust/src/identity.rs
+    - rust/src/import.rs
+    - rust/src/drift.rs
+    - rust/src/codebase.rs
+  - id: comp.s5d.execution
+    feature: feat.s5d.self-governance
+    domain: s5d-execution
+    container: ctr.s5d.rust-crate
+    name: Gates, workflow, router, and task execution
+    paths:
+    - rust/src/gates.rs
+    - rust/src/phase_gates.rs
+    - rust/src/ralph.rs
+    - rust/src/router.rs
+    - rust/src/template.rs
+  - id: comp.s5d.architecture
+    feature: feat.s5d.self-governance
+    domain: s5d-architecture
+    container: ctr.s5d.rust-crate
+    name: Architecture linter
+    paths:
+    - rust/src/arch.rs
+  - id: comp.s5d.adapters
+    feature: feat.s5d.self-governance
+    domain: s5d-adapters
+    container: ctr.s5d.rust-crate
+    name: CLI and MCP adapters
+    paths:
+    - rust/src/bin/s5d.rs
+    - rust/src/mcp.rs
+  - id: comp.s5d.tests
+    feature: feat.s5d.self-governance
+    domain: s5d-tests
+    container: ctr.s5d.rust-crate
+    name: Regression test suite
+    paths:
+    - rust/tests/*.rs
+  roles:
+  - id: role.s5d.owner
+    name: Product owner
+    kind: human
+  - id: role.s5d.implementer
+    name: Rust implementer
+    kind: agent
+  - id: role.s5d.verifier
+    name: Architecture verifier
+    kind: agent
+  concerns:
+  - id: concern.s5d.drift
+    role: role.s5d.owner
+    name: S5D source drifts away from S5D specs
+    supersystem: null
+    confirmed: true
+  - id: concern.s5d.hook-shell
+    role: role.s5d.owner
+    name: Hook behavior regresses into shell glue instead of Rust-owned logic
+    supersystem: null
+    confirmed: true
+  metrics:
+  - id: metric.s5d.arch-check
+    name: Architecture check pass rate
+    units: pass/fail
+    how_to_measure: s5d check .s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml
+    supersystem: null
+  - id: metric.s5d.coverage
+    name: Rust codebase coverage state
+    units: governed|partial|blind
+    how_to_measure: s5d codebase check
+    supersystem: null
+  supersystems: []
+  transports: []
+links:
+  feature_to_domain:
+  - feature: feat.s5d.self-governance
+    domain: s5d-core
+  - feature: feat.s5d.self-governance
+    domain: s5d-validation
+  - feature: feat.s5d.self-governance
+    domain: s5d-state
+  - feature: feat.s5d.self-governance
+    domain: s5d-execution
+  - feature: feat.s5d.self-governance
+    domain: s5d-architecture
+  - feature: feat.s5d.self-governance
+    domain: s5d-adapters
+  - feature: feat.s5d.self-governance
+    domain: s5d-tests
+  use_case_to_capability:
+  - use_case: uc.s5d.verify-self
+    capability: cap.s5d.architecture
+  - use_case: uc.s5d.verify-self
+    capability: cap.s5d.regression
+  use_case_to_entity: []
+  component_to_capability:
+  - component: comp.s5d.core
+    capability: cap.s5d.model
+  - component: comp.s5d.validation
+    capability: cap.s5d.validate
+  - component: comp.s5d.state
+    capability: cap.s5d.state
+  - component: comp.s5d.execution
+    capability: cap.s5d.execute
+  - component: comp.s5d.architecture
+    capability: cap.s5d.architecture
+  - component: comp.s5d.adapters
+    capability: cap.s5d.adapters
+  - component: comp.s5d.tests
+    capability: cap.s5d.regression
+  component_to_entity:
+  - component: comp.s5d.core
+    entity: ent.s5d.spec
+  - component: comp.s5d.state
+    entity: ent.s5d.record
+  - component: comp.s5d.state
+    entity: ent.s5d.project
+  - component: comp.s5d.architecture
+    entity: ent.s5d.arch-report
+  container_to_capability:
+  - container: ctr.s5d.rust-crate
+    capability: cap.s5d.model
+  - container: ctr.s5d.rust-crate
+    capability: cap.s5d.validate
+  - container: ctr.s5d.rust-crate
+    capability: cap.s5d.state
+  - container: ctr.s5d.rust-crate
+    capability: cap.s5d.execute
+  - container: ctr.s5d.rust-crate
+    capability: cap.s5d.architecture
+  - container: ctr.s5d.rust-crate
+    capability: cap.s5d.adapters
+  - container: ctr.s5d.rust-crate
+    capability: cap.s5d.regression
+  concern_to_metric:
+  - concern: concern.s5d.drift
+    metric: metric.s5d.arch-check
+  - concern: concern.s5d.drift
+    metric: metric.s5d.coverage
+  - concern: concern.s5d.hook-shell
+    metric: metric.s5d.arch-check
+  component_to_container:
+  - component: comp.s5d.core
+    container: ctr.s5d.rust-crate
+  - component: comp.s5d.validation
+    container: ctr.s5d.rust-crate
+  - component: comp.s5d.state
+    container: ctr.s5d.rust-crate
+  - component: comp.s5d.execution
+    container: ctr.s5d.rust-crate
+  - component: comp.s5d.architecture
+    container: ctr.s5d.rust-crate
+  - component: comp.s5d.adapters
+    container: ctr.s5d.rust-crate
+  - component: comp.s5d.tests
+    container: ctr.s5d.rust-crate
+  edges:
+  - from: s5d-adapters
+    to: s5d-execution
+    archetype: customer_supplier
+    description: CLI and MCP invoke workflow, gate, router, and task execution APIs.
+  - from: s5d-adapters
+    to: s5d-state
+    archetype: customer_supplier
+    description: CLI and MCP manage project records, imports, drift, and reconciliation.
+  - from: s5d-adapters
+    to: s5d-validation
+    archetype: customer_supplier
+    description: CLI and MCP expose validation and graph checks.
+  - from: s5d-adapters
+    to: s5d-architecture
+    archetype: customer_supplier
+    description: CLI and hooks expose source-to-spec checks.
+  - from: s5d-adapters
+    to: s5d-core
+    archetype: customer_supplier
+    description: CLI and MCP serialize and display canonical S5D objects.
+  - from: s5d-tests
+    to: s5d-adapters
+    archetype: customer_supplier
+    description: Integration tests execute the CLI adapter.
+  - from: s5d-tests
+    to: s5d-core
+    archetype: customer_supplier
+    description: Tests construct model objects directly.
+  - from: s5d-tests
+    to: s5d-state
+    archetype: customer_supplier
+    description: Tests exercise project state and records.
+  - from: s5d-tests
+    to: s5d-architecture
+    archetype: customer_supplier
+    description: Tests exercise architecture checking.
+  - from: s5d-execution
+    to: s5d-architecture
+    archetype: customer_supplier
+    description: Built-in architecture gate delegates to the architecture linter.
+  - from: s5d-execution
+    to: s5d-validation
+    archetype: customer_supplier
+    description: Built-in schema and graph gates delegate to validation rules.
+  - from: s5d-execution
+    to: s5d-core
+    archetype: customer_supplier
+    description: Execution code consumes canonical spec and record types.
+  - from: s5d-architecture
+    to: s5d-validation
+    archetype: customer_supplier
+    description: Architecture checks include schema and graph validation.
+  - from: s5d-architecture
+    to: s5d-core
+    archetype: customer_supplier
+    description: Architecture checks inspect declared components and links.
+  - from: s5d-state
+    to: s5d-execution
+    archetype: customer_supplier
+    description: Drift and import create fallback records through template helpers.
+  - from: s5d-state
+    to: s5d-validation
+    archetype: customer_supplier
+    description: Import and drift materialize inferred links before state comparison.
+  - from: s5d-state
+    to: s5d-core
+    archetype: customer_supplier
+    description: Project state persists canonical specs, records, and aliases.
+  - from: s5d-validation
+    to: s5d-core
+    archetype: customer_supplier
+    description: Validation rules operate on canonical model objects.
+  depends_on: []
+  entity_relations:
+  - entity: ent.s5d.project
+    related_entity: ent.s5d.record
+    cardinality: 1:N
+    projection: false
+    aggregate_root: true
+  capability_to_entity:
+  - capability: cap.s5d.model
+    entity: ent.s5d.spec
+  - capability: cap.s5d.state
+    entity: ent.s5d.record
+  - capability: cap.s5d.state
+    entity: ent.s5d.project
+  - capability: cap.s5d.architecture
+    entity: ent.s5d.arch-report
+  capability_to_concern:
+  - capability: cap.s5d.architecture
+    concern: concern.s5d.drift
+  - capability: cap.s5d.adapters
+    concern: concern.s5d.hook-shell
+contracts: []
+gates:
+- kind: schema
+- kind: graph
+- kind: architecture
+roc: null
+problem: S5D needs a canonical self-model so source ownership and architecture drift are checked in the same language it asks other repositories to use.
+hypotheses: []
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false

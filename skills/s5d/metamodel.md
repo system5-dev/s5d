@@ -459,6 +459,8 @@ All rules enforced by `validate`. Violations block preview and approve.
 
 ### Gate Kinds
 - Valid kinds: `schema`, `graph`, `architecture`, `contract`, `lint`, `test`, `typecheck`, `policy`
+- `architecture` is built in: it validates the spec/graph first, checks that `components[].paths` resolve to source files, rejects overlapping component ownership, and requires cross-domain source imports to be represented by `links.edges`.
+- `.s5d/codebase/modules.yaml` and `.s5d/codebase/coverage.yaml` are optional coverage snapshots. `s5d codebase sync` rebuilds them from source files and component paths; `s5d codebase check` fails when the snapshot is stale.
 
 ### Concern/Metric Supersystem Reference
 - If `concern.supersystem` is set, it must reference a declared supersystem id

@@ -1,0 +1,4 @@
+- name: rust
+  path: rust
+  language: Rust
+  file_count: 20
