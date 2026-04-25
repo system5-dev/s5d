@@ -401,6 +401,8 @@ pub struct Workflow {
     #[serde(default)]
     pub review_policy: Option<ReviewPolicy>,
     #[serde(default)]
+    pub structure_outline: Option<StructureOutline>,
+    #[serde(default)]
     pub execution_mode: Option<ExecutionMode>,
     #[serde(default)]
     pub phases: Vec<WorkflowPhase>,
@@ -434,6 +436,15 @@ pub struct ReviewPolicy {
     pub cross_model_required: bool,
     #[serde(default)]
     pub required_on: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StructureOutline {
+    pub summary: String,
+    #[serde(default)]
+    pub signatures: Vec<String>,
+    #[serde(default)]
+    pub types: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -1,0 +1,15 @@
+spec_ref: feat.s5d.structure-outline-and-vertical-phases__20260425.s5d.yaml
+spec_sha256: sha256:f432c16868d7eb9658f272ca78cfc1d6fe4241e85d0cad650a0ebe19fa06719d
+status: proposed
+sync_status: unknown
+status_history:
+- status: proposed
+  timestamp: 2026-04-25T10:09:48.448188+00:00
+active_phase: null
+phase_history: []
+approvals: []
+preview: null
+reflection: null
+gate_results: []
+decision: null
+verified_by: null
