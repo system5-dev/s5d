@@ -1582,7 +1582,12 @@ fn tool_s5d_execute_loop(args: &Value) -> anyhow::Result<String> {
         .strip_prefix(project.root.as_path())
         .map(|path| path.display().to_string())
         .unwrap_or_else(|_| task_path.display().to_string());
-    Ok(format!("Task artifact: {}\n\n{}", display_path, package))
+
+    let mut result = format!("Task artifact: {}\n\n{}", display_path, package);
+    if let Some(warning) = crate::ralph::check_vertical_slicing(phase) {
+        result.push_str(&format!("\n⚠ Methodological warning: {}\n", warning));
+    }
+    Ok(result)
 }
 
 // ── s5d_status ────────────────────────────────────────────────────────────────

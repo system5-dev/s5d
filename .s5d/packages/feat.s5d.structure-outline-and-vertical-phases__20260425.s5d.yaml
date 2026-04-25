@@ -1,0 +1,123 @@
+s5d: '1.0'
+id: feat.s5d.structure-outline-and-vertical-phases
+version: 1.0.0
+product: s5d
+tier: lightweight
+allow_update: true
+meta:
+  title: Structure Outline artifact and vertical phase validation
+  authors: [roman]
+  date: 2026-04-25
+  tickets: []
+  adrs: []
+  renames: []
+context: |
+  ## Problem
+  S5D jumps from decide straight to Ralph task package with no intermediate
+  design contract. AI implementers drift from intent because they lack
+  signatures, types, and slice boundaries. Phases default to horizontal
+  (all-DB → all-API → all-UI) which produces untestable blocks.
+
+  ## Goal
+  1. Optional `structure_outline` on Workflow — rendered in Ralph package
+  2. Heuristic warning in execute_loop when phase scope looks horizontal
+
+  ## Privacy
+  Classification: Internal
+workflow:
+  mode: plan
+  target_architecture:
+    summary: |
+      Workflow gains optional structure_outline (summary + signatures + types).
+      Ralph task package renders it when present. execute_loop emits a
+      methodological warning when phase scope matches horizontal patterns.
+    invariants:
+      - structure_outline is optional — zero-overhead when unused
+      - horizontal warning is methodological, never structural (never blocks)
+      - existing specs with no structure_outline deserialize unchanged
+  delivery_strategy:
+    summary: Single vertical slice — model + ralph output + heuristic + tests
+    rationale: All three changes are small and interdependent
+  resources: null
+  role_map:
+    reviewer: reviewer
+    owner: human
+    verifier: reviewer
+    implementer: coder
+  review_policy:
+    cross_model_required: false
+    required_on: []
+  execution_mode:
+    engine: manual
+    max_iterations: null
+    stop_conditions:
+    - Phase acceptance reached
+    - Approved scope exhausted
+    - New decision required
+  phases:
+  - id: prototype
+    title: Prototype
+    scope: Reduce unknowns before committed implementation
+    roles:
+    - owner
+    - implementer
+    acceptance:
+    - Critical feasibility questions answered
+    - Telemetry approach identified
+    rollback:
+    - Discard spike output if assumptions fail
+  - id: build
+    title: Build
+    scope: Implement approved scope and pass local gates
+    roles:
+    - implementer
+    - reviewer
+    acceptance:
+    - Declared gates pass
+    - Change matches approved scope
+    rollback:
+    - Revert or reconcile if gates or review fail
+  - id: measure
+    title: Measure
+    scope: Collect telemetry and close the loop with an explicit verdict
+    roles:
+    - owner
+    - verifier
+    acceptance:
+    - Telemetry collected against success criteria
+    - Outcome verdict recorded
+    rollback:
+    - Iterate or kill if evidence stays weak
+artifacts:
+  products:
+  - id: s5d
+    name: s5d
+    organization: null
+  domains: []
+  capabilities: []
+  entities: []
+  features:
+  - id: feat.s5d.structure-outline-and-vertical-phases
+    product: s5d
+    name: structure-outline-and-vertical-phases
+    description: null
+  use_cases: []
+  systems: []
+  containers: []
+  components: []
+  roles: []
+  concerns: []
+  metrics: []
+  supersystems: []
+  transports: []
+links: null
+contracts: []
+gates:
+- kind: schema
+roc: null
+problem: null
+hypotheses: []
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false

@@ -79,6 +79,16 @@ pub fn build_ralph_task_package(
         }
     }
 
+    if let Some(ref outline) = workflow.structure_outline {
+        out.push_str(&format!("\nStructure Outline:\n{}\n", outline.summary));
+        if !outline.signatures.is_empty() {
+            push_bullets(&mut out, "Signatures", &outline.signatures);
+        }
+        if !outline.types.is_empty() {
+            push_bullets(&mut out, "Types", &outline.types);
+        }
+    }
+
     out.push_str(&format!("\nScope:\n{}\n", phase.scope));
     if !phase.roles.is_empty() {
         let roles = phase
@@ -150,6 +160,34 @@ pub fn build_ralph_task_package(
     push_bullets(&mut out, "Escalate Immediately If", &escalations);
 
     Ok(out)
+}
+
+const HORIZONTAL_PATTERNS: &[&str] = &[
+    "all database",
+    "all api",
+    "all frontend",
+    "all ui",
+    "entire model",
+    "entire schema",
+    "all migrations",
+    "all endpoints",
+    "all components",
+    "whole data layer",
+    "whole service layer",
+];
+
+pub fn check_vertical_slicing(phase: &WorkflowPhase) -> Option<String> {
+    let scope_lower = phase.scope.to_ascii_lowercase();
+    for pattern in HORIZONTAL_PATTERNS {
+        if scope_lower.contains(pattern) {
+            return Some(format!(
+                "phase '{}' scope looks horizontal (matches '{}') — \
+                 consider vertical slices with end-to-end verification points",
+                phase.id, pattern
+            ));
+        }
+    }
+    None
 }
 
 fn push_bullets(out: &mut String, title: &str, bullets: &[impl AsRef<str>]) {
@@ -260,9 +298,9 @@ fn preset_escalations(preset: RalphPreset) -> &'static [&'static str] {
 
 #[cfg(test)]
 mod tests {
-    use crate::{generate_spec, Capability, RalphPreset, Tier};
+    use crate::{generate_spec, Capability, RalphPreset, StructureOutline, Tier};
 
-    use super::build_ralph_task_package;
+    use super::{build_ralph_task_package, check_vertical_slicing};
 
     #[test]
     fn bugfix_preset_package_contains_regression_first_contract() {
@@ -314,5 +352,68 @@ mod tests {
             "{}",
             rendered
         );
+    }
+
+    #[test]
+    fn structure_outline_renders_in_package() {
+        let mut spec = generate_spec("feat.outline-test", Tier::Lightweight, "Prod");
+        let workflow = spec.workflow.as_mut().unwrap();
+        workflow.structure_outline = Some(StructureOutline {
+            summary: "Add retry logic to HTTP client".into(),
+            signatures: vec![
+                "fn retry_with_backoff(req: Request, max: u32) -> Response".into(),
+            ],
+            types: vec!["RetryPolicy { max_attempts: u32, backoff_ms: u64 }".into()],
+        });
+
+        let rendered = {
+            let workflow = spec.workflow.as_ref().unwrap();
+            let phase = &workflow.phases[1];
+            build_ralph_task_package(&spec, workflow, phase, RalphPreset::Generic).unwrap()
+        };
+
+        assert!(rendered.contains("Structure Outline:"), "{}", rendered);
+        assert!(rendered.contains("Add retry logic"), "{}", rendered);
+        assert!(rendered.contains("retry_with_backoff"), "{}", rendered);
+        assert!(rendered.contains("RetryPolicy"), "{}", rendered);
+    }
+
+    #[test]
+    fn no_outline_omits_section() {
+        let spec = generate_spec("feat.no-outline", Tier::Lightweight, "Prod");
+        let workflow = spec.workflow.as_ref().unwrap();
+        let phase = &workflow.phases[1];
+        let rendered =
+            build_ralph_task_package(&spec, workflow, phase, RalphPreset::Generic).unwrap();
+
+        assert!(!rendered.contains("Structure Outline:"), "{}", rendered);
+    }
+
+    #[test]
+    fn horizontal_scope_triggers_warning() {
+        let phase = crate::WorkflowPhase {
+            id: "db-layer".into(),
+            title: "Database Layer".into(),
+            scope: "Create all database migrations and models".into(),
+            roles: vec![],
+            acceptance: vec![],
+            rollback: vec![],
+        };
+        let warning = check_vertical_slicing(&phase);
+        assert!(warning.is_some());
+        assert!(warning.unwrap().contains("horizontal"));
+    }
+
+    #[test]
+    fn vertical_scope_no_warning() {
+        let phase = crate::WorkflowPhase {
+            id: "build".into(),
+            title: "Build".into(),
+            scope: "Implement retry logic end-to-end: model, service, and UI indicator".into(),
+            roles: vec![],
+            acceptance: vec![],
+            rollback: vec![],
+        };
+        assert!(check_vertical_slicing(&phase).is_none());
     }
 }

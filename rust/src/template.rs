@@ -49,6 +49,7 @@ pub fn generate_spec(id: &str, tier: Tier, product: &str) -> Spec {
                 cross_model_required: false,
                 required_on: vec![],
             }),
+            structure_outline: None,
             execution_mode: Some(ExecutionMode {
                 engine: "manual".into(),
                 max_iterations: None,
