@@ -1653,16 +1653,33 @@ fn run_init(
     }
 
     println!("\n  {} Agent instructions:", "agents".bold());
-    match ensure_agents_md(&cwd.join("AGENTS.md")) {
-        Ok(AgentsUpdate::Created) => println!("    {} AGENTS.md — created", "✓".green()),
-        Ok(AgentsUpdate::Inserted) => {
-            println!("    {} AGENTS.md — s5d block appended", "✓".green())
+    // AGENTS.md is universal (Codex, Junie, etc.) — always create.
+    // CLAUDE.md / GEMINI.md are runtime-specific — inject only when the file
+    // already exists, to avoid polluting projects that don't use that runtime.
+    let agent_files = [
+        ("AGENTS.md", true),  // create_if_absent
+        ("CLAUDE.md", false),
+        ("GEMINI.md", false),
+    ];
+    for (filename, create_if_absent) in agent_files {
+        let path = cwd.join(filename);
+        if !create_if_absent && !path.exists() {
+            println!("    {} {} — not present (skipped)", "·".dimmed(), filename);
+            continue;
         }
-        Ok(AgentsUpdate::Replaced) => println!("    {} AGENTS.md — s5d block updated", "✓".green()),
-        Ok(AgentsUpdate::Unchanged) => {
-            println!("    {} AGENTS.md — already up to date", "✓".green())
+        match ensure_agents_md(&path) {
+            Ok(AgentsUpdate::Created) => println!("    {} {} — created", "✓".green(), filename),
+            Ok(AgentsUpdate::Inserted) => {
+                println!("    {} {} — s5d block appended", "✓".green(), filename)
+            }
+            Ok(AgentsUpdate::Replaced) => {
+                println!("    {} {} — s5d block updated", "✓".green(), filename)
+            }
+            Ok(AgentsUpdate::Unchanged) => {
+                println!("    {} {} — already up to date", "✓".green(), filename)
+            }
+            Err(e) => println!("    {} {}: {}", "⚠".yellow(), filename, e),
         }
-        Err(e) => println!("    {} AGENTS.md: {}", "⚠".yellow(), e),
     }
 
     println!("\n  {} Git hooks:", "hooks".bold());
@@ -1718,7 +1735,10 @@ fn agents_block() -> String {
         "{}\n## S5D — Decision & Validation Layer\n\n\
 This repo uses **S5D** (https://github.com/system5-dev/s5d) — a thin layer over git \
 for recording architectural decisions and verifying that code still matches them.\n\n\
-**Use S5D for non-trivial changes.** Skip for: bug fixes <30 LOC, config-only, docs-only.\n\n\
+**⛔ S5D is MANDATORY for non-trivial work.** Architectural decisions, new features, \
+refactors >30 LOC, and any change touching multiple modules MUST go through the S5D \
+flow before implementation — no exceptions. Skip ONLY for: bug fixes <30 LOC, \
+config-only, docs-only. When in doubt, run `s5d_route` to classify the request.\n\n\
 **Flow:** `s5d_new` → edit spec → `s5d_validate` → `s5d_preview` → `s5d_approve` \
 → implement → `s5d_run_gates` → `s5d_import` → `s5d_drift_check`.\n\n\
 **MCP tools** (prefer over shell CLI when available):\n\
@@ -1728,6 +1748,11 @@ for recording architectural decisions and verifying that code still matches them
 - `s5d_approve` / `s5d_import` — commit decision, bind SHA256 chain\n\
 - `s5d_drift_check` / `s5d_reconcile` / `s5d_rollback` — verify & recover\n\
 - `s5d_show` / `s5d_status` — inspect specs and project state\n\n\
+**Commits reference specs.** When a change is governed by an S5D spec, include \
+`S5D-Spec: <spec-id>` as a trailer in the commit body \
+(e.g. `S5D-Spec: feat.s5d.structure-outline-and-vertical-phases`). \
+This binds the commit to the decision record and lets `git log --grep='S5D-Spec:'` \
+reconstruct the architectural rationale. Trivial changes that skipped S5D need no reference.\n\n\
 Specs live in `.s5d/packages/`. Run `s5d --help` or read `skills/s5d/SKILL.md` for full reference.\n{}",
         AGENTS_BEGIN, AGENTS_END
     )
@@ -4118,5 +4143,34 @@ mod agents_md_tests {
         let body = std::fs::read_to_string(&path).unwrap();
         assert!(body.contains("# Top"));
         assert!(body.contains("## Footer section"));
+    }
+
+    #[test]
+    fn block_marks_s5d_mandatory() {
+        // The agent block must declare S5D as mandatory, not just suggested.
+        let block = agents_block();
+        assert!(block.contains("MANDATORY"), "agents block lost MANDATORY marker");
+        assert!(block.contains("S5D-Spec:"), "agents block lost commit trailer rule");
+    }
+
+    #[test]
+    fn injects_into_existing_runtime_files() {
+        // CLAUDE.md / GEMINI.md exist in user's project — block must be appended,
+        // not refuse. Using ensure_agents_md directly (init flow uses same fn).
+        let dir = tempdir().unwrap();
+        for filename in ["CLAUDE.md", "GEMINI.md"] {
+            let path = dir.path().join(filename);
+            std::fs::write(&path, "# Project\n\nExisting rules.\n").unwrap();
+            assert_eq!(
+                ensure_agents_md(&path).unwrap(),
+                AgentsUpdate::Inserted,
+                "expected inserted block for {}",
+                filename
+            );
+            let body = std::fs::read_to_string(&path).unwrap();
+            assert!(body.contains("Existing rules."));
+            assert!(body.contains(AGENTS_BEGIN));
+            assert!(body.contains("MANDATORY"));
+        }
     }
 }

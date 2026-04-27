@@ -45,12 +45,12 @@ COMMIT_MSG=""
 if echo "$COMMAND" | grep -qE '\-m\s'; then
     COMMIT_MSG=$(echo "$COMMAND" | sed 's/.*-m[[:space:]]*["'"'"']//' | sed 's/["'"'"'].*//')
 fi
-HAS_SPEC_REF=$(echo "$COMMIT_MSG" | grep -oE 'spec://|Implements:|feat\.' | head -1)
+HAS_SPEC_REF=$(echo "$COMMIT_MSG" | grep -oE 'S5D-Spec:|spec://|Implements:|feat\.' | head -1)
 
 if [ -n "$HAS_FEATURE_SPEC" ] || [ -n "$HAS_RECORD_APPLIED" ] || [ -n "$HAS_SPEC_REF" ]; then
     echo '{"decision":"approve"}'
     exit 0
 fi
 
-echo "{\"decision\":\"block\",\"reason\":\"Non-trivial change (${SOURCE_FILES} source files, +${LOC_DELTA} LOC) without S5D spec. Run /s5d to create a spec first, or add 'Implements: spec://' to commit message if spec exists elsewhere.\"}"
+echo "{\"decision\":\"block\",\"reason\":\"Non-trivial change (${SOURCE_FILES} source files, +${LOC_DELTA} LOC) without S5D spec. Run /s5d to create a spec first, or add 'S5D-Spec: <spec-id>' to commit message if spec exists elsewhere.\"}"
 exit 0
