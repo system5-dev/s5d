@@ -18,6 +18,9 @@ pub const PRETOOL_HOOK_COMMAND: &str = "s5d hook pretool-edit";
 pub const PRETOOL_HOOK_MATCHER: &str = "Edit|Write|MultiEdit";
 pub const PRETOOL_TIMEOUT_MS: u64 = 5_000;
 
+pub const USER_PROMPT_HOOK_COMMAND: &str = "s5d hook user-prompt-submit";
+pub const USER_PROMPT_TIMEOUT_MS: u64 = 5_000;
+
 #[derive(Debug, PartialEq, Eq)]
 pub enum HooksJsonUpdate {
     Created,
@@ -28,6 +31,52 @@ pub enum HooksJsonUpdate {
 /// Ensure the PreToolUse hook entry exists in the given hooks.json file.
 /// Idempotent: re-runs return Unchanged. Preserves any unrelated existing entries.
 pub fn ensure_pretool_hook(path: &Path) -> Result<HooksJsonUpdate> {
+    ensure_hook_entries(path, &[
+        HookSpec::Matched {
+            event: "PreToolUse",
+            matcher: PRETOOL_HOOK_MATCHER,
+            command: PRETOOL_HOOK_COMMAND,
+            timeout_ms: PRETOOL_TIMEOUT_MS,
+        },
+    ])
+}
+
+/// Ensure both Phase 2 (PreToolUse) and Phase 3 (UserPromptSubmit) hooks
+/// are registered. Single write per file. Used by `s5d init`.
+pub fn ensure_all_s5d_hooks(path: &Path) -> Result<HooksJsonUpdate> {
+    ensure_hook_entries(path, &[
+        HookSpec::Matched {
+            event: "PreToolUse",
+            matcher: PRETOOL_HOOK_MATCHER,
+            command: PRETOOL_HOOK_COMMAND,
+            timeout_ms: PRETOOL_TIMEOUT_MS,
+        },
+        HookSpec::Unmatched {
+            event: "UserPromptSubmit",
+            command: USER_PROMPT_HOOK_COMMAND,
+            timeout_ms: USER_PROMPT_TIMEOUT_MS,
+        },
+    ])
+}
+
+/// Internal hook descriptor — either a matcher-keyed event (PreToolUse)
+/// or a flat event (UserPromptSubmit which has no tool_name to match on).
+enum HookSpec {
+    Matched {
+        event: &'static str,
+        matcher: &'static str,
+        command: &'static str,
+        timeout_ms: u64,
+    },
+    Unmatched {
+        event: &'static str,
+        command: &'static str,
+        timeout_ms: u64,
+    },
+}
+
+fn ensure_hook_entries(path: &Path, specs: &[HookSpec]) -> Result<HooksJsonUpdate> {
+    let was_created = !path.exists();
     let mut existing: Value = if path.exists() {
         let raw = std::fs::read_to_string(path)
             .with_context(|| format!("read {}", path.display()))?;
@@ -41,10 +90,22 @@ pub fn ensure_pretool_hook(path: &Path) -> Result<HooksJsonUpdate> {
         json!({})
     };
 
-    let was_created = !path.exists();
-    let already = inject_pretool_entry(&mut existing);
+    let mut all_already = true;
+    for spec in specs {
+        let was_already = match spec {
+            HookSpec::Matched { event, matcher, command, timeout_ms } => {
+                inject_matched_entry(&mut existing, event, matcher, command, *timeout_ms)
+            }
+            HookSpec::Unmatched { event, command, timeout_ms } => {
+                inject_unmatched_entry(&mut existing, event, command, *timeout_ms)
+            }
+        };
+        if !was_already {
+            all_already = false;
+        }
+    }
 
-    if already && !was_created {
+    if all_already && !was_created {
         return Ok(HooksJsonUpdate::Unchanged);
     }
 
@@ -63,74 +124,94 @@ pub fn ensure_pretool_hook(path: &Path) -> Result<HooksJsonUpdate> {
     }
 }
 
-/// Mutates `root` to ensure a PreToolUse(Edit|Write|MultiEdit) hook entry
-/// pointing at `s5d hook pretool-edit` exists. Returns true if the entry
-/// was already present (no mutation needed).
-fn inject_pretool_entry(root: &mut Value) -> bool {
-    let root_obj = match root.as_object_mut() {
-        Some(o) => o,
-        None => {
-            *root = json!({});
-            root.as_object_mut().unwrap()
-        }
-    };
-    let hooks = root_obj
-        .entry("hooks".to_string())
-        .or_insert_with(|| json!({}));
-    let hooks_obj = match hooks.as_object_mut() {
-        Some(o) => o,
-        None => {
-            *hooks = json!({});
-            hooks.as_object_mut().unwrap()
-        }
-    };
-    let pretool = hooks_obj
-        .entry("PreToolUse".to_string())
-        .or_insert_with(|| json!([]));
-    let pretool_arr = match pretool.as_array_mut() {
-        Some(a) => a,
-        None => {
-            *pretool = json!([]);
-            pretool.as_array_mut().unwrap()
-        }
-    };
-
-    // Search for an existing matcher group with our matcher
-    for entry in pretool_arr.iter_mut() {
-        if entry.get("matcher").and_then(|v| v.as_str()) == Some(PRETOOL_HOOK_MATCHER) {
-            // Group exists — check if our command is already registered
-            let group_hooks = entry
-                .get_mut("hooks")
-                .and_then(|v| v.as_array_mut());
+/// Mutates `root` to ensure a matched-event hook entry (e.g. PreToolUse)
+/// exists. Returns true if already present.
+fn inject_matched_entry(
+    root: &mut Value,
+    event: &str,
+    matcher: &str,
+    command: &str,
+    timeout_ms: u64,
+) -> bool {
+    let event_arr = ensure_event_array(root, event);
+    for entry in event_arr.iter_mut() {
+        if entry.get("matcher").and_then(|v| v.as_str()) == Some(matcher) {
+            let group_hooks = entry.get_mut("hooks").and_then(|v| v.as_array_mut());
             if let Some(group_hooks) = group_hooks {
-                let already = group_hooks.iter().any(|h| {
-                    h.get("command").and_then(|v| v.as_str()) == Some(PRETOOL_HOOK_COMMAND)
-                });
+                let already = group_hooks
+                    .iter()
+                    .any(|h| h.get("command").and_then(|v| v.as_str()) == Some(command));
                 if already {
                     return true;
                 }
-                group_hooks.push(make_hook_entry());
+                group_hooks.push(make_hook_entry(command, timeout_ms));
                 return false;
             } else {
-                entry["hooks"] = json!([make_hook_entry()]);
+                entry["hooks"] = json!([make_hook_entry(command, timeout_ms)]);
                 return false;
             }
         }
     }
-
-    // No matching group — append a new one
-    pretool_arr.push(json!({
-        "matcher": PRETOOL_HOOK_MATCHER,
-        "hooks": [make_hook_entry()]
+    event_arr.push(json!({
+        "matcher": matcher,
+        "hooks": [make_hook_entry(command, timeout_ms)]
     }));
     false
 }
 
-fn make_hook_entry() -> Value {
+/// Mutates `root` to ensure an unmatched-event hook entry (e.g. UserPromptSubmit)
+/// exists. These events have no `tool_name` so no `matcher` field. We register
+/// under a single group with no matcher key (Claude Code accepts that shape).
+fn inject_unmatched_entry(
+    root: &mut Value,
+    event: &str,
+    command: &str,
+    timeout_ms: u64,
+) -> bool {
+    let event_arr = ensure_event_array(root, event);
+    for entry in event_arr.iter_mut() {
+        if entry.get("matcher").is_none() || entry.get("matcher").and_then(|v| v.as_str()) == Some("*") {
+            let group_hooks = entry.get_mut("hooks").and_then(|v| v.as_array_mut());
+            if let Some(group_hooks) = group_hooks {
+                let already = group_hooks
+                    .iter()
+                    .any(|h| h.get("command").and_then(|v| v.as_str()) == Some(command));
+                if already {
+                    return true;
+                }
+                group_hooks.push(make_hook_entry(command, timeout_ms));
+                return false;
+            }
+        }
+    }
+    event_arr.push(json!({
+        "hooks": [make_hook_entry(command, timeout_ms)]
+    }));
+    false
+}
+
+fn ensure_event_array<'a>(root: &'a mut Value, event: &str) -> &'a mut Vec<Value> {
+    if !root.is_object() {
+        *root = json!({});
+    }
+    let root_obj = root.as_object_mut().unwrap();
+    let hooks = root_obj.entry("hooks".to_string()).or_insert_with(|| json!({}));
+    if !hooks.is_object() {
+        *hooks = json!({});
+    }
+    let hooks_obj = hooks.as_object_mut().unwrap();
+    let event_val = hooks_obj.entry(event.to_string()).or_insert_with(|| json!([]));
+    if !event_val.is_array() {
+        *event_val = json!([]);
+    }
+    event_val.as_array_mut().unwrap()
+}
+
+fn make_hook_entry(command: &str, timeout_ms: u64) -> Value {
     json!({
         "type": "command",
-        "command": PRETOOL_HOOK_COMMAND,
-        "timeout": PRETOOL_TIMEOUT_MS,
+        "command": command,
+        "timeout": timeout_ms,
     })
 }
 
@@ -255,5 +336,45 @@ mod tests {
         std::fs::write(dir.path().join("hooks/hooks.json"), "{}").unwrap();
         let paths = target_hooks_paths(dir.path());
         assert!(paths.iter().any(|p| p.ends_with("hooks/hooks.json")));
+    }
+
+    #[test]
+    fn ensure_all_writes_both_phases() {
+        let dir = tempdir().unwrap();
+        let path = dir.path().join("hooks.json");
+        assert_eq!(ensure_all_s5d_hooks(&path).unwrap(), HooksJsonUpdate::Created);
+        let body = std::fs::read_to_string(&path).unwrap();
+        assert!(body.contains(PRETOOL_HOOK_COMMAND));
+        assert!(body.contains(USER_PROMPT_HOOK_COMMAND));
+        assert!(body.contains("UserPromptSubmit"));
+        assert!(!body.contains("bash "));
+        assert!(!body.contains(".sh"));
+    }
+
+    #[test]
+    fn ensure_all_idempotent() {
+        let dir = tempdir().unwrap();
+        let path = dir.path().join("hooks.json");
+        ensure_all_s5d_hooks(&path).unwrap();
+        assert_eq!(
+            ensure_all_s5d_hooks(&path).unwrap(),
+            HooksJsonUpdate::Unchanged
+        );
+    }
+
+    #[test]
+    fn ensure_all_partial_existing() {
+        // Phase 2 hook present, Phase 3 missing → should add only Phase 3.
+        let dir = tempdir().unwrap();
+        let path = dir.path().join("hooks.json");
+        ensure_pretool_hook(&path).unwrap();
+        // Now expand to all hooks — should write (Inserted), not Unchanged.
+        assert_eq!(
+            ensure_all_s5d_hooks(&path).unwrap(),
+            HooksJsonUpdate::Inserted
+        );
+        let body = std::fs::read_to_string(&path).unwrap();
+        assert!(body.contains(PRETOOL_HOOK_COMMAND));
+        assert!(body.contains(USER_PROMPT_HOOK_COMMAND));
     }
 }
