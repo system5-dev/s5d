@@ -376,6 +376,13 @@ enum HookCommand {
     /// Reads Claude Code hook JSON from stdin, returns decision JSON to stdout.
     /// S5D-Spec: feat.s5d.pretool-enforcement
     PretoolEdit,
+    /// UserPromptSubmit hook entrypoint (L1 advisory).
+    /// Reads Claude Code hook JSON from stdin, classifies the prompt via
+    /// `s5d::route`, and emits a reminder on stdout (which Claude injects
+    /// into context) when the request looks non-trivial and no spec is
+    /// in `.s5d/packages/` yet. Never blocks — non-zero noise budget.
+    /// S5D-Spec: feat.s5d.pretool-enforcement
+    UserPromptSubmit,
 }
 
 /// PreToolUse enforcement gate subcommands.
@@ -529,6 +536,7 @@ fn main() -> anyhow::Result<()> {
         S5dCommand::Hook { command } => match command {
             HookCommand::PreCommit => run_hook_pre_commit(),
             HookCommand::PretoolEdit => run_hook_pretool_edit(),
+            HookCommand::UserPromptSubmit => run_hook_user_prompt_submit(),
         },
         S5dCommand::Update { command } => match command {
             UpdateCommand::Check { hook, json } => run_update_check(hook, json),
@@ -753,6 +761,80 @@ fn run_hook_pretool_edit() -> anyhow::Result<()> {
     }
 
     println!("{}", serde_json::to_string(&decision)?);
+    Ok(())
+}
+
+/// Pure-Rust UserPromptSubmit hook entrypoint (L1 advisory).
+/// Reads Claude Code hook JSON from stdin, classifies the prompt, and
+/// emits a reminder on stdout if the request is in S5D scope but no spec
+/// exists yet. Never blocks (always exits 0 with empty or reminder text).
+/// S5D-Spec: feat.s5d.pretool-enforcement
+fn run_hook_user_prompt_submit() -> anyhow::Result<()> {
+    use std::io::Read;
+
+    // Bypass — silent
+    if std::env::var("S5D_BYPASS").map(|v| v == "1").unwrap_or(false) {
+        return Ok(());
+    }
+
+    let mut buf = String::new();
+    std::io::stdin().read_to_string(&mut buf).ok();
+    let value: serde_json::Value = match serde_json::from_str(&buf) {
+        Ok(v) => v,
+        Err(_) => return Ok(()), // fail-silent on malformed envelope
+    };
+
+    let prompt = value
+        .get("prompt")
+        .and_then(|v| v.as_str())
+        .unwrap_or("")
+        .trim();
+    if prompt.is_empty() {
+        return Ok(());
+    }
+
+    // Classify via the existing router (same logic `s5d route` uses)
+    let result = s5d::route(prompt);
+    if !result.in_scope {
+        return Ok(()); // trivial — no noise
+    }
+
+    // Project must have opted into s5d to receive reminders
+    let cwd = std::env::current_dir()?;
+    let s5d_dir = cwd.join(".s5d");
+    if !s5d_dir.exists() {
+        return Ok(());
+    }
+
+    // If at least one spec already exists, assume the user is mid-flow and
+    // don't pile on reminders. (Refinement target for Phase 4: only specs
+    // covering THIS prompt's likely scope should suppress.)
+    let packages_dir = s5d_dir.join("packages");
+    if let Ok(mut entries) = std::fs::read_dir(&packages_dir) {
+        if entries.any(|e| {
+            e.as_ref()
+                .ok()
+                .and_then(|x| x.path().extension().and_then(|s| s.to_str()).map(str::to_string))
+                .as_deref()
+                == Some("yaml")
+        }) {
+            return Ok(());
+        }
+    }
+
+    // Non-trivial scope, no spec — emit advisory. Claude injects stdout
+    // text into the agent's context for this turn.
+    let tier = result
+        .tier
+        .as_ref()
+        .map(|t| format!("{:?}", t).to_lowercase())
+        .unwrap_or_else(|| "standard".to_string());
+    println!(
+        "[S5D advisory] This request looks non-trivial (tier: {}). \
+S5D is mandatory for non-trivial work in this project — run `s5d new <feature-id> --product <name>` \
+before any Edit/Write tool call. Bypass with `S5D_BYPASS=1` only for justified one-offs.",
+        tier
+    );
     Ok(())
 }
 
@@ -1951,12 +2033,13 @@ fn run_init(
         Err(e) => println!("    {} pre-commit: {}", "⚠".yellow(), e),
     }
 
-    // L2 PreToolUse(Edit|Write|MultiEdit) hook — pure Rust, no shell wrapper.
+    // L1 + L2 enforcement hooks — pure Rust, no shell wrapper.
+    // L1 = UserPromptSubmit advisory; L2 = PreToolUse(Edit|Write|MultiEdit) gate.
     // S5D-Spec: feat.s5d.pretool-enforcement
-    println!("\n  {} PreToolUse gate:", "agents".bold());
+    println!("\n  {} S5D enforcement hooks:", "agents".bold());
     for path in s5d::hooks_json::target_hooks_paths(&cwd) {
         let rel = path.strip_prefix(&cwd).unwrap_or(&path);
-        match s5d::hooks_json::ensure_pretool_hook(&path) {
+        match s5d::hooks_json::ensure_all_s5d_hooks(&path) {
             Ok(s5d::hooks_json::HooksJsonUpdate::Created) => {
                 println!("    {} {} — created", "✓".green(), rel.display())
             }
