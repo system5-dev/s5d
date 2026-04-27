@@ -1,0 +1,35 @@
+spec_ref: feat.s5d.pretool-enforcement__20260427.s5d.yaml
+spec_sha256: sha256:96ed1f5547cd1870e0e2c95afb1318508b2f141c551dc8d7291871bb63f2fbea
+status: approved
+sync_status: unknown
+status_history:
+- status: proposed
+  timestamp: 2026-04-27T11:19:10.129435+00:00
+- status: previewed
+  timestamp: 2026-04-27T11:23:02.090563+00:00
+- status: previewed
+  timestamp: 2026-04-27T11:24:26.703721+00:00
+- status: previewed
+  timestamp: 2026-04-27T11:24:43.473802+00:00
+- status: approved
+  timestamp: 2026-04-27T11:31:58.816108+00:00
+active_phase: null
+phase_history: []
+approvals:
+- reviewer: roman
+  date: 2026-04-27T11:31:58.816104+00:00
+  spec_sha256: sha256:c9b3f25d612f0fa9893e7041ec81f3840629d64d704e55b4e92b1b215871ba8d
+  diff_sha256: sha256:8360eddf876cbd0ff1f5996e8606f20f7c6997e15c550b0abd0fbe6144326ed9
+preview:
+  diff_sha256: sha256:8360eddf876cbd0ff1f5996e8606f20f7c6997e15c550b0abd0fbe6144326ed9
+  previewed_spec_sha256: sha256:c9b3f25d612f0fa9893e7041ec81f3840629d64d704e55b4e92b1b215871ba8d
+  actions:
+    create: 3
+    link: 0
+    update: 1
+    delete: 0
+  log: null
+reflection: null
+gate_results: []
+decision: null
+verified_by: null
