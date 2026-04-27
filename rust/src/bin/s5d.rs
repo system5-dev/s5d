@@ -389,6 +389,11 @@ enum HookCommand {
     /// Pure Rust replacement for hooks/require-spec.sh.
     /// S5D-Spec: feat.s5d.pretool-enforcement
     RequireSpec,
+    /// PreToolUse(Bash) staged-spec validation hook.
+    /// On `git commit`, validates every staged .s5d.yaml file via
+    /// `s5d validate`. Pure Rust replacement for hooks/pre-commit-validate.sh.
+    /// S5D-Spec: feat.s5d.pretool-enforcement
+    PreCommitValidate,
 }
 
 /// PreToolUse enforcement gate subcommands.
@@ -544,6 +549,7 @@ fn main() -> anyhow::Result<()> {
             HookCommand::PretoolEdit => run_hook_pretool_edit(),
             HookCommand::UserPromptSubmit => run_hook_user_prompt_submit(),
             HookCommand::RequireSpec => run_hook_require_spec(),
+            HookCommand::PreCommitValidate => run_hook_pre_commit_validate(),
         },
         S5dCommand::Update { command } => match command {
             UpdateCommand::Check { hook, json } => run_update_check(hook, json),
@@ -1022,6 +1028,81 @@ fn commit_msg_has_spec_ref(command: &str) -> bool {
         || msg.contains("spec://")
         || msg.contains("Implements:")
         || msg.contains("feat.")
+}
+
+/// Pure-Rust PreToolUse(Bash) staged-spec validation hook.
+/// On `git commit`, validates every staged .s5d.yaml file via the same
+/// validate path used by `s5d validate`. Replaces hooks/pre-commit-validate.sh.
+/// S5D-Spec: feat.s5d.pretool-enforcement
+fn run_hook_pre_commit_validate() -> anyhow::Result<()> {
+    use std::io::Read;
+
+    if std::env::var("S5D_BYPASS").map(|v| v == "1").unwrap_or(false) {
+        println!(r#"{{"decision":"approve"}}"#);
+        return Ok(());
+    }
+
+    let mut buf = String::new();
+    std::io::stdin().read_to_string(&mut buf).ok();
+    let value: serde_json::Value = match serde_json::from_str(&buf) {
+        Ok(v) => v,
+        Err(_) => {
+            println!(r#"{{"decision":"approve"}}"#);
+            return Ok(());
+        }
+    };
+    let command = value
+        .get("tool_input")
+        .and_then(|t| t.get("command"))
+        .and_then(|c| c.as_str())
+        .unwrap_or("");
+    if !is_git_commit(command) {
+        println!(r#"{{"decision":"approve"}}"#);
+        return Ok(());
+    }
+
+    let cwd = std::env::current_dir()?;
+    let staged = git_staged_files(&cwd).unwrap_or_default();
+    let specs: Vec<&String> = staged.iter().filter(|p| p.ends_with(".s5d.yaml")).collect();
+    if specs.is_empty() {
+        println!(r#"{{"decision":"approve"}}"#);
+        return Ok(());
+    }
+
+    let mut failures = Vec::new();
+    for spec_rel in specs {
+        let spec_path = cwd.join(spec_rel);
+        if !spec_path.exists() {
+            continue;
+        }
+        // Reuse the validate path the `s5d validate` CLI uses
+        match validate_spec_file(&spec_path) {
+            Ok(()) => {}
+            Err(e) => failures.push(format!("  {}: {}", spec_rel, e)),
+        }
+    }
+
+    if failures.is_empty() {
+        println!(r#"{{"decision":"approve"}}"#);
+    } else {
+        let reason = format!("S5D spec validation failed:\n{}", failures.join("\n"));
+        println!("{}", serde_json::json!({"decision": "block", "reason": reason}));
+    }
+    Ok(())
+}
+
+/// Validate a single spec yaml — same logic as `s5d validate`. Returns Err
+/// with the human-readable failure on parse/schema/metamodel error.
+fn validate_spec_file(path: &std::path::Path) -> anyhow::Result<()> {
+    let raw = std::fs::read_to_string(path)?;
+    let spec: s5d::Spec = serde_yaml::from_str(&raw)
+        .map_err(|e| anyhow::anyhow!("YAML parse error: {}", e))?;
+    let errors = s5d::validate::validate_spec(&spec);
+    if errors.is_empty() {
+        Ok(())
+    } else {
+        Err(anyhow::anyhow!("{}", errors.join("; ")))
+    }
 }
 
 /// Best-effort line-count delta from a tool_input JSON value.
