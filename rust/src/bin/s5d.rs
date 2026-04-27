@@ -372,6 +372,10 @@ enum CodebaseCommand {
 enum HookCommand {
     /// Run the S5D pre-commit check over staged specs and architecture-gated source
     PreCommit,
+    /// PreToolUse(Edit|Write|MultiEdit) hook entrypoint.
+    /// Reads Claude Code hook JSON from stdin, returns decision JSON to stdout.
+    /// S5D-Spec: feat.s5d.pretool-enforcement
+    PretoolEdit,
 }
 
 /// PreToolUse enforcement gate subcommands.
@@ -524,6 +528,7 @@ fn main() -> anyhow::Result<()> {
         },
         S5dCommand::Hook { command } => match command {
             HookCommand::PreCommit => run_hook_pre_commit(),
+            HookCommand::PretoolEdit => run_hook_pretool_edit(),
         },
         S5dCommand::Update { command } => match command {
             UpdateCommand::Check { hook, json } => run_update_check(hook, json),
@@ -672,6 +677,115 @@ fn main() -> anyhow::Result<()> {
 }
 
 // ── Gate (S5D-Spec: feat.s5d.pretool-enforcement) ────────────────────────────
+
+/// Pure-Rust PreToolUse(Edit|Write|MultiEdit) hook entrypoint.
+/// Reads Claude Code hook JSON from stdin, returns decision JSON to stdout.
+/// Wired into project hooks.json by `s5d init` — no shell wrapper.
+/// S5D-Spec: feat.s5d.pretool-enforcement
+fn run_hook_pretool_edit() -> anyhow::Result<()> {
+    use s5d::gate::{
+        evaluate_edit, load_session_state, matches_trivial_allowlist, save_session_state,
+        GateDecision, ThresholdConfig,
+    };
+    use std::io::Read;
+
+    // Bypass first — never block when explicitly requested
+    if std::env::var("S5D_BYPASS").map(|v| v == "1").unwrap_or(false) {
+        println!(r#"{{"decision":"approve"}}"#);
+        return Ok(());
+    }
+
+    let mut buf = String::new();
+    std::io::stdin().read_to_string(&mut buf).ok();
+
+    // Be liberal in what we accept — if input is malformed, fail-open (approve)
+    // rather than blocking unrelated tool calls.
+    let value: serde_json::Value = match serde_json::from_str(&buf) {
+        Ok(v) => v,
+        Err(_) => {
+            println!(r#"{{"decision":"approve"}}"#);
+            return Ok(());
+        }
+    };
+
+    let session_id = value
+        .get("session_id")
+        .and_then(|v| v.as_str())
+        .unwrap_or("default")
+        .to_string();
+    let tool_input = value.get("tool_input").cloned().unwrap_or(serde_json::Value::Null);
+    let file_path = tool_input.get("file_path").and_then(|v| v.as_str());
+    let Some(file_str) = file_path else {
+        // Tool call doesn't target a file — not our concern
+        println!(r#"{{"decision":"approve"}}"#);
+        return Ok(());
+    };
+    let file = std::path::PathBuf::from(file_str);
+
+    // Compute loc_delta from tool_input. Edit: |new_string| - |old_string|.
+    // Write: |content|. MultiEdit: sum across edits. Best-effort.
+    let loc_delta = compute_loc_delta(&tool_input);
+
+    let cwd = std::env::current_dir()?;
+    let s5d_dir_path = cwd.join(".s5d");
+    let s5d_dir_opt = if s5d_dir_path.exists() { Some(s5d_dir_path.as_path()) } else { None };
+
+    let state = if let Some(s) = s5d_dir_opt {
+        load_session_state(s, &session_id)?
+    } else {
+        Default::default()
+    };
+
+    let decision = evaluate_edit(s5d_dir_opt, &file, loc_delta, &state, &ThresholdConfig::default());
+
+    if matches!(decision, GateDecision::Approve) {
+        if let Some(s) = s5d_dir_opt {
+            use s5d::gate::covered_by_spec;
+            let counts = !matches_trivial_allowlist(&file) && covered_by_spec(s, &file).is_none();
+            if counts {
+                let mut new_state = state;
+                new_state.session_id = session_id;
+                new_state.loc_delta += loc_delta;
+                new_state.files.insert(file);
+                save_session_state(s, &new_state).ok();
+            }
+        }
+    }
+
+    println!("{}", serde_json::to_string(&decision)?);
+    Ok(())
+}
+
+/// Best-effort line-count delta from a tool_input JSON value.
+fn compute_loc_delta(tool_input: &serde_json::Value) -> usize {
+    fn count_lines(s: &str) -> usize {
+        s.lines().count().max(1)
+    }
+
+    // MultiEdit shape: { edits: [{old_string, new_string}, ...] }
+    if let Some(edits) = tool_input.get("edits").and_then(|v| v.as_array()) {
+        return edits
+            .iter()
+            .map(|e| {
+                let old = e.get("old_string").and_then(|v| v.as_str()).unwrap_or("");
+                let new = e.get("new_string").and_then(|v| v.as_str()).unwrap_or("");
+                count_lines(new).saturating_sub(count_lines(old))
+            })
+            .sum();
+    }
+    // Edit shape: { old_string, new_string }
+    if let (Some(old), Some(new)) = (
+        tool_input.get("old_string").and_then(|v| v.as_str()),
+        tool_input.get("new_string").and_then(|v| v.as_str()),
+    ) {
+        return count_lines(new).saturating_sub(count_lines(old));
+    }
+    // Write shape: { content }
+    if let Some(content) = tool_input.get("content").and_then(|v| v.as_str()) {
+        return count_lines(content);
+    }
+    1
+}
 
 fn run_gate(command: GateCommand) -> anyhow::Result<()> {
     use s5d::gate::{
@@ -1835,6 +1949,25 @@ fn run_init(
             )
         }
         Err(e) => println!("    {} pre-commit: {}", "⚠".yellow(), e),
+    }
+
+    // L2 PreToolUse(Edit|Write|MultiEdit) hook — pure Rust, no shell wrapper.
+    // S5D-Spec: feat.s5d.pretool-enforcement
+    println!("\n  {} PreToolUse gate:", "agents".bold());
+    for path in s5d::hooks_json::target_hooks_paths(&cwd) {
+        let rel = path.strip_prefix(&cwd).unwrap_or(&path);
+        match s5d::hooks_json::ensure_pretool_hook(&path) {
+            Ok(s5d::hooks_json::HooksJsonUpdate::Created) => {
+                println!("    {} {} — created", "✓".green(), rel.display())
+            }
+            Ok(s5d::hooks_json::HooksJsonUpdate::Inserted) => {
+                println!("    {} {} — entry added", "✓".green(), rel.display())
+            }
+            Ok(s5d::hooks_json::HooksJsonUpdate::Unchanged) => {
+                println!("    {} {} — already up to date", "✓".green(), rel.display())
+            }
+            Err(e) => println!("    {} {}: {}", "⚠".yellow(), rel.display(), e),
+        }
     }
 
     println!(

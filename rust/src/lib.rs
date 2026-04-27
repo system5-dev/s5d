@@ -8,6 +8,7 @@ pub mod codebase;
 pub mod drift;
 pub mod gate;
 pub mod gates;
+pub mod hooks_json;
 pub mod graph;
 pub mod identity;
 pub mod import;

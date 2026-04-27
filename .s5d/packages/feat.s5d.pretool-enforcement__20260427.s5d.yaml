@@ -48,7 +48,10 @@ workflow:
         Never blocks the prompt itself.
 
       L2 — PreToolUse(Edit|Write|MultiEdit) (HARD GATE — the new piece):
-        Runs `s5d gate edit --file <path>`. Decision tree:
+        Pure Rust — NO shell wrapper. The hook command in the project's
+        hooks.json is `s5d hook pretool-edit` directly (subcommand of the
+        Rust binary). Reads Claude Code hook JSON from stdin, extracts
+        file_path + session_id, calls the gate logic. Decision tree:
           1. If `.s5d/` does not exist in project → approve (s5d not adopted).
           2. If file path is in trivial allowlist (docs, config, tests,
              lockfiles, .gitignore, .env*) → approve.
@@ -99,10 +102,16 @@ workflow:
     required_on: [build]
   structure_outline:
     summary: |
-      New Rust subcommand `s5d gate edit` + thin shell hook
-      `hooks/pretool-edit-gate.sh` reading JSON from stdin (Claude
-      Code hook protocol). Installer extension in `s5d init` registers
-      the hook in the project's hooks.json.
+      Pure-Rust hook chain — NO shell wrappers. Two Rust subcommands:
+      (1) `s5d gate edit` (Phase 1) — pure decision function exposed via CLI
+      for testing and direct invocation;
+      (2) `s5d hook pretool-edit` (Phase 2) — the actual hook entrypoint
+      that reads Claude Code hook JSON from stdin, parses tool_input to
+      extract file_path + session_id, computes loc_delta from the edit
+      payload, calls evaluate_edit, writes JSON decision to stdout.
+      Installer extension in `s5d init` registers the hook command
+      string `s5d hook pretool-edit` directly in the project's
+      hooks.json — no `bash ${CLAUDE_PLUGIN_ROOT}/...sh` indirection.
     signatures:
     - "fn cmd_gate_edit(args: GateEditArgs) -> Result<GateDecision>"
     - "fn evaluate_edit(project: &Project, file: &Path, session: &SessionState) -> GateDecision"
@@ -116,11 +125,12 @@ workflow:
     - "struct GateEditArgs { file: PathBuf, loc_delta: Option<usize>, session_id: Option<String> }"
     - "struct ThresholdConfig { max_loc: usize, max_files: usize, allowlist_globs: Vec<String> }"
     files:
-    - rust/src/bin/s5d.rs (new subcommand `gate edit`, ~120 LOC)
-    - rust/src/gate.rs (new module: evaluate_edit, session state, allowlist)
-    - hooks/pretool-edit-gate.sh (new thin wrapper, ~30 LOC)
-    - hooks/hooks.json (add PreToolUse(Edit|Write|MultiEdit) entry)
-    - rust/src/bin/s5d.rs ensure_agents_md → also update install path for new hook
+    - "rust/src/gate.rs — Phase 1, done: evaluate_edit, session state, allowlist"
+    - "rust/src/bin/s5d.rs — Phase 1, done: `gate edit`/`gate reset` subcommands"
+    - "rust/src/bin/s5d.rs — Phase 2: `hook pretool-edit` subcommand reading stdin JSON"
+    - "rust/src/hooks_json.rs — Phase 2 new module: ensure_pretool_hook_in_hooks_json mirroring ensure_agents_md pattern; idempotent JSON-merge over hooks.json in .claude-plugin/, .codex-plugin/, project root"
+    - "rust/src/bin/s5d.rs — Phase 2: extend run_init to call hooks_json installer"
+    - "EXPLICITLY EXCLUDED: NO shell scripts. NO hooks/*.sh files added or referenced."
   execution_mode:
     engine: manual
     max_iterations: null
@@ -146,19 +156,30 @@ workflow:
     rollback:
     - Revert module if integration proves wrong abstraction
   - id: hook-wiring
-    title: Hook installer + thin shell wrapper
+    title: Pure-Rust hook entrypoint + hooks.json installer
     scope: |
-      Add `hooks/pretool-edit-gate.sh` (parses Claude Code PreToolUse
-      JSON, calls `s5d gate edit`, returns approve/block JSON). Extend
-      `s5d init` to register entry in target hooks.json (Claude plugin)
-      and equivalent codex-plugin hooks. Idempotent.
+      NO shell — pure Rust. Two pieces:
+      (a) `s5d hook pretool-edit` Rust subcommand: reads Claude Code
+          hook JSON from stdin, extracts tool_input.file_path +
+          session_id, computes loc_delta from the edit payload (Edit
+          tool: count newlines in new_string minus old_string; Write:
+          count newlines in content), calls evaluate_edit, prints JSON
+          decision to stdout. Honors S5D_BYPASS=1.
+      (b) `ensure_pretool_hook_in_hooks_json` installer in s5d init:
+          mirrors ensure_agents_md pattern. Targets hooks.json in
+          .claude-plugin/ and .codex-plugin/ project subdirs (created
+          if absent). Registers PreToolUse with matcher Edit|Write|MultiEdit
+          pointing at command string `s5d hook pretool-edit` directly.
+          Idempotent via JSON merge keyed on the command string.
     roles: [implementer, reviewer]
     acceptance:
+    - "`s5d hook pretool-edit < claude_hook_input.json` returns valid JSON"
     - Manual smoke in tmp project — Edit blocked correctly when threshold crossed
-    - Hook registration idempotent (second `s5d init` → unchanged)
+    - Hook registration idempotent (second `s5d init` → AlreadyInstalled)
     - Bypass via `S5D_BYPASS=1 claude ...` works
+    - No new files under `hooks/*.sh` (correctness check via `git diff --stat`)
     rollback:
-    - Remove hook entry, gate command stays harmless
+    - Remove hook entry from hooks.json; `s5d hook pretool-edit` stays harmless as standalone command
   - id: l1-advisory
     title: UserPromptSubmit advisory layer
     scope: |
