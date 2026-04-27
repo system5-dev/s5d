@@ -25,6 +25,9 @@ pub const REQUIRE_SPEC_HOOK_COMMAND: &str = "s5d hook require-spec";
 pub const REQUIRE_SPEC_HOOK_MATCHER: &str = "Bash";
 pub const REQUIRE_SPEC_TIMEOUT_MS: u64 = 10_000;
 
+pub const PRE_COMMIT_VALIDATE_HOOK_COMMAND: &str = "s5d hook pre-commit-validate";
+pub const PRE_COMMIT_VALIDATE_TIMEOUT_MS: u64 = 30_000;
+
 #[derive(Debug, PartialEq, Eq)]
 pub enum HooksJsonUpdate {
     Created,
@@ -64,6 +67,12 @@ pub fn ensure_all_s5d_hooks(path: &Path) -> Result<HooksJsonUpdate> {
             matcher: REQUIRE_SPEC_HOOK_MATCHER,
             command: REQUIRE_SPEC_HOOK_COMMAND,
             timeout_ms: REQUIRE_SPEC_TIMEOUT_MS,
+        },
+        HookSpec::Matched {
+            event: "PreToolUse",
+            matcher: REQUIRE_SPEC_HOOK_MATCHER,
+            command: PRE_COMMIT_VALIDATE_HOOK_COMMAND,
+            timeout_ms: PRE_COMMIT_VALIDATE_TIMEOUT_MS,
         },
         HookSpec::Unmatched {
             event: "UserPromptSubmit",
@@ -361,6 +370,7 @@ mod tests {
         // L2 + L3 are both PreToolUse, different matchers
         assert!(body.contains(PRETOOL_HOOK_COMMAND), "L2 missing");
         assert!(body.contains(REQUIRE_SPEC_HOOK_COMMAND), "L3 missing");
+        assert!(body.contains(PRE_COMMIT_VALIDATE_HOOK_COMMAND), "spec-validate missing");
         assert!(body.contains(USER_PROMPT_HOOK_COMMAND), "L1 missing");
         assert!(body.contains("UserPromptSubmit"));
         assert!(body.contains(PRETOOL_HOOK_MATCHER));
