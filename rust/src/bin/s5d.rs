@@ -299,6 +299,11 @@ enum S5dCommand {
         #[command(subcommand)]
         command: HookCommand,
     },
+    /// PreToolUse enforcement gate (S5D-Spec: feat.s5d.pretool-enforcement)
+    Gate {
+        #[command(subcommand)]
+        command: GateCommand,
+    },
     /// Check for and apply S5D binary/skill updates
     Update {
         #[command(subcommand)]
@@ -367,6 +372,35 @@ enum CodebaseCommand {
 enum HookCommand {
     /// Run the S5D pre-commit check over staged specs and architecture-gated source
     PreCommit,
+}
+
+/// PreToolUse enforcement gate subcommands.
+/// S5D-Spec: feat.s5d.pretool-enforcement
+#[derive(Subcommand)]
+enum GateCommand {
+    /// Decide whether an Edit/Write/MultiEdit tool call should be allowed.
+    /// Reads project state, returns JSON GateDecision on stdout.
+    Edit {
+        /// File path the tool would modify
+        #[arg(long)]
+        file: std::path::PathBuf,
+        /// Estimated lines-of-code delta the edit will introduce (default 0 — caller may not know yet)
+        #[arg(long, default_value = "0")]
+        loc_delta: usize,
+        /// Claude Code session id (from hook stdin) — keys per-session counter
+        #[arg(long)]
+        session_id: Option<String>,
+        /// Bypass via env var alternative — also honored: S5D_BYPASS=1
+        #[arg(long)]
+        bypass: bool,
+    },
+    /// Reset the session counter for a given session id (or all if --all).
+    Reset {
+        #[arg(long)]
+        session_id: Option<String>,
+        #[arg(long)]
+        all: bool,
+    },
 }
 
 #[derive(Subcommand)]
@@ -633,6 +667,98 @@ fn main() -> anyhow::Result<()> {
             all,
             global,
         ),
+        S5dCommand::Gate { command } => run_gate(command),
+    }
+}
+
+// ── Gate (S5D-Spec: feat.s5d.pretool-enforcement) ────────────────────────────
+
+fn run_gate(command: GateCommand) -> anyhow::Result<()> {
+    use s5d::gate::{
+        evaluate_edit, load_session_state, save_session_state, GateDecision, ThresholdConfig,
+    };
+
+    match command {
+        GateCommand::Edit { file, loc_delta, session_id, bypass } => {
+            // Bypass: explicit flag OR env var (h2)
+            let env_bypass = std::env::var("S5D_BYPASS").map(|v| v == "1").unwrap_or(false);
+            if bypass || env_bypass {
+                println!(
+                    "{}",
+                    serde_json::to_string(&GateDecision::Approve)
+                        .unwrap_or_else(|_| r#"{"decision":"approve"}"#.to_string())
+                );
+                return Ok(());
+            }
+
+            let cwd = std::env::current_dir()?;
+            let s5d_dir_path = cwd.join(".s5d");
+            let s5d_dir_opt = if s5d_dir_path.exists() {
+                Some(s5d_dir_path.as_path())
+            } else {
+                None
+            };
+
+            let sid = session_id.unwrap_or_else(|| "default".to_string());
+            let state = if let Some(s) = s5d_dir_opt {
+                load_session_state(s, &sid)?
+            } else {
+                Default::default()
+            };
+
+            let decision =
+                evaluate_edit(s5d_dir_opt, &file, loc_delta, &state, &ThresholdConfig::default());
+
+            // On approve, persist updated counter — but only for non-trivial files
+            // not covered by an existing spec. Trivial allowlist hits and
+            // spec-covered files don't count against the session threshold.
+            if matches!(decision, GateDecision::Approve) {
+                if let Some(s) = s5d_dir_opt {
+                    use s5d::gate::{covered_by_spec, matches_trivial_allowlist};
+                    let counts = !matches_trivial_allowlist(&file)
+                        && covered_by_spec(s, &file).is_none();
+                    if counts {
+                        let mut new_state = state;
+                        new_state.session_id = sid;
+                        new_state.loc_delta += loc_delta;
+                        new_state.files.insert(file.clone());
+                        save_session_state(s, &new_state).ok();
+                    }
+                }
+            }
+
+            println!("{}", serde_json::to_string(&decision)?);
+            Ok(())
+        }
+        GateCommand::Reset { session_id, all } => {
+            let cwd = std::env::current_dir()?;
+            let s5d_dir = cwd.join(".s5d");
+            if !s5d_dir.exists() {
+                println!(r#"{{"reset":"noop","reason":"no .s5d/ directory"}}"#);
+                return Ok(());
+            }
+            let mut removed = 0usize;
+            if all {
+                for entry in std::fs::read_dir(&s5d_dir)?.flatten() {
+                    let name = entry.file_name();
+                    let s = name.to_string_lossy();
+                    if s.starts_with(".session-counter-") && s.ends_with(".json") {
+                        if std::fs::remove_file(entry.path()).is_ok() {
+                            removed += 1;
+                        }
+                    }
+                }
+            } else if let Some(sid) = session_id {
+                let path = s5d_dir.join(format!(".session-counter-{}.json", sid));
+                if path.exists() && std::fs::remove_file(&path).is_ok() {
+                    removed = 1;
+                }
+            } else {
+                anyhow::bail!("specify --session-id <id> or --all");
+            }
+            println!(r#"{{"reset":"ok","removed":{}}}"#, removed);
+            Ok(())
+        }
     }
 }
 

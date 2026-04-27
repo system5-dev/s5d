@@ -6,6 +6,7 @@
 pub mod arch;
 pub mod codebase;
 pub mod drift;
+pub mod gate;
 pub mod gates;
 pub mod graph;
 pub mod identity;

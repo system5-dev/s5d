@@ -1,0 +1,281 @@
+s5d: '1.0'
+id: feat.s5d.pretool-enforcement
+version: 1.0.0
+product: s5d
+tier: lightweight
+allow_update: true
+meta:
+  title: PreToolUse enforcement layer for S5D mandatory mode
+  authors: [roman, diana]
+  date: 2026-04-27
+  tickets: []
+  adrs: []
+  renames: []
+context: |
+  ## Problem
+  Today S5D enforcement is documentation-only plus a single commit-time gate
+  (`hooks/require-spec.sh`). By the time `git commit` fires, the agent has
+  already produced potentially significant code without an approved spec.
+  The "S5D MANDATORY" wording in agents_block is advisory — there is no
+  mechanical block on Edit/Write/MultiEdit before code starts landing.
+
+  Concrete failure mode observed in this very session: feature work
+  (multi-runtime AGENTS inject + MANDATORY wording) was implemented
+  directly without a prior spec, then noted retroactively in the commit
+  body. The rule we just declared was violated by the commit that
+  declared it.
+
+  ## Goal
+  Make S5D non-bypassable for non-trivial work without ceremony for trivial
+  work. Three mechanical layers (UserPromptSubmit nudge → PreToolUse Edit
+  gate → existing pre-commit fallback) so the agent literally cannot
+  produce non-trivial code without an approved spec, while small fixes
+  and docs remain frictionless.
+
+  ## Privacy
+  Classification: Internal (s5d open-source project).
+workflow:
+  mode: plan
+  target_architecture:
+    summary: |
+      Three-layer enforcement, each a Claude Code / Codex / Gemini hook
+      that ships with `s5d init` and is registered idempotently:
+
+      L1 — UserPromptSubmit (advisory):
+        Runs `s5d route <prompt>`. If classified as non-trivial AND no
+        approved spec exists in `.s5d/packages/`, injects a system
+        reminder: "S5D mandatory; run s5d_new before any Edit/Write."
+        Never blocks the prompt itself.
+
+      L2 — PreToolUse(Edit|Write|MultiEdit) (HARD GATE — the new piece):
+        Runs `s5d gate edit --file <path>`. Decision tree:
+          1. If `.s5d/` does not exist in project → approve (s5d not adopted).
+          2. If file path is in trivial allowlist (docs, config, tests,
+             lockfiles, .gitignore, .env*) → approve.
+          3. If file is under a path covered by an approved spec's
+             `affects:` list → approve.
+          4. If accumulated session edits to non-trivial source files
+             exceed the threshold (default 30 LOC OR 4 distinct files)
+             → block with reason: "non-trivial scope without spec; run
+             s5d_new <feature-id> first or s5d note for one-off."
+          5. Otherwise → approve, increment session counter.
+
+      L3 — PreToolUse(Bash) require-spec.sh (existing — final net):
+        Already in place. Catches `git commit` if L1+L2 were bypassed.
+
+      Bypass: explicit `S5D_BYPASS=1` env var per-invocation OR
+      `s5d note <rationale>` quick-spec for one-off justified changes
+      that are too small to warrant a full spec but cross the threshold.
+      No flag-file bypass — too easy to forget on disk.
+
+      Session state: `.s5d/.session-counter.json` keyed by Claude session
+      id (env var) tracking { files: [], loc: int, started: ts }. Reset
+      on session end or after spec approval.
+    invariants:
+    - L2 hook never blocks if .s5d/ directory does not exist (opt-in per project)
+    - Trivial allowlist match short-circuits before any other check
+    - Session counter persists per-Claude-session, not globally
+    - S5D_BYPASS=1 always wins (last-resort escape hatch)
+    - Threshold values (30 LOC, 4 files) configurable via .s5d/config.toml
+  delivery_strategy:
+    summary: |
+      Vertical slice: ship L2 first (the missing piece), refine L1 and
+      threshold tuning after observing real friction. L3 stays as-is.
+      Phase 1 builds the gate command + hook installer + happy-path tests.
+      Phase 2 wires session counter and bypass mechanism. Phase 3 adds
+      L1 advisory injection (lower-risk because non-blocking).
+    rationale: |
+      L2 is the actual enforcement; L1 is polish. Shipping L2 first means
+      enforcement begins working immediately; L1 reduces user friction
+      later. Reversed order would ship friction without enforcement.
+  resources: null
+  role_map:
+    verifier: reviewer
+    implementer: coder
+    owner: human
+    reviewer: reviewer
+  review_policy:
+    cross_model_required: true
+    required_on: [build]
+  structure_outline:
+    summary: |
+      New Rust subcommand `s5d gate edit` + thin shell hook
+      `hooks/pretool-edit-gate.sh` reading JSON from stdin (Claude
+      Code hook protocol). Installer extension in `s5d init` registers
+      the hook in the project's hooks.json.
+    signatures:
+    - "fn cmd_gate_edit(args: GateEditArgs) -> Result<GateDecision>"
+    - "fn evaluate_edit(project: &Project, file: &Path, session: &SessionState) -> GateDecision"
+    - "fn load_session_state(session_id: &str) -> Result<SessionState>"
+    - "fn save_session_state(session_id: &str, state: &SessionState) -> Result<()>"
+    - "fn matches_trivial_allowlist(path: &Path) -> bool"
+    - "fn covered_by_spec(project: &Project, file: &Path) -> Option<SpecId>"
+    types:
+    - "enum GateDecision { Approve, Block { reason: String } }"
+    - "struct SessionState { files: BTreeSet<PathBuf>, loc_delta: usize, started: DateTime }"
+    - "struct GateEditArgs { file: PathBuf, loc_delta: Option<usize>, session_id: Option<String> }"
+    - "struct ThresholdConfig { max_loc: usize, max_files: usize, allowlist_globs: Vec<String> }"
+    files:
+    - rust/src/bin/s5d.rs (new subcommand `gate edit`, ~120 LOC)
+    - rust/src/gate.rs (new module: evaluate_edit, session state, allowlist)
+    - hooks/pretool-edit-gate.sh (new thin wrapper, ~30 LOC)
+    - hooks/hooks.json (add PreToolUse(Edit|Write|MultiEdit) entry)
+    - rust/src/bin/s5d.rs ensure_agents_md → also update install path for new hook
+  execution_mode:
+    engine: manual
+    max_iterations: null
+    stop_conditions:
+    - Phase acceptance reached
+    - Approved scope exhausted
+    - New decision required
+  phases:
+  - id: gate-core
+    title: L2 gate command + module + tests
+    scope: |
+      Implement `s5d gate edit` subcommand and `gate.rs` module. No hook
+      registration yet — pure CLI. End-to-end: input file path → output
+      JSON GateDecision. Unit tests for each branch (no .s5d/, allowlist
+      hit, spec coverage hit, threshold crossed, threshold not crossed).
+      Vertical slice: this alone is testable from Bash without any agent
+      runtime.
+    roles: [implementer, reviewer]
+    acceptance:
+    - "`s5d gate edit --file <p>` returns valid GateDecision JSON"
+    - 6 unit tests cover all decision branches
+    - "`cargo test gate` green"
+    rollback:
+    - Revert module if integration proves wrong abstraction
+  - id: hook-wiring
+    title: Hook installer + thin shell wrapper
+    scope: |
+      Add `hooks/pretool-edit-gate.sh` (parses Claude Code PreToolUse
+      JSON, calls `s5d gate edit`, returns approve/block JSON). Extend
+      `s5d init` to register entry in target hooks.json (Claude plugin)
+      and equivalent codex-plugin hooks. Idempotent.
+    roles: [implementer, reviewer]
+    acceptance:
+    - Manual smoke in tmp project — Edit blocked correctly when threshold crossed
+    - Hook registration idempotent (second `s5d init` → unchanged)
+    - Bypass via `S5D_BYPASS=1 claude ...` works
+    rollback:
+    - Remove hook entry, gate command stays harmless
+  - id: l1-advisory
+    title: UserPromptSubmit advisory layer
+    scope: |
+      Add `s5d route` invocation in UserPromptSubmit hook that injects
+      reminder when classification is non-trivial without active spec.
+      Non-blocking. Shipped after L2 because L2 is the actual gate.
+    roles: [implementer]
+    acceptance:
+    - Reminder appears in agent context for non-trivial prompts
+    - No-op for trivial prompts (no context noise)
+    rollback:
+    - Remove hook entry; L2 still enforces
+  - id: measure
+    title: Live observation
+    scope: |
+      Use enforcement on s5d itself + Diana for one week. Track:
+      false-blocks (forced bypass count), missed non-trivial work
+      (commits without spec that weren't blocked), threshold tuning.
+    roles: [owner, verifier]
+    acceptance:
+    - "<2 forced bypasses per week (signal threshold may be too tight)"
+    - "0 non-trivial commits without spec (signal gate works)"
+    - Threshold values updated in `.s5d/config.toml` if needed
+    rollback:
+    - Loosen thresholds OR add path patterns to allowlist
+artifacts:
+  products:
+  - id: s5d
+    name: s5d
+    organization: null
+  domains:
+  - id: dom.s5d.enforcement
+    product: s5d
+    classification: core
+    name: S5D enforcement (project-local hooks gating tool calls and commits)
+  capabilities:
+  - id: cap.s5d.enforce-spec-required
+    name: Enforce spec-required policy on code-changing tool calls
+    domain: dom.s5d.enforcement
+  entities: []
+  features:
+  - id: feat.s5d.pretool-enforcement
+    product: s5d
+    name: PreToolUse enforcement layer
+    description: |
+      Hard gate on Edit/Write/MultiEdit tool calls when project has
+      adopted s5d (.s5d/ exists). Blocks non-trivial scope without an
+      approved spec; trivial allowlist + bypass env var keep friction
+      bounded.
+  use_cases: []
+  systems: []
+  containers: []
+  components: []
+  roles: []
+  concerns: []
+  metrics: []
+  supersystems: []
+  transports: []
+links:
+  feature_to_domain: []
+  use_case_to_capability: []
+  use_case_to_entity: []
+  component_to_capability: []
+  component_to_entity: []
+  container_to_capability: []
+  concern_to_metric: []
+  component_to_container: []
+  edges: []
+  depends_on: []
+  entity_relations: []
+  capability_to_entity: []
+  capability_to_concern: []
+contracts: []
+gates:
+- kind: schema
+- kind: graph
+roc: null
+problem: null
+hypotheses:
+- id: h1-granularity
+  title: Threshold-based gating granularity
+  content: |
+    Threshold-based gating (30 LOC OR 4 files accumulated per session)
+    catches the right cases without blocking normal small fixes. Strict
+    per-Edit gating would force a spec for every single-line change;
+    path-based gating alone misses cross-cutting refactors.
+    Falsifiable: ≥2 forced bypasses per week on s5d + Diana use, OR
+    non-trivial commits land without a referenced spec → hypothesis
+    rejected, narrow allowlist or lower threshold.
+  scope: L2 gate decision branch 4 (threshold check)
+  kind: behavior
+  layer: L1
+- id: h2-bypass
+  title: Single env-var bypass mechanism
+  content: |
+    Single env-var bypass (S5D_BYPASS=1) is sufficient. Flag-file bypass
+    is too easy to leave on disk; no-bypass is impractical when truly
+    one-off work crosses threshold.
+    Falsifiable: bypass count >1 per week per active project, OR users
+    reach for flag-file workaround → revisit with lighter alternative.
+  scope: L2 gate bypass mechanism
+  kind: design
+  layer: L1
+- id: h3-installer-scope
+  title: Reuse existing init-time hook installer
+  content: |
+    The new hook installs via the same `s5d init` flow as the existing
+    pre-commit hook — no separate `s5d gate install` command. Scope
+    stays project-local (.git/hooks + project hooks.json), never
+    user-global. Existing installer pattern (s5d.rs:1668-1695)
+    generalizes cleanly to a second hook target.
+    Falsifiable: installer logic forks into hook-specific branches that
+    don't share code → extract a generic installer abstraction first.
+  scope: hook-wiring phase, s5d init UX
+  kind: design
+  layer: L1
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false
