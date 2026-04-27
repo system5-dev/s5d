@@ -1,5 +1,5 @@
 {
-  "description": "S5D plugin hooks — Rust-backed update check on session start, spec validation on commit",
+  "description": "S5D plugin hooks — pure-Rust enforcement (S5D-Spec: feat.s5d.pretool-enforcement). Rust subcommands invoked directly; no bash wrappers.",
   "hooks": {
     "SessionStart": [
       {
@@ -15,6 +15,16 @@
     ],
     "PreToolUse": [
       {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "s5d hook pretool-edit",
+            "timeout": 5000
+          }
+        ]
+      },
+      {
         "matcher": "Bash",
         "hooks": [
           {
@@ -24,7 +34,7 @@
           },
           {
             "type": "command",
-            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/require-spec.sh",
+            "command": "s5d hook require-spec",
             "timeout": 10000
           }
         ]
@@ -38,6 +48,17 @@
             "type": "command",
             "command": "bash ${extensionPath}/hooks/pre-commit-validate.sh",
             "timeout": 30000
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "s5d hook user-prompt-submit",
+            "timeout": 5000
           }
         ]
       }

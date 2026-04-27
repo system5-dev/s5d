@@ -21,6 +21,10 @@ pub const PRETOOL_TIMEOUT_MS: u64 = 5_000;
 pub const USER_PROMPT_HOOK_COMMAND: &str = "s5d hook user-prompt-submit";
 pub const USER_PROMPT_TIMEOUT_MS: u64 = 5_000;
 
+pub const REQUIRE_SPEC_HOOK_COMMAND: &str = "s5d hook require-spec";
+pub const REQUIRE_SPEC_HOOK_MATCHER: &str = "Bash";
+pub const REQUIRE_SPEC_TIMEOUT_MS: u64 = 10_000;
+
 #[derive(Debug, PartialEq, Eq)]
 pub enum HooksJsonUpdate {
     Created,
@@ -41,8 +45,12 @@ pub fn ensure_pretool_hook(path: &Path) -> Result<HooksJsonUpdate> {
     ])
 }
 
-/// Ensure both Phase 2 (PreToolUse) and Phase 3 (UserPromptSubmit) hooks
-/// are registered. Single write per file. Used by `s5d init`.
+/// Ensure all three S5D enforcement hooks are registered:
+///   * L1: UserPromptSubmit advisory (Phase 3)
+///   * L2: PreToolUse(Edit|Write|MultiEdit) gate (Phase 2)
+///   * L3: PreToolUse(Bash) require-spec — pure-Rust replacement for
+///         hooks/require-spec.sh (Phase 4 / l3-migration)
+/// Single write per file. Used by `s5d init`.
 pub fn ensure_all_s5d_hooks(path: &Path) -> Result<HooksJsonUpdate> {
     ensure_hook_entries(path, &[
         HookSpec::Matched {
@@ -50,6 +58,12 @@ pub fn ensure_all_s5d_hooks(path: &Path) -> Result<HooksJsonUpdate> {
             matcher: PRETOOL_HOOK_MATCHER,
             command: PRETOOL_HOOK_COMMAND,
             timeout_ms: PRETOOL_TIMEOUT_MS,
+        },
+        HookSpec::Matched {
+            event: "PreToolUse",
+            matcher: REQUIRE_SPEC_HOOK_MATCHER,
+            command: REQUIRE_SPEC_HOOK_COMMAND,
+            timeout_ms: REQUIRE_SPEC_TIMEOUT_MS,
         },
         HookSpec::Unmatched {
             event: "UserPromptSubmit",
@@ -339,16 +353,38 @@ mod tests {
     }
 
     #[test]
-    fn ensure_all_writes_both_phases() {
+    fn ensure_all_writes_all_three_layers() {
         let dir = tempdir().unwrap();
         let path = dir.path().join("hooks.json");
         assert_eq!(ensure_all_s5d_hooks(&path).unwrap(), HooksJsonUpdate::Created);
         let body = std::fs::read_to_string(&path).unwrap();
-        assert!(body.contains(PRETOOL_HOOK_COMMAND));
-        assert!(body.contains(USER_PROMPT_HOOK_COMMAND));
+        // L2 + L3 are both PreToolUse, different matchers
+        assert!(body.contains(PRETOOL_HOOK_COMMAND), "L2 missing");
+        assert!(body.contains(REQUIRE_SPEC_HOOK_COMMAND), "L3 missing");
+        assert!(body.contains(USER_PROMPT_HOOK_COMMAND), "L1 missing");
         assert!(body.contains("UserPromptSubmit"));
-        assert!(!body.contains("bash "));
-        assert!(!body.contains(".sh"));
+        assert!(body.contains(PRETOOL_HOOK_MATCHER));
+        assert!(body.contains(REQUIRE_SPEC_HOOK_MATCHER));
+        assert!(!body.contains("bash "), "shell wrapper leaked");
+        assert!(!body.contains(".sh"), "shell wrapper leaked");
+    }
+
+    #[test]
+    fn l2_and_l3_share_pretooluse_event() {
+        // Both PreToolUse hooks should land in the SAME PreToolUse array,
+        // as separate matcher groups, not duplicate events.
+        let dir = tempdir().unwrap();
+        let path = dir.path().join("hooks.json");
+        ensure_all_s5d_hooks(&path).unwrap();
+        let v: Value = serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
+        let pretool_arr = v["hooks"]["PreToolUse"].as_array().unwrap();
+        assert_eq!(pretool_arr.len(), 2, "expected 2 matcher groups under PreToolUse");
+        let matchers: Vec<&str> = pretool_arr
+            .iter()
+            .filter_map(|g| g.get("matcher").and_then(|m| m.as_str()))
+            .collect();
+        assert!(matchers.contains(&PRETOOL_HOOK_MATCHER));
+        assert!(matchers.contains(&REQUIRE_SPEC_HOOK_MATCHER));
     }
 
     #[test]

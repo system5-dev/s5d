@@ -180,6 +180,25 @@ workflow:
     - No new files under `hooks/*.sh` (correctness check via `git diff --stat`)
     rollback:
     - Remove hook entry from hooks.json; `s5d hook pretool-edit` stays harmless as standalone command
+  - id: l3-migration
+    title: Migrate L3 commit-time gate from shell to pure Rust
+    scope: |
+      Replace `hooks/require-spec.sh` with `s5d hook require-spec` Rust
+      subcommand. Same logic (block git commit when non-trivial change
+      lacks spec reference), pure-Rust impl reading PreToolUse(Bash)
+      JSON from stdin. Update Claude/Codex plugin hooks.json registrations
+      to call `s5d hook require-spec` directly instead of bashing the
+      shell wrapper. Shell file kept on disk for one release cycle for
+      back-compat, then removed.
+    roles: [implementer, reviewer]
+    acceptance:
+    - "`s5d hook require-spec` produces same approve/block decisions as require-spec.sh"
+    - hooks.json registrations point at Rust subcommand, no `bash` invocation
+    - "`git commit` on non-trivial without spec → blocked (e2e smoke)"
+    - "`git commit` on trivial change → approved"
+    - "Recognizes all four spec-ref patterns: S5D-Spec, spec://, Implements, feat-prefix"
+    rollback:
+    - Revert hooks.json change; require-spec.sh stays operational on disk
   - id: l1-advisory
     title: UserPromptSubmit advisory layer
     scope: |
