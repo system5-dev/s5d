@@ -17,6 +17,12 @@ status_history:
   timestamp: 2026-04-27T11:41:26.105896+00:00
 - status: approved
   timestamp: 2026-04-27T11:41:26.111720+00:00
+- status: previewed
+  timestamp: 2026-04-27T13:21:57.758199+00:00
+- status: approved
+  timestamp: 2026-04-27T13:21:57.777185+00:00
+active_phase: null
+phase_history: []
 approvals:
 - reviewer: roman
   date: 2026-04-27T11:31:58.816104+00:00
@@ -26,8 +32,13 @@ approvals:
   date: 2026-04-27T11:41:26.111719+00:00
   spec_sha256: sha256:db719b74405478eddf034286b76328c72954c3d118c7f3ecb124b249449cb5f7
   diff_sha256: sha256:8360eddf876cbd0ff1f5996e8606f20f7c6997e15c550b0abd0fbe6144326ed9
+- reviewer: roman
+  date: 2026-04-27T13:21:57.777183+00:00
+  spec_sha256: sha256:18378163cc690211a675a1528744c036eb8b456208568662002a0a4895751ac2
+  diff_sha256: sha256:8360eddf876cbd0ff1f5996e8606f20f7c6997e15c550b0abd0fbe6144326ed9
 preview:
   diff_sha256: sha256:8360eddf876cbd0ff1f5996e8606f20f7c6997e15c550b0abd0fbe6144326ed9
+  previewed_spec_sha256: sha256:18378163cc690211a675a1528744c036eb8b456208568662002a0a4895751ac2
   actions:
     create: 3
     link: 0

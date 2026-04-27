@@ -383,6 +383,12 @@ enum HookCommand {
     /// in `.s5d/packages/` yet. Never blocks — non-zero noise budget.
     /// S5D-Spec: feat.s5d.pretool-enforcement
     UserPromptSubmit,
+    /// PreToolUse(Bash) require-spec hook (L3 — final commit-time net).
+    /// Reads PreToolUse JSON from stdin; if the command is `git commit`
+    /// and the change is non-trivial without a spec reference, blocks.
+    /// Pure Rust replacement for hooks/require-spec.sh.
+    /// S5D-Spec: feat.s5d.pretool-enforcement
+    RequireSpec,
 }
 
 /// PreToolUse enforcement gate subcommands.
@@ -537,6 +543,7 @@ fn main() -> anyhow::Result<()> {
             HookCommand::PreCommit => run_hook_pre_commit(),
             HookCommand::PretoolEdit => run_hook_pretool_edit(),
             HookCommand::UserPromptSubmit => run_hook_user_prompt_submit(),
+            HookCommand::RequireSpec => run_hook_require_spec(),
         },
         S5dCommand::Update { command } => match command {
             UpdateCommand::Check { hook, json } => run_update_check(hook, json),
@@ -836,6 +843,185 @@ before any Edit/Write tool call. Bypass with `S5D_BYPASS=1` only for justified o
         tier
     );
     Ok(())
+}
+
+/// Pure-Rust PreToolUse(Bash) require-spec hook (L3 final net).
+/// Replaces `hooks/require-spec.sh`. Blocks `git commit` when the change
+/// is non-trivial and the commit message lacks a spec reference.
+/// S5D-Spec: feat.s5d.pretool-enforcement
+fn run_hook_require_spec() -> anyhow::Result<()> {
+    use std::io::Read;
+
+    if std::env::var("S5D_BYPASS").map(|v| v == "1").unwrap_or(false) {
+        println!(r#"{{"decision":"approve"}}"#);
+        return Ok(());
+    }
+
+    let mut buf = String::new();
+    std::io::stdin().read_to_string(&mut buf).ok();
+    let value: serde_json::Value = match serde_json::from_str(&buf) {
+        Ok(v) => v,
+        Err(_) => {
+            println!(r#"{{"decision":"approve"}}"#);
+            return Ok(());
+        }
+    };
+
+    let command = value
+        .get("tool_input")
+        .and_then(|t| t.get("command"))
+        .and_then(|c| c.as_str())
+        .unwrap_or("");
+
+    // Only care about git commit
+    if !is_git_commit(command) {
+        println!(r#"{{"decision":"approve"}}"#);
+        return Ok(());
+    }
+
+    // Skip if project hasn't opted in
+    let cwd = std::env::current_dir()?;
+    if !cwd.join(".s5d/packages").is_dir() {
+        println!(r#"{{"decision":"approve"}}"#);
+        return Ok(());
+    }
+
+    // Count staged source files (excludes config/docs/tests/lockfiles via existing is_source_path)
+    let staged = git_staged_files(&cwd).unwrap_or_default();
+    let source_files: Vec<&String> = staged.iter().filter(|p| is_source_path(p)).collect();
+    let loc_delta = git_staged_insertions().unwrap_or(0);
+
+    // Trivial change → allow
+    if source_files.len() <= 1 && loc_delta <= 30 {
+        println!(r#"{{"decision":"approve"}}"#);
+        return Ok(());
+    }
+
+    // Non-trivial: any approved spec OR commit-message ref → allow
+    if has_any_feature_spec(&cwd) || has_applied_record(&cwd) {
+        println!(r#"{{"decision":"approve"}}"#);
+        return Ok(());
+    }
+    if commit_msg_has_spec_ref(command) {
+        println!(r#"{{"decision":"approve"}}"#);
+        return Ok(());
+    }
+
+    let reason = format!(
+        "Non-trivial change ({} source files, +{} LOC) without S5D spec. \
+Run /s5d to create a spec first, or add 'S5D-Spec: <spec-id>' to commit message if spec exists elsewhere.",
+        source_files.len(), loc_delta
+    );
+    println!(
+        "{}",
+        serde_json::json!({"decision": "block", "reason": reason})
+    );
+    Ok(())
+}
+
+fn is_git_commit(command: &str) -> bool {
+    // Match leading `git commit` or `git -c ... commit`
+    let trimmed = command.trim_start();
+    trimmed.starts_with("git commit") || (trimmed.starts_with("git ") && trimmed.contains(" commit "))
+}
+
+fn git_staged_insertions() -> Option<usize> {
+    let output = std::process::Command::new("git")
+        .args(["diff", "--cached", "--shortstat"])
+        .output()
+        .ok()?;
+    if !output.status.success() {
+        return None;
+    }
+    let s = String::from_utf8_lossy(&output.stdout);
+    // e.g. " 3 files changed, 47 insertions(+), 5 deletions(-)"
+    s.split(',')
+        .find_map(|part| {
+            let p = part.trim();
+            p.strip_suffix(" insertions(+)")
+                .or_else(|| p.strip_suffix(" insertion(+)"))
+                .and_then(|n| n.trim().parse::<usize>().ok())
+        })
+}
+
+fn has_any_feature_spec(cwd: &std::path::Path) -> bool {
+    let dir = cwd.join(".s5d/packages");
+    std::fs::read_dir(&dir)
+        .map(|entries| {
+            entries.flatten().any(|e| {
+                e.file_name()
+                    .to_string_lossy()
+                    .starts_with("feat.")
+                    && e.file_name().to_string_lossy().ends_with(".s5d.yaml")
+            })
+        })
+        .unwrap_or(false)
+}
+
+fn has_applied_record(cwd: &std::path::Path) -> bool {
+    let dir = cwd.join(".s5d/records");
+    std::fs::read_dir(&dir)
+        .map(|entries| {
+            entries.flatten().any(|e| {
+                let path = e.path();
+                if path.extension().and_then(|s| s.to_str()) != Some("yaml") {
+                    return false;
+                }
+                std::fs::read_to_string(&path)
+                    .map(|c| {
+                        c.contains("status: applied")
+                            || c.contains("status: operated")
+                            || c.contains("status: approved")
+                    })
+                    .unwrap_or(false)
+            })
+        })
+        .unwrap_or(false)
+}
+
+fn commit_msg_has_spec_ref(command: &str) -> bool {
+    // Extract -m "..." payload — handles single and double quotes
+    let mut chars = command.chars().peekable();
+    let mut found_dash_m = false;
+    let mut msg = String::new();
+    let mut in_quote: Option<char> = None;
+    while let Some(c) = chars.next() {
+        if !found_dash_m {
+            if c == '-' && chars.peek() == Some(&'m') {
+                chars.next();
+                found_dash_m = true;
+                while let Some(&p) = chars.peek() {
+                    if p == ' ' || p == '\t' {
+                        chars.next();
+                    } else {
+                        break;
+                    }
+                }
+                if let Some(&q) = chars.peek() {
+                    if q == '"' || q == '\'' {
+                        in_quote = Some(q);
+                        chars.next();
+                    }
+                }
+            }
+            continue;
+        }
+        if let Some(q) = in_quote {
+            if c == q {
+                break;
+            }
+            msg.push(c);
+        } else {
+            if c == ' ' || c == '\t' {
+                break;
+            }
+            msg.push(c);
+        }
+    }
+    msg.contains("S5D-Spec:")
+        || msg.contains("spec://")
+        || msg.contains("Implements:")
+        || msg.contains("feat.")
 }
 
 /// Best-effort line-count delta from a tool_input JSON value.
