@@ -170,7 +170,7 @@ fn core_tools() -> Vec<Value> {
             "description": "Transactional import — apply spec to alias table and ledger",
             "inputSchema": {
                 "type": "object",
-                "required": ["spec"],
+                "required": ["spec", "verified_by"],
                 "properties": {
                     "spec": {"type": "string", "description": "Path to .s5d.yaml file"},
                     "verified_by": {"type": "string", "description": "Who independently verified gates passed"},
@@ -917,7 +917,11 @@ fn tool_s5d_import(args: &Value) -> anyhow::Result<String> {
     let spec_arg = args["spec"]
         .as_str()
         .ok_or_else(|| anyhow::anyhow!("missing required argument: spec"))?;
-    let verified_by: Option<String> = args["verified_by"].as_str().map(|s| s.to_string());
+    let verified_by = args["verified_by"]
+        .as_str()
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .ok_or_else(|| anyhow::anyhow!("missing required argument: verified_by"))?;
     let force = args["force"].as_bool().unwrap_or(false);
 
     let (project, spec_path, spec, spec_filename) = load_spec_context_mcp(spec_arg)?;
@@ -936,7 +940,7 @@ fn tool_s5d_import(args: &Value) -> anyhow::Result<String> {
         );
     }
 
-    let import_checks = crate::check_import(&Some(record.clone()), &verified_by);
+    let import_checks = crate::check_import(&Some(record.clone()), verified_by);
     crate::enforce_checks(&import_checks, force)?;
 
     if !spec.gates.is_empty() {
@@ -984,10 +988,8 @@ fn tool_s5d_import(args: &Value) -> anyhow::Result<String> {
         );
     }
 
-    if verified_by.is_some() {
-        record.verified_by = verified_by.clone();
-        project.save_record(&spec_filename, &record)?;
-    }
+    record.verified_by = Some(verified_by.to_string());
+    project.save_record(&spec_filename, &record)?;
 
     let (actions, fingerprint) =
         crate::execute_import(&project, &spec_path, &spec, &spec_filename)?;

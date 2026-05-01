@@ -213,6 +213,7 @@ pub fn generate_record(spec_filename: &str, spec_sha256: &str) -> Record {
         }],
         active_phase: None,
         phase_history: vec![],
+        phase_runs: vec![],
         approvals: vec![],
         preview: None,
         reflection: None,

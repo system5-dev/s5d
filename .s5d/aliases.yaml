@@ -5,6 +5,12 @@ global:
   package_id: null
   owning_package: feat.s5d.test-logging
   deprecated: false
+- uuid: 76499f2c-29d8-4068-9a52-f8fdda8f15c5
+  artifact_id: S5D
+  artifact_type: Product
+  package_id: null
+  owning_package: feat.s5d.enforcement-contract
+  deprecated: false
 packages:
 - uuid: 0d3f4abc-8b28-422f-ba12-3bdb515b33ac
   artifact_id: cap.LogError
@@ -16,5 +22,41 @@ packages:
   artifact_id: feat.s5d.test-logging
   artifact_type: Feature
   package_id: feat.s5d.test-logging
+  owning_package: null
+  deprecated: false
+- uuid: 7765c995-eebc-4ea4-8f7f-443bc8441a53
+  artifact_id: cap.s5d.enforcement-contract
+  artifact_type: Capability
+  package_id: feat.s5d.enforcement-contract
+  owning_package: null
+  deprecated: false
+- uuid: 7c15f93f-d634-4b99-aaca-2e823a6b2d65
+  artifact_id: feat.s5d.enforcement-contract
+  artifact_type: Feature
+  package_id: feat.s5d.enforcement-contract
+  owning_package: null
+  deprecated: false
+- uuid: 4ddfc015-ce63-4752-8b25-46531d274ae3
+  artifact_id: cap.SimplifyCliSurface
+  artifact_type: Capability
+  package_id: feat.s5d.cli-surface-simplification
+  owning_package: null
+  deprecated: false
+- uuid: fcc3e6cc-040b-4b8d-9a02-ba58e9b865d6
+  artifact_id: feat.s5d.cli-surface-simplification
+  artifact_type: Feature
+  package_id: feat.s5d.cli-surface-simplification
+  owning_package: null
+  deprecated: false
+- uuid: 9239c0e0-5dfd-414f-9244-f3ef8af45505
+  artifact_id: cap.s5d.external-engine-phase-run
+  artifact_type: Capability
+  package_id: feat.s5d.external-engine-phase-run
+  owning_package: null
+  deprecated: false
+- uuid: ec031fb1-3fd6-407c-b07b-ac6824c7e68b
+  artifact_id: feat.s5d.external-engine-phase-run
+  artifact_type: Feature
+  package_id: feat.s5d.external-engine-phase-run
   owning_package: null
   deprecated: false

@@ -56,6 +56,7 @@ jobs:
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
+          prerelease: ${{ contains(github.ref_name, '-') }}
           files: |
             s5d-darwin-arm64/s5d-darwin-arm64
             s5d-darwin-x86_64/s5d-darwin-x86_64

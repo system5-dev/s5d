@@ -38,48 +38,53 @@ pub enum HooksJsonUpdate {
 /// Ensure the PreToolUse hook entry exists in the given hooks.json file.
 /// Idempotent: re-runs return Unchanged. Preserves any unrelated existing entries.
 pub fn ensure_pretool_hook(path: &Path) -> Result<HooksJsonUpdate> {
-    ensure_hook_entries(path, &[
-        HookSpec::Matched {
+    ensure_hook_entries(
+        path,
+        &[HookSpec::Matched {
             event: "PreToolUse",
             matcher: PRETOOL_HOOK_MATCHER,
             command: PRETOOL_HOOK_COMMAND,
             timeout_ms: PRETOOL_TIMEOUT_MS,
-        },
-    ])
+        }],
+    )
 }
 
 /// Ensure all three S5D enforcement hooks are registered:
-///   * L1: UserPromptSubmit advisory (Phase 3)
-///   * L2: PreToolUse(Edit|Write|MultiEdit) gate (Phase 2)
-///   * L3: PreToolUse(Bash) require-spec — pure-Rust replacement for
-///         hooks/require-spec.sh (Phase 4 / l3-migration)
+/// * L1: UserPromptSubmit advisory (Phase 3)
+/// * L2: PreToolUse(Edit|Write|MultiEdit) gate (Phase 2)
+/// * L3: PreToolUse(Bash) require-spec — pure-Rust replacement for
+///   hooks/require-spec.sh (Phase 4 / l3-migration)
+///
 /// Single write per file. Used by `s5d init`.
 pub fn ensure_all_s5d_hooks(path: &Path) -> Result<HooksJsonUpdate> {
-    ensure_hook_entries(path, &[
-        HookSpec::Matched {
-            event: "PreToolUse",
-            matcher: PRETOOL_HOOK_MATCHER,
-            command: PRETOOL_HOOK_COMMAND,
-            timeout_ms: PRETOOL_TIMEOUT_MS,
-        },
-        HookSpec::Matched {
-            event: "PreToolUse",
-            matcher: REQUIRE_SPEC_HOOK_MATCHER,
-            command: REQUIRE_SPEC_HOOK_COMMAND,
-            timeout_ms: REQUIRE_SPEC_TIMEOUT_MS,
-        },
-        HookSpec::Matched {
-            event: "PreToolUse",
-            matcher: REQUIRE_SPEC_HOOK_MATCHER,
-            command: PRE_COMMIT_VALIDATE_HOOK_COMMAND,
-            timeout_ms: PRE_COMMIT_VALIDATE_TIMEOUT_MS,
-        },
-        HookSpec::Unmatched {
-            event: "UserPromptSubmit",
-            command: USER_PROMPT_HOOK_COMMAND,
-            timeout_ms: USER_PROMPT_TIMEOUT_MS,
-        },
-    ])
+    ensure_hook_entries(
+        path,
+        &[
+            HookSpec::Matched {
+                event: "PreToolUse",
+                matcher: PRETOOL_HOOK_MATCHER,
+                command: PRETOOL_HOOK_COMMAND,
+                timeout_ms: PRETOOL_TIMEOUT_MS,
+            },
+            HookSpec::Matched {
+                event: "PreToolUse",
+                matcher: REQUIRE_SPEC_HOOK_MATCHER,
+                command: REQUIRE_SPEC_HOOK_COMMAND,
+                timeout_ms: REQUIRE_SPEC_TIMEOUT_MS,
+            },
+            HookSpec::Matched {
+                event: "PreToolUse",
+                matcher: REQUIRE_SPEC_HOOK_MATCHER,
+                command: PRE_COMMIT_VALIDATE_HOOK_COMMAND,
+                timeout_ms: PRE_COMMIT_VALIDATE_TIMEOUT_MS,
+            },
+            HookSpec::Unmatched {
+                event: "UserPromptSubmit",
+                command: USER_PROMPT_HOOK_COMMAND,
+                timeout_ms: USER_PROMPT_TIMEOUT_MS,
+            },
+        ],
+    )
 }
 
 /// Internal hook descriptor — either a matcher-keyed event (PreToolUse)
@@ -101,13 +106,12 @@ enum HookSpec {
 fn ensure_hook_entries(path: &Path, specs: &[HookSpec]) -> Result<HooksJsonUpdate> {
     let was_created = !path.exists();
     let mut existing: Value = if path.exists() {
-        let raw = std::fs::read_to_string(path)
-            .with_context(|| format!("read {}", path.display()))?;
+        let raw =
+            std::fs::read_to_string(path).with_context(|| format!("read {}", path.display()))?;
         if raw.trim().is_empty() {
             json!({})
         } else {
-            serde_json::from_str(&raw)
-                .with_context(|| format!("parse {}", path.display()))?
+            serde_json::from_str(&raw).with_context(|| format!("parse {}", path.display()))?
         }
     } else {
         json!({})
@@ -116,12 +120,17 @@ fn ensure_hook_entries(path: &Path, specs: &[HookSpec]) -> Result<HooksJsonUpdat
     let mut all_already = true;
     for spec in specs {
         let was_already = match spec {
-            HookSpec::Matched { event, matcher, command, timeout_ms } => {
-                inject_matched_entry(&mut existing, event, matcher, command, *timeout_ms)
-            }
-            HookSpec::Unmatched { event, command, timeout_ms } => {
-                inject_unmatched_entry(&mut existing, event, command, *timeout_ms)
-            }
+            HookSpec::Matched {
+                event,
+                matcher,
+                command,
+                timeout_ms,
+            } => inject_matched_entry(&mut existing, event, matcher, command, *timeout_ms),
+            HookSpec::Unmatched {
+                event,
+                command,
+                timeout_ms,
+            } => inject_unmatched_entry(&mut existing, event, command, *timeout_ms),
         };
         if !was_already {
             all_already = false;
@@ -133,8 +142,7 @@ fn ensure_hook_entries(path: &Path, specs: &[HookSpec]) -> Result<HooksJsonUpdat
     }
 
     if let Some(parent) = path.parent() {
-        std::fs::create_dir_all(parent)
-            .with_context(|| format!("mkdir {}", parent.display()))?;
+        std::fs::create_dir_all(parent).with_context(|| format!("mkdir {}", parent.display()))?;
     }
     let pretty = serde_json::to_string_pretty(&existing)?;
     std::fs::write(path, format!("{}\n", pretty))
@@ -185,15 +193,12 @@ fn inject_matched_entry(
 /// Mutates `root` to ensure an unmatched-event hook entry (e.g. UserPromptSubmit)
 /// exists. These events have no `tool_name` so no `matcher` field. We register
 /// under a single group with no matcher key (Claude Code accepts that shape).
-fn inject_unmatched_entry(
-    root: &mut Value,
-    event: &str,
-    command: &str,
-    timeout_ms: u64,
-) -> bool {
+fn inject_unmatched_entry(root: &mut Value, event: &str, command: &str, timeout_ms: u64) -> bool {
     let event_arr = ensure_event_array(root, event);
     for entry in event_arr.iter_mut() {
-        if entry.get("matcher").is_none() || entry.get("matcher").and_then(|v| v.as_str()) == Some("*") {
+        if entry.get("matcher").is_none()
+            || entry.get("matcher").and_then(|v| v.as_str()) == Some("*")
+        {
             let group_hooks = entry.get_mut("hooks").and_then(|v| v.as_array_mut());
             if let Some(group_hooks) = group_hooks {
                 let already = group_hooks
@@ -218,12 +223,16 @@ fn ensure_event_array<'a>(root: &'a mut Value, event: &str) -> &'a mut Vec<Value
         *root = json!({});
     }
     let root_obj = root.as_object_mut().unwrap();
-    let hooks = root_obj.entry("hooks".to_string()).or_insert_with(|| json!({}));
+    let hooks = root_obj
+        .entry("hooks".to_string())
+        .or_insert_with(|| json!({}));
     if !hooks.is_object() {
         *hooks = json!({});
     }
     let hooks_obj = hooks.as_object_mut().unwrap();
-    let event_val = hooks_obj.entry(event.to_string()).or_insert_with(|| json!([]));
+    let event_val = hooks_obj
+        .entry(event.to_string())
+        .or_insert_with(|| json!([]));
     if !event_val.is_array() {
         *event_val = json!([]);
     }
@@ -262,7 +271,10 @@ mod tests {
     fn creates_file_when_absent() {
         let dir = tempdir().unwrap();
         let path = dir.path().join(".claude-plugin/hooks.json");
-        assert_eq!(ensure_pretool_hook(&path).unwrap(), HooksJsonUpdate::Created);
+        assert_eq!(
+            ensure_pretool_hook(&path).unwrap(),
+            HooksJsonUpdate::Created
+        );
         let body = std::fs::read_to_string(&path).unwrap();
         assert!(body.contains(PRETOOL_HOOK_COMMAND));
         assert!(body.contains(PRETOOL_HOOK_MATCHER));
@@ -301,7 +313,10 @@ mod tests {
         });
         std::fs::write(&path, serde_json::to_string_pretty(&preexisting).unwrap()).unwrap();
 
-        assert_eq!(ensure_pretool_hook(&path).unwrap(), HooksJsonUpdate::Inserted);
+        assert_eq!(
+            ensure_pretool_hook(&path).unwrap(),
+            HooksJsonUpdate::Inserted
+        );
         let body = std::fs::read_to_string(&path).unwrap();
         // Old Bash entry preserved
         assert!(body.contains("my-other-check"));
@@ -328,10 +343,17 @@ mod tests {
         std::fs::write(&path, serde_json::to_string_pretty(&preexisting).unwrap()).unwrap();
 
         ensure_pretool_hook(&path).unwrap();
-        let updated: Value = serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
+        let updated: Value =
+            serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
         let group = &updated["hooks"]["PreToolUse"][0]["hooks"];
-        assert_eq!(group.as_array().unwrap().len(), 2, "should append, not replace");
-        let cmds: Vec<&str> = group.as_array().unwrap()
+        assert_eq!(
+            group.as_array().unwrap().len(),
+            2,
+            "should append, not replace"
+        );
+        let cmds: Vec<&str> = group
+            .as_array()
+            .unwrap()
             .iter()
             .filter_map(|h| h.get("command").and_then(|v| v.as_str()))
             .collect();
@@ -343,8 +365,12 @@ mod tests {
     fn target_paths_include_plugin_dirs() {
         let dir = tempdir().unwrap();
         let paths = target_hooks_paths(dir.path());
-        assert!(paths.iter().any(|p| p.ends_with(".claude-plugin/hooks.json")));
-        assert!(paths.iter().any(|p| p.ends_with(".codex-plugin/hooks.json")));
+        assert!(paths
+            .iter()
+            .any(|p| p.ends_with(".claude-plugin/hooks.json")));
+        assert!(paths
+            .iter()
+            .any(|p| p.ends_with(".codex-plugin/hooks.json")));
     }
 
     #[test]
@@ -365,12 +391,18 @@ mod tests {
     fn ensure_all_writes_all_three_layers() {
         let dir = tempdir().unwrap();
         let path = dir.path().join("hooks.json");
-        assert_eq!(ensure_all_s5d_hooks(&path).unwrap(), HooksJsonUpdate::Created);
+        assert_eq!(
+            ensure_all_s5d_hooks(&path).unwrap(),
+            HooksJsonUpdate::Created
+        );
         let body = std::fs::read_to_string(&path).unwrap();
         // L2 + L3 are both PreToolUse, different matchers
         assert!(body.contains(PRETOOL_HOOK_COMMAND), "L2 missing");
         assert!(body.contains(REQUIRE_SPEC_HOOK_COMMAND), "L3 missing");
-        assert!(body.contains(PRE_COMMIT_VALIDATE_HOOK_COMMAND), "spec-validate missing");
+        assert!(
+            body.contains(PRE_COMMIT_VALIDATE_HOOK_COMMAND),
+            "spec-validate missing"
+        );
         assert!(body.contains(USER_PROMPT_HOOK_COMMAND), "L1 missing");
         assert!(body.contains("UserPromptSubmit"));
         assert!(body.contains(PRETOOL_HOOK_MATCHER));
@@ -388,7 +420,11 @@ mod tests {
         ensure_all_s5d_hooks(&path).unwrap();
         let v: Value = serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
         let pretool_arr = v["hooks"]["PreToolUse"].as_array().unwrap();
-        assert_eq!(pretool_arr.len(), 2, "expected 2 matcher groups under PreToolUse");
+        assert_eq!(
+            pretool_arr.len(),
+            2,
+            "expected 2 matcher groups under PreToolUse"
+        );
         let matchers: Vec<&str> = pretool_arr
             .iter()
             .filter_map(|g| g.get("matcher").and_then(|m| m.as_str()))

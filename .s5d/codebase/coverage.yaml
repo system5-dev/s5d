@@ -1,14 +1,15 @@
 product: s5d
 total_modules: 1
-governed: 1
-partial: 0
+governed: 0
+partial: 1
 blind: 0
 modules:
 - module:
     name: rust
     path: rust
     language: Rust
-    file_count: 20
-  status: governed
+    file_count: 22
+  status: partial
   specs:
+  - feat.s5d.domain-capability-mode
   - feat.s5d.self-governance

@@ -1,0 +1,65 @@
+spec_ref: feat.s5d.external-engine-phase-run__20260501.s5d.yaml
+spec_sha256: sha256:23a89d6171d3de09ae116156cae6b7b6d6fee7851c3998a30ebae0cf0fdce803
+status: operated
+sync_status: synced
+status_history:
+- status: proposed
+  timestamp: 2026-05-01T07:49:03.454285+00:00
+- status: previewed
+  timestamp: 2026-05-01T07:49:29.120392+00:00
+- status: approved
+  timestamp: 2026-05-01T07:49:34.923473+00:00
+- status: previewed
+  timestamp: 2026-05-01T07:58:35.019300+00:00
+- status: approved
+  timestamp: 2026-05-01T07:58:43.219351+00:00
+- status: applied
+  timestamp: 2026-05-01T07:59:00.559049+00:00
+- status: operated
+  timestamp: 2026-05-01T07:59:48.927928+00:00
+active_phase: null
+phase_history: []
+phase_runs: []
+approvals:
+- reviewer: Roman
+  date: 2026-05-01T07:49:34.923441+00:00
+  spec_sha256: sha256:f89aae266ed1e33908eae398127c87ab8d959bad180f5e0c1c28debd73074d9d
+  diff_sha256: sha256:f1d4ca300f49a9177b02de64efc4f9ee5a942da3b698e6b7fbb78056fc3faf1e
+- reviewer: Roman
+  date: 2026-05-01T07:58:43.219289+00:00
+  spec_sha256: sha256:a8331df7c9c0ffd5df31891f661b9c99e3c78b64915f7df784aecc359894c02a
+  diff_sha256: sha256:f1d4ca300f49a9177b02de64efc4f9ee5a942da3b698e6b7fbb78056fc3faf1e
+preview:
+  diff_sha256: sha256:f1d4ca300f49a9177b02de64efc4f9ee5a942da3b698e6b7fbb78056fc3faf1e
+  previewed_spec_sha256: sha256:a8331df7c9c0ffd5df31891f661b9c99e3c78b64915f7df784aecc359894c02a
+  actions:
+    create: 2
+    link: 0
+    update: 1
+    delete: 0
+  log: null
+reflection:
+  verdict: confirmed
+  measurement_window: local test suite
+  telemetry_refs:
+  - cargo:test:full
+  summary: Added minimal external engine phase-run supervision with approved command templates and hashed run artifacts.
+  worked: []
+  issues: []
+  structured_issues: []
+  follow_ups: []
+  evidence: []
+  heuristics:
+  - Keep S5D as supervisor over external adapters, not a provider-specific chat client.
+gate_results:
+- kind: schema
+  status: passed
+  attempt: 1
+  timestamp: 2026-05-01T07:58:53.471150+00:00
+  log: schema validation passed (built-in)
+  exit_code: null
+  evidence_path: evidence/feat.s5d.external-engine-phase-run/schema_1.log
+  command: null
+  duration_ms: 5
+decision: null
+verified_by: Diana

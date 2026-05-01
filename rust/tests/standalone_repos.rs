@@ -189,6 +189,20 @@ fn configure_gate_command(repo: &StandaloneRepo, gate: &str, command: Vec<String
     fs::write(config_path, serde_yaml::to_string(&config).unwrap()).unwrap();
 }
 
+fn configure_engine(repo: &StandaloneRepo, name: &str, approved: bool, command: Vec<String>) {
+    let config_path = repo.path().join(".s5d").join("config.yaml");
+    let mut config: s5d::S5dConfig = load_yaml(&config_path);
+    config.engines.insert(
+        name.to_string(),
+        s5d::EngineConfig {
+            approved,
+            command,
+            reasoning: Some("low".into()),
+        },
+    );
+    fs::write(config_path, serde_yaml::to_string(&config).unwrap()).unwrap();
+}
+
 fn configure_gate_timeout(repo: &StandaloneRepo, timeout_s: u32) {
     let config_path = repo.path().join(".s5d").join("config.yaml");
     let mut config: s5d::S5dConfig = load_yaml(&config_path);
@@ -490,6 +504,57 @@ fn init_bootstraps_project_layout_for_standalone_repo() {
 }
 
 #[test]
+fn public_help_hides_internal_commands() {
+    let repo = StandaloneRepo::new();
+
+    let help = run_ok(repo.path(), ["--help"]);
+    for hidden in ["index", "gate", "bootstrap", "cg", "mcp"] {
+        assert!(
+            !help
+                .stdout
+                .lines()
+                .any(|line| line.trim_start().starts_with(&format!("{hidden} "))),
+            "top-level help should hide internal command `{hidden}`:\n{}",
+            help.stdout
+        );
+    }
+    for public in ["codebase", "hook", "update", "install"] {
+        assert!(
+            help.stdout
+                .lines()
+                .any(|line| line.trim_start().starts_with(&format!("{public} "))),
+            "top-level help should keep public command `{public}`:\n{}",
+            help.stdout
+        );
+    }
+
+    let hook_help = run_ok(repo.path(), ["hook", "--help"]);
+    assert!(
+        hook_help
+            .stdout
+            .lines()
+            .any(|line| line.trim_start().starts_with("pre-commit ")),
+        "hook help should keep pre-commit public:\n{}",
+        hook_help.stdout
+    );
+    for hidden in [
+        "pretool-edit",
+        "user-prompt-submit",
+        "require-spec",
+        "pre-commit-validate",
+    ] {
+        assert!(
+            !hook_help
+                .stdout
+                .lines()
+                .any(|line| line.trim_start().starts_with(&format!("{hidden} "))),
+            "hook help should hide internal command `{hidden}`:\n{}",
+            hook_help.stdout
+        );
+    }
+}
+
+#[test]
 fn lightweight_feature_flow_passes_with_configured_schema_gate() {
     let repo = StandaloneRepo::new();
     seed_searchable_rust_repo(&repo);
@@ -534,16 +599,37 @@ fn lightweight_feature_flow_passes_with_configured_schema_gate() {
     }
 
     run_ok(repo.path(), ["preview", spec_str]);
+    let approve_without_reviewer = run_fail(repo.path(), ["approve", spec_str]);
+    assert!(
+        approve_without_reviewer.stderr.contains("--reviewer"),
+        "{}",
+        approve_without_reviewer.summary()
+    );
     run_ok(repo.path(), ["approve", spec_str, "--reviewer", "Roman"]);
     let gates = run_ok(repo.path(), ["run-gates", spec_str]);
     assert!(gates.stdout.contains("gate:schema"), "{}", gates.summary());
 
-    let import = run_ok(repo.path(), ["import", spec_str]);
+    let import_without_verifier = run_fail(repo.path(), ["import", spec_str]);
+    assert!(
+        import_without_verifier.stderr.contains("--verified-by"),
+        "{}",
+        import_without_verifier.summary()
+    );
+    let same_person_import = run_fail(repo.path(), ["import", spec_str, "--verified-by", "Roman"]);
+    assert!(
+        same_person_import
+            .stderr
+            .contains("verifier should differ from approver"),
+        "{}",
+        same_person_import.summary()
+    );
+    let import = run_ok(repo.path(), ["import", spec_str, "--verified-by", "Diana"]);
     assert!(import.stdout.contains("Imported"), "{}", import.summary());
 
     let record: s5d::Record = load_yaml(&record_path_for(&spec_path));
     assert_eq!(record.status, s5d::SpecStatus::Applied);
     assert_eq!(record.sync_status, s5d::SyncStatus::Synced);
+    assert_eq!(record.verified_by.as_deref(), Some("Diana"));
     assert!(record
         .gate_results
         .iter()
@@ -775,6 +861,134 @@ fn workflow_phase_lifecycle_emits_ralph_task_package_and_records_outcome() {
 }
 
 #[test]
+fn workflow_phase_run_records_external_engine_artifact() {
+    let repo = StandaloneRepo::new();
+    seed_searchable_rust_repo(&repo);
+    run_ok(repo.path(), ["init"]);
+
+    run_ok(
+        repo.path(),
+        [
+            "new",
+            "feat.billing.external-run",
+            "--tier",
+            "lightweight",
+            "--product",
+            "Billing",
+        ],
+    );
+
+    let spec_path = only_spec_path(&repo);
+    let spec_str = spec_path.to_str().unwrap();
+    {
+        let mut spec: s5d::Spec = load_yaml(&spec_path);
+        if let Some(ref mut artifacts) = spec.artifacts {
+            artifacts.capabilities.push(s5d::Capability {
+                id: "cap.RunExternalEngine".into(),
+                domain: "billing".into(),
+                name: "RunExternalEngine".into(),
+                description: Some("Record external engine phase artifacts".into()),
+                since: None,
+            });
+        }
+        fs::write(&spec_path, serde_yaml::to_string(&spec).unwrap()).unwrap();
+    }
+
+    configure_engine(
+        &repo,
+        "local-s5d",
+        true,
+        vec![s5d_bin().into(), "show".into(), "{spec}".into()],
+    );
+    configure_engine(
+        &repo,
+        "blocked-s5d",
+        false,
+        vec![s5d_bin().into(), "show".into(), "{spec}".into()],
+    );
+
+    run_ok(repo.path(), ["preview", spec_str]);
+    run_ok(repo.path(), ["approve", spec_str, "--reviewer", "Roman"]);
+
+    let before_start = run_fail(
+        repo.path(),
+        [
+            "phase",
+            "run",
+            spec_str,
+            "--id",
+            "prototype",
+            "--engine",
+            "local-s5d",
+        ],
+    );
+    assert!(
+        before_start
+            .stderr
+            .contains("must be active before phase run"),
+        "{}",
+        before_start.summary()
+    );
+
+    run_ok(
+        repo.path(),
+        ["phase", "start", spec_str, "--id", "prototype"],
+    );
+
+    let unapproved = run_fail(
+        repo.path(),
+        [
+            "phase",
+            "run",
+            spec_str,
+            "--id",
+            "prototype",
+            "--engine",
+            "blocked-s5d",
+        ],
+    );
+    assert!(
+        unapproved.stderr.contains("not approved"),
+        "{}",
+        unapproved.summary()
+    );
+
+    let run = run_ok(
+        repo.path(),
+        [
+            "phase",
+            "run",
+            spec_str,
+            "--id",
+            "prototype",
+            "--engine",
+            "local-s5d",
+        ],
+    );
+    assert!(
+        run.stdout.contains("Phase run completed"),
+        "{}",
+        run.summary()
+    );
+    assert!(run.stdout.contains("sha256:"), "{}", run.summary());
+
+    let record: s5d::Record = load_yaml(&record_path_for(&spec_path));
+    assert_eq!(record.phase_runs.len(), 1);
+    let phase_run = &record.phase_runs[0];
+    assert_eq!(phase_run.phase_id, "prototype");
+    assert_eq!(phase_run.engine, "local-s5d");
+    assert_eq!(phase_run.status, "completed");
+    assert_eq!(phase_run.reasoning.as_deref(), Some("low"));
+    assert!(phase_run.output_sha256.starts_with("sha256:"));
+    assert!(repo.path().join(&phase_run.output_path).is_file());
+    assert!(record.phase_history.iter().any(|entry| {
+        entry.phase_id == "prototype"
+            && entry.status == s5d::WorkflowPhaseStatus::Verified
+            && entry.engine.as_deref() == Some("local-s5d")
+    }));
+}
+
+#[test]
 fn import_stays_blocked_when_declared_gate_only_skips() {
     let repo = StandaloneRepo::new();
     seed_searchable_rust_repo(&repo);
@@ -808,7 +1022,7 @@ fn import_stays_blocked_when_declared_gate_only_skips() {
     let gates = run_ok(repo.path(), ["run-gates", spec_str]);
     assert!(gates.stdout.contains("skipped: 1"), "{}", gates.summary());
 
-    let import = run_fail(repo.path(), ["import", spec_str]);
+    let import = run_fail(repo.path(), ["import", spec_str, "--verified-by", "Diana"]);
     assert!(
         import
             .stderr
@@ -1281,6 +1495,106 @@ fn architecture_check_allows_declared_domain_edge() {
     assert!(
         result.stdout.contains("architecture ok"),
         "architecture check should pass with declared edge:\n{}",
+        result.summary()
+    );
+}
+
+#[test]
+fn architecture_check_accepts_markdown_component_paths() {
+    let repo = StandaloneRepo::new();
+    repo.write("skills/s5d/SKILL.md", "# S5D\n");
+    run_ok(repo.path(), ["init"]);
+
+    let spec_dir = repo.path().join(".s5d").join("packages");
+    fs::create_dir_all(&spec_dir).unwrap();
+    let spec_path = spec_dir.join("feat.s5d.skill-doc-governance__20260429.s5d.yaml");
+    let spec = s5d::Spec {
+        s5d: "1.0".into(),
+        id: "feat.s5d.skill-doc-governance".into(),
+        version: "1.0.0".into(),
+        product: "s5d".into(),
+        tier: s5d::Tier::Standard,
+        allow_update: false,
+        meta: None,
+        context: Some("Skill documentation is an agent-facing architecture surface".into()),
+        workflow: None,
+        artifacts: Some(s5d::Artifacts {
+            products: vec![s5d::Product {
+                id: "s5d".into(),
+                name: "S5D".into(),
+                organization: None,
+            }],
+            domains: vec![s5d::Domain {
+                id: "dom.s5d.execution".into(),
+                product: "s5d".into(),
+                name: "S5D Execution".into(),
+                classification: Some("core".into()),
+                description: None,
+                team: None,
+                maturity_level: None,
+            }],
+            capabilities: vec![s5d::Capability {
+                id: "cap.s5d.shape-product-intent".into(),
+                domain: "dom.s5d.execution".into(),
+                name: "ShapeProductIntent".into(),
+                description: None,
+                since: None,
+            }],
+            features: vec![s5d::Feature {
+                id: "feat.s5d.skill-doc-governance".into(),
+                product: "s5d".into(),
+                name: "Skill Doc Governance".into(),
+                description: None,
+            }],
+            systems: vec![s5d::SoftwareSystem {
+                id: "sys.s5d".into(),
+                product: "s5d".into(),
+                name: "S5D".into(),
+            }],
+            containers: vec![s5d::Container {
+                id: "ctr.s5d.skill-docs".into(),
+                system: "sys.s5d".into(),
+                name: "Skill Docs".into(),
+                technology: Some("Markdown".into()),
+            }],
+            components: vec![s5d::Component {
+                id: "comp.s5d.skill-docs".into(),
+                feature: "feat.s5d.skill-doc-governance".into(),
+                domain: "dom.s5d.execution".into(),
+                container: "ctr.s5d.skill-docs".into(),
+                name: "S5D Skill Docs".into(),
+                paths: vec!["skills/s5d/SKILL.md".into()],
+            }],
+            ..Default::default()
+        }),
+        links: Some(s5d::Links::default()),
+        contracts: vec![],
+        gates: vec![
+            s5d::Gate {
+                kind: "schema".into(),
+            },
+            s5d::Gate {
+                kind: "graph".into(),
+            },
+            s5d::Gate {
+                kind: "architecture".into(),
+            },
+        ],
+        roc: None,
+        problem: None,
+        hypotheses: vec![],
+        decision: None,
+        note_rationale: None,
+        expires_at: None,
+        auto_noted: false,
+    };
+    fs::write(&spec_path, serde_yaml::to_string(&spec).unwrap()).unwrap();
+
+    let spec_str = spec_path.to_str().unwrap();
+    let result = run_ok(repo.path(), ["check", spec_str]);
+    assert!(
+        result.stdout.contains("architecture ok"),
+        "architecture check should accept markdown component paths:\n{}",
         result.summary()
     );
 }
@@ -1961,7 +2275,10 @@ fn contract_full_lifecycle_end_to_end() {
     run_ok(repo.path(), ["run-gates", &spec_str]);
 
     // Import
-    let import = run_ok(repo.path(), ["import", &spec_str]);
+    let import = run_ok(
+        repo.path(),
+        ["import", &spec_str, "--verified-by", "TestVerifier"],
+    );
     assert!(
         import.stdout.contains("imported")
             || import.stdout.contains("state_fingerprint")
@@ -2485,7 +2802,10 @@ fn import_rejects_spec_modified_since_approval() {
     fs::write(&spec_path, serde_yaml::to_string(&spec).unwrap()).unwrap();
 
     // Import should reject — spec changed since approval
-    let result = run_fail(repo.path(), ["import", &spec_str]);
+    let result = run_fail(
+        repo.path(),
+        ["import", &spec_str, "--verified-by", "TestVerifier"],
+    );
     assert!(
         result.stderr.contains("modified")
             || result.stderr.contains("spec_sha")
@@ -2510,7 +2830,10 @@ fn rollback_after_import_tombstones_aliases_and_removes_index() {
         ["approve", &spec_str, "--reviewer", "TestReviewer"],
     );
     run_ok(repo.path(), ["run-gates", &spec_str]);
-    run_ok(repo.path(), ["import", &spec_str]);
+    run_ok(
+        repo.path(),
+        ["import", &spec_str, "--verified-by", "TestVerifier"],
+    );
 
     // Verify import created entries
     let s5d_dir = repo.path().join(".s5d");
@@ -2700,7 +3023,10 @@ fn reconcile_fails_closed_on_deleted_alias() {
         ["approve", &spec_str, "--reviewer", "TestReviewer"],
     );
     run_ok(repo.path(), ["run-gates", &spec_str]);
-    run_ok(repo.path(), ["import", &spec_str]);
+    run_ok(
+        repo.path(),
+        ["import", &spec_str, "--verified-by", "TestVerifier"],
+    );
 
     // Delete one package alias entry — UUID is lost, can't restore
     let s5d_dir = repo.path().join(".s5d");
@@ -2732,7 +3058,10 @@ fn reconcile_fails_closed_on_corrupted_uuid() {
         ["approve", &spec_str, "--reviewer", "TestReviewer"],
     );
     run_ok(repo.path(), ["run-gates", &spec_str]);
-    run_ok(repo.path(), ["import", &spec_str]);
+    run_ok(
+        repo.path(),
+        ["import", &spec_str, "--verified-by", "TestVerifier"],
+    );
 
     // Corrupt a UUID — reconcile can't fix this from spec alone
     let s5d_dir = repo.path().join(".s5d");
@@ -2796,7 +3125,7 @@ fn rollback_of_first_spec_does_not_break_second_spec_sharing_global_artifact() {
     run_ok(repo.path(), ["preview", &spec1_str]);
     run_ok(repo.path(), ["approve", &spec1_str, "--reviewer", "R"]);
     run_ok(repo.path(), ["run-gates", &spec1_str]);
-    run_ok(repo.path(), ["import", &spec1_str]);
+    run_ok(repo.path(), ["import", &spec1_str, "--verified-by", "V"]);
 
     // Spec 2 (in same repo, shares Product "shop")
     run_ok(
@@ -2834,7 +3163,7 @@ fn rollback_of_first_spec_does_not_break_second_spec_sharing_global_artifact() {
     run_ok(repo.path(), ["preview", &spec2_str]);
     run_ok(repo.path(), ["approve", &spec2_str, "--reviewer", "R"]);
     run_ok(repo.path(), ["run-gates", &spec2_str]);
-    run_ok(repo.path(), ["import", &spec2_str]);
+    run_ok(repo.path(), ["import", &spec2_str, "--verified-by", "V"]);
 
     // Both imported. Now rollback spec1.
     run_ok(repo.path(), ["rollback", &spec1_str]);
@@ -2901,7 +3230,7 @@ fn shared_global_drift_visible_for_non_owner_spec() {
     run_ok(repo.path(), ["preview", &spec1_str]);
     run_ok(repo.path(), ["approve", &spec1_str, "--reviewer", "R"]);
     run_ok(repo.path(), ["run-gates", &spec1_str]);
-    run_ok(repo.path(), ["import", &spec1_str]);
+    run_ok(repo.path(), ["import", &spec1_str, "--verified-by", "V"]);
 
     // Spec 2 — non-owner, shares Product "shared"
     run_ok(
@@ -2938,7 +3267,7 @@ fn shared_global_drift_visible_for_non_owner_spec() {
     run_ok(repo.path(), ["preview", &spec2_str]);
     run_ok(repo.path(), ["approve", &spec2_str, "--reviewer", "R"]);
     run_ok(repo.path(), ["run-gates", &spec2_str]);
-    run_ok(repo.path(), ["import", &spec2_str]);
+    run_ok(repo.path(), ["import", &spec2_str, "--verified-by", "V"]);
 
     // Both imported. Corrupt the shared Product global alias UUID.
     let s5d_dir = repo.path().join(".s5d");

@@ -230,6 +230,7 @@ fn is_source_file(path: &Path) -> bool {
                 | "js"
                 | "jsx"
                 | "go"
+                | "md"
                 | "java"
                 | "kt"
                 | "swift"

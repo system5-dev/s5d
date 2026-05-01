@@ -50,16 +50,17 @@ s5d new feat.my-feature --product myapp
 # Edit the spec YAML, then:
 s5d validate .s5d/packages/feat.my-feature__*.s5d.yaml
 s5d preview .s5d/packages/feat.my-feature__*.s5d.yaml
-s5d approve .s5d/packages/feat.my-feature__*.s5d.yaml --reviewer yourname
+s5d approve .s5d/packages/feat.my-feature__*.s5d.yaml --reviewer reviewername
 
 # Implement your code, then:
 s5d run-gates .s5d/packages/feat.my-feature__*.s5d.yaml
-s5d import .s5d/packages/feat.my-feature__*.s5d.yaml
+s5d import .s5d/packages/feat.my-feature__*.s5d.yaml --verified-by verifiername
 
 # Optional: run a bounded workflow phase with Ralph
 s5d phase list .s5d/packages/feat.my-feature__*.s5d.yaml
 s5d phase start .s5d/packages/feat.my-feature__*.s5d.yaml --id prototype
 s5d execute loop .s5d/packages/feat.my-feature__*.s5d.yaml --phase prototype --engine ralph
+s5d phase run .s5d/packages/feat.my-feature__*.s5d.yaml --id prototype --engine local-engine
 s5d phase accept .s5d/packages/feat.my-feature__*.s5d.yaml --id prototype --reviewer yourname
 
 # Later: close the loop with telemetry-backed outcome
@@ -78,9 +79,11 @@ s5d drift-check
 
 When a team already has its own delivery/discovery process, S5D can support it instead of replacing it.
 
-- `s5d phase list/start/accept` manages the active workflow phase in `.record.yaml`
+- `s5d phase list/start/run/accept` manages the active workflow phase in `.record.yaml`
+- `s5d phase run --engine <name>` executes an approved command template from `.s5d/config.yaml`, captures stdout/stderr under `.s5d/runs/`, and records the output hash in `.record.yaml`
 - `s5d execute loop --engine ralph [--mode init|bugfix]` emits a bounded task package for the active phase only
 - each `execute loop` call persists the package under `.s5d/tasks/`
+- engine completion does not accept the phase; human `phase accept` remains explicit
 - `ralph-init` warms repo context from docs, tests, environment setup, and current test results
 - `ralph-bugfix` enforces regression-first bugfix execution with explicit root-cause evidence
 - `s5d reflect --verdict --measurement-window --telemetry` records outcome evidence after rollout

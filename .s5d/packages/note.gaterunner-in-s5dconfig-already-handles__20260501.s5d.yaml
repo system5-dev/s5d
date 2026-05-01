@@ -1,0 +1,26 @@
+s5d: '1.0'
+id: note.gaterunner-in-s5dconfig-already-handles
+version: 1.0.0
+product: default
+tier: note
+allow_update: true
+meta:
+  title: GateRunner in S5dConfig already handles subprocess execution with timeout and env — this is the existing subprocess boundary in S5D
+  authors: []
+  date: 2026-05-01
+  tickets: []
+  adrs: []
+  renames: []
+context: null
+workflow: null
+artifacts: null
+links: null
+contracts: []
+gates: []
+roc: null
+problem: null
+hypotheses: []
+decision: null
+note_rationale: GateRunner in S5dConfig already handles subprocess execution with timeout and env — this is the existing subprocess boundary in S5D
+expires_at: 2026-07-30
+auto_noted: false

@@ -14,3 +14,18 @@ features:
   status: proposed
   product: s5d
   version: 1.0.0
+- id: feat.s5d.enforcement-contract
+  spec_path: packages/feat.s5d.enforcement-contract__20260427.s5d.yaml
+  status: applied
+  product: S5D
+  version: 1.0.0
+- id: feat.s5d.cli-surface-simplification
+  spec_path: packages/feat.s5d.cli-surface-simplification__20260427.s5d.yaml
+  status: applied
+  product: S5D
+  version: 1.0.0
+- id: feat.s5d.external-engine-phase-run
+  spec_path: packages/feat.s5d.external-engine-phase-run__20260501.s5d.yaml
+  status: applied
+  product: s5d
+  version: 1.0.0

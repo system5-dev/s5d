@@ -1,0 +1,130 @@
+s5d: '1.0'
+id: feat.s5d.enforcement-contract
+version: 1.0.0
+product: S5D
+tier: lightweight
+allow_update: true
+meta:
+  title: S5D enforcement contract alignment
+  authors: [diana]
+  date: 2026-04-27
+  tickets: [RAN-325]
+  adrs: []
+  renames: []
+context: |
+  ## Problem
+  S5D generated policy says non-trivial work is mandatory and has "no exceptions",
+  but hook enforcement still has weak edges: malformed PreToolUse envelopes are
+  approved, and the bypass escape hatch is described like an ordinary option.
+  That creates false confidence: the social contract sounds stronger than the
+  runtime contract.
+
+  ## Goal
+  Align the contract with behavior using the smallest change:
+  - fail closed for malformed PreToolUse enforcement envelopes;
+  - keep S5D_BYPASS=1 as an explicit break-glass escape hatch, not routine flow;
+  - update generated/advisory wording so "mandatory" and "break-glass" are both
+    true and test-covered.
+
+  ## Privacy
+  Classification: Internal
+workflow:
+  mode: plan
+  target_architecture:
+    summary: PreToolUse enforcement blocks malformed enforcement input and generated policy text describes bypass as explicit break-glass.
+    invariants:
+    - Malformed PreToolUse Edit/Write/MultiEdit hook input blocks, because the gate cannot verify scope.
+    - Malformed PreToolUse Bash commit hook input blocks for require-spec and staged-spec validation entrypoints.
+    - UserPromptSubmit remains advisory and fail-silent on malformed input.
+    - S5D_BYPASS=1 remains available only as an explicit break-glass escape hatch.
+  delivery_strategy:
+    summary: Tighten hook parsing and wording in place, then add focused tests around malformed input and generated policy text.
+    rationale: null
+  resources: null
+  role_map:
+    implementer: coder
+    reviewer: reviewer
+    owner: human
+    verifier: reviewer
+  review_policy:
+    cross_model_required: false
+    required_on: []
+  structure_outline: null
+  execution_mode:
+    engine: manual
+    max_iterations: null
+    stop_conditions:
+    - Phase acceptance reached
+    - Approved scope exhausted
+    - New decision required
+  phases:
+  - id: prototype
+    title: Prototype
+    scope: Reduce unknowns before committed implementation
+    roles:
+    - owner
+    - implementer
+    acceptance:
+    - Critical feasibility questions answered
+    - Telemetry approach identified
+    rollback:
+    - Discard spike output if assumptions fail
+  - id: build
+    title: Build
+    scope: Implement approved scope and pass local gates
+    roles:
+    - implementer
+    - reviewer
+    acceptance:
+    - Declared gates pass
+    - Change matches approved scope
+    rollback:
+    - Revert or reconcile if gates or review fail
+  - id: measure
+    title: Measure
+    scope: Collect telemetry and close the loop with an explicit verdict
+    roles:
+    - owner
+    - verifier
+    acceptance:
+    - Telemetry collected against success criteria
+    - Outcome verdict recorded
+    rollback:
+    - Iterate or kill if evidence stays weak
+artifacts:
+  products:
+  - id: S5D
+    name: S5D
+    organization: null
+  domains: []
+  capabilities:
+  - id: cap.s5d.enforcement-contract
+    name: Align mandatory enforcement contract with hook behavior
+    domain: s5d-execution
+    description: Make PreToolUse enforcement fail closed on malformed input and present bypass as break-glass only.
+  entities: []
+  features:
+  - id: feat.s5d.enforcement-contract
+    product: S5D
+    name: enforcement-contract
+    description: null
+  use_cases: []
+  systems: []
+  containers: []
+  components: []
+  roles: []
+  concerns: []
+  metrics: []
+  supersystems: []
+  transports: []
+links: null
+contracts: []
+gates:
+- kind: schema
+roc: null
+problem: null
+hypotheses: []
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false

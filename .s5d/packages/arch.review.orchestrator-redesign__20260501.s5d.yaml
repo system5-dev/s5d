@@ -1,0 +1,26 @@
+s5d: '1.0'
+id: arch.review.orchestrator-redesign
+version: 1.0.0
+product: MyProduct
+tier: note
+allow_update: true
+meta:
+  title: arch.review.orchestrator-redesign
+  authors: []
+  date: 2026-05-01
+  tickets: []
+  adrs: []
+  renames: []
+context: null
+workflow: null
+artifacts: null
+links: null
+contracts: []
+gates: []
+roc: null
+problem: null
+hypotheses: []
+decision: null
+note_rationale: Architecture audit of the proposed S5D orchestrator redesign — findings and recommended shape
+expires_at: 2026-07-30
+auto_noted: false

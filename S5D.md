@@ -25,7 +25,7 @@ Applies only to work grounded in an existing repository. No codebase, no S5D.
 
 **Reference docs** (read when needed, not upfront):
 - [metamodel.md](metamodel.md) — artifact graph, DDD decomposition, validation rules
-- [session-protocol.md](session-protocol.md) — WAL format, spec:// URI, REVIEW markers, conflicts
+- [session-protocol.md](session-protocol.md) — WAL format, spec:// URI, REVIEW markers, conflicts, effectiveness metrics
 
 ---
 
@@ -87,10 +87,20 @@ Every active spec has two mutable surfaces:
 | Approve | `s5d_approve` | `s5d approve --reviewer <name>` | Must be `previewed`. Binds `spec_sha256` + `diff_sha256`. |
 | Run gates | `s5d_run_gates` | `s5d run-gates` | Schema/graph run built-in if no external command. Failed gate blocks import. |
 | Waive gate | `s5d_waiver` | MCP only | Gate kind must exist in spec. |
-| Import | `s5d_import` | `s5d import [--verified-by] [--force]` | Requires: approved, spec hash match, diff hash match, all gates passed/waived. |
+| Import | `s5d_import` | `s5d import --verified-by <name> [--force]` | Requires: explicit verifier, approved spec, spec hash match, diff hash match, all gates passed/waived. |
 | Decide | `s5d_decide` | `s5d decide --confirmed-by <name>` | Decision tier. Winner must have `spec_ref`. Human confirmation required. |
 | Reflect | `s5d_reflect` | `s5d reflect --summary ... --heuristic ...` | Writes to record only (not spec). |
 | Route | `s5d_route` | `s5d route` | Classifies into tier + mode + entry point. |
+
+### Workflow Shell Commands
+
+| Action | MCP | CLI | Hard preconditions |
+|---|---|---|---|
+| List phases | `s5d_phase_list` | `s5d phase list <spec>` | Spec must have a `workflow` block and an existing `.record.yaml`. |
+| Start phase | `s5d_phase_start` | `s5d phase start <spec> --id <phase>` | Spec must be approved or later. No other phase may already be active. |
+| Run external engine | — | `s5d phase run <spec> --id <phase> --engine <name>` | Phase must be active. Engine must be approved in `.s5d/config.yaml`. Captures stdout/stderr under `.s5d/runs/` and records output hash in `.record.yaml`. Does not accept the phase. |
+| Accept phase | `s5d_phase_accept` | `s5d phase accept <spec> --id <phase> --reviewer <name>` | Phase must already be active. Human reviewer required. |
+| Emit Ralph task package | `s5d_execute_loop` | `s5d execute loop <spec> --phase <id> --engine ralph [--mode init\|bugfix]` | Phase must be active. Workflow engine must match and currently only `ralph` is supported. Each run persists a task artifact under `.s5d/tasks/`. |
 
 ### Recovery Commands
 
@@ -141,7 +151,7 @@ s5d preview <feature-spec>
 s5d approve <feature-spec> --reviewer Roman
 # implement code
 s5d run-gates <feature-spec>
-s5d import <feature-spec> --verified-by Roman
+s5d import <feature-spec> --verified-by Diana
 
 # 6. Ship (explicit human permission for push/deploy)
 

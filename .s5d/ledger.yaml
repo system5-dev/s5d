@@ -7,3 +7,24 @@ entries:
   status: success
   timestamp: 2026-04-11T07:30:12.086458+00:00
   record_ref: records/feat.s5d.test-logging__20260411.record.yaml
+- spec_sha256: sha256:d1d41730df47438c1361216d48217f3f85d9c2fae46cf787344fa42d2827e207
+  state_fingerprint: sha256:000a7ab5ef9b922650565e29e6499d754fd563296a8c3799b031b45549df3e1c
+  package_id: feat.s5d.enforcement-contract
+  action: import
+  status: success
+  timestamp: 2026-04-27T14:08:07.739813+00:00
+  record_ref: records/feat.s5d.enforcement-contract__20260427.record.yaml
+- spec_sha256: sha256:f0d08bf0bcca281daf52463dbf97735d5e658a7f6905b0c81aaa6c621ceab405
+  state_fingerprint: sha256:f9de577618b8f9dfdd5d9445fafc303418377adb68e353d1150656ef8836da21
+  package_id: feat.s5d.cli-surface-simplification
+  action: import
+  status: success
+  timestamp: 2026-04-27T17:02:35.200330+00:00
+  record_ref: records/feat.s5d.cli-surface-simplification__20260427.record.yaml
+- spec_sha256: sha256:a8331df7c9c0ffd5df31891f661b9c99e3c78b64915f7df784aecc359894c02a
+  state_fingerprint: sha256:c9f139889038967df158f27583f151aeacf30d6ff0ad252f9697a822076d1344
+  package_id: feat.s5d.external-engine-phase-run
+  action: import
+  status: success
+  timestamp: 2026-05-01T07:59:00.544551+00:00
+  record_ref: records/feat.s5d.external-engine-phase-run__20260501.record.yaml

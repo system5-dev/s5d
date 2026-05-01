@@ -46,10 +46,30 @@ fn metamodel_has_core_invariants() {
 #[test]
 fn session_protocol_has_core_concepts() {
     let session = read_repo_file("skills/s5d/session-protocol.md");
-    for term in ["WAL", "spec://", "REVIEW"] {
+    for term in ["WAL", "spec://", "REVIEW", "Effectiveness Metrics"] {
         assert!(
             session.contains(term),
             "session-protocol.md must contain: {}",
+            term
+        );
+    }
+}
+
+#[test]
+fn session_protocol_documents_effectiveness_measurement() {
+    let session = read_repo_file("skills/s5d/session-protocol.md");
+    for term in [
+        "Judgment",
+        "Efficiency",
+        "Intent preservation",
+        "A/B Protocol",
+        "Replay Protocol",
+        "Code-only",
+        "Spec-anchored",
+    ] {
+        assert!(
+            session.contains(term),
+            "session-protocol.md must document effectiveness measurement term: {}",
             term
         );
     }
@@ -68,6 +88,7 @@ fn workflow_shell_commands_are_documented() {
 
     for term in [
         "s5d phase start",
+        "s5d phase run",
         "s5d execute loop",
         "--verdict",
         "--measurement-window",
@@ -76,10 +97,33 @@ fn workflow_shell_commands_are_documented() {
         ".s5d/tasks/",
         "ralph-init",
         "ralph-bugfix",
+        ".s5d/runs/",
     ] {
         assert!(
             readme.contains(term) || skill.contains(term),
             "workflow-shell docs must mention: {}",
+            term
+        );
+    }
+}
+
+#[test]
+fn skill_defines_cli_conductor_contract() {
+    let skill = read_repo_file("skills/s5d/SKILL.md");
+
+    for term in [
+        "human-facing conductor",
+        "not a second state machine",
+        ".s5d/config.yaml",
+        "approved: true",
+        "must not",
+        "call Claude/Codex/Gemini directly",
+        "Engine completion is only evidence",
+        "s5d add-hypothesis",
+    ] {
+        assert!(
+            skill.contains(term),
+            "S5D skill must preserve CLI-conductor contract term: {}",
             term
         );
     }

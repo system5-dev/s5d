@@ -1,0 +1,288 @@
+s5d: "1.0"
+id: feat.s5d.domain-capability-mode
+version: 1.0.0
+product: s5d
+tier: standard
+allow_update: true
+meta:
+  title: domain-capability-mode
+  authors: []
+  date: 2026-04-29
+  tickets: []
+  adrs: []
+  renames: []
+context: |
+  ## Problem
+  Product-intent shaping was extracted as a standalone skill, but the intended target state is one S5D skill with internal agent modes.
+
+  ## Goal
+  Make Domain-Capability Design an S5D Frame/Spec operating mode: product intent becomes S5D-native domains, capabilities, use cases, components, contracts, and scope constraints before implementation.
+
+  ## Repository Boundary
+  Keep discovery and feature shaping in the current repository by default. Split into a monorepo or architecture repository only after the single-repo boundary becomes a verified bottleneck.
+
+  ## Privacy
+  Classification: Internal. This change affects local S5D skill instructions only and does not introduce user-data handling.
+workflow:
+  mode: plan
+  target_architecture:
+    summary: S5D remains the single skill; Domain-Capability Design is an internal Product Intent -> Spec mode documented under skills/s5d.
+    invariants:
+    - Product intent shaping is framed as S5D behavior, not a standalone methodology.
+    - The mode outputs S5D-native artifacts and links.
+    - Discovery init surveys GitHub/Jira/Figma/Miro/Linear/MCP availability before building the map.
+    - Discovery state stays in the current repo unless cross-repo reuse or drift proves otherwise.
+    - Agents validate the resulting spec through S5D commands before implementation.
+    - No separate domain-capability-design skill is installed or referenced as canonical.
+  delivery_strategy:
+    summary: Add a S5D reference mode document, link it from the S5D skill, and remove the standalone skill artifact created during exploration.
+    rationale: Keeps the guidance modular enough for context hygiene while preserving a single S5D workflow boundary.
+  resources: null
+  role_map:
+    owner: human
+    implementer: coder
+    reviewer: reviewer
+    verifier: reviewer
+  review_policy:
+    cross_model_required: false
+    required_on: []
+  structure_outline: null
+  execution_mode:
+    engine: manual
+    max_iterations: null
+    stop_conditions:
+    - S5D spec no longer validates.
+    - Domain-Capability Design drifts back into a separate skill.
+    - User asks to redesign the S5D workflow boundary.
+  phases:
+  - id: shape
+    title: Shape
+    scope: Define Product Intent -> Domain-Capability Design as an S5D internal mode.
+    roles:
+    - owner
+    - implementer
+    acceptance:
+    - S5D skill names the mode and its position in the flow.
+    - The mode has a concise reference document under skills/s5d.
+    - Discovery init records available primary sources and MCP connectors.
+    rollback:
+    - Remove the mode reference if it cannot be reconciled with S5D's metamodel.
+  - id: build
+    title: Build
+    scope: Update skill files and remove the standalone skill artifact.
+    roles:
+    - implementer
+    - reviewer
+    acceptance:
+    - skills/s5d/SKILL.md links to the mode.
+    - skills/s5d/domain-capability-mode.md contains the operating contract.
+    - skills/domain-capability-design is not a tracked skill artifact.
+    rollback:
+    - Restore the previous standalone skill only if Roman explicitly chooses separate installation.
+  - id: verify
+    title: Verify
+    scope: Run S5D schema, graph, and architecture checks.
+    roles:
+    - verifier
+    acceptance:
+    - s5d validate passes.
+    - s5d graph-check passes.
+    - s5d check passes or reports an actionable limitation.
+    rollback:
+    - Fix the spec or reduce gates if a declared check is not applicable to skill docs.
+artifacts:
+  products:
+  - id: s5d
+    name: S5D
+    organization: random1st
+  domains:
+  - id: s5d-execution
+    product: s5d
+    name: Execution
+    classification: core
+    maturity_level: custom
+    team: s5d
+    description: Workflow phases, agent operating modes, gates, routing, and task execution.
+  - id: s5d-architecture
+    product: s5d
+    name: Architecture Enforcement
+    classification: core
+    maturity_level: genesis
+    team: s5d
+    description: Source-to-spec ownership and dependency checks.
+  - id: s5d-tests
+    product: s5d
+    name: Regression Tests
+    classification: core
+    maturity_level: custom
+    team: s5d
+    description: Integration and documentation sync tests for S5D behavior.
+  capabilities:
+  - id: cap.s5d.shape-product-intent
+    domain: s5d-execution
+    name: ShapeProductIntent
+    description: Turn raw product intent into S5D-native domain, capability, component, and scope artifacts before implementation.
+  - id: cap.s5d.survey-discovery-sources
+    domain: s5d-execution
+    name: SurveyDiscoverySources
+    description: Record available code, tracker, design, delivery, runtime, and MCP sources before project discovery.
+  - id: cap.s5d.check-doc-component-paths
+    domain: s5d-architecture
+    name: CheckDocComponentPaths
+    description: Let architecture checks own agent-facing Markdown instructions as governed component files.
+  - id: cap.s5d.guard-skill-doc-governance
+    domain: s5d-tests
+    name: GuardSkillDocGovernance
+    description: Verify that architecture checks accept skill Markdown component paths.
+  entities:
+  - id: ent.s5d.agent-mode
+    domain: s5d-execution
+    name: AgentMode
+    description: A documented operating mode inside the S5D skill lifecycle.
+  - id: ent.s5d.source-survey
+    domain: s5d-execution
+    name: SourceSurvey
+    description: Discovery-init record of available primary sources and their confidence.
+  features:
+  - id: feat.s5d.domain-capability-mode
+    product: s5d
+    name: domain-capability-mode
+    description: Integrate Domain-Capability Design as an internal S5D agent mode.
+  use_cases:
+  - id: uc.s5d.init-source-survey
+    feature: feat.s5d.domain-capability-mode
+    name: Survey discovery sources before architecture mapping
+  - id: uc.s5d.shape-product-intent
+    feature: feat.s5d.domain-capability-mode
+    name: Shape product intent into S5D artifacts
+  - id: uc.s5d.constrain-agent-scope
+    feature: feat.s5d.domain-capability-mode
+    name: Constrain implementation agents with domain boundaries
+  systems:
+  - id: sys.s5d
+    product: s5d
+    name: S5D Repository
+  containers:
+  - id: ctr.s5d.skill-docs
+    system: sys.s5d
+    name: S5D Skill Documentation
+    technology: Markdown
+  components:
+  - id: comp.s5d.domain-capability-mode
+    feature: feat.s5d.domain-capability-mode
+    domain: s5d-execution
+    container: ctr.s5d.skill-docs
+    name: S5D product-intent operating mode
+    paths:
+    - skills/s5d/SKILL.md
+    - skills/s5d/domain-capability-mode.md
+  - id: comp.s5d.arch-doc-paths
+    feature: feat.s5d.domain-capability-mode
+    domain: s5d-architecture
+    container: ctr.s5d.skill-docs
+    name: Architecture checker Markdown ownership
+    paths:
+    - rust/src/arch.rs
+  - id: comp.s5d.skill-doc-governance-tests
+    feature: feat.s5d.domain-capability-mode
+    domain: s5d-tests
+    container: ctr.s5d.skill-docs
+    name: Skill doc governance regression tests
+    paths:
+    - rust/tests/standalone_repos.rs
+  roles: []
+  concerns: []
+  metrics: []
+  supersystems: []
+  transports: []
+links:
+  feature_to_domain:
+  - feature: feat.s5d.domain-capability-mode
+    domain: s5d-execution
+  - feature: feat.s5d.domain-capability-mode
+    domain: s5d-architecture
+  - feature: feat.s5d.domain-capability-mode
+    domain: s5d-tests
+  use_case_to_capability:
+  - use_case: uc.s5d.init-source-survey
+    capability: cap.s5d.survey-discovery-sources
+  - use_case: uc.s5d.shape-product-intent
+    capability: cap.s5d.shape-product-intent
+  - use_case: uc.s5d.constrain-agent-scope
+    capability: cap.s5d.shape-product-intent
+  - use_case: uc.s5d.constrain-agent-scope
+    capability: cap.s5d.check-doc-component-paths
+  use_case_to_entity: []
+  component_to_capability:
+  - component: comp.s5d.domain-capability-mode
+    capability: cap.s5d.shape-product-intent
+  - component: comp.s5d.domain-capability-mode
+    capability: cap.s5d.survey-discovery-sources
+  - component: comp.s5d.arch-doc-paths
+    capability: cap.s5d.check-doc-component-paths
+  - component: comp.s5d.skill-doc-governance-tests
+    capability: cap.s5d.guard-skill-doc-governance
+  component_to_entity:
+  - component: comp.s5d.domain-capability-mode
+    entity: ent.s5d.agent-mode
+  - component: comp.s5d.domain-capability-mode
+    entity: ent.s5d.source-survey
+  container_to_capability:
+  - container: ctr.s5d.skill-docs
+    capability: cap.s5d.shape-product-intent
+  - container: ctr.s5d.skill-docs
+    capability: cap.s5d.survey-discovery-sources
+  - container: ctr.s5d.skill-docs
+    capability: cap.s5d.check-doc-component-paths
+  - container: ctr.s5d.skill-docs
+    capability: cap.s5d.guard-skill-doc-governance
+  concern_to_metric: []
+  component_to_container:
+  - component: comp.s5d.domain-capability-mode
+    container: ctr.s5d.skill-docs
+  edges:
+  - from: s5d-tests
+    to: s5d-architecture
+    archetype: customer_supplier
+    description: Regression tests execute the architecture checker behavior for Markdown component paths.
+  depends_on: []
+  entity_relations: []
+  capability_to_entity:
+  - capability: cap.s5d.shape-product-intent
+    entity: ent.s5d.agent-mode
+  - capability: cap.s5d.survey-discovery-sources
+    entity: ent.s5d.source-survey
+  capability_to_concern: []
+contracts: []
+gates:
+- kind: schema
+- kind: graph
+- kind: architecture
+roc: null
+problem: Product-intent architecture shaping must be governed by S5D itself, not delivered as a separate skill that bypasses S5D workflow enforcement.
+hypotheses:
+- id: h1-standalone-skill
+  title: Keep Domain-Capability Design as a standalone skill
+  content: |
+    This keeps the artifact easy to install independently, but it splits product-intent shaping from the S5D lifecycle and weakens enforcement. It also contradicts the intended one-skill flow.
+  scope: Skill packaging boundary
+  kind: design
+  layer: L1
+- id: h2-s5d-internal-mode
+  title: Integrate as an S5D internal operating mode
+  content: |
+    This keeps Domain-Capability Design inside the S5D Frame/Spec workflow while preserving context hygiene through a reference document. It is the selected path.
+  scope: S5D skill workflow boundary
+  kind: design
+  layer: L1
+- id: h3-inline-only
+  title: Inline the whole mode into SKILL.md
+  content: |
+    This makes the mode impossible to miss, but bloats the default S5D skill context. A linked reference keeps the main workflow readable while making the mode canonical.
+  scope: S5D skill context budget
+  kind: design
+  layer: L1
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false

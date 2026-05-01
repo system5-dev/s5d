@@ -27,7 +27,8 @@ Applies only to work grounded in an existing repository. No codebase, no S5D.
 
 **Reference docs** (read when needed, not upfront):
 - [metamodel.md](metamodel.md) — artifact graph, DDD decomposition, validation rules
-- [session-protocol.md](session-protocol.md) — WAL format, spec:// URI, REVIEW markers, conflicts
+- [domain-capability-mode.md](domain-capability-mode.md) — Product Intent → domain/capability design → implementation scope mode
+- [session-protocol.md](session-protocol.md) — WAL format, spec:// URI, REVIEW markers, conflicts, effectiveness metrics
 
 ---
 
@@ -44,6 +45,24 @@ Applies only to work grounded in an existing repository. No codebase, no S5D.
 
 ---
 
+## Agent Modes
+
+S5D is one skill with internal agent modes. Domain-capability design is not a separate skill or methodology; it is the S5D shaping mode used when raw product intent must become an architecture-aware spec.
+
+Canonical product path:
+
+```
+Product Intent → Domain-Capability Design → S5D Spec → Build → Verify → Learn
+```
+
+Use [domain-capability-mode.md](domain-capability-mode.md) inside Frame/Spec when input is a feature request, product note, Jira/Linear ticket, design, transcript, project discovery task, or implementation brief that needs domain boundaries. The mode produces S5D artifacts: domains, capabilities, entities, use cases, components, contracts, edges, gates, allowed changes, and forbidden changes.
+
+Keep discovery state in the current repository by default. Use the existing `.s5d/` package/record flow for decisions and specs; only split into a monorepo or separate architecture repository after the current repo boundary becomes a proven bottleneck.
+
+Do not create or invoke a separate `domain-capability-design` skill. Keep the output in S5D terms and validate with S5D commands.
+
+---
+
 ## Cross-cutting
 
 **WAL** — see [session-protocol.md](session-protocol.md). WAL saves are local writes (no permission needed). Ship commits require human permission.
@@ -52,7 +71,7 @@ Applies only to work grounded in an existing repository. No codebase, no S5D.
 
 **Conflicts** — see [session-protocol.md](session-protocol.md). Priority: Human > Spec > Code > Tests.
 
-**Metamodel** — enforced by `s5d validate` gate. Spec without domains/capabilities/components = validation error.
+**Metamodel** — enforced by `s5d validate`. Lightweight specs require capabilities; standard/high specs require domains, capabilities, and components.
 
 ---
 
@@ -63,7 +82,53 @@ Every active spec has two mutable surfaces:
 - `.s5d/packages/<spec-id>__<date>.s5d.yaml` — authored intent: problem, artifacts, links, contracts, gates.
 - `.s5d/records/<spec-id>__<date>.record.yaml` — runtime state: preview diff, approvals, gate results, import fingerprint, decision record, reflection, outcome verdict.
 
-`s5d_new` creates both. `s5d_add_hypothesis` / `s5d_add_evidence` edit spec YAML. All other commands update the record file.
+`s5d_new` creates both. `s5d_add_hypothesis` / `s5d_add_evidence` edit spec YAML. Lifecycle commands such as preview, approve, gates, import, phase, and reflect update the record file; read-only commands do not.
+
+---
+
+## Skill Runtime Contract
+
+This skill is the human-facing conductor for the S5D CLI. It is not a second state machine.
+
+**Source of truth:**
+- CLI commands perform durable state transitions.
+- `.s5d/packages/` stores authored intent.
+- `.s5d/records/` stores runtime truth.
+- `.s5d/config.yaml` stores approved local engine command templates.
+- `.s5d/runs/` stores external phase-run artifacts.
+
+**The skill may:**
+- route the request and choose the next S5D command;
+- help draft or edit spec YAML;
+- read run artifacts and summarize them for the human;
+- normalize engine outputs into hypotheses/evidence/spec edits through S5D commands;
+- recommend phase acceptance when evidence is sufficient.
+
+**The skill must not:**
+- store its own workflow state outside S5D files;
+- treat an engine run as phase acceptance;
+- call Claude/Codex/Gemini directly for S5D workflow execution when `s5d phase run` applies;
+- approve an engine that is not configured as `approved: true` in `.s5d/config.yaml`;
+- bypass preview/approve/import hash checks.
+
+If work needs an AI engine inside the S5D workflow, use:
+
+```bash
+s5d phase start <spec> --id <phase>
+s5d phase run <spec> --id <phase> --engine <approved-engine>
+# read .s5d/runs/.../stdout.txt
+s5d phase accept <spec> --id <phase> --reviewer <name>
+```
+
+For multi-engine hypothesis generation, run multiple approved engines for the same active phase, then merge only the artifacts:
+
+```bash
+s5d phase run <decision-spec> --id frame --engine codex-high
+s5d phase run <decision-spec> --id frame --engine claude-sonnet
+s5d phase run <decision-spec> --id frame --engine gemini-pro
+```
+
+After reading the three outputs, deduplicate and add hypotheses/evidence with `s5d add-hypothesis` / `s5d add-evidence` or by editing the decision spec followed by `s5d validate`.
 
 ---
 
@@ -89,7 +154,7 @@ Every active spec has two mutable surfaces:
 | Approve | `s5d_approve` | `s5d approve --reviewer <name>` | Must be `previewed`. Binds `spec_sha256` + `diff_sha256`. |
 | Run gates | `s5d_run_gates` | `s5d run-gates` | Schema/graph run built-in if no external command. Failed gate blocks import. |
 | Waive gate | `s5d_waiver` | MCP only | Gate kind must exist in spec. |
-| Import | `s5d_import` | `s5d import [--verified-by] [--force]` | Requires: approved, spec hash match, diff hash match, all gates passed/waived. |
+| Import | `s5d_import` | `s5d import --verified-by <name> [--force]` | Requires: explicit verifier, approved spec, spec hash match, diff hash match, all gates passed/waived. |
 | Decide | `s5d_decide` | `s5d decide --confirmed-by <name>` | Decision tier. Winner must have `spec_ref`. Human confirmation required. |
 | Reflect | `s5d_reflect` | `s5d reflect --summary ... --heuristic ... [--verdict ...] [--measurement-window ...] [--telemetry ...]` | Writes to record only (not spec). |
 | Route | `s5d_route` | `s5d route` | Classifies into tier + mode + entry point. |
@@ -100,6 +165,7 @@ Every active spec has two mutable surfaces:
 |---|---|---|---|
 | List phases | `s5d_phase_list` | `s5d phase list <spec>` | Spec must have a `workflow` block and an existing `.record.yaml`. |
 | Start phase | `s5d_phase_start` | `s5d phase start <spec> --id <phase>` | Spec must be approved or later. No other phase may already be active. |
+| Run external engine | — | `s5d phase run <spec> --id <phase> --engine <name>` | Phase must be active. Engine must be approved in `.s5d/config.yaml`. Captures stdout/stderr under `.s5d/runs/` and records output hash in `.record.yaml`. Does not accept the phase. |
 | Accept phase | `s5d_phase_accept` | `s5d phase accept <spec> --id <phase> --reviewer <name>` | Phase must already be active. Human reviewer required. |
 | Emit Ralph task package | `s5d_execute_loop` | `s5d execute loop <spec> --phase <id> --engine ralph [--mode init|bugfix]` | Phase must be active. Workflow engine must match and currently only `ralph` is supported. Each run persists a task artifact under `.s5d/tasks/`. |
 
@@ -157,7 +223,7 @@ s5d preview <feature-spec>
 s5d approve <feature-spec> --reviewer Roman
 # implement code
 s5d run-gates <feature-spec>
-s5d import <feature-spec> --verified-by Roman
+s5d import <feature-spec> --verified-by Diana
 
 # 6. Ship (explicit human permission for push/deploy)
 
@@ -182,6 +248,7 @@ Classify before touching tools. First match wins.
 - Ambiguous → pick the higher tier.
 
 **Mode:**
+- Raw product intent / ticket / design / transcript → `prepare` (run Domain-Capability Design in Frame/Spec)
 - "Evaluate/compare" → `prepare` (analyze + frame, stop for human)
 - "Implement X" with clear architecture → `execute` (auto-waiver Frame+Decide)
 - No signal → `prepare`
@@ -201,6 +268,10 @@ Reason: touches auth + payments, needs framing
 State what's anomalous. Define acceptance BEFORE options.
 
 `s5d_new` (tier: decision) creates skeleton. Fill problem card and add hypotheses/evidence via YAML or `s5d_add_hypothesis`/`s5d_add_evidence`.
+
+For raw product intent, first run Domain-Capability Design mode: extract feature intent and use cases, discover current architecture, map impacted capabilities/entities/components/UX surfaces, then decide whether this is lightweight/standard/high. Use the resulting map to populate the feature spec; do not jump directly from product text to code.
+
+When multiple engines are approved and the task benefits from independent generation, use `s5d phase run` for each engine and treat the outputs as evidence, not decisions. Do not invoke provider CLIs directly from the skill for S5D workflow work.
 
 ---
 
@@ -222,7 +293,7 @@ If a probe reveals a fatal flaw, stop — revisit hypotheses.
 
 Problem → acceptance scenarios (>=3 GWT) → implementation hypotheses (>=2) → winner → DO/DON'T.
 
-`s5d_new` creates scaffold. Write YAML with metamodel artifacts. `s5d_validate` + `s5d_graph_check`.
+`s5d_new` creates scaffold. Write YAML with metamodel artifacts. For feature specs, trace every user-facing change as `Feature → UseCase → Capability → Component` and declare cross-domain edges/contracts explicitly. `s5d_validate` + `s5d_graph_check`.
 
 ---
 
@@ -232,7 +303,13 @@ Problem → acceptance scenarios (>=3 GWT) → implementation hypotheses (>=2) �
 
 WAL: `status=AWAITING_HUMAN, pending=approve <spec-id>`. Stop.
 
-After approval: `s5d_run_gates` → implement. Local commits allowed. REVIEW markers for non-obvious decisions.
+After approval: optionally use `s5d phase start` / `s5d phase run` for bounded engine work, then implement → run local tests → `s5d_run_gates`. Local commits allowed. REVIEW markers for non-obvious decisions.
+
+Engine completion is only evidence. Human acceptance is explicit:
+
+```bash
+s5d phase accept <spec> --id <phase> --reviewer <name>
+```
 
 ---
 

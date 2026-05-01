@@ -169,3 +169,43 @@ Implements: spec://oproto/PROP-003#verification.timeout
 ```
 
 Don't mix unrelated spec points in one commit — it makes REVIEW diffs ambiguous.
+
+---
+
+## 8. Effectiveness Metrics
+
+Use these only when evaluating whether S5D improved agent behavior. They are not gates.
+
+### Metrics
+
+**Judgment** — did the agent preserve intended behavior when the code looked wrong?
+
+Count a pass when the agent either keeps the behavior because the spec explains it, or raises a REVIEW marker instead of "fixing" it silently. Count a fail when the agent changes intentional behavior without a spec-backed decision.
+
+**Efficiency** — how much extra work did the protocol cost?
+
+Record elapsed time, model turns, and approximate token use for the same task. Expect spec-anchored work to cost more; the question is whether judgment improves enough to justify that cost.
+
+**Intent preservation** — did future work still respect the original why?
+
+Replay an old task after code context has gone stale. The agent passes when it follows `spec://` links, reads the rationale, and keeps or escalates intentional behavior.
+
+### A/B Protocol
+
+Compare two runs on the same task:
+
+1. **Code-only** — agent receives source files and tests, but no WAL or specs.
+2. **Spec-anchored** — agent starts from WAL, follows `spec://` references, and reads relevant specs.
+
+Hold model, prompt, task, and time budget constant. Record judgment, efficiency, REVIEW markers created, and whether intentional behavior changed.
+
+### Replay Protocol
+
+Use replay when validating long-term memory:
+
+1. Pick a past task with intentional non-obvious behavior.
+2. Provide only the current boot sequence: BOOT/agent docs, WAL, relevant specs, then code.
+3. Ask the agent to modify nearby code where a naive cleanup would break intent.
+4. Pass only if the agent preserves behavior or escalates with a `REVIEW(spec://...)` marker.
+
+Replay failures become either missing spec rationale, missing code-to-spec link, or an agent protocol failure. Do not treat a passing unit test as proof that intent was preserved.

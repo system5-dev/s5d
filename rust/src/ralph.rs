@@ -360,9 +360,7 @@ mod tests {
         let workflow = spec.workflow.as_mut().unwrap();
         workflow.structure_outline = Some(StructureOutline {
             summary: "Add retry logic to HTTP client".into(),
-            signatures: vec![
-                "fn retry_with_backoff(req: Request, max: u32) -> Response".into(),
-            ],
+            signatures: vec!["fn retry_with_backoff(req: Request, max: u32) -> Response".into()],
             types: vec!["RetryPolicy { max_attempts: u32, backoff_ms: u64 }".into()],
         });
 
