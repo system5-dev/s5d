@@ -1,0 +1,25 @@
+spec_ref: feat.s5d.domain-capability-mode__20260429.s5d.yaml
+spec_sha256: sha256:ca5a0b07e5908de7c96930c180c60c18b7ec4696921ed414aaef87c96a992829
+status: previewed
+sync_status: unknown
+status_history:
+- status: proposed
+  timestamp: 2026-04-29T12:19:55.903672+00:00
+- status: previewed
+  timestamp: 2026-04-29T12:30:28.886094+00:00
+active_phase: null
+phase_history: []
+approvals: []
+preview:
+  diff_sha256: sha256:b6cb3423fafb749194a70f600d6f3dc568426c852555a7f55c7db4d09a001135
+  previewed_spec_sha256: sha256:436257505771a845f4cda1b0b3e00fda375ad79a81adc4969632040d216c3a2f
+  actions:
+    create: 18
+    link: 31
+    update: 1
+    delete: 0
+  log: null
+reflection: null
+gate_results: []
+decision: null
+verified_by: null

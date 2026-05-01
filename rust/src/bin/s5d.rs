@@ -182,7 +182,7 @@ enum S5dCommand {
         /// Path to .s5d.yaml file
         spec: String,
         /// Reviewer name
-        #[arg(long, default_value = "self")]
+        #[arg(long)]
         reviewer: String,
         /// Block approval if reviewer is not a domain owner
         #[arg(long)]
@@ -199,7 +199,7 @@ enum S5dCommand {
         spec: String,
         /// Who independently verified gates passed (trust separation)
         #[arg(long)]
-        verified_by: Option<String>,
+        verified_by: String,
         /// Override methodological checks
         #[arg(long)]
         force: bool,
@@ -285,6 +285,7 @@ enum S5dCommand {
         format: String,
     },
     /// Index management
+    #[command(hide = true)]
     Index {
         #[command(subcommand)]
         command: IndexCommand,
@@ -300,6 +301,7 @@ enum S5dCommand {
         command: HookCommand,
     },
     /// PreToolUse enforcement gate (S5D-Spec: feat.s5d.pretool-enforcement)
+    #[command(hide = true)]
     Gate {
         #[command(subcommand)]
         command: GateCommand,
@@ -310,13 +312,16 @@ enum S5dCommand {
         command: UpdateCommand,
     },
     /// Seed alias table from bootstrap manifest
+    #[command(hide = true)]
     Bootstrap {
         /// Path to bootstrap manifest YAML
         manifest: String,
     },
     /// Print environment fingerprint (tool versions hash)
+    #[command(hide = true)]
     Cg,
     /// Start stdio MCP server (for Claude Code integration)
+    #[command(hide = true)]
     Mcp,
     /// Register s5d MCP server for supported assistants.
     /// Default: project-level for Claude (.mcp.json). Use flags to target
@@ -375,6 +380,7 @@ enum HookCommand {
     /// PreToolUse(Edit|Write|MultiEdit) hook entrypoint.
     /// Reads Claude Code hook JSON from stdin, returns decision JSON to stdout.
     /// S5D-Spec: feat.s5d.pretool-enforcement
+    #[command(hide = true)]
     PretoolEdit,
     /// UserPromptSubmit hook entrypoint (L1 advisory).
     /// Reads Claude Code hook JSON from stdin, classifies the prompt via
@@ -382,17 +388,20 @@ enum HookCommand {
     /// into context) when the request looks non-trivial and no spec is
     /// in `.s5d/packages/` yet. Never blocks — non-zero noise budget.
     /// S5D-Spec: feat.s5d.pretool-enforcement
+    #[command(hide = true)]
     UserPromptSubmit,
     /// PreToolUse(Bash) require-spec hook (L3 — final commit-time net).
     /// Reads PreToolUse JSON from stdin; if the command is `git commit`
     /// and the change is non-trivial without a spec reference, blocks.
     /// Pure Rust replacement for hooks/require-spec.sh.
     /// S5D-Spec: feat.s5d.pretool-enforcement
+    #[command(hide = true)]
     RequireSpec,
     /// PreToolUse(Bash) staged-spec validation hook.
     /// On `git commit`, validates every staged .s5d.yaml file via
     /// `s5d validate`. Pure Rust replacement for hooks/pre-commit-validate.sh.
     /// S5D-Spec: feat.s5d.pretool-enforcement
+    #[command(hide = true)]
     PreCommitValidate,
 }
 
@@ -469,6 +478,17 @@ enum PhaseCommand {
         /// Reviewer who accepts the phase
         #[arg(long)]
         reviewer: String,
+    },
+    /// Run a configured external engine for an active workflow phase
+    Run {
+        /// Path to .s5d.yaml file
+        spec: String,
+        /// Workflow phase ID
+        #[arg(long)]
+        id: String,
+        /// Approved engine name from .s5d/config.yaml
+        #[arg(long)]
+        engine: String,
     },
 }
 
@@ -563,6 +583,7 @@ fn main() -> anyhow::Result<()> {
             PhaseCommand::List { spec } => run_phase_list(&spec),
             PhaseCommand::Start { spec, id } => run_phase_start(&spec, &id),
             PhaseCommand::Accept { spec, id, reviewer } => run_phase_accept(&spec, &id, &reviewer),
+            PhaseCommand::Run { spec, id, engine } => run_phase_run(&spec, &id, &engine),
         },
         S5dCommand::Execute { command } => match command {
             ExecuteCommand::Loop {
@@ -699,6 +720,55 @@ fn main() -> anyhow::Result<()> {
 
 // ── Gate (S5D-Spec: feat.s5d.pretool-enforcement) ────────────────────────────
 
+fn malformed_hook_block(
+    hook_name: &str,
+    detail: impl std::fmt::Display,
+) -> s5d::gate::GateDecision {
+    s5d::gate::GateDecision::Block {
+        reason: format!(
+            "S5D enforcement: malformed {} hook input ({}). Cannot verify scope; fix hook JSON/configuration or use S5D_BYPASS=1 as explicit break-glass.",
+            hook_name, detail
+        ),
+    }
+}
+
+fn parse_required_hook_json(
+    buf: &str,
+    hook_name: &str,
+) -> Result<serde_json::Value, s5d::gate::GateDecision> {
+    serde_json::from_str(buf).map_err(|err| malformed_hook_block(hook_name, err))
+}
+
+fn required_tool_file_path(
+    tool_input: &serde_json::Value,
+    hook_name: &str,
+) -> Result<String, s5d::gate::GateDecision> {
+    tool_input
+        .get("file_path")
+        .and_then(|v| v.as_str())
+        .filter(|s| !s.trim().is_empty())
+        .map(str::to_string)
+        .ok_or_else(|| malformed_hook_block(hook_name, "missing tool_input.file_path"))
+}
+
+fn required_bash_command(
+    value: &serde_json::Value,
+    hook_name: &str,
+) -> Result<String, s5d::gate::GateDecision> {
+    value
+        .get("tool_input")
+        .and_then(|t| t.get("command"))
+        .and_then(|c| c.as_str())
+        .filter(|s| !s.trim().is_empty())
+        .map(str::to_string)
+        .ok_or_else(|| malformed_hook_block(hook_name, "missing tool_input.command"))
+}
+
+fn print_gate_decision(decision: s5d::gate::GateDecision) -> anyhow::Result<()> {
+    println!("{}", serde_json::to_string(&decision)?);
+    Ok(())
+}
+
 /// Pure-Rust PreToolUse(Edit|Write|MultiEdit) hook entrypoint.
 /// Reads Claude Code hook JSON from stdin, returns decision JSON to stdout.
 /// Wired into project hooks.json by `s5d init` — no shell wrapper.
@@ -711,7 +781,10 @@ fn run_hook_pretool_edit() -> anyhow::Result<()> {
     use std::io::Read;
 
     // Bypass first — never block when explicitly requested
-    if std::env::var("S5D_BYPASS").map(|v| v == "1").unwrap_or(false) {
+    if std::env::var("S5D_BYPASS")
+        .map(|v| v == "1")
+        .unwrap_or(false)
+    {
         println!(r#"{{"decision":"approve"}}"#);
         return Ok(());
     }
@@ -719,14 +792,11 @@ fn run_hook_pretool_edit() -> anyhow::Result<()> {
     let mut buf = String::new();
     std::io::stdin().read_to_string(&mut buf).ok();
 
-    // Be liberal in what we accept — if input is malformed, fail-open (approve)
-    // rather than blocking unrelated tool calls.
-    let value: serde_json::Value = match serde_json::from_str(&buf) {
+    // PreToolUse(Edit|Write|MultiEdit) is an enforcement hook. Malformed
+    // envelopes must fail closed because the gate cannot verify scope.
+    let value = match parse_required_hook_json(&buf, "PreToolUse(Edit|Write|MultiEdit)") {
         Ok(v) => v,
-        Err(_) => {
-            println!(r#"{{"decision":"approve"}}"#);
-            return Ok(());
-        }
+        Err(decision) => return print_gate_decision(decision),
     };
 
     let session_id = value
@@ -734,12 +804,13 @@ fn run_hook_pretool_edit() -> anyhow::Result<()> {
         .and_then(|v| v.as_str())
         .unwrap_or("default")
         .to_string();
-    let tool_input = value.get("tool_input").cloned().unwrap_or(serde_json::Value::Null);
-    let file_path = tool_input.get("file_path").and_then(|v| v.as_str());
-    let Some(file_str) = file_path else {
-        // Tool call doesn't target a file — not our concern
-        println!(r#"{{"decision":"approve"}}"#);
-        return Ok(());
+    let tool_input = value
+        .get("tool_input")
+        .cloned()
+        .unwrap_or(serde_json::Value::Null);
+    let file_str = match required_tool_file_path(&tool_input, "PreToolUse(Edit|Write|MultiEdit)") {
+        Ok(path) => path,
+        Err(decision) => return print_gate_decision(decision),
     };
     let file = std::path::PathBuf::from(file_str);
 
@@ -749,7 +820,11 @@ fn run_hook_pretool_edit() -> anyhow::Result<()> {
 
     let cwd = std::env::current_dir()?;
     let s5d_dir_path = cwd.join(".s5d");
-    let s5d_dir_opt = if s5d_dir_path.exists() { Some(s5d_dir_path.as_path()) } else { None };
+    let s5d_dir_opt = if s5d_dir_path.exists() {
+        Some(s5d_dir_path.as_path())
+    } else {
+        None
+    };
 
     let state = if let Some(s) = s5d_dir_opt {
         load_session_state(s, &session_id)?
@@ -757,7 +832,13 @@ fn run_hook_pretool_edit() -> anyhow::Result<()> {
         Default::default()
     };
 
-    let decision = evaluate_edit(s5d_dir_opt, &file, loc_delta, &state, &ThresholdConfig::default());
+    let decision = evaluate_edit(
+        s5d_dir_opt,
+        &file,
+        loc_delta,
+        &state,
+        &ThresholdConfig::default(),
+    );
 
     if matches!(decision, GateDecision::Approve) {
         if let Some(s) = s5d_dir_opt {
@@ -786,7 +867,10 @@ fn run_hook_user_prompt_submit() -> anyhow::Result<()> {
     use std::io::Read;
 
     // Bypass — silent
-    if std::env::var("S5D_BYPASS").map(|v| v == "1").unwrap_or(false) {
+    if std::env::var("S5D_BYPASS")
+        .map(|v| v == "1")
+        .unwrap_or(false)
+    {
         return Ok(());
     }
 
@@ -827,7 +911,12 @@ fn run_hook_user_prompt_submit() -> anyhow::Result<()> {
         if entries.any(|e| {
             e.as_ref()
                 .ok()
-                .and_then(|x| x.path().extension().and_then(|s| s.to_str()).map(str::to_string))
+                .and_then(|x| {
+                    x.path()
+                        .extension()
+                        .and_then(|s| s.to_str())
+                        .map(str::to_string)
+                })
                 .as_deref()
                 == Some("yaml")
         }) {
@@ -845,7 +934,7 @@ fn run_hook_user_prompt_submit() -> anyhow::Result<()> {
     println!(
         "[S5D advisory] This request looks non-trivial (tier: {}). \
 S5D is mandatory for non-trivial work in this project — run `s5d new <feature-id> --product <name>` \
-before any Edit/Write tool call. Bypass with `S5D_BYPASS=1` only for justified one-offs.",
+before any Edit/Write tool call. Use `S5D_BYPASS=1` only as explicit break-glass for justified one-offs.",
         tier
     );
     Ok(())
@@ -858,29 +947,28 @@ before any Edit/Write tool call. Bypass with `S5D_BYPASS=1` only for justified o
 fn run_hook_require_spec() -> anyhow::Result<()> {
     use std::io::Read;
 
-    if std::env::var("S5D_BYPASS").map(|v| v == "1").unwrap_or(false) {
+    if std::env::var("S5D_BYPASS")
+        .map(|v| v == "1")
+        .unwrap_or(false)
+    {
         println!(r#"{{"decision":"approve"}}"#);
         return Ok(());
     }
 
     let mut buf = String::new();
     std::io::stdin().read_to_string(&mut buf).ok();
-    let value: serde_json::Value = match serde_json::from_str(&buf) {
+    let value = match parse_required_hook_json(&buf, "PreToolUse(Bash require-spec)") {
         Ok(v) => v,
-        Err(_) => {
-            println!(r#"{{"decision":"approve"}}"#);
-            return Ok(());
-        }
+        Err(decision) => return print_gate_decision(decision),
     };
 
-    let command = value
-        .get("tool_input")
-        .and_then(|t| t.get("command"))
-        .and_then(|c| c.as_str())
-        .unwrap_or("");
+    let command = match required_bash_command(&value, "PreToolUse(Bash require-spec)") {
+        Ok(command) => command,
+        Err(decision) => return print_gate_decision(decision),
+    };
 
     // Only care about git commit
-    if !is_git_commit(command) {
+    if !is_git_commit(&command) {
         println!(r#"{{"decision":"approve"}}"#);
         return Ok(());
     }
@@ -908,7 +996,7 @@ fn run_hook_require_spec() -> anyhow::Result<()> {
         println!(r#"{{"decision":"approve"}}"#);
         return Ok(());
     }
-    if commit_msg_has_spec_ref(command) {
+    if commit_msg_has_spec_ref(&command) {
         println!(r#"{{"decision":"approve"}}"#);
         return Ok(());
     }
@@ -928,7 +1016,8 @@ Run /s5d to create a spec first, or add 'S5D-Spec: <spec-id>' to commit message 
 fn is_git_commit(command: &str) -> bool {
     // Match leading `git commit` or `git -c ... commit`
     let trimmed = command.trim_start();
-    trimmed.starts_with("git commit") || (trimmed.starts_with("git ") && trimmed.contains(" commit "))
+    trimmed.starts_with("git commit")
+        || (trimmed.starts_with("git ") && trimmed.contains(" commit "))
 }
 
 fn git_staged_insertions() -> Option<usize> {
@@ -941,13 +1030,12 @@ fn git_staged_insertions() -> Option<usize> {
     }
     let s = String::from_utf8_lossy(&output.stdout);
     // e.g. " 3 files changed, 47 insertions(+), 5 deletions(-)"
-    s.split(',')
-        .find_map(|part| {
-            let p = part.trim();
-            p.strip_suffix(" insertions(+)")
-                .or_else(|| p.strip_suffix(" insertion(+)"))
-                .and_then(|n| n.trim().parse::<usize>().ok())
-        })
+    s.split(',').find_map(|part| {
+        let p = part.trim();
+        p.strip_suffix(" insertions(+)")
+            .or_else(|| p.strip_suffix(" insertion(+)"))
+            .and_then(|n| n.trim().parse::<usize>().ok())
+    })
 }
 
 fn has_any_feature_spec(cwd: &std::path::Path) -> bool {
@@ -955,9 +1043,7 @@ fn has_any_feature_spec(cwd: &std::path::Path) -> bool {
     std::fs::read_dir(&dir)
         .map(|entries| {
             entries.flatten().any(|e| {
-                e.file_name()
-                    .to_string_lossy()
-                    .starts_with("feat.")
+                e.file_name().to_string_lossy().starts_with("feat.")
                     && e.file_name().to_string_lossy().ends_with(".s5d.yaml")
             })
         })
@@ -1024,10 +1110,7 @@ fn commit_msg_has_spec_ref(command: &str) -> bool {
             msg.push(c);
         }
     }
-    msg.contains("S5D-Spec:")
-        || msg.contains("spec://")
-        || msg.contains("Implements:")
-        || msg.contains("feat.")
+    msg.contains("S5D-Spec:") || msg.contains("spec://")
 }
 
 /// Pure-Rust PreToolUse(Bash) staged-spec validation hook.
@@ -1037,26 +1120,25 @@ fn commit_msg_has_spec_ref(command: &str) -> bool {
 fn run_hook_pre_commit_validate() -> anyhow::Result<()> {
     use std::io::Read;
 
-    if std::env::var("S5D_BYPASS").map(|v| v == "1").unwrap_or(false) {
+    if std::env::var("S5D_BYPASS")
+        .map(|v| v == "1")
+        .unwrap_or(false)
+    {
         println!(r#"{{"decision":"approve"}}"#);
         return Ok(());
     }
 
     let mut buf = String::new();
     std::io::stdin().read_to_string(&mut buf).ok();
-    let value: serde_json::Value = match serde_json::from_str(&buf) {
+    let value = match parse_required_hook_json(&buf, "PreToolUse(Bash staged-spec validation)") {
         Ok(v) => v,
-        Err(_) => {
-            println!(r#"{{"decision":"approve"}}"#);
-            return Ok(());
-        }
+        Err(decision) => return print_gate_decision(decision),
     };
-    let command = value
-        .get("tool_input")
-        .and_then(|t| t.get("command"))
-        .and_then(|c| c.as_str())
-        .unwrap_or("");
-    if !is_git_commit(command) {
+    let command = match required_bash_command(&value, "PreToolUse(Bash staged-spec validation)") {
+        Ok(command) => command,
+        Err(decision) => return print_gate_decision(decision),
+    };
+    if !is_git_commit(&command) {
         println!(r#"{{"decision":"approve"}}"#);
         return Ok(());
     }
@@ -1086,7 +1168,10 @@ fn run_hook_pre_commit_validate() -> anyhow::Result<()> {
         println!(r#"{{"decision":"approve"}}"#);
     } else {
         let reason = format!("S5D spec validation failed:\n{}", failures.join("\n"));
-        println!("{}", serde_json::json!({"decision": "block", "reason": reason}));
+        println!(
+            "{}",
+            serde_json::json!({"decision": "block", "reason": reason})
+        );
     }
     Ok(())
 }
@@ -1095,8 +1180,8 @@ fn run_hook_pre_commit_validate() -> anyhow::Result<()> {
 /// with the human-readable failure on parse/schema/metamodel error.
 fn validate_spec_file(path: &std::path::Path) -> anyhow::Result<()> {
     let raw = std::fs::read_to_string(path)?;
-    let spec: s5d::Spec = serde_yaml::from_str(&raw)
-        .map_err(|e| anyhow::anyhow!("YAML parse error: {}", e))?;
+    let spec: s5d::Spec =
+        serde_yaml::from_str(&raw).map_err(|e| anyhow::anyhow!("YAML parse error: {}", e))?;
     let errors = s5d::validate::validate_spec(&spec);
     if errors.is_empty() {
         Ok(())
@@ -1142,9 +1227,16 @@ fn run_gate(command: GateCommand) -> anyhow::Result<()> {
     };
 
     match command {
-        GateCommand::Edit { file, loc_delta, session_id, bypass } => {
+        GateCommand::Edit {
+            file,
+            loc_delta,
+            session_id,
+            bypass,
+        } => {
             // Bypass: explicit flag OR env var (h2)
-            let env_bypass = std::env::var("S5D_BYPASS").map(|v| v == "1").unwrap_or(false);
+            let env_bypass = std::env::var("S5D_BYPASS")
+                .map(|v| v == "1")
+                .unwrap_or(false);
             if bypass || env_bypass {
                 println!(
                     "{}",
@@ -1169,8 +1261,13 @@ fn run_gate(command: GateCommand) -> anyhow::Result<()> {
                 Default::default()
             };
 
-            let decision =
-                evaluate_edit(s5d_dir_opt, &file, loc_delta, &state, &ThresholdConfig::default());
+            let decision = evaluate_edit(
+                s5d_dir_opt,
+                &file,
+                loc_delta,
+                &state,
+                &ThresholdConfig::default(),
+            );
 
             // On approve, persist updated counter — but only for non-trivial files
             // not covered by an existing spec. Trivial allowlist hits and
@@ -1178,8 +1275,8 @@ fn run_gate(command: GateCommand) -> anyhow::Result<()> {
             if matches!(decision, GateDecision::Approve) {
                 if let Some(s) = s5d_dir_opt {
                     use s5d::gate::{covered_by_spec, matches_trivial_allowlist};
-                    let counts = !matches_trivial_allowlist(&file)
-                        && covered_by_spec(s, &file).is_none();
+                    let counts =
+                        !matches_trivial_allowlist(&file) && covered_by_spec(s, &file).is_none();
                     if counts {
                         let mut new_state = state;
                         new_state.session_id = sid;
@@ -1205,10 +1302,11 @@ fn run_gate(command: GateCommand) -> anyhow::Result<()> {
                 for entry in std::fs::read_dir(&s5d_dir)?.flatten() {
                     let name = entry.file_name();
                     let s = name.to_string_lossy();
-                    if s.starts_with(".session-counter-") && s.ends_with(".json") {
-                        if std::fs::remove_file(entry.path()).is_ok() {
-                            removed += 1;
-                        }
+                    if s.starts_with(".session-counter-")
+                        && s.ends_with(".json")
+                        && std::fs::remove_file(entry.path()).is_ok()
+                    {
+                        removed += 1;
                     }
                 }
             } else if let Some(sid) = session_id {
@@ -2246,7 +2344,7 @@ fn run_init(
     // CLAUDE.md / GEMINI.md are runtime-specific — inject only when the file
     // already exists, to avoid polluting projects that don't use that runtime.
     let agent_files = [
-        ("AGENTS.md", true),  // create_if_absent
+        ("AGENTS.md", true), // create_if_absent
         ("CLAUDE.md", false),
         ("GEMINI.md", false),
     ];
@@ -2346,8 +2444,9 @@ This repo uses **S5D** (https://github.com/system5-dev/s5d) — a thin layer ove
 for recording architectural decisions and verifying that code still matches them.\n\n\
 **⛔ S5D is MANDATORY for non-trivial work.** Architectural decisions, new features, \
 refactors >30 LOC, and any change touching multiple modules MUST go through the S5D \
-flow before implementation — no exceptions. Skip ONLY for: bug fixes <30 LOC, \
-config-only, docs-only. When in doubt, run `s5d_route` to classify the request.\n\n\
+flow before implementation. Skip ONLY for: bug fixes <30 LOC, config-only, docs-only. \
+`S5D_BYPASS=1` is an explicit break-glass escape hatch, not routine flow; document the \
+justification when you use it. When in doubt, run `s5d_route` to classify the request.\n\n\
 **Flow:** `s5d_new` → edit spec → `s5d_validate` → `s5d_preview` → `s5d_approve` \
 → implement → `s5d_run_gates` → `s5d_import` → `s5d_drift_check`.\n\n\
 **MCP tools** (prefer over shell CLI when available):\n\
@@ -2967,6 +3066,144 @@ fn run_phase_accept(spec_path: &str, phase_id: &str, reviewer: &str) -> anyhow::
     Ok(())
 }
 
+fn run_phase_run(spec_path: &str, phase_id: &str, engine_name: &str) -> anyhow::Result<()> {
+    let (project, spec_path_buf, spec, spec_filename) = load_spec_context(spec_path)?;
+    let workflow = workflow_required(&spec)?;
+    workflow_phase_by_id(workflow, phase_id)?;
+    let mut record = project.load_record(&spec_filename)?.ok_or_else(|| {
+        anyhow::anyhow!("no record found for {} — run preview first", spec_filename)
+    })?;
+    ensure_phase_execution_ready(&spec, &record, phase_id)?;
+
+    if record.active_phase.as_deref() != Some(phase_id) {
+        anyhow::bail!("phase '{}' must be active before phase run", phase_id);
+    }
+
+    s5d::sanitize_id(phase_id)?;
+    s5d::sanitize_id(engine_name)?;
+
+    let config = project.load_config()?;
+    let engine = config
+        .engines
+        .get(engine_name)
+        .ok_or_else(|| anyhow::anyhow!("engine '{}' is not configured", engine_name))?;
+    if !engine.approved {
+        anyhow::bail!("engine '{}' is configured but not approved", engine_name);
+    }
+    if engine.command.is_empty() {
+        anyhow::bail!("engine '{}' has no command template", engine_name);
+    }
+
+    let spec_stem = spec_filename
+        .strip_suffix(".s5d.yaml")
+        .unwrap_or(&spec_filename);
+    let timestamp = chrono::Utc::now();
+    let run_id = format!(
+        "{}-{}-{}-{}",
+        phase_id,
+        engine_name,
+        timestamp.format("%Y%m%dT%H%M%SZ"),
+        std::process::id()
+    );
+    s5d::sanitize_id(&run_id)?;
+
+    let run_dir = project.s5d_dir().join("runs").join(spec_stem).join(&run_id);
+    std::fs::create_dir_all(&run_dir)?;
+    let stdout_path = run_dir.join("stdout.txt");
+    let stderr_path = run_dir.join("stderr.txt");
+
+    let spec_abs = spec_path_buf
+        .canonicalize()
+        .unwrap_or_else(|_| spec_path_buf.clone());
+    let replacements = [
+        ("{spec}", spec_abs.display().to_string()),
+        ("{spec_filename}", spec_filename.clone()),
+        ("{phase}", phase_id.to_string()),
+        ("{engine}", engine_name.to_string()),
+        ("{run_id}", run_id.clone()),
+        ("{run_dir}", run_dir.display().to_string()),
+        ("{stdout}", stdout_path.display().to_string()),
+        ("{stderr}", stderr_path.display().to_string()),
+        ("{s5d_dir}", project.s5d_dir().display().to_string()),
+        ("{root}", project.root.display().to_string()),
+    ];
+    let render_arg = |arg: &str| {
+        replacements
+            .iter()
+            .fold(arg.to_string(), |acc, (from, to)| acc.replace(from, to))
+    };
+    let command = engine
+        .command
+        .iter()
+        .map(|arg| render_arg(arg))
+        .collect::<Vec<_>>();
+
+    let output = std::process::Command::new(&command[0])
+        .args(&command[1..])
+        .current_dir(&project.root)
+        .output()
+        .map_err(|err| anyhow::anyhow!("engine '{}' failed to start: {}", engine_name, err))?;
+
+    std::fs::write(&stdout_path, &output.stdout)?;
+    std::fs::write(&stderr_path, &output.stderr)?;
+    let output_sha256 = s5d::S5dProject::file_sha256(&stdout_path)?;
+    let status = if output.status.success() {
+        "completed"
+    } else {
+        "failed"
+    };
+    let completed_at = chrono::Utc::now().to_rfc3339();
+    let output_ref = project_relative_path(&project, &stdout_path);
+    let stderr_ref = project_relative_path(&project, &stderr_path);
+
+    record.phase_runs.push(s5d::WorkflowPhaseRun {
+        run_id: run_id.clone(),
+        phase_id: phase_id.to_string(),
+        engine: engine_name.to_string(),
+        status: status.to_string(),
+        timestamp: timestamp.to_rfc3339(),
+        completed_at: Some(completed_at),
+        reasoning: engine.reasoning.clone(),
+        exit_code: output.status.code(),
+        output_path: output_ref.clone(),
+        output_sha256: output_sha256.clone(),
+        stderr_path: Some(stderr_ref.clone()),
+    });
+
+    if output.status.success() {
+        append_phase_history(
+            &mut record,
+            phase_id,
+            s5d::WorkflowPhaseStatus::Verified,
+            None,
+            Some(engine_name.to_string()),
+            Some(format!("External engine run completed: {}", run_id)),
+        );
+    }
+    project.save_record(&spec_filename, &record)?;
+
+    println!("{} Phase run {}", "ok".green(), status);
+    println!("  {} {}", "run_id:".dimmed(), run_id);
+    println!("  {} {}", "engine:".dimmed(), engine_name);
+    println!("  {} {}", "output:".dimmed(), output_ref);
+    println!("  {} {}", "sha256:".dimmed(), output_sha256);
+    if !output.status.success() {
+        anyhow::bail!(
+            "engine '{}' exited with status {:?}; stderr captured at {}",
+            engine_name,
+            output.status.code(),
+            stderr_ref
+        );
+    }
+    Ok(())
+}
+
+fn project_relative_path(project: &s5d::S5dProject, path: &std::path::Path) -> String {
+    path.strip_prefix(project.root.as_path())
+        .map(|path| path.display().to_string())
+        .unwrap_or_else(|_| path.display().to_string())
+}
+
 fn run_execute_loop(
     spec_path: &str,
     phase_id: &str,
@@ -3108,6 +3345,12 @@ fn run_preview(spec_arg: &str) -> anyhow::Result<()> {
 // ── Approve ───────────────────────────────────────────────────────────────────
 
 fn run_approve(spec_arg: &str, reviewer: &str, require_owner: bool) -> anyhow::Result<()> {
+    let reviewer = reviewer.trim();
+    if reviewer.is_empty() {
+        eprintln!("  {} --reviewer must not be empty", "error:".red());
+        std::process::exit(2);
+    }
+
     let (project, spec_path, spec, spec_filename) = load_spec_context(spec_arg)?;
 
     // Check reviewer against domain owners
@@ -3245,7 +3488,13 @@ fn run_gates(spec_arg: &str) -> anyhow::Result<()> {
 
 // ── Import ────────────────────────────────────────────────────────────────────
 
-fn run_import(spec_arg: &str, verified_by: &Option<String>, force: bool) -> anyhow::Result<()> {
+fn run_import(spec_arg: &str, verified_by: &str, force: bool) -> anyhow::Result<()> {
+    let verified_by = verified_by.trim();
+    if verified_by.is_empty() {
+        eprintln!("  {} --verified-by must not be empty", "error:".red());
+        std::process::exit(2);
+    }
+
     let (project, spec_path, spec, spec_filename) = load_spec_context(spec_arg)?;
 
     // Check record status == Approved
@@ -3324,10 +3573,8 @@ fn run_import(spec_arg: &str, verified_by: &Option<String>, force: bool) -> anyh
     }
 
     // Store verified_by before import execution
-    if verified_by.is_some() {
-        record.verified_by = verified_by.clone();
-        project.save_record(&spec_filename, &record)?;
-    }
+    record.verified_by = Some(verified_by.to_string());
+    project.save_record(&spec_filename, &record)?;
 
     let (actions, fingerprint) = s5d::execute_import(&project, &spec_path, &spec, &spec_filename)?;
     let counts = actions.counts();
@@ -4758,8 +5005,81 @@ mod agents_md_tests {
     fn block_marks_s5d_mandatory() {
         // The agent block must declare S5D as mandatory, not just suggested.
         let block = agents_block();
-        assert!(block.contains("MANDATORY"), "agents block lost MANDATORY marker");
-        assert!(block.contains("S5D-Spec:"), "agents block lost commit trailer rule");
+        assert!(
+            block.contains("MANDATORY"),
+            "agents block lost MANDATORY marker"
+        );
+        assert!(
+            block.contains("S5D-Spec:"),
+            "agents block lost commit trailer rule"
+        );
+        assert!(
+            block.contains("break-glass"),
+            "agents block must describe bypass as break-glass"
+        );
+        assert!(
+            !block.contains("no exceptions"),
+            "agents block must not overstate enforcement when break-glass exists"
+        );
+    }
+
+    #[test]
+    fn commit_spec_ref_detection_requires_explicit_marker() {
+        assert!(commit_msg_has_spec_ref(
+            r#"git commit -m "tighten hook detection
+
+S5D-Spec: feat.s5d.pretool-enforcement""#
+        ));
+        assert!(commit_msg_has_spec_ref(
+            r#"git commit -m "implement timeout
+
+Implements: spec://s5d/PROP-003#verification.timeout""#
+        ));
+        assert!(!commit_msg_has_spec_ref(
+            r#"git commit -m "feat.s5d cleanup without trailer""#
+        ));
+        assert!(!commit_msg_has_spec_ref(
+            r#"git commit -m "Implements: local cleanup""#
+        ));
+    }
+
+    #[test]
+    fn malformed_enforcement_hook_json_blocks() {
+        let decision = parse_required_hook_json("{not json", "PreToolUse(Edit)")
+            .expect_err("malformed enforcement JSON should fail closed");
+        match decision {
+            s5d::gate::GateDecision::Block { reason } => {
+                assert!(reason.contains("malformed PreToolUse(Edit) hook input"));
+                assert!(reason.contains("break-glass"));
+            }
+            s5d::gate::GateDecision::Approve => panic!("malformed hook input approved"),
+        }
+    }
+
+    #[test]
+    fn missing_pretool_file_path_blocks() {
+        let tool_input = serde_json::json!({});
+        let decision = required_tool_file_path(&tool_input, "PreToolUse(Edit|Write|MultiEdit)")
+            .expect_err("missing file path should fail closed");
+        match decision {
+            s5d::gate::GateDecision::Block { reason } => {
+                assert!(reason.contains("missing tool_input.file_path"));
+            }
+            s5d::gate::GateDecision::Approve => panic!("missing file path approved"),
+        }
+    }
+
+    #[test]
+    fn missing_bash_command_blocks() {
+        let envelope = serde_json::json!({ "tool_input": {} });
+        let decision = required_bash_command(&envelope, "PreToolUse(Bash require-spec)")
+            .expect_err("missing bash command should fail closed");
+        match decision {
+            s5d::gate::GateDecision::Block { reason } => {
+                assert!(reason.contains("missing tool_input.command"));
+            }
+            s5d::gate::GateDecision::Approve => panic!("missing bash command approved"),
+        }
     }
 
     #[test]

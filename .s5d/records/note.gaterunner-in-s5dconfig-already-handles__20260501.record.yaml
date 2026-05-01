@@ -1,0 +1,15 @@
+spec_ref: note.gaterunner-in-s5dconfig-already-handles__20260501.s5d.yaml
+spec_sha256: sha256:38e8eebf0a1c2c38522c799c6587abcf9fe1ecdd27c58e9caf41cfd165fc481d
+status: proposed
+sync_status: unknown
+status_history:
+- status: proposed
+  timestamp: 2026-05-01T07:13:39.598887+00:00
+active_phase: null
+phase_history: []
+approvals: []
+preview: null
+reflection: null
+gate_results: []
+decision: null
+verified_by: null

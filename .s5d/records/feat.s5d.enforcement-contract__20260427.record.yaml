@@ -1,0 +1,43 @@
+spec_ref: feat.s5d.enforcement-contract__20260427.s5d.yaml
+spec_sha256: sha256:843a08bbd2c914fe6254a0f22bedf624c3262e554d3021ee3f37cb644ef2b554
+status: applied
+sync_status: synced
+status_history:
+- status: proposed
+  timestamp: 2026-04-27T14:01:07.327689+00:00
+- status: previewed
+  timestamp: 2026-04-27T14:02:13.073802+00:00
+- status: approved
+  timestamp: 2026-04-27T14:02:18.304984+00:00
+- status: applied
+  timestamp: 2026-04-27T14:08:07.750781+00:00
+active_phase: null
+phase_history: []
+phase_runs: []
+approvals:
+- reviewer: diana
+  date: 2026-04-27T14:02:18.304911+00:00
+  spec_sha256: sha256:d1d41730df47438c1361216d48217f3f85d9c2fae46cf787344fa42d2827e207
+  diff_sha256: sha256:46257b5f9837c5bfbf75995eaa3d49cdfee2c136690a02f8becd1bcf36497636
+preview:
+  diff_sha256: sha256:46257b5f9837c5bfbf75995eaa3d49cdfee2c136690a02f8becd1bcf36497636
+  previewed_spec_sha256: sha256:d1d41730df47438c1361216d48217f3f85d9c2fae46cf787344fa42d2827e207
+  actions:
+    create: 3
+    link: 0
+    update: 0
+    delete: 0
+  log: null
+reflection: null
+gate_results:
+- kind: schema
+  status: passed
+  attempt: 1
+  timestamp: 2026-04-27T14:07:54.054292+00:00
+  log: schema validation passed (built-in)
+  exit_code: null
+  evidence_path: evidence/feat.s5d.enforcement-contract/schema_1.log
+  command: null
+  duration_ms: 0
+decision: null
+verified_by: diana

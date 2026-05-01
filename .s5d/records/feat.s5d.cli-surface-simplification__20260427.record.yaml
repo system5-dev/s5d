@@ -1,0 +1,70 @@
+spec_ref: feat.s5d.cli-surface-simplification__20260427.s5d.yaml
+spec_sha256: sha256:547529f61a279b3fa48a462c65898570c71945f3ade132ee6bc8c9a3d31042f0
+status: operated
+sync_status: synced
+status_history:
+- status: proposed
+  timestamp: 2026-04-27T16:54:22.348272+00:00
+- status: previewed
+  timestamp: 2026-04-27T16:57:18.270954+00:00
+- status: approved
+  timestamp: 2026-04-27T16:57:25.248034+00:00
+- status: applied
+  timestamp: 2026-04-27T17:02:35.213824+00:00
+- status: operated
+  timestamp: 2026-04-27T17:02:56.287114+00:00
+active_phase: null
+phase_history: []
+approvals:
+- reviewer: Roman
+  date: 2026-04-27T16:57:25.247952+00:00
+  spec_sha256: sha256:f0d08bf0bcca281daf52463dbf97735d5e658a7f6905b0c81aaa6c621ceab405
+  diff_sha256: sha256:8fcb72a19aad5a26f71136f4d81a172004ed6a43e85f8e23651ed61df5355d58
+preview:
+  diff_sha256: sha256:8fcb72a19aad5a26f71136f4d81a172004ed6a43e85f8e23651ed61df5355d58
+  previewed_spec_sha256: sha256:f0d08bf0bcca281daf52463dbf97735d5e658a7f6905b0c81aaa6c621ceab405
+  actions:
+    create: 2
+    link: 0
+    update: 1
+    delete: 0
+  log: null
+reflection:
+  verdict: confirmed
+  measurement_window: local verification
+  telemetry_refs: []
+  summary: 'CLI surface simplified: explicit approval/import identity and hidden internal help entries'
+  worked: []
+  issues: []
+  structured_issues: []
+  follow_ups: []
+  evidence:
+  - path: cargo fmt --check
+    sha256: null
+    formality: null
+    claim_scope: null
+    reliability: null
+  - path: cargo clippy --all-targets -D warnings
+    sha256: null
+    formality: null
+    claim_scope: null
+    reliability: null
+  - path: cargo test
+    sha256: null
+    formality: null
+    claim_scope: null
+    reliability: null
+  heuristics:
+  - Hide integration plumbing from public help before adding new user-facing commands
+gate_results:
+- kind: schema
+  status: passed
+  attempt: 1
+  timestamp: 2026-04-27T17:02:27.137846+00:00
+  log: schema validation passed (built-in)
+  exit_code: null
+  evidence_path: evidence/feat.s5d.cli-surface-simplification/schema_1.log
+  command: null
+  duration_ms: 0
+decision: null
+verified_by: Diana

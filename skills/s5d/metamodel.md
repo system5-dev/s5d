@@ -81,6 +81,16 @@ Reflection in `.record.yaml` may now additionally record:
 - `measurement_window`: free-form measurement window string
 - `telemetry_refs[]`: dashboard/query/log references backing the verdict
 
+External phase runs are configured in `.s5d/config.yaml`, not in the spec:
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `engines.<name>.approved` | bool | required to be true before `s5d phase run` executes it |
+| `engines.<name>.command` | list | argv template, not a shell string; supports `{spec}`, `{spec_filename}`, `{phase}`, `{engine}`, `{run_id}`, `{run_dir}`, `{stdout}`, `{stderr}`, `{s5d_dir}`, `{root}` |
+| `engines.<name>.reasoning` | string | optional label recorded with the run |
+
+`s5d phase run` captures stdout/stderr under `.s5d/runs/`, appends `phase_runs[]` to the record, and appends a `verified` phase-history entry only when the command exits successfully. Human phase acceptance remains a separate step.
+
 ---
 
 ## Complete Artifact Definitions

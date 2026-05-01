@@ -1,0 +1,15 @@
+spec_ref: arch.review.orchestrator-redesign__20260501.s5d.yaml
+spec_sha256: sha256:a3e02e9ddcbca4f25eb145f28d7b5fe9dd27adef67d128af03459164374615c8
+status: proposed
+sync_status: unknown
+status_history:
+- status: proposed
+  timestamp: 2026-05-01T07:12:52.471124+00:00
+active_phase: null
+phase_history: []
+approvals: []
+preview: null
+reflection: null
+gate_results: []
+decision: null
+verified_by: null

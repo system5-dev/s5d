@@ -1,0 +1,123 @@
+s5d: '1.0'
+id: feat.s5d.external-engine-phase-run
+version: 1.0.0
+product: s5d
+tier: lightweight
+allow_update: true
+meta:
+  title: external-engine-phase-run
+  authors: []
+  date: 2026-05-01
+  tickets: []
+  adrs: []
+  renames: []
+context: |
+  ## Problem
+  The workflow shell can start/accept phases and emit Ralph task packages, but S5D cannot yet supervise a phase run through a user-approved external engine command and persist the execution trace.
+
+  ## Goal
+  Add the smallest external-engine phase run path: config declares approved command templates, `s5d phase run` executes one template for the active phase, and the record stores run metadata plus artifact hash.
+
+  ## Privacy
+  Classification: Internal
+workflow:
+  mode: plan
+  target_architecture:
+    summary: S5D core remains a thin supervisor over workflow state; provider-specific behavior lives behind external command templates and run artifacts.
+    invariants:
+    - S5D never stores provider credentials or secrets in spec/record/config.
+    - S5D records execution facts and artifact hashes, not chat state as authoritative architecture.
+    - Phase execution requires an approved-or-later spec and an active phase.
+    - Human phase acceptance remains separate from engine completion.
+  delivery_strategy:
+    summary: Extend the existing workflow phase surface instead of introducing a new orchestration subsystem.
+    rationale: A single command-template runner validates the state model before adding provider-specific adapters or parallel multi-engine hypothesis generation.
+  resources: null
+  role_map:
+    implementer: coder
+    verifier: reviewer
+    owner: human
+    reviewer: reviewer
+  review_policy:
+    cross_model_required: false
+    required_on: []
+  structure_outline: null
+  execution_mode:
+    engine: manual
+    max_iterations: null
+    stop_conditions:
+    - Phase acceptance reached
+    - Approved scope exhausted
+    - New decision required
+  phases:
+  - id: prototype
+    title: Prototype
+    scope: Reduce unknowns before committed implementation
+    roles:
+    - owner
+    - implementer
+    acceptance:
+    - Critical feasibility questions answered
+    - Telemetry approach identified
+    rollback:
+    - Discard spike output if assumptions fail
+  - id: build
+    title: Build
+    scope: Implement approved scope and pass local gates
+    roles:
+    - implementer
+    - reviewer
+    acceptance:
+    - Declared gates pass
+    - Change matches approved scope
+    rollback:
+    - Revert or reconcile if gates or review fail
+  - id: measure
+    title: Measure
+    scope: Collect telemetry and close the loop with an explicit verdict
+    roles:
+    - owner
+    - verifier
+    acceptance:
+    - Telemetry collected against success criteria
+    - Outcome verdict recorded
+    rollback:
+    - Iterate or kill if evidence stays weak
+artifacts:
+  products:
+  - id: s5d
+    name: s5d
+    organization: null
+  domains: []
+  capabilities:
+  - id: cap.s5d.external-engine-phase-run
+    domain: dom.s5d.workflow
+    name: External Engine Phase Run
+    description: Run a user-approved external command for an active workflow phase and persist auditable execution metadata.
+    since: null
+  entities: []
+  features:
+  - id: feat.s5d.external-engine-phase-run
+    product: s5d
+    name: external-engine-phase-run
+    description: null
+  use_cases: []
+  systems: []
+  containers: []
+  components: []
+  roles: []
+  concerns: []
+  metrics: []
+  supersystems: []
+  transports: []
+links: null
+contracts: []
+gates:
+- kind: schema
+roc: null
+problem: S5D needs resumable engine-supervised phase execution without becoming a provider-specific chat client.
+hypotheses: []
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false

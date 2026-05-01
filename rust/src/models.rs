@@ -691,6 +691,8 @@ pub struct Record {
     #[serde(default)]
     pub phase_history: Vec<WorkflowPhaseRecord>,
     #[serde(default)]
+    pub phase_runs: Vec<WorkflowPhaseRun>,
+    #[serde(default)]
     pub approvals: Vec<Approval>,
     #[serde(default)]
     pub preview: Option<PreviewResult>,
@@ -793,6 +795,25 @@ pub struct WorkflowPhaseRecord {
     pub engine: Option<String>,
     #[serde(default)]
     pub notes: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WorkflowPhaseRun {
+    pub run_id: String,
+    pub phase_id: String,
+    pub engine: String,
+    pub status: String,
+    pub timestamp: String,
+    #[serde(default)]
+    pub completed_at: Option<String>,
+    #[serde(default)]
+    pub reasoning: Option<String>,
+    #[serde(default)]
+    pub exit_code: Option<i32>,
+    pub output_path: String,
+    pub output_sha256: String,
+    #[serde(default)]
+    pub stderr_path: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -909,9 +930,21 @@ pub struct S5dConfig {
     #[serde(default)]
     pub gate_commands: HashMap<String, Vec<String>>,
     #[serde(default)]
+    pub engines: HashMap<String, EngineConfig>,
+    #[serde(default)]
     pub gate_runner: Option<GateRunner>,
     #[serde(default)]
     pub defaults: Option<Defaults>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EngineConfig {
+    #[serde(default)]
+    pub approved: bool,
+    #[serde(default)]
+    pub command: Vec<String>,
+    #[serde(default)]
+    pub reasoning: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

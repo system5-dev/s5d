@@ -141,8 +141,9 @@ pub fn check_approve(record: &Option<Record>) -> Vec<PhaseCheck> {
     checks
 }
 
-pub fn check_import(record: &Option<Record>, verified_by: &Option<String>) -> Vec<PhaseCheck> {
+pub fn check_import(record: &Option<Record>, verified_by: &str) -> Vec<PhaseCheck> {
     let mut checks = Vec::new();
+    let verified_by = verified_by.trim();
 
     // Structural: must have approval
     let has_approval = record.as_ref().is_some_and(|r| !r.approvals.is_empty());
@@ -151,12 +152,17 @@ pub fn check_import(record: &Option<Record>, verified_by: &Option<String>) -> Ve
         "spec must be approved before import — run `s5d approve` first",
     ));
 
+    checks.push(PhaseCheck::structural(
+        !verified_by.is_empty(),
+        "import verifier required — pass `--verified-by <name>`",
+    ));
+
     // Methodological: verifier ≠ approver (trust separation)
-    if let Some(vb) = verified_by {
+    if !verified_by.is_empty() {
         if let Some(rec) = record {
             if let Some(last_approval) = rec.approvals.last() {
                 checks.push(PhaseCheck::methodological(
-                    vb != &last_approval.reviewer,
+                    verified_by != last_approval.reviewer,
                     "verifier should differ from approver for trust separation — use --force to override",
                 ));
             }
@@ -292,6 +298,7 @@ mod tests {
             status_history: vec![],
             active_phase: None,
             phase_history: vec![],
+            phase_runs: vec![],
             approvals: vec![],
             preview: None,
             reflection: None,

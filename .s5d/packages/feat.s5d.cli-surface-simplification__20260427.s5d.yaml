@@ -1,0 +1,128 @@
+s5d: '1.0'
+id: feat.s5d.cli-surface-simplification
+version: 1.0.0
+product: S5D
+tier: lightweight
+allow_update: true
+meta:
+  title: cli-surface-simplification
+  authors: []
+  date: 2026-04-27
+  tickets: []
+  adrs: []
+  renames: []
+context: |
+  ## Problem
+  The CLI exposes internal plumbing commands in the top-level help and lets
+  `approve`/`import` complete without an explicit human identity. That makes
+  the public surface noisier than the S5D lifecycle and weakens the trust
+  separation contract.
+
+  ## Goal
+  Keep the visible CLI smaller: lifecycle/setup/recovery commands stay public,
+  internal hook/MCP/bootstrap/fingerprint plumbing is hidden from help, and
+  approval/import identity is explicit at the command boundary.
+
+  ## Privacy
+  Classification: Internal
+workflow:
+  mode: plan
+  target_architecture:
+    summary: Public help lists operator-facing lifecycle commands; internal entrypoints remain callable but hidden. Approval and import require explicit identity.
+    invariants:
+    - "`s5d approve` requires `--reviewer <name>`."
+    - "`s5d import` and `s5d_import` require `verified_by`."
+    - "`--force` may override same-person trust separation, but not missing identity."
+    - Internal commands stay callable for hooks/integrations but are hidden from public help.
+  delivery_strategy:
+    summary: Remove default identity values, make verifier required, hide internal Clap subcommands, and add regression tests around help/output contracts.
+    rationale: This narrows the existing CLI surface without moving commands or adding a new abstraction.
+  resources: null
+  role_map:
+    implementer: coder
+    owner: human
+    reviewer: reviewer
+    verifier: reviewer
+  review_policy:
+    cross_model_required: false
+    required_on: []
+  structure_outline: null
+  execution_mode:
+    engine: manual
+    max_iterations: null
+    stop_conditions:
+    - Phase acceptance reached
+    - Approved scope exhausted
+    - New decision required
+  phases:
+  - id: prototype
+    title: Prototype
+    scope: Reduce unknowns before committed implementation
+    roles:
+    - owner
+    - implementer
+    acceptance:
+    - Critical feasibility questions answered
+    - Telemetry approach identified
+    rollback:
+    - Discard spike output if assumptions fail
+  - id: build
+    title: Build
+    scope: Implement approved scope and pass local gates
+    roles:
+    - implementer
+    - reviewer
+    acceptance:
+    - Declared gates pass
+    - Change matches approved scope
+    rollback:
+    - Revert or reconcile if gates or review fail
+  - id: measure
+    title: Measure
+    scope: Collect telemetry and close the loop with an explicit verdict
+    roles:
+    - owner
+    - verifier
+    acceptance:
+    - Telemetry collected against success criteria
+    - Outcome verdict recorded
+    rollback:
+    - Iterate or kill if evidence stays weak
+artifacts:
+  products:
+  - id: S5D
+    name: S5D
+    organization: null
+  domains: []
+  capabilities:
+  - id: cap.SimplifyCliSurface
+    domain: s5d.cli
+    name: Simplify CLI Surface
+    description: Hide internal commands from public help and require explicit approval/import identity.
+    since: null
+  entities: []
+  features:
+  - id: feat.s5d.cli-surface-simplification
+    product: S5D
+    name: cli-surface-simplification
+    description: null
+  use_cases: []
+  systems: []
+  containers: []
+  components: []
+  roles: []
+  concerns: []
+  metrics: []
+  supersystems: []
+  transports: []
+links: null
+contracts: []
+gates:
+- kind: schema
+roc: null
+problem: null
+hypotheses: []
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false

@@ -45,7 +45,10 @@ pub struct ThresholdConfig {
 
 impl Default for ThresholdConfig {
     fn default() -> Self {
-        Self { max_loc: DEFAULT_MAX_LOC, max_files: DEFAULT_MAX_FILES }
+        Self {
+            max_loc: DEFAULT_MAX_LOC,
+            max_files: DEFAULT_MAX_FILES,
+        }
     }
 }
 
@@ -55,7 +58,13 @@ pub fn matches_trivial_allowlist(path: &Path) -> bool {
     let s = path.to_string_lossy().to_lowercase();
 
     // Lockfiles
-    for lock in ["cargo.lock", "package-lock.json", "yarn.lock", "uv.lock", "poetry.lock"] {
+    for lock in [
+        "cargo.lock",
+        "package-lock.json",
+        "yarn.lock",
+        "uv.lock",
+        "poetry.lock",
+    ] {
         if s.ends_with(lock) {
             return true;
         }
@@ -64,8 +73,10 @@ pub fn matches_trivial_allowlist(path: &Path) -> bool {
     // Special files (full filename match)
     if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
         let n = name.to_lowercase();
-        if matches!(n.as_str(), ".gitignore" | ".gitattributes" | "readme" | "license" | "license.md")
-            || n.starts_with(".env")
+        if matches!(
+            n.as_str(),
+            ".gitignore" | ".gitattributes" | "readme" | "license" | "license.md"
+        ) || n.starts_with(".env")
             || n.starts_with("readme.")
             || n.starts_with("license.")
         {
@@ -75,8 +86,8 @@ pub fn matches_trivial_allowlist(path: &Path) -> bool {
 
     // Extensions: docs + config
     let trivial_exts = [
-        ".md", ".rst", ".txt",                          // docs
-        ".toml", ".yaml", ".yml", ".json", ".ini",      // config
+        ".md", ".rst", ".txt", // docs
+        ".toml", ".yaml", ".yml", ".json", ".ini", // config
         ".cfg", ".conf",
     ];
     for ext in trivial_exts {
@@ -123,7 +134,9 @@ pub fn covered_by_spec(s5d_dir: &Path, file: &Path) -> Option<String> {
         if path.extension().and_then(|s| s.to_str()) != Some("yaml") {
             continue;
         }
-        let Ok(content) = std::fs::read_to_string(&path) else { continue };
+        let Ok(content) = std::fs::read_to_string(&path) else {
+            continue;
+        };
 
         // Best-effort: spec id is line `id: feat.foo.bar`
         let spec_id = content
@@ -177,8 +190,8 @@ pub fn evaluate_edit(
         return GateDecision::Block {
             reason: format!(
                 "S5D enforcement: non-trivial scope without spec ({} files, +{} LOC across session, > {}f/{}LOC threshold). \
-                 Run `s5d new <feature-id> --product <name>` to declare a spec, or `s5d note <rationale>` for a one-off, \
-                 or set S5D_BYPASS=1 to bypass this single tool call.",
+                 Run `s5d new <feature-id> --product <name>` to declare a spec, or `s5d note <rationale>` for a one-off. \
+                 Use S5D_BYPASS=1 only as explicit break-glass for a justified single tool call.",
                 projected_files, projected_loc, config.max_files, config.max_loc
             ),
         };
@@ -201,8 +214,7 @@ pub fn load_session_state(s5d_dir: &Path, session_id: &str) -> Result<SessionSta
     }
     let raw = std::fs::read_to_string(&path)
         .with_context(|| format!("read session state {}", path.display()))?;
-    serde_json::from_str(&raw)
-        .with_context(|| format!("parse session state {}", path.display()))
+    serde_json::from_str(&raw).with_context(|| format!("parse session state {}", path.display()))
 }
 
 pub fn save_session_state(s5d_dir: &Path, state: &SessionState) -> Result<()> {
@@ -218,7 +230,13 @@ fn session_state_path(s5d_dir: &Path, session_id: &str) -> PathBuf {
     // Sanitize session_id — no path separators, no dots leading
     let safe: String = session_id
         .chars()
-        .map(|c| if c.is_alphanumeric() || c == '-' || c == '_' { c } else { '_' })
+        .map(|c| {
+            if c.is_alphanumeric() || c == '-' || c == '_' {
+                c
+            } else {
+                '_'
+            }
+        })
         .collect();
     s5d_dir.join(format!(".session-counter-{}.json", safe))
 }
@@ -265,8 +283,19 @@ mod tests {
             "src/foo_test.rs",
             ".s5d/packages/feat.bar.yaml",
         ] {
-            let dec = evaluate_edit(Some(s5d), Path::new(trivial), 9999, &empty_session(), &cfg());
-            assert_eq!(dec, GateDecision::Approve, "expected approve for {}", trivial);
+            let dec = evaluate_edit(
+                Some(s5d),
+                Path::new(trivial),
+                9999,
+                &empty_session(),
+                &cfg(),
+            );
+            assert_eq!(
+                dec,
+                GateDecision::Approve,
+                "expected approve for {}",
+                trivial
+            );
         }
     }
 
@@ -307,6 +336,7 @@ mod tests {
             GateDecision::Block { reason } => {
                 assert!(reason.contains("non-trivial scope without spec"));
                 assert!(reason.contains("S5D_BYPASS=1"));
+                assert!(reason.contains("break-glass"));
             }
             _ => panic!("expected Block, got Approve"),
         }

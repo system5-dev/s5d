@@ -72,6 +72,7 @@ impl S5dProject {
         let config = S5dConfig {
             schema: "1.0".into(),
             gate_commands: Default::default(),
+            engines: Default::default(),
             gate_runner: None,
             defaults: Some(Defaults {
                 tier: Some("standard".into()),
