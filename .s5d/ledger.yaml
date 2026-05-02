@@ -28,3 +28,10 @@ entries:
   status: success
   timestamp: 2026-05-01T07:59:00.544551+00:00
   record_ref: records/feat.s5d.external-engine-phase-run__20260501.record.yaml
+- spec_sha256: sha256:2094a40dcf3fada4c155e84ef2861238679f23c2dc2eba7b5889834dd32e6f8e
+  state_fingerprint: sha256:64a084e214a13adf2813f11ca04cbb9ae6184dbf5761e4c53a12f41be37a3394
+  package_id: feat.s5d.operational-harness
+  action: import
+  status: success
+  timestamp: 2026-05-02T08:33:52.198229+00:00
+  record_ref: records/feat.s5d.operational-harness__20260502.record.yaml

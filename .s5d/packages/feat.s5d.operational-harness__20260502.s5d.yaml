@@ -1,0 +1,124 @@
+s5d: '1.0'
+id: feat.s5d.operational-harness
+version: 1.0.0
+product: s5d
+tier: lightweight
+allow_update: true
+meta:
+  title: operational-harness
+  authors: []
+  date: 2026-05-02
+  tickets: []
+  adrs: []
+  renames: []
+context: |
+  ## Problem
+  S5D can supervise workflow phases and engine runs, but long-running agent work still lacks a thin operational harness for isolated worktrees, clean preflight, journaling, heartbeat/status, and disciplined merge-back.
+
+  ## Goal
+  Add the smallest CLI harness surface that wraps existing S5D workflow commands instead of creating a second autopilot state machine.
+
+  ## Privacy
+  Classification: Internal
+workflow:
+  mode: plan
+  target_architecture:
+    summary: S5D remains the source of truth for specs, phases, evidence, gates, and approvals; the harness owns only operational process state around an isolated worktree.
+    invariants:
+    - Harness state is stored as journal/status artifacts, not as authoritative workflow phase truth.
+    - Harness commands must call or instruct existing S5D workflow commands for phase/run/gate transitions.
+    - Harness start requires a clean source worktree unless explicitly forced.
+    - Harness status must expose last event, current phase, worktree path, and stale heartbeat risk.
+    - Harness must not accept phases, approve specs, import specs, or merge back automatically.
+  delivery_strategy:
+    summary: Add local CLI commands for start/status/journal around git worktree and .s5d/harness artifacts.
+    rationale: This gives operators visibility and isolation immediately while preserving the existing S5D workflow model.
+  resources: null
+  role_map:
+    owner: human
+    implementer: coder
+    reviewer: reviewer
+    verifier: reviewer
+  review_policy:
+    cross_model_required: false
+    required_on: []
+  structure_outline: null
+  execution_mode:
+    engine: manual
+    max_iterations: null
+    stop_conditions:
+    - Phase acceptance reached
+    - Approved scope exhausted
+    - New decision required
+  phases:
+  - id: prototype
+    title: Prototype
+    scope: Reduce unknowns before committed implementation
+    roles:
+    - owner
+    - implementer
+    acceptance:
+    - Critical feasibility questions answered
+    - Telemetry approach identified
+    rollback:
+    - Discard spike output if assumptions fail
+  - id: build
+    title: Build
+    scope: Implement approved scope and pass local gates
+    roles:
+    - implementer
+    - reviewer
+    acceptance:
+    - Declared gates pass
+    - Change matches approved scope
+    rollback:
+    - Revert or reconcile if gates or review fail
+  - id: measure
+    title: Measure
+    scope: Collect telemetry and close the loop with an explicit verdict
+    roles:
+    - owner
+    - verifier
+    acceptance:
+    - Telemetry collected against success criteria
+    - Outcome verdict recorded
+    rollback:
+    - Iterate or kill if evidence stays weak
+artifacts:
+  products:
+  - id: s5d
+    name: s5d
+    organization: null
+  domains: []
+  capabilities:
+  - id: cap.s5d.operational-harness
+    domain: dom.s5d.workflow
+    name: Operational Harness
+    description: Manage isolated worktree execution state, heartbeat, and journal around existing S5D workflow commands.
+    since: null
+  entities: []
+  features:
+  - id: feat.s5d.operational-harness
+    product: s5d
+    name: operational-harness
+    description: null
+  use_cases: []
+  systems: []
+  containers: []
+  components: []
+  roles: []
+  concerns: []
+  metrics: []
+  supersystems: []
+  transports: []
+links: null
+contracts: []
+gates:
+- kind: schema
+roc: null
+problem: null
+hypotheses: []
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false

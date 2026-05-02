@@ -1,0 +1,43 @@
+spec_ref: feat.s5d.operational-harness__20260502.s5d.yaml
+spec_sha256: sha256:60f3c88a09113b5262b0b04a99f4236d509ca66b95c520556913ae947f897cc6
+status: applied
+sync_status: synced
+status_history:
+- status: proposed
+  timestamp: 2026-05-02T08:28:26.154261+00:00
+- status: previewed
+  timestamp: 2026-05-02T08:28:57.744974+00:00
+- status: approved
+  timestamp: 2026-05-02T08:29:02.471850+00:00
+- status: applied
+  timestamp: 2026-05-02T08:33:52.212032+00:00
+active_phase: null
+phase_history: []
+phase_runs: []
+approvals:
+- reviewer: Roman
+  date: 2026-05-02T08:29:02.471759+00:00
+  spec_sha256: sha256:2094a40dcf3fada4c155e84ef2861238679f23c2dc2eba7b5889834dd32e6f8e
+  diff_sha256: sha256:c05cd5ad41e8073c353ee2d82356137d17898629eae00fc18203c725b8300e04
+preview:
+  diff_sha256: sha256:c05cd5ad41e8073c353ee2d82356137d17898629eae00fc18203c725b8300e04
+  previewed_spec_sha256: sha256:2094a40dcf3fada4c155e84ef2861238679f23c2dc2eba7b5889834dd32e6f8e
+  actions:
+    create: 2
+    link: 0
+    update: 1
+    delete: 0
+  log: null
+reflection: null
+gate_results:
+- kind: schema
+  status: passed
+  attempt: 1
+  timestamp: 2026-05-02T08:33:46.235750+00:00
+  log: schema validation passed (built-in)
+  exit_code: null
+  evidence_path: evidence/feat.s5d.operational-harness/schema_1.log
+  command: null
+  duration_ms: 0
+decision: null
+verified_by: Diana

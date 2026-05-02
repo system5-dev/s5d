@@ -63,7 +63,7 @@ impl S5dProject {
             files_created: vec![],
         };
 
-        for dir in &["packages", "records", "tasks", ".locks"] {
+        for dir in &["packages", "records", "tasks", "harness", ".locks"] {
             let path = s5d.join(dir);
             fs::create_dir_all(&path)?;
             report.dirs_created.push(path);
@@ -114,6 +114,7 @@ impl S5dProject {
         fs::create_dir_all(s5d.join("packages"))?;
         fs::create_dir_all(s5d.join("records"))?;
         fs::create_dir_all(s5d.join("tasks"))?;
+        fs::create_dir_all(s5d.join("harness"))?;
         fs::create_dir_all(s5d.join(".locks"))?;
         Ok(())
     }

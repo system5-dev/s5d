@@ -98,6 +98,10 @@ fn workflow_shell_commands_are_documented() {
         "ralph-init",
         "ralph-bugfix",
         ".s5d/runs/",
+        "s5d harness start",
+        "s5d harness status",
+        "s5d harness exec",
+        ".s5d/harness/",
     ] {
         assert!(
             readme.contains(term) || skill.contains(term),
@@ -116,6 +120,7 @@ fn skill_defines_cli_conductor_contract() {
         "not a second state machine",
         ".s5d/config.yaml",
         "approved: true",
+        "harness journal state",
         "must not",
         "call Claude/Codex/Gemini directly",
         "Engine completion is only evidence",
