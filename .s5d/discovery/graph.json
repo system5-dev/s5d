@@ -1,0 +1,5677 @@
+{
+  "schema": "s5d.discovery.graph/1.0",
+  "nodes": [
+    {
+      "id": "capability:cap.SimplifyCliSurface",
+      "kind": "capability",
+      "label": "Simplify CLI Surface",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.cli-surface-simplification__20260427.s5d.yaml",
+          "line": 98,
+          "kind": "spec",
+          "symbol": "cap.SimplifyCliSurface"
+        }
+      ]
+    },
+    {
+      "id": "capability:cap.s5d.adapters",
+      "kind": "capability",
+      "label": "ServeAgentsAndCLI",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 158,
+          "kind": "spec",
+          "symbol": "cap.s5d.adapters"
+        }
+      ]
+    },
+    {
+      "id": "capability:cap.s5d.architecture",
+      "kind": "capability",
+      "label": "EnforceArchitecture",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 153,
+          "kind": "spec",
+          "symbol": "cap.s5d.architecture"
+        }
+      ]
+    },
+    {
+      "id": "capability:cap.s5d.check-doc-component-paths",
+      "kind": "capability",
+      "label": "CheckDocComponentPaths",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 129,
+          "kind": "spec",
+          "symbol": "cap.s5d.check-doc-component-paths"
+        }
+      ]
+    },
+    {
+      "id": "capability:cap.s5d.discovery-index-graph",
+      "kind": "capability",
+      "label": "Discovery Index Graph",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.discovery-index-graph__20260502.s5d.yaml",
+          "line": 101,
+          "kind": "spec",
+          "symbol": "cap.s5d.discovery-index-graph"
+        }
+      ]
+    },
+    {
+      "id": "capability:cap.s5d.enforce-spec-required",
+      "kind": "capability",
+      "label": "Enforce spec-required policy on code-changing tool calls",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.pretool-enforcement__20260427.s5d.yaml",
+          "line": 238,
+          "kind": "spec",
+          "symbol": "cap.s5d.enforce-spec-required"
+        }
+      ]
+    },
+    {
+      "id": "capability:cap.s5d.enforcement-contract",
+      "kind": "capability",
+      "label": "Align mandatory enforcement contract with hook behavior",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.enforcement-contract__20260427.s5d.yaml",
+          "line": 101,
+          "kind": "spec",
+          "symbol": "cap.s5d.enforcement-contract"
+        }
+      ]
+    },
+    {
+      "id": "capability:cap.s5d.execute",
+      "kind": "capability",
+      "label": "RunWorkflowAndGates",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 148,
+          "kind": "spec",
+          "symbol": "cap.s5d.execute"
+        }
+      ]
+    },
+    {
+      "id": "capability:cap.s5d.external-engine-phase-run",
+      "kind": "capability",
+      "label": "External Engine Phase Run",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.external-engine-phase-run__20260501.s5d.yaml",
+          "line": 93,
+          "kind": "spec",
+          "symbol": "cap.s5d.external-engine-phase-run"
+        }
+      ]
+    },
+    {
+      "id": "capability:cap.s5d.guard-skill-doc-governance",
+      "kind": "capability",
+      "label": "GuardSkillDocGovernance",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 133,
+          "kind": "spec",
+          "symbol": "cap.s5d.guard-skill-doc-governance"
+        }
+      ]
+    },
+    {
+      "id": "capability:cap.s5d.model",
+      "kind": "capability",
+      "label": "MaintainCanonicalModel",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 133,
+          "kind": "spec",
+          "symbol": "cap.s5d.model"
+        }
+      ]
+    },
+    {
+      "id": "capability:cap.s5d.operational-harness",
+      "kind": "capability",
+      "label": "Operational Harness",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.operational-harness__20260502.s5d.yaml",
+          "line": 94,
+          "kind": "spec",
+          "symbol": "cap.s5d.operational-harness"
+        }
+      ]
+    },
+    {
+      "id": "capability:cap.s5d.regression",
+      "kind": "capability",
+      "label": "GuardRegressions",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 163,
+          "kind": "spec",
+          "symbol": "cap.s5d.regression"
+        }
+      ]
+    },
+    {
+      "id": "capability:cap.s5d.shape-product-intent",
+      "kind": "capability",
+      "label": "ShapeProductIntent",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 121,
+          "kind": "spec",
+          "symbol": "cap.s5d.shape-product-intent"
+        }
+      ]
+    },
+    {
+      "id": "capability:cap.s5d.state",
+      "kind": "capability",
+      "label": "ManageProjectState",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 143,
+          "kind": "spec",
+          "symbol": "cap.s5d.state"
+        }
+      ]
+    },
+    {
+      "id": "capability:cap.s5d.survey-discovery-sources",
+      "kind": "capability",
+      "label": "SurveyDiscoverySources",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 125,
+          "kind": "spec",
+          "symbol": "cap.s5d.survey-discovery-sources"
+        }
+      ]
+    },
+    {
+      "id": "capability:cap.s5d.validate",
+      "kind": "capability",
+      "label": "ValidateSpecs",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 138,
+          "kind": "spec",
+          "symbol": "cap.s5d.validate"
+        }
+      ]
+    },
+    {
+      "id": "component:cmp.s5d.discovery",
+      "kind": "component",
+      "label": "Discovery snapshot builder",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.discovery-index-graph__20260502.s5d.yaml",
+          "line": 123,
+          "kind": "spec",
+          "symbol": "cmp.s5d.discovery"
+        }
+      ]
+    },
+    {
+      "id": "component:comp.s5d.adapters",
+      "kind": "component",
+      "label": "CLI and MCP adapters",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 246,
+          "kind": "spec",
+          "symbol": "comp.s5d.adapters"
+        }
+      ]
+    },
+    {
+      "id": "component:comp.s5d.arch-doc-paths",
+      "kind": "component",
+      "label": "Architecture checker Markdown ownership",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 179,
+          "kind": "spec",
+          "symbol": "comp.s5d.arch-doc-paths"
+        }
+      ]
+    },
+    {
+      "id": "component:comp.s5d.architecture",
+      "kind": "component",
+      "label": "Architecture linter",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 239,
+          "kind": "spec",
+          "symbol": "comp.s5d.architecture"
+        }
+      ]
+    },
+    {
+      "id": "component:comp.s5d.core",
+      "kind": "component",
+      "label": "Core model and library surface",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 200,
+          "kind": "spec",
+          "symbol": "comp.s5d.core"
+        }
+      ]
+    },
+    {
+      "id": "component:comp.s5d.domain-capability-mode",
+      "kind": "component",
+      "label": "S5D product-intent operating mode",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 171,
+          "kind": "spec",
+          "symbol": "comp.s5d.domain-capability-mode"
+        }
+      ]
+    },
+    {
+      "id": "component:comp.s5d.execution",
+      "kind": "component",
+      "label": "Gates, workflow, router, and task execution",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 228,
+          "kind": "spec",
+          "symbol": "comp.s5d.execution"
+        }
+      ]
+    },
+    {
+      "id": "component:comp.s5d.skill-doc-governance-tests",
+      "kind": "component",
+      "label": "Skill doc governance regression tests",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 186,
+          "kind": "spec",
+          "symbol": "comp.s5d.skill-doc-governance-tests"
+        }
+      ]
+    },
+    {
+      "id": "component:comp.s5d.state",
+      "kind": "component",
+      "label": "Project state, import lifecycle, and codebase coverage",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 217,
+          "kind": "spec",
+          "symbol": "comp.s5d.state"
+        }
+      ]
+    },
+    {
+      "id": "component:comp.s5d.tests",
+      "kind": "component",
+      "label": "Regression test suite",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 254,
+          "kind": "spec",
+          "symbol": "comp.s5d.tests"
+        }
+      ]
+    },
+    {
+      "id": "component:comp.s5d.validation",
+      "kind": "component",
+      "label": "Spec validation and graph rules",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 208,
+          "kind": "spec",
+          "symbol": "comp.s5d.validation"
+        }
+      ]
+    },
+    {
+      "id": "component_candidate:rust",
+      "kind": "component",
+      "label": "rust",
+      "status": "inferred",
+      "confidence": 0.55,
+      "provenance": [
+        {
+          "path": "rust/src/arch.rs",
+          "line": null,
+          "kind": "path",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "container:ctr.s5d.rust-cli",
+      "kind": "container",
+      "label": "Rust CLI",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.discovery-index-graph__20260502.s5d.yaml",
+          "line": 118,
+          "kind": "spec",
+          "symbol": "ctr.s5d.rust-cli"
+        }
+      ]
+    },
+    {
+      "id": "container:ctr.s5d.rust-crate",
+      "kind": "container",
+      "label": "Rust CLI and Library",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 195,
+          "kind": "spec",
+          "symbol": "ctr.s5d.rust-crate"
+        }
+      ]
+    },
+    {
+      "id": "container:ctr.s5d.skill-docs",
+      "kind": "container",
+      "label": "S5D Skill Documentation",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 166,
+          "kind": "spec",
+          "symbol": "ctr.s5d.skill-docs"
+        }
+      ]
+    },
+    {
+      "id": "domain:dom.s5d.discovery",
+      "kind": "domain",
+      "label": "Discovery",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.discovery-index-graph__20260502.s5d.yaml",
+          "line": 93,
+          "kind": "spec",
+          "symbol": "dom.s5d.discovery"
+        }
+      ]
+    },
+    {
+      "id": "domain:dom.s5d.enforcement",
+      "kind": "domain",
+      "label": "S5D enforcement (project-local hooks gating tool calls and commits)",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.pretool-enforcement__20260427.s5d.yaml",
+          "line": 233,
+          "kind": "spec",
+          "symbol": "dom.s5d.enforcement"
+        }
+      ]
+    },
+    {
+      "id": "domain:s5d-adapters",
+      "kind": "domain",
+      "label": "Agent and CLI Adapters",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 118,
+          "kind": "spec",
+          "symbol": "s5d-adapters"
+        }
+      ]
+    },
+    {
+      "id": "domain:s5d-architecture",
+      "kind": "domain",
+      "label": "Architecture Enforcement",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 106,
+          "kind": "spec",
+          "symbol": "s5d-architecture"
+        }
+      ]
+    },
+    {
+      "id": "domain:s5d-core",
+      "kind": "domain",
+      "label": "Core Model",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 83,
+          "kind": "spec",
+          "symbol": "s5d-core"
+        }
+      ]
+    },
+    {
+      "id": "domain:s5d-execution",
+      "kind": "domain",
+      "label": "Execution",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 99,
+          "kind": "spec",
+          "symbol": "s5d-execution"
+        }
+      ]
+    },
+    {
+      "id": "domain:s5d-state",
+      "kind": "domain",
+      "label": "Project State",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 97,
+          "kind": "spec",
+          "symbol": "s5d-state"
+        }
+      ]
+    },
+    {
+      "id": "domain:s5d-tests",
+      "kind": "domain",
+      "label": "Regression Tests",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 113,
+          "kind": "spec",
+          "symbol": "s5d-tests"
+        }
+      ]
+    },
+    {
+      "id": "domain:s5d-validation",
+      "kind": "domain",
+      "label": "Validation",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 90,
+          "kind": "spec",
+          "symbol": "s5d-validation"
+        }
+      ]
+    },
+    {
+      "id": "entity:ent.s5d.agent-mode",
+      "kind": "entity",
+      "label": "AgentMode",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 138,
+          "kind": "spec",
+          "symbol": "ent.s5d.agent-mode"
+        }
+      ]
+    },
+    {
+      "id": "entity:ent.s5d.arch-report",
+      "kind": "entity",
+      "label": "ArchitectureCheckReport",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 178,
+          "kind": "spec",
+          "symbol": "ent.s5d.arch-report"
+        }
+      ]
+    },
+    {
+      "id": "entity:ent.s5d.project",
+      "kind": "entity",
+      "label": "S5dProject",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 175,
+          "kind": "spec",
+          "symbol": "ent.s5d.project"
+        }
+      ]
+    },
+    {
+      "id": "entity:ent.s5d.record",
+      "kind": "entity",
+      "label": "Record",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 172,
+          "kind": "spec",
+          "symbol": "ent.s5d.record"
+        }
+      ]
+    },
+    {
+      "id": "entity:ent.s5d.source-survey",
+      "kind": "entity",
+      "label": "SourceSurvey",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 142,
+          "kind": "spec",
+          "symbol": "ent.s5d.source-survey"
+        }
+      ]
+    },
+    {
+      "id": "entity:ent.s5d.spec",
+      "kind": "entity",
+      "label": "Spec",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 169,
+          "kind": "spec",
+          "symbol": "ent.s5d.spec"
+        }
+      ]
+    },
+    {
+      "id": "feature:feat.s5d.cli-surface-simplification",
+      "kind": "feature",
+      "label": "cli-surface-simplification",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.cli-surface-simplification__20260427.s5d.yaml",
+          "line": 2,
+          "kind": "spec",
+          "symbol": "feat.s5d.cli-surface-simplification"
+        }
+      ]
+    },
+    {
+      "id": "feature:feat.s5d.discovery-index-graph",
+      "kind": "feature",
+      "label": "discovery-index-graph",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.discovery-index-graph__20260502.s5d.yaml",
+          "line": 2,
+          "kind": "spec",
+          "symbol": "feat.s5d.discovery-index-graph"
+        }
+      ]
+    },
+    {
+      "id": "feature:feat.s5d.domain-capability-mode",
+      "kind": "feature",
+      "label": "domain-capability-mode",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 2,
+          "kind": "spec",
+          "symbol": "feat.s5d.domain-capability-mode"
+        }
+      ]
+    },
+    {
+      "id": "feature:feat.s5d.enforcement-contract",
+      "kind": "feature",
+      "label": "enforcement-contract",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.enforcement-contract__20260427.s5d.yaml",
+          "line": 2,
+          "kind": "spec",
+          "symbol": "feat.s5d.enforcement-contract"
+        }
+      ]
+    },
+    {
+      "id": "feature:feat.s5d.external-engine-phase-run",
+      "kind": "feature",
+      "label": "external-engine-phase-run",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.external-engine-phase-run__20260501.s5d.yaml",
+          "line": 2,
+          "kind": "spec",
+          "symbol": "feat.s5d.external-engine-phase-run"
+        }
+      ]
+    },
+    {
+      "id": "feature:feat.s5d.operational-harness",
+      "kind": "feature",
+      "label": "operational-harness",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.operational-harness__20260502.s5d.yaml",
+          "line": 2,
+          "kind": "spec",
+          "symbol": "feat.s5d.operational-harness"
+        }
+      ]
+    },
+    {
+      "id": "feature:feat.s5d.pretool-enforcement",
+      "kind": "feature",
+      "label": "PreToolUse enforcement layer",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.pretool-enforcement__20260427.s5d.yaml",
+          "line": 2,
+          "kind": "spec",
+          "symbol": "feat.s5d.pretool-enforcement"
+        }
+      ]
+    },
+    {
+      "id": "feature:feat.s5d.self-governance",
+      "kind": "feature",
+      "label": "self-governance",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 2,
+          "kind": "spec",
+          "symbol": "feat.s5d.self-governance"
+        }
+      ]
+    },
+    {
+      "id": "feature:feat.s5d.structure-outline-and-vertical-phases",
+      "kind": "feature",
+      "label": "structure-outline-and-vertical-phases",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.structure-outline-and-vertical-phases__20260425.s5d.yaml",
+          "line": 2,
+          "kind": "spec",
+          "symbol": "feat.s5d.structure-outline-and-vertical-phases"
+        }
+      ]
+    },
+    {
+      "id": "file:.claude-plugin/plugin.json",
+      "kind": "file",
+      "label": ".claude-plugin/plugin.json",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".claude-plugin/plugin.json",
+          "line": null,
+          "kind": "config",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:.claude/CLAUDE.md",
+      "kind": "file",
+      "label": ".claude/CLAUDE.md",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".claude/CLAUDE.md",
+          "line": null,
+          "kind": "doc",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:.claude/settings.json",
+      "kind": "file",
+      "label": ".claude/settings.json",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".claude/settings.json",
+          "line": null,
+          "kind": "config",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:.claude/settings.local.json",
+      "kind": "file",
+      "label": ".claude/settings.local.json",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".claude/settings.local.json",
+          "line": null,
+          "kind": "config",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:.codex-plugin/plugin.json",
+      "kind": "file",
+      "label": ".codex-plugin/plugin.json",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".codex-plugin/plugin.json",
+          "line": null,
+          "kind": "config",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:.github/workflows/release.yml",
+      "kind": "file",
+      "label": ".github/workflows/release.yml",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".github/workflows/release.yml",
+          "line": null,
+          "kind": "config",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:.mcp.json",
+      "kind": "file",
+      "label": ".mcp.json",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".mcp.json",
+          "line": null,
+          "kind": "config",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:.s5d/packages/arch.review.orchestrator-redesign__20260501.s5d.yaml",
+      "kind": "file",
+      "label": ".s5d/packages/arch.review.orchestrator-redesign__20260501.s5d.yaml",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/arch.review.orchestrator-redesign__20260501.s5d.yaml",
+          "line": null,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:.s5d/packages/decision.redbook-expansion__20260410.s5d.yaml",
+      "kind": "file",
+      "label": ".s5d/packages/decision.redbook-expansion__20260410.s5d.yaml",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/decision.redbook-expansion__20260410.s5d.yaml",
+          "line": null,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:.s5d/packages/decision.skill-decomposition__20260407.s5d.yaml",
+      "kind": "file",
+      "label": ".s5d/packages/decision.skill-decomposition__20260407.s5d.yaml",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/decision.skill-decomposition__20260407.s5d.yaml",
+          "line": null,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:.s5d/packages/feat.s5d.cli-surface-simplification__20260427.s5d.yaml",
+      "kind": "file",
+      "label": ".s5d/packages/feat.s5d.cli-surface-simplification__20260427.s5d.yaml",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.cli-surface-simplification__20260427.s5d.yaml",
+          "line": null,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:.s5d/packages/feat.s5d.discovery-index-graph__20260502.s5d.yaml",
+      "kind": "file",
+      "label": ".s5d/packages/feat.s5d.discovery-index-graph__20260502.s5d.yaml",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.discovery-index-graph__20260502.s5d.yaml",
+          "line": null,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:.s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+      "kind": "file",
+      "label": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": null,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:.s5d/packages/feat.s5d.enforcement-contract__20260427.s5d.yaml",
+      "kind": "file",
+      "label": ".s5d/packages/feat.s5d.enforcement-contract__20260427.s5d.yaml",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.enforcement-contract__20260427.s5d.yaml",
+          "line": null,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:.s5d/packages/feat.s5d.external-engine-phase-run__20260501.s5d.yaml",
+      "kind": "file",
+      "label": ".s5d/packages/feat.s5d.external-engine-phase-run__20260501.s5d.yaml",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.external-engine-phase-run__20260501.s5d.yaml",
+          "line": null,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:.s5d/packages/feat.s5d.operational-harness__20260502.s5d.yaml",
+      "kind": "file",
+      "label": ".s5d/packages/feat.s5d.operational-harness__20260502.s5d.yaml",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.operational-harness__20260502.s5d.yaml",
+          "line": null,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:.s5d/packages/feat.s5d.pretool-enforcement__20260427.s5d.yaml",
+      "kind": "file",
+      "label": ".s5d/packages/feat.s5d.pretool-enforcement__20260427.s5d.yaml",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.pretool-enforcement__20260427.s5d.yaml",
+          "line": null,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:.s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+      "kind": "file",
+      "label": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": null,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:.s5d/packages/feat.s5d.structure-outline-and-vertical-phases__20260425.s5d.yaml",
+      "kind": "file",
+      "label": ".s5d/packages/feat.s5d.structure-outline-and-vertical-phases__20260425.s5d.yaml",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.structure-outline-and-vertical-phases__20260425.s5d.yaml",
+          "line": null,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:.s5d/packages/note.architecture-audit-of-proposed-s5d-orche__20260501.s5d.yaml",
+      "kind": "file",
+      "label": ".s5d/packages/note.architecture-audit-of-proposed-s5d-orche__20260501.s5d.yaml",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/note.architecture-audit-of-proposed-s5d-orche__20260501.s5d.yaml",
+          "line": null,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:.s5d/packages/note.gaterunner-in-s5dconfig-already-handles__20260501.s5d.yaml",
+      "kind": "file",
+      "label": ".s5d/packages/note.gaterunner-in-s5dconfig-already-handles__20260501.s5d.yaml",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/note.gaterunner-in-s5dconfig-already-handles__20260501.s5d.yaml",
+          "line": null,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:README.md",
+      "kind": "file",
+      "label": "README.md",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "README.md",
+          "line": null,
+          "kind": "doc",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:S5D.md",
+      "kind": "file",
+      "label": "S5D.md",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "S5D.md",
+          "line": null,
+          "kind": "doc",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:docs/s5d-v2-workflow-spec.md",
+      "kind": "file",
+      "label": "docs/s5d-v2-workflow-spec.md",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "docs/s5d-v2-workflow-spec.md",
+          "line": null,
+          "kind": "doc",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:examples/decision-example.record.yaml",
+      "kind": "file",
+      "label": "examples/decision-example.record.yaml",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "examples/decision-example.record.yaml",
+          "line": null,
+          "kind": "config",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:examples/decision-example.s5d.yaml",
+      "kind": "file",
+      "label": "examples/decision-example.s5d.yaml",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "examples/decision-example.s5d.yaml",
+          "line": null,
+          "kind": "config",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:gemini-extension.json",
+      "kind": "file",
+      "label": "gemini-extension.json",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "gemini-extension.json",
+          "line": null,
+          "kind": "config",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:hooks/hooks.json",
+      "kind": "file",
+      "label": "hooks/hooks.json",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "hooks/hooks.json",
+          "line": null,
+          "kind": "config",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:rust/Cargo.toml",
+      "kind": "file",
+      "label": "rust/Cargo.toml",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "rust/Cargo.toml",
+          "line": null,
+          "kind": "config",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:rust/src/arch.rs",
+      "kind": "file",
+      "label": "rust/src/arch.rs",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "rust/src/arch.rs",
+          "line": null,
+          "kind": "source",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:rust/src/bin/s5d.rs",
+      "kind": "file",
+      "label": "rust/src/bin/s5d.rs",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "rust/src/bin/s5d.rs",
+          "line": null,
+          "kind": "source",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:rust/src/codebase.rs",
+      "kind": "file",
+      "label": "rust/src/codebase.rs",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "rust/src/codebase.rs",
+          "line": null,
+          "kind": "source",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:rust/src/discovery.rs",
+      "kind": "file",
+      "label": "rust/src/discovery.rs",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "rust/src/discovery.rs",
+          "line": null,
+          "kind": "source",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:rust/src/drift.rs",
+      "kind": "file",
+      "label": "rust/src/drift.rs",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "rust/src/drift.rs",
+          "line": null,
+          "kind": "source",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:rust/src/gate.rs",
+      "kind": "file",
+      "label": "rust/src/gate.rs",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "rust/src/gate.rs",
+          "line": null,
+          "kind": "source",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:rust/src/gates.rs",
+      "kind": "file",
+      "label": "rust/src/gates.rs",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "rust/src/gates.rs",
+          "line": null,
+          "kind": "source",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:rust/src/graph.rs",
+      "kind": "file",
+      "label": "rust/src/graph.rs",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "rust/src/graph.rs",
+          "line": null,
+          "kind": "source",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:rust/src/hooks_json.rs",
+      "kind": "file",
+      "label": "rust/src/hooks_json.rs",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "rust/src/hooks_json.rs",
+          "line": null,
+          "kind": "source",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:rust/src/identity.rs",
+      "kind": "file",
+      "label": "rust/src/identity.rs",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "rust/src/identity.rs",
+          "line": null,
+          "kind": "source",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:rust/src/import.rs",
+      "kind": "file",
+      "label": "rust/src/import.rs",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "rust/src/import.rs",
+          "line": null,
+          "kind": "source",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:rust/src/infer.rs",
+      "kind": "file",
+      "label": "rust/src/infer.rs",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "rust/src/infer.rs",
+          "line": null,
+          "kind": "source",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:rust/src/lib.rs",
+      "kind": "file",
+      "label": "rust/src/lib.rs",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "rust/src/lib.rs",
+          "line": null,
+          "kind": "source",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:rust/src/mcp.rs",
+      "kind": "file",
+      "label": "rust/src/mcp.rs",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "rust/src/mcp.rs",
+          "line": null,
+          "kind": "source",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:rust/src/models.rs",
+      "kind": "file",
+      "label": "rust/src/models.rs",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "rust/src/models.rs",
+          "line": null,
+          "kind": "source",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:rust/src/phase_gates.rs",
+      "kind": "file",
+      "label": "rust/src/phase_gates.rs",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "rust/src/phase_gates.rs",
+          "line": null,
+          "kind": "source",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:rust/src/project.rs",
+      "kind": "file",
+      "label": "rust/src/project.rs",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "rust/src/project.rs",
+          "line": null,
+          "kind": "source",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:rust/src/ralph.rs",
+      "kind": "file",
+      "label": "rust/src/ralph.rs",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "rust/src/ralph.rs",
+          "line": null,
+          "kind": "source",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:rust/src/router.rs",
+      "kind": "file",
+      "label": "rust/src/router.rs",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "rust/src/router.rs",
+          "line": null,
+          "kind": "source",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:rust/src/template.rs",
+      "kind": "file",
+      "label": "rust/src/template.rs",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "rust/src/template.rs",
+          "line": null,
+          "kind": "source",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:rust/src/validate.rs",
+      "kind": "file",
+      "label": "rust/src/validate.rs",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "rust/src/validate.rs",
+          "line": null,
+          "kind": "source",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:rust/tests/docs_sync.rs",
+      "kind": "file",
+      "label": "rust/tests/docs_sync.rs",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "rust/tests/docs_sync.rs",
+          "line": null,
+          "kind": "source",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:rust/tests/standalone_repos.rs",
+      "kind": "file",
+      "label": "rust/tests/standalone_repos.rs",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "rust/tests/standalone_repos.rs",
+          "line": null,
+          "kind": "source",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:skills/fpf/SKILL.md",
+      "kind": "file",
+      "label": "skills/fpf/SKILL.md",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "skills/fpf/SKILL.md",
+          "line": null,
+          "kind": "doc",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:skills/s5d/SKILL.md",
+      "kind": "file",
+      "label": "skills/s5d/SKILL.md",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "skills/s5d/SKILL.md",
+          "line": null,
+          "kind": "doc",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:skills/s5d/domain-capability-mode.md",
+      "kind": "file",
+      "label": "skills/s5d/domain-capability-mode.md",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "skills/s5d/domain-capability-mode.md",
+          "line": null,
+          "kind": "doc",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:skills/s5d/metamodel.md",
+      "kind": "file",
+      "label": "skills/s5d/metamodel.md",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "skills/s5d/metamodel.md",
+          "line": null,
+          "kind": "doc",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "file:skills/s5d/session-protocol.md",
+      "kind": "file",
+      "label": "skills/s5d/session-protocol.md",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "skills/s5d/session-protocol.md",
+          "line": null,
+          "kind": "doc",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "id": "path:rust/src/arch.rs",
+      "kind": "path",
+      "label": "rust/src/arch.rs",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 185,
+          "kind": "spec",
+          "symbol": "rust/src/arch.rs"
+        }
+      ]
+    },
+    {
+      "id": "path:rust/src/bin/s5d.rs",
+      "kind": "path",
+      "label": "rust/src/bin/s5d.rs",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.discovery-index-graph__20260502.s5d.yaml",
+          "line": 130,
+          "kind": "spec",
+          "symbol": "rust/src/bin/s5d.rs"
+        }
+      ]
+    },
+    {
+      "id": "path:rust/src/codebase.rs",
+      "kind": "path",
+      "label": "rust/src/codebase.rs",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 227,
+          "kind": "spec",
+          "symbol": "rust/src/codebase.rs"
+        }
+      ]
+    },
+    {
+      "id": "path:rust/src/discovery.rs",
+      "kind": "path",
+      "label": "rust/src/discovery.rs",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.discovery-index-graph__20260502.s5d.yaml",
+          "line": 129,
+          "kind": "spec",
+          "symbol": "rust/src/discovery.rs"
+        }
+      ]
+    },
+    {
+      "id": "path:rust/src/drift.rs",
+      "kind": "path",
+      "label": "rust/src/drift.rs",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 226,
+          "kind": "spec",
+          "symbol": "rust/src/drift.rs"
+        }
+      ]
+    },
+    {
+      "id": "path:rust/src/gates.rs",
+      "kind": "path",
+      "label": "rust/src/gates.rs",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 234,
+          "kind": "spec",
+          "symbol": "rust/src/gates.rs"
+        }
+      ]
+    },
+    {
+      "id": "path:rust/src/graph.rs",
+      "kind": "path",
+      "label": "rust/src/graph.rs",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 215,
+          "kind": "spec",
+          "symbol": "rust/src/graph.rs"
+        }
+      ]
+    },
+    {
+      "id": "path:rust/src/identity.rs",
+      "kind": "path",
+      "label": "rust/src/identity.rs",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 224,
+          "kind": "spec",
+          "symbol": "rust/src/identity.rs"
+        }
+      ]
+    },
+    {
+      "id": "path:rust/src/import.rs",
+      "kind": "path",
+      "label": "rust/src/import.rs",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 225,
+          "kind": "spec",
+          "symbol": "rust/src/import.rs"
+        }
+      ]
+    },
+    {
+      "id": "path:rust/src/infer.rs",
+      "kind": "path",
+      "label": "rust/src/infer.rs",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 216,
+          "kind": "spec",
+          "symbol": "rust/src/infer.rs"
+        }
+      ]
+    },
+    {
+      "id": "path:rust/src/lib.rs",
+      "kind": "path",
+      "label": "rust/src/lib.rs",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 206,
+          "kind": "spec",
+          "symbol": "rust/src/lib.rs"
+        }
+      ]
+    },
+    {
+      "id": "path:rust/src/mcp.rs",
+      "kind": "path",
+      "label": "rust/src/mcp.rs",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 253,
+          "kind": "spec",
+          "symbol": "rust/src/mcp.rs"
+        }
+      ]
+    },
+    {
+      "id": "path:rust/src/models.rs",
+      "kind": "path",
+      "label": "rust/src/models.rs",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 207,
+          "kind": "spec",
+          "symbol": "rust/src/models.rs"
+        }
+      ]
+    },
+    {
+      "id": "path:rust/src/phase_gates.rs",
+      "kind": "path",
+      "label": "rust/src/phase_gates.rs",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 235,
+          "kind": "spec",
+          "symbol": "rust/src/phase_gates.rs"
+        }
+      ]
+    },
+    {
+      "id": "path:rust/src/project.rs",
+      "kind": "path",
+      "label": "rust/src/project.rs",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 223,
+          "kind": "spec",
+          "symbol": "rust/src/project.rs"
+        }
+      ]
+    },
+    {
+      "id": "path:rust/src/ralph.rs",
+      "kind": "path",
+      "label": "rust/src/ralph.rs",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 236,
+          "kind": "spec",
+          "symbol": "rust/src/ralph.rs"
+        }
+      ]
+    },
+    {
+      "id": "path:rust/src/router.rs",
+      "kind": "path",
+      "label": "rust/src/router.rs",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 237,
+          "kind": "spec",
+          "symbol": "rust/src/router.rs"
+        }
+      ]
+    },
+    {
+      "id": "path:rust/src/template.rs",
+      "kind": "path",
+      "label": "rust/src/template.rs",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 238,
+          "kind": "spec",
+          "symbol": "rust/src/template.rs"
+        }
+      ]
+    },
+    {
+      "id": "path:rust/src/validate.rs",
+      "kind": "path",
+      "label": "rust/src/validate.rs",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 214,
+          "kind": "spec",
+          "symbol": "rust/src/validate.rs"
+        }
+      ]
+    },
+    {
+      "id": "path:rust/tests/*.rs",
+      "kind": "path",
+      "label": "rust/tests/*.rs",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 260,
+          "kind": "spec",
+          "symbol": "rust/tests/*.rs"
+        }
+      ]
+    },
+    {
+      "id": "path:rust/tests/standalone_repos.rs",
+      "kind": "path",
+      "label": "rust/tests/standalone_repos.rs",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.discovery-index-graph__20260502.s5d.yaml",
+          "line": 131,
+          "kind": "spec",
+          "symbol": "rust/tests/standalone_repos.rs"
+        }
+      ]
+    },
+    {
+      "id": "path:skills/s5d/SKILL.md",
+      "kind": "path",
+      "label": "skills/s5d/SKILL.md",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 77,
+          "kind": "spec",
+          "symbol": "skills/s5d/SKILL.md"
+        }
+      ]
+    },
+    {
+      "id": "path:skills/s5d/domain-capability-mode.md",
+      "kind": "path",
+      "label": "skills/s5d/domain-capability-mode.md",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 78,
+          "kind": "spec",
+          "symbol": "skills/s5d/domain-capability-mode.md"
+        }
+      ]
+    },
+    {
+      "id": "product:S5D",
+      "kind": "product",
+      "label": "S5D",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.cli-surface-simplification__20260427.s5d.yaml",
+          "line": 4,
+          "kind": "spec",
+          "symbol": "S5D"
+        }
+      ]
+    },
+    {
+      "id": "product:s5d",
+      "kind": "product",
+      "label": "s5d",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.discovery-index-graph__20260502.s5d.yaml",
+          "line": 1,
+          "kind": "spec",
+          "symbol": "s5d"
+        }
+      ]
+    },
+    {
+      "id": "spec:arch.review.orchestrator-redesign",
+      "kind": "spec",
+      "label": "arch.review.orchestrator-redesign",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/arch.review.orchestrator-redesign__20260501.s5d.yaml",
+          "line": 1,
+          "kind": "spec",
+          "symbol": "arch.review.orchestrator-redesign"
+        }
+      ]
+    },
+    {
+      "id": "spec:decision.redbook-expansion",
+      "kind": "spec",
+      "label": "decision.redbook-expansion",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/decision.redbook-expansion__20260410.s5d.yaml",
+          "line": 1,
+          "kind": "spec",
+          "symbol": "decision.redbook-expansion"
+        }
+      ]
+    },
+    {
+      "id": "spec:decision.skill-decomposition",
+      "kind": "spec",
+      "label": "decision.skill-decomposition",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/decision.skill-decomposition__20260407.s5d.yaml",
+          "line": 1,
+          "kind": "spec",
+          "symbol": "decision.skill-decomposition"
+        }
+      ]
+    },
+    {
+      "id": "spec:feat.s5d.cli-surface-simplification",
+      "kind": "spec",
+      "label": "feat.s5d.cli-surface-simplification",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.cli-surface-simplification__20260427.s5d.yaml",
+          "line": 1,
+          "kind": "spec",
+          "symbol": "feat.s5d.cli-surface-simplification"
+        }
+      ]
+    },
+    {
+      "id": "spec:feat.s5d.discovery-index-graph",
+      "kind": "spec",
+      "label": "feat.s5d.discovery-index-graph",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.discovery-index-graph__20260502.s5d.yaml",
+          "line": 1,
+          "kind": "spec",
+          "symbol": "feat.s5d.discovery-index-graph"
+        }
+      ]
+    },
+    {
+      "id": "spec:feat.s5d.domain-capability-mode",
+      "kind": "spec",
+      "label": "feat.s5d.domain-capability-mode",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 1,
+          "kind": "spec",
+          "symbol": "feat.s5d.domain-capability-mode"
+        }
+      ]
+    },
+    {
+      "id": "spec:feat.s5d.enforcement-contract",
+      "kind": "spec",
+      "label": "feat.s5d.enforcement-contract",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.enforcement-contract__20260427.s5d.yaml",
+          "line": 1,
+          "kind": "spec",
+          "symbol": "feat.s5d.enforcement-contract"
+        }
+      ]
+    },
+    {
+      "id": "spec:feat.s5d.external-engine-phase-run",
+      "kind": "spec",
+      "label": "feat.s5d.external-engine-phase-run",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.external-engine-phase-run__20260501.s5d.yaml",
+          "line": 1,
+          "kind": "spec",
+          "symbol": "feat.s5d.external-engine-phase-run"
+        }
+      ]
+    },
+    {
+      "id": "spec:feat.s5d.operational-harness",
+      "kind": "spec",
+      "label": "feat.s5d.operational-harness",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.operational-harness__20260502.s5d.yaml",
+          "line": 1,
+          "kind": "spec",
+          "symbol": "feat.s5d.operational-harness"
+        }
+      ]
+    },
+    {
+      "id": "spec:feat.s5d.pretool-enforcement",
+      "kind": "spec",
+      "label": "feat.s5d.pretool-enforcement",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.pretool-enforcement__20260427.s5d.yaml",
+          "line": 1,
+          "kind": "spec",
+          "symbol": "feat.s5d.pretool-enforcement"
+        }
+      ]
+    },
+    {
+      "id": "spec:feat.s5d.self-governance",
+      "kind": "spec",
+      "label": "feat.s5d.self-governance",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 1,
+          "kind": "spec",
+          "symbol": "feat.s5d.self-governance"
+        }
+      ]
+    },
+    {
+      "id": "spec:feat.s5d.structure-outline-and-vertical-phases",
+      "kind": "spec",
+      "label": "feat.s5d.structure-outline-and-vertical-phases",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.structure-outline-and-vertical-phases__20260425.s5d.yaml",
+          "line": 1,
+          "kind": "spec",
+          "symbol": "feat.s5d.structure-outline-and-vertical-phases"
+        }
+      ]
+    },
+    {
+      "id": "spec:note.architecture-audit-of-proposed-s5d-orche",
+      "kind": "spec",
+      "label": "note.architecture-audit-of-proposed-s5d-orche",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/note.architecture-audit-of-proposed-s5d-orche__20260501.s5d.yaml",
+          "line": 1,
+          "kind": "spec",
+          "symbol": "note.architecture-audit-of-proposed-s5d-orche"
+        }
+      ]
+    },
+    {
+      "id": "spec:note.gaterunner-in-s5dconfig-already-handles",
+      "kind": "spec",
+      "label": "note.gaterunner-in-s5dconfig-already-handles",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/note.gaterunner-in-s5dconfig-already-handles__20260501.s5d.yaml",
+          "line": 1,
+          "kind": "spec",
+          "symbol": "note.gaterunner-in-s5dconfig-already-handles"
+        }
+      ]
+    },
+    {
+      "id": "system:sys.s5d",
+      "kind": "system",
+      "label": "S5D Repository",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 162,
+          "kind": "spec",
+          "symbol": "sys.s5d"
+        }
+      ]
+    },
+    {
+      "id": "system:sys.s5d.cli",
+      "kind": "system",
+      "label": "S5D CLI",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.discovery-index-graph__20260502.s5d.yaml",
+          "line": 114,
+          "kind": "spec",
+          "symbol": "sys.s5d.cli"
+        }
+      ]
+    },
+    {
+      "id": "use_case:uc.s5d.constrain-agent-scope",
+      "kind": "use_case",
+      "label": "Constrain implementation agents with domain boundaries",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 158,
+          "kind": "spec",
+          "symbol": "uc.s5d.constrain-agent-scope"
+        }
+      ]
+    },
+    {
+      "id": "use_case:uc.s5d.init-source-survey",
+      "kind": "use_case",
+      "label": "Survey discovery sources before architecture mapping",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 152,
+          "kind": "spec",
+          "symbol": "uc.s5d.init-source-survey"
+        }
+      ]
+    },
+    {
+      "id": "use_case:uc.s5d.shape-product-intent",
+      "kind": "use_case",
+      "label": "Shape product intent into S5D artifacts",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 155,
+          "kind": "spec",
+          "symbol": "uc.s5d.shape-product-intent"
+        }
+      ]
+    },
+    {
+      "id": "use_case:uc.s5d.verify-self",
+      "kind": "use_case",
+      "label": "Verify S5D against its own architecture model",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 187,
+          "kind": "spec",
+          "symbol": "uc.s5d.verify-self"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from": "component:cmp.s5d.discovery",
+      "to": "path:rust/src/bin/s5d.rs",
+      "kind": "claims_path",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.discovery-index-graph__20260502.s5d.yaml",
+          "line": 130,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "component:cmp.s5d.discovery",
+      "to": "path:rust/src/discovery.rs",
+      "kind": "claims_path",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.discovery-index-graph__20260502.s5d.yaml",
+          "line": 129,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "component:cmp.s5d.discovery",
+      "to": "path:rust/tests/standalone_repos.rs",
+      "kind": "claims_path",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.discovery-index-graph__20260502.s5d.yaml",
+          "line": 131,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "component:comp.s5d.adapters",
+      "to": "path:rust/src/bin/s5d.rs",
+      "kind": "claims_path",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 252,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "component:comp.s5d.adapters",
+      "to": "path:rust/src/mcp.rs",
+      "kind": "claims_path",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 253,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "component:comp.s5d.arch-doc-paths",
+      "to": "path:rust/src/arch.rs",
+      "kind": "claims_path",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 185,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "component:comp.s5d.architecture",
+      "to": "path:rust/src/arch.rs",
+      "kind": "claims_path",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 245,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "component:comp.s5d.core",
+      "to": "path:rust/src/lib.rs",
+      "kind": "claims_path",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 206,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "component:comp.s5d.core",
+      "to": "path:rust/src/models.rs",
+      "kind": "claims_path",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 207,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "component:comp.s5d.domain-capability-mode",
+      "to": "path:skills/s5d/SKILL.md",
+      "kind": "claims_path",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 77,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "component:comp.s5d.domain-capability-mode",
+      "to": "path:skills/s5d/domain-capability-mode.md",
+      "kind": "claims_path",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 78,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "component:comp.s5d.execution",
+      "to": "path:rust/src/gates.rs",
+      "kind": "claims_path",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 234,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "component:comp.s5d.execution",
+      "to": "path:rust/src/phase_gates.rs",
+      "kind": "claims_path",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 235,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "component:comp.s5d.execution",
+      "to": "path:rust/src/ralph.rs",
+      "kind": "claims_path",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 236,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "component:comp.s5d.execution",
+      "to": "path:rust/src/router.rs",
+      "kind": "claims_path",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 237,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "component:comp.s5d.execution",
+      "to": "path:rust/src/template.rs",
+      "kind": "claims_path",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 238,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "component:comp.s5d.skill-doc-governance-tests",
+      "to": "path:rust/tests/standalone_repos.rs",
+      "kind": "claims_path",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 192,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "component:comp.s5d.state",
+      "to": "path:rust/src/codebase.rs",
+      "kind": "claims_path",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 227,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "component:comp.s5d.state",
+      "to": "path:rust/src/drift.rs",
+      "kind": "claims_path",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 226,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "component:comp.s5d.state",
+      "to": "path:rust/src/identity.rs",
+      "kind": "claims_path",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 224,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "component:comp.s5d.state",
+      "to": "path:rust/src/import.rs",
+      "kind": "claims_path",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 225,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "component:comp.s5d.state",
+      "to": "path:rust/src/project.rs",
+      "kind": "claims_path",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 223,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "component:comp.s5d.tests",
+      "to": "path:rust/tests/*.rs",
+      "kind": "claims_path",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 260,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "component:comp.s5d.validation",
+      "to": "path:rust/src/graph.rs",
+      "kind": "claims_path",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 215,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "component:comp.s5d.validation",
+      "to": "path:rust/src/infer.rs",
+      "kind": "claims_path",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 216,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "component:comp.s5d.validation",
+      "to": "path:rust/src/validate.rs",
+      "kind": "claims_path",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 214,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "component_candidate:rust",
+      "to": "file:rust/src/arch.rs",
+      "kind": "contains_file",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "rust/src/arch.rs",
+          "line": null,
+          "kind": "path",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "component_candidate:rust",
+      "to": "file:rust/src/bin/s5d.rs",
+      "kind": "contains_file",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "rust/src/bin/s5d.rs",
+          "line": null,
+          "kind": "path",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "component_candidate:rust",
+      "to": "file:rust/src/codebase.rs",
+      "kind": "contains_file",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "rust/src/codebase.rs",
+          "line": null,
+          "kind": "path",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "component_candidate:rust",
+      "to": "file:rust/src/discovery.rs",
+      "kind": "contains_file",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "rust/src/discovery.rs",
+          "line": null,
+          "kind": "path",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "component_candidate:rust",
+      "to": "file:rust/src/drift.rs",
+      "kind": "contains_file",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "rust/src/drift.rs",
+          "line": null,
+          "kind": "path",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "component_candidate:rust",
+      "to": "file:rust/src/gate.rs",
+      "kind": "contains_file",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "rust/src/gate.rs",
+          "line": null,
+          "kind": "path",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "component_candidate:rust",
+      "to": "file:rust/src/gates.rs",
+      "kind": "contains_file",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "rust/src/gates.rs",
+          "line": null,
+          "kind": "path",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "component_candidate:rust",
+      "to": "file:rust/src/graph.rs",
+      "kind": "contains_file",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "rust/src/graph.rs",
+          "line": null,
+          "kind": "path",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "component_candidate:rust",
+      "to": "file:rust/src/hooks_json.rs",
+      "kind": "contains_file",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "rust/src/hooks_json.rs",
+          "line": null,
+          "kind": "path",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "component_candidate:rust",
+      "to": "file:rust/src/identity.rs",
+      "kind": "contains_file",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "rust/src/identity.rs",
+          "line": null,
+          "kind": "path",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "component_candidate:rust",
+      "to": "file:rust/src/import.rs",
+      "kind": "contains_file",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "rust/src/import.rs",
+          "line": null,
+          "kind": "path",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "component_candidate:rust",
+      "to": "file:rust/src/infer.rs",
+      "kind": "contains_file",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "rust/src/infer.rs",
+          "line": null,
+          "kind": "path",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "component_candidate:rust",
+      "to": "file:rust/src/lib.rs",
+      "kind": "contains_file",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "rust/src/lib.rs",
+          "line": null,
+          "kind": "path",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "component_candidate:rust",
+      "to": "file:rust/src/mcp.rs",
+      "kind": "contains_file",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "rust/src/mcp.rs",
+          "line": null,
+          "kind": "path",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "component_candidate:rust",
+      "to": "file:rust/src/models.rs",
+      "kind": "contains_file",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "rust/src/models.rs",
+          "line": null,
+          "kind": "path",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "component_candidate:rust",
+      "to": "file:rust/src/phase_gates.rs",
+      "kind": "contains_file",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "rust/src/phase_gates.rs",
+          "line": null,
+          "kind": "path",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "component_candidate:rust",
+      "to": "file:rust/src/project.rs",
+      "kind": "contains_file",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "rust/src/project.rs",
+          "line": null,
+          "kind": "path",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "component_candidate:rust",
+      "to": "file:rust/src/ralph.rs",
+      "kind": "contains_file",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "rust/src/ralph.rs",
+          "line": null,
+          "kind": "path",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "component_candidate:rust",
+      "to": "file:rust/src/router.rs",
+      "kind": "contains_file",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "rust/src/router.rs",
+          "line": null,
+          "kind": "path",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "component_candidate:rust",
+      "to": "file:rust/src/template.rs",
+      "kind": "contains_file",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "rust/src/template.rs",
+          "line": null,
+          "kind": "path",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "component_candidate:rust",
+      "to": "file:rust/src/validate.rs",
+      "kind": "contains_file",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "rust/src/validate.rs",
+          "line": null,
+          "kind": "path",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "component_candidate:rust",
+      "to": "file:rust/tests/docs_sync.rs",
+      "kind": "contains_file",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "rust/tests/docs_sync.rs",
+          "line": null,
+          "kind": "path",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "component_candidate:rust",
+      "to": "file:rust/tests/standalone_repos.rs",
+      "kind": "contains_file",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": "rust/tests/standalone_repos.rs",
+          "line": null,
+          "kind": "path",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "container:ctr.s5d.rust-cli",
+      "to": "component:cmp.s5d.discovery",
+      "kind": "contains_component",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.discovery-index-graph__20260502.s5d.yaml",
+          "line": 123,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "container:ctr.s5d.rust-crate",
+      "to": "component:comp.s5d.adapters",
+      "kind": "contains_component",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 246,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "container:ctr.s5d.rust-crate",
+      "to": "component:comp.s5d.architecture",
+      "kind": "contains_component",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 239,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "container:ctr.s5d.rust-crate",
+      "to": "component:comp.s5d.core",
+      "kind": "contains_component",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 200,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "container:ctr.s5d.rust-crate",
+      "to": "component:comp.s5d.execution",
+      "kind": "contains_component",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 228,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "container:ctr.s5d.rust-crate",
+      "to": "component:comp.s5d.state",
+      "kind": "contains_component",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 217,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "container:ctr.s5d.rust-crate",
+      "to": "component:comp.s5d.tests",
+      "kind": "contains_component",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 254,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "container:ctr.s5d.rust-crate",
+      "to": "component:comp.s5d.validation",
+      "kind": "contains_component",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 208,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "container:ctr.s5d.skill-docs",
+      "to": "component:comp.s5d.arch-doc-paths",
+      "kind": "contains_component",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 179,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "container:ctr.s5d.skill-docs",
+      "to": "component:comp.s5d.domain-capability-mode",
+      "kind": "contains_component",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 171,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "container:ctr.s5d.skill-docs",
+      "to": "component:comp.s5d.skill-doc-governance-tests",
+      "kind": "contains_component",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 186,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "domain:dom.s5d.discovery",
+      "to": "capability:cap.s5d.discovery-index-graph",
+      "kind": "owns_capability",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.discovery-index-graph__20260502.s5d.yaml",
+          "line": 101,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "domain:dom.s5d.discovery",
+      "to": "component:cmp.s5d.discovery",
+      "kind": "owns_component",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.discovery-index-graph__20260502.s5d.yaml",
+          "line": 123,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "domain:dom.s5d.enforcement",
+      "to": "capability:cap.s5d.enforce-spec-required",
+      "kind": "owns_capability",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.pretool-enforcement__20260427.s5d.yaml",
+          "line": 238,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "domain:dom.s5d.workflow",
+      "to": "capability:cap.s5d.external-engine-phase-run",
+      "kind": "owns_capability",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.external-engine-phase-run__20260501.s5d.yaml",
+          "line": 93,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "domain:dom.s5d.workflow",
+      "to": "capability:cap.s5d.operational-harness",
+      "kind": "owns_capability",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.operational-harness__20260502.s5d.yaml",
+          "line": 94,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "domain:s5d-adapters",
+      "to": "capability:cap.s5d.adapters",
+      "kind": "owns_capability",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 158,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "domain:s5d-adapters",
+      "to": "component:comp.s5d.adapters",
+      "kind": "owns_component",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 246,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "domain:s5d-architecture",
+      "to": "capability:cap.s5d.architecture",
+      "kind": "owns_capability",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 153,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "domain:s5d-architecture",
+      "to": "capability:cap.s5d.check-doc-component-paths",
+      "kind": "owns_capability",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 129,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "domain:s5d-architecture",
+      "to": "component:comp.s5d.arch-doc-paths",
+      "kind": "owns_component",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 179,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "domain:s5d-architecture",
+      "to": "component:comp.s5d.architecture",
+      "kind": "owns_component",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 239,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "domain:s5d-architecture",
+      "to": "entity:ent.s5d.arch-report",
+      "kind": "owns_entity",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 178,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "domain:s5d-core",
+      "to": "capability:cap.s5d.model",
+      "kind": "owns_capability",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 133,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "domain:s5d-core",
+      "to": "component:comp.s5d.core",
+      "kind": "owns_component",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 200,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "domain:s5d-core",
+      "to": "entity:ent.s5d.spec",
+      "kind": "owns_entity",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 169,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "domain:s5d-execution",
+      "to": "capability:cap.s5d.enforcement-contract",
+      "kind": "owns_capability",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.enforcement-contract__20260427.s5d.yaml",
+          "line": 101,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "domain:s5d-execution",
+      "to": "capability:cap.s5d.execute",
+      "kind": "owns_capability",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 148,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "domain:s5d-execution",
+      "to": "capability:cap.s5d.shape-product-intent",
+      "kind": "owns_capability",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 121,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "domain:s5d-execution",
+      "to": "capability:cap.s5d.survey-discovery-sources",
+      "kind": "owns_capability",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 125,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "domain:s5d-execution",
+      "to": "component:comp.s5d.domain-capability-mode",
+      "kind": "owns_component",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 171,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "domain:s5d-execution",
+      "to": "component:comp.s5d.execution",
+      "kind": "owns_component",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 228,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "domain:s5d-execution",
+      "to": "entity:ent.s5d.agent-mode",
+      "kind": "owns_entity",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 138,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "domain:s5d-execution",
+      "to": "entity:ent.s5d.source-survey",
+      "kind": "owns_entity",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 142,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "domain:s5d-state",
+      "to": "capability:cap.s5d.state",
+      "kind": "owns_capability",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 143,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "domain:s5d-state",
+      "to": "component:comp.s5d.state",
+      "kind": "owns_component",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 217,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "domain:s5d-state",
+      "to": "entity:ent.s5d.project",
+      "kind": "owns_entity",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 175,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "domain:s5d-state",
+      "to": "entity:ent.s5d.record",
+      "kind": "owns_entity",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 172,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "domain:s5d-tests",
+      "to": "capability:cap.s5d.guard-skill-doc-governance",
+      "kind": "owns_capability",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 133,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "domain:s5d-tests",
+      "to": "capability:cap.s5d.regression",
+      "kind": "owns_capability",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 163,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "domain:s5d-tests",
+      "to": "component:comp.s5d.skill-doc-governance-tests",
+      "kind": "owns_component",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 186,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "domain:s5d-tests",
+      "to": "component:comp.s5d.tests",
+      "kind": "owns_component",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 254,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "domain:s5d-validation",
+      "to": "capability:cap.s5d.validate",
+      "kind": "owns_capability",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 138,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "domain:s5d-validation",
+      "to": "component:comp.s5d.validation",
+      "kind": "owns_component",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 208,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "domain:s5d.cli",
+      "to": "capability:cap.SimplifyCliSurface",
+      "kind": "owns_capability",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.cli-surface-simplification__20260427.s5d.yaml",
+          "line": 98,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "feature:feat.s5d.discovery-index-graph",
+      "to": "component:cmp.s5d.discovery",
+      "kind": "implemented_by",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.discovery-index-graph__20260502.s5d.yaml",
+          "line": 123,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "feature:feat.s5d.domain-capability-mode",
+      "to": "component:comp.s5d.arch-doc-paths",
+      "kind": "implemented_by",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 179,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "feature:feat.s5d.domain-capability-mode",
+      "to": "component:comp.s5d.domain-capability-mode",
+      "kind": "implemented_by",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 171,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "feature:feat.s5d.domain-capability-mode",
+      "to": "component:comp.s5d.skill-doc-governance-tests",
+      "kind": "implemented_by",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 186,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "feature:feat.s5d.domain-capability-mode",
+      "to": "use_case:uc.s5d.constrain-agent-scope",
+      "kind": "has_use_case",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 158,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "feature:feat.s5d.domain-capability-mode",
+      "to": "use_case:uc.s5d.init-source-survey",
+      "kind": "has_use_case",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 152,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "feature:feat.s5d.domain-capability-mode",
+      "to": "use_case:uc.s5d.shape-product-intent",
+      "kind": "has_use_case",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 155,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "feature:feat.s5d.self-governance",
+      "to": "component:comp.s5d.adapters",
+      "kind": "implemented_by",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 246,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "feature:feat.s5d.self-governance",
+      "to": "component:comp.s5d.architecture",
+      "kind": "implemented_by",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 239,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "feature:feat.s5d.self-governance",
+      "to": "component:comp.s5d.core",
+      "kind": "implemented_by",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 200,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "feature:feat.s5d.self-governance",
+      "to": "component:comp.s5d.execution",
+      "kind": "implemented_by",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 228,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "feature:feat.s5d.self-governance",
+      "to": "component:comp.s5d.state",
+      "kind": "implemented_by",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 217,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "feature:feat.s5d.self-governance",
+      "to": "component:comp.s5d.tests",
+      "kind": "implemented_by",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 254,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "feature:feat.s5d.self-governance",
+      "to": "component:comp.s5d.validation",
+      "kind": "implemented_by",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 208,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "feature:feat.s5d.self-governance",
+      "to": "use_case:uc.s5d.verify-self",
+      "kind": "has_use_case",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 187,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "file:.s5d/packages/arch.review.orchestrator-redesign__20260501.s5d.yaml",
+      "to": "spec:arch.review.orchestrator-redesign",
+      "kind": "defines",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/arch.review.orchestrator-redesign__20260501.s5d.yaml",
+          "line": 1,
+          "kind": "spec",
+          "symbol": "arch.review.orchestrator-redesign"
+        }
+      ]
+    },
+    {
+      "from": "file:.s5d/packages/decision.redbook-expansion__20260410.s5d.yaml",
+      "to": "spec:decision.redbook-expansion",
+      "kind": "defines",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/decision.redbook-expansion__20260410.s5d.yaml",
+          "line": 1,
+          "kind": "spec",
+          "symbol": "decision.redbook-expansion"
+        }
+      ]
+    },
+    {
+      "from": "file:.s5d/packages/decision.skill-decomposition__20260407.s5d.yaml",
+      "to": "spec:decision.skill-decomposition",
+      "kind": "defines",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/decision.skill-decomposition__20260407.s5d.yaml",
+          "line": 1,
+          "kind": "spec",
+          "symbol": "decision.skill-decomposition"
+        }
+      ]
+    },
+    {
+      "from": "file:.s5d/packages/feat.s5d.cli-surface-simplification__20260427.s5d.yaml",
+      "to": "spec:feat.s5d.cli-surface-simplification",
+      "kind": "defines",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.cli-surface-simplification__20260427.s5d.yaml",
+          "line": 1,
+          "kind": "spec",
+          "symbol": "feat.s5d.cli-surface-simplification"
+        }
+      ]
+    },
+    {
+      "from": "file:.s5d/packages/feat.s5d.discovery-index-graph__20260502.s5d.yaml",
+      "to": "spec:feat.s5d.discovery-index-graph",
+      "kind": "defines",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.discovery-index-graph__20260502.s5d.yaml",
+          "line": 1,
+          "kind": "spec",
+          "symbol": "feat.s5d.discovery-index-graph"
+        }
+      ]
+    },
+    {
+      "from": "file:.s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+      "to": "spec:feat.s5d.domain-capability-mode",
+      "kind": "defines",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 1,
+          "kind": "spec",
+          "symbol": "feat.s5d.domain-capability-mode"
+        }
+      ]
+    },
+    {
+      "from": "file:.s5d/packages/feat.s5d.enforcement-contract__20260427.s5d.yaml",
+      "to": "spec:feat.s5d.enforcement-contract",
+      "kind": "defines",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.enforcement-contract__20260427.s5d.yaml",
+          "line": 1,
+          "kind": "spec",
+          "symbol": "feat.s5d.enforcement-contract"
+        }
+      ]
+    },
+    {
+      "from": "file:.s5d/packages/feat.s5d.external-engine-phase-run__20260501.s5d.yaml",
+      "to": "spec:feat.s5d.external-engine-phase-run",
+      "kind": "defines",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.external-engine-phase-run__20260501.s5d.yaml",
+          "line": 1,
+          "kind": "spec",
+          "symbol": "feat.s5d.external-engine-phase-run"
+        }
+      ]
+    },
+    {
+      "from": "file:.s5d/packages/feat.s5d.operational-harness__20260502.s5d.yaml",
+      "to": "spec:feat.s5d.operational-harness",
+      "kind": "defines",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.operational-harness__20260502.s5d.yaml",
+          "line": 1,
+          "kind": "spec",
+          "symbol": "feat.s5d.operational-harness"
+        }
+      ]
+    },
+    {
+      "from": "file:.s5d/packages/feat.s5d.pretool-enforcement__20260427.s5d.yaml",
+      "to": "spec:feat.s5d.pretool-enforcement",
+      "kind": "defines",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.pretool-enforcement__20260427.s5d.yaml",
+          "line": 1,
+          "kind": "spec",
+          "symbol": "feat.s5d.pretool-enforcement"
+        }
+      ]
+    },
+    {
+      "from": "file:.s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+      "to": "spec:feat.s5d.self-governance",
+      "kind": "defines",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 1,
+          "kind": "spec",
+          "symbol": "feat.s5d.self-governance"
+        }
+      ]
+    },
+    {
+      "from": "file:.s5d/packages/feat.s5d.structure-outline-and-vertical-phases__20260425.s5d.yaml",
+      "to": "spec:feat.s5d.structure-outline-and-vertical-phases",
+      "kind": "defines",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.structure-outline-and-vertical-phases__20260425.s5d.yaml",
+          "line": 1,
+          "kind": "spec",
+          "symbol": "feat.s5d.structure-outline-and-vertical-phases"
+        }
+      ]
+    },
+    {
+      "from": "file:.s5d/packages/note.architecture-audit-of-proposed-s5d-orche__20260501.s5d.yaml",
+      "to": "spec:note.architecture-audit-of-proposed-s5d-orche",
+      "kind": "defines",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/note.architecture-audit-of-proposed-s5d-orche__20260501.s5d.yaml",
+          "line": 1,
+          "kind": "spec",
+          "symbol": "note.architecture-audit-of-proposed-s5d-orche"
+        }
+      ]
+    },
+    {
+      "from": "file:.s5d/packages/note.gaterunner-in-s5dconfig-already-handles__20260501.s5d.yaml",
+      "to": "spec:note.gaterunner-in-s5dconfig-already-handles",
+      "kind": "defines",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/note.gaterunner-in-s5dconfig-already-handles__20260501.s5d.yaml",
+          "line": 1,
+          "kind": "spec",
+          "symbol": "note.gaterunner-in-s5dconfig-already-handles"
+        }
+      ]
+    },
+    {
+      "from": "product:S5D",
+      "to": "feature:feat.s5d.cli-surface-simplification",
+      "kind": "offers_feature",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.cli-surface-simplification__20260427.s5d.yaml",
+          "line": 2,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "product:S5D",
+      "to": "feature:feat.s5d.enforcement-contract",
+      "kind": "offers_feature",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.enforcement-contract__20260427.s5d.yaml",
+          "line": 2,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "product:s5d",
+      "to": "domain:dom.s5d.discovery",
+      "kind": "owns_domain",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.discovery-index-graph__20260502.s5d.yaml",
+          "line": 93,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "product:s5d",
+      "to": "domain:dom.s5d.enforcement",
+      "kind": "owns_domain",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.pretool-enforcement__20260427.s5d.yaml",
+          "line": 233,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "product:s5d",
+      "to": "domain:s5d-adapters",
+      "kind": "owns_domain",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 118,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "product:s5d",
+      "to": "domain:s5d-architecture",
+      "kind": "owns_domain",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 106,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "product:s5d",
+      "to": "domain:s5d-core",
+      "kind": "owns_domain",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 83,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "product:s5d",
+      "to": "domain:s5d-execution",
+      "kind": "owns_domain",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 99,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "product:s5d",
+      "to": "domain:s5d-state",
+      "kind": "owns_domain",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 97,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "product:s5d",
+      "to": "domain:s5d-tests",
+      "kind": "owns_domain",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 113,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "product:s5d",
+      "to": "domain:s5d-validation",
+      "kind": "owns_domain",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 90,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "product:s5d",
+      "to": "feature:feat.s5d.discovery-index-graph",
+      "kind": "offers_feature",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.discovery-index-graph__20260502.s5d.yaml",
+          "line": 2,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "product:s5d",
+      "to": "feature:feat.s5d.domain-capability-mode",
+      "kind": "offers_feature",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 2,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "product:s5d",
+      "to": "feature:feat.s5d.external-engine-phase-run",
+      "kind": "offers_feature",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.external-engine-phase-run__20260501.s5d.yaml",
+          "line": 2,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "product:s5d",
+      "to": "feature:feat.s5d.operational-harness",
+      "kind": "offers_feature",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.operational-harness__20260502.s5d.yaml",
+          "line": 2,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "product:s5d",
+      "to": "feature:feat.s5d.pretool-enforcement",
+      "kind": "offers_feature",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.pretool-enforcement__20260427.s5d.yaml",
+          "line": 2,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "product:s5d",
+      "to": "feature:feat.s5d.self-governance",
+      "kind": "offers_feature",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 2,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "product:s5d",
+      "to": "feature:feat.s5d.structure-outline-and-vertical-phases",
+      "kind": "offers_feature",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.structure-outline-and-vertical-phases__20260425.s5d.yaml",
+          "line": 2,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "product:s5d",
+      "to": "system:sys.s5d",
+      "kind": "owns_system",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 162,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "product:s5d",
+      "to": "system:sys.s5d.cli",
+      "kind": "owns_system",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.discovery-index-graph__20260502.s5d.yaml",
+          "line": 114,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.cli-surface-simplification",
+      "to": "capability:cap.SimplifyCliSurface",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.cli-surface-simplification__20260427.s5d.yaml",
+          "line": 98,
+          "kind": "spec",
+          "symbol": "cap.SimplifyCliSurface"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.cli-surface-simplification",
+      "to": "feature:feat.s5d.cli-surface-simplification",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.cli-surface-simplification__20260427.s5d.yaml",
+          "line": 2,
+          "kind": "spec",
+          "symbol": "feat.s5d.cli-surface-simplification"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.cli-surface-simplification",
+      "to": "product:S5D",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.cli-surface-simplification__20260427.s5d.yaml",
+          "line": 4,
+          "kind": "spec",
+          "symbol": "S5D"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.discovery-index-graph",
+      "to": "capability:cap.s5d.discovery-index-graph",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.discovery-index-graph__20260502.s5d.yaml",
+          "line": 101,
+          "kind": "spec",
+          "symbol": "cap.s5d.discovery-index-graph"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.discovery-index-graph",
+      "to": "component:cmp.s5d.discovery",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.discovery-index-graph__20260502.s5d.yaml",
+          "line": 123,
+          "kind": "spec",
+          "symbol": "cmp.s5d.discovery"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.discovery-index-graph",
+      "to": "container:ctr.s5d.rust-cli",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.discovery-index-graph__20260502.s5d.yaml",
+          "line": 118,
+          "kind": "spec",
+          "symbol": "ctr.s5d.rust-cli"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.discovery-index-graph",
+      "to": "domain:dom.s5d.discovery",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.discovery-index-graph__20260502.s5d.yaml",
+          "line": 93,
+          "kind": "spec",
+          "symbol": "dom.s5d.discovery"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.discovery-index-graph",
+      "to": "feature:feat.s5d.discovery-index-graph",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.discovery-index-graph__20260502.s5d.yaml",
+          "line": 2,
+          "kind": "spec",
+          "symbol": "feat.s5d.discovery-index-graph"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.discovery-index-graph",
+      "to": "product:s5d",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.discovery-index-graph__20260502.s5d.yaml",
+          "line": 1,
+          "kind": "spec",
+          "symbol": "s5d"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.discovery-index-graph",
+      "to": "system:sys.s5d.cli",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.discovery-index-graph__20260502.s5d.yaml",
+          "line": 114,
+          "kind": "spec",
+          "symbol": "sys.s5d.cli"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.domain-capability-mode",
+      "to": "capability:cap.s5d.check-doc-component-paths",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 129,
+          "kind": "spec",
+          "symbol": "cap.s5d.check-doc-component-paths"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.domain-capability-mode",
+      "to": "capability:cap.s5d.guard-skill-doc-governance",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 133,
+          "kind": "spec",
+          "symbol": "cap.s5d.guard-skill-doc-governance"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.domain-capability-mode",
+      "to": "capability:cap.s5d.shape-product-intent",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 121,
+          "kind": "spec",
+          "symbol": "cap.s5d.shape-product-intent"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.domain-capability-mode",
+      "to": "capability:cap.s5d.survey-discovery-sources",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 125,
+          "kind": "spec",
+          "symbol": "cap.s5d.survey-discovery-sources"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.domain-capability-mode",
+      "to": "component:comp.s5d.arch-doc-paths",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 179,
+          "kind": "spec",
+          "symbol": "comp.s5d.arch-doc-paths"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.domain-capability-mode",
+      "to": "component:comp.s5d.domain-capability-mode",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 171,
+          "kind": "spec",
+          "symbol": "comp.s5d.domain-capability-mode"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.domain-capability-mode",
+      "to": "component:comp.s5d.skill-doc-governance-tests",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 186,
+          "kind": "spec",
+          "symbol": "comp.s5d.skill-doc-governance-tests"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.domain-capability-mode",
+      "to": "container:ctr.s5d.skill-docs",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 166,
+          "kind": "spec",
+          "symbol": "ctr.s5d.skill-docs"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.domain-capability-mode",
+      "to": "domain:s5d-architecture",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 106,
+          "kind": "spec",
+          "symbol": "s5d-architecture"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.domain-capability-mode",
+      "to": "domain:s5d-execution",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 99,
+          "kind": "spec",
+          "symbol": "s5d-execution"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.domain-capability-mode",
+      "to": "domain:s5d-tests",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 113,
+          "kind": "spec",
+          "symbol": "s5d-tests"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.domain-capability-mode",
+      "to": "entity:ent.s5d.agent-mode",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 138,
+          "kind": "spec",
+          "symbol": "ent.s5d.agent-mode"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.domain-capability-mode",
+      "to": "entity:ent.s5d.source-survey",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 142,
+          "kind": "spec",
+          "symbol": "ent.s5d.source-survey"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.domain-capability-mode",
+      "to": "feature:feat.s5d.domain-capability-mode",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 2,
+          "kind": "spec",
+          "symbol": "feat.s5d.domain-capability-mode"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.domain-capability-mode",
+      "to": "product:s5d",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 1,
+          "kind": "spec",
+          "symbol": "s5d"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.domain-capability-mode",
+      "to": "system:sys.s5d",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 162,
+          "kind": "spec",
+          "symbol": "sys.s5d"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.domain-capability-mode",
+      "to": "use_case:uc.s5d.constrain-agent-scope",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 158,
+          "kind": "spec",
+          "symbol": "uc.s5d.constrain-agent-scope"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.domain-capability-mode",
+      "to": "use_case:uc.s5d.init-source-survey",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 152,
+          "kind": "spec",
+          "symbol": "uc.s5d.init-source-survey"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.domain-capability-mode",
+      "to": "use_case:uc.s5d.shape-product-intent",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 155,
+          "kind": "spec",
+          "symbol": "uc.s5d.shape-product-intent"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.enforcement-contract",
+      "to": "capability:cap.s5d.enforcement-contract",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.enforcement-contract__20260427.s5d.yaml",
+          "line": 101,
+          "kind": "spec",
+          "symbol": "cap.s5d.enforcement-contract"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.enforcement-contract",
+      "to": "feature:feat.s5d.enforcement-contract",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.enforcement-contract__20260427.s5d.yaml",
+          "line": 2,
+          "kind": "spec",
+          "symbol": "feat.s5d.enforcement-contract"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.enforcement-contract",
+      "to": "product:S5D",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.enforcement-contract__20260427.s5d.yaml",
+          "line": 4,
+          "kind": "spec",
+          "symbol": "S5D"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.external-engine-phase-run",
+      "to": "capability:cap.s5d.external-engine-phase-run",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.external-engine-phase-run__20260501.s5d.yaml",
+          "line": 93,
+          "kind": "spec",
+          "symbol": "cap.s5d.external-engine-phase-run"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.external-engine-phase-run",
+      "to": "feature:feat.s5d.external-engine-phase-run",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.external-engine-phase-run__20260501.s5d.yaml",
+          "line": 2,
+          "kind": "spec",
+          "symbol": "feat.s5d.external-engine-phase-run"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.external-engine-phase-run",
+      "to": "product:s5d",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.external-engine-phase-run__20260501.s5d.yaml",
+          "line": 1,
+          "kind": "spec",
+          "symbol": "s5d"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.operational-harness",
+      "to": "capability:cap.s5d.operational-harness",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.operational-harness__20260502.s5d.yaml",
+          "line": 94,
+          "kind": "spec",
+          "symbol": "cap.s5d.operational-harness"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.operational-harness",
+      "to": "feature:feat.s5d.operational-harness",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.operational-harness__20260502.s5d.yaml",
+          "line": 2,
+          "kind": "spec",
+          "symbol": "feat.s5d.operational-harness"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.operational-harness",
+      "to": "product:s5d",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.operational-harness__20260502.s5d.yaml",
+          "line": 1,
+          "kind": "spec",
+          "symbol": "s5d"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.pretool-enforcement",
+      "to": "capability:cap.s5d.enforce-spec-required",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.pretool-enforcement__20260427.s5d.yaml",
+          "line": 238,
+          "kind": "spec",
+          "symbol": "cap.s5d.enforce-spec-required"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.pretool-enforcement",
+      "to": "domain:dom.s5d.enforcement",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.pretool-enforcement__20260427.s5d.yaml",
+          "line": 233,
+          "kind": "spec",
+          "symbol": "dom.s5d.enforcement"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.pretool-enforcement",
+      "to": "feature:feat.s5d.pretool-enforcement",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.pretool-enforcement__20260427.s5d.yaml",
+          "line": 2,
+          "kind": "spec",
+          "symbol": "feat.s5d.pretool-enforcement"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.pretool-enforcement",
+      "to": "product:s5d",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.pretool-enforcement__20260427.s5d.yaml",
+          "line": 1,
+          "kind": "spec",
+          "symbol": "s5d"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.self-governance",
+      "to": "capability:cap.s5d.adapters",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 158,
+          "kind": "spec",
+          "symbol": "cap.s5d.adapters"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.self-governance",
+      "to": "capability:cap.s5d.architecture",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 153,
+          "kind": "spec",
+          "symbol": "cap.s5d.architecture"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.self-governance",
+      "to": "capability:cap.s5d.execute",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 148,
+          "kind": "spec",
+          "symbol": "cap.s5d.execute"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.self-governance",
+      "to": "capability:cap.s5d.model",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 133,
+          "kind": "spec",
+          "symbol": "cap.s5d.model"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.self-governance",
+      "to": "capability:cap.s5d.regression",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 163,
+          "kind": "spec",
+          "symbol": "cap.s5d.regression"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.self-governance",
+      "to": "capability:cap.s5d.state",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 143,
+          "kind": "spec",
+          "symbol": "cap.s5d.state"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.self-governance",
+      "to": "capability:cap.s5d.validate",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 138,
+          "kind": "spec",
+          "symbol": "cap.s5d.validate"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.self-governance",
+      "to": "component:comp.s5d.adapters",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 246,
+          "kind": "spec",
+          "symbol": "comp.s5d.adapters"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.self-governance",
+      "to": "component:comp.s5d.architecture",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 239,
+          "kind": "spec",
+          "symbol": "comp.s5d.architecture"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.self-governance",
+      "to": "component:comp.s5d.core",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 200,
+          "kind": "spec",
+          "symbol": "comp.s5d.core"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.self-governance",
+      "to": "component:comp.s5d.execution",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 228,
+          "kind": "spec",
+          "symbol": "comp.s5d.execution"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.self-governance",
+      "to": "component:comp.s5d.state",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 217,
+          "kind": "spec",
+          "symbol": "comp.s5d.state"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.self-governance",
+      "to": "component:comp.s5d.tests",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 254,
+          "kind": "spec",
+          "symbol": "comp.s5d.tests"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.self-governance",
+      "to": "component:comp.s5d.validation",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 208,
+          "kind": "spec",
+          "symbol": "comp.s5d.validation"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.self-governance",
+      "to": "container:ctr.s5d.rust-crate",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 195,
+          "kind": "spec",
+          "symbol": "ctr.s5d.rust-crate"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.self-governance",
+      "to": "domain:s5d-adapters",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 118,
+          "kind": "spec",
+          "symbol": "s5d-adapters"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.self-governance",
+      "to": "domain:s5d-architecture",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 111,
+          "kind": "spec",
+          "symbol": "s5d-architecture"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.self-governance",
+      "to": "domain:s5d-core",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 83,
+          "kind": "spec",
+          "symbol": "s5d-core"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.self-governance",
+      "to": "domain:s5d-execution",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 104,
+          "kind": "spec",
+          "symbol": "s5d-execution"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.self-governance",
+      "to": "domain:s5d-state",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 97,
+          "kind": "spec",
+          "symbol": "s5d-state"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.self-governance",
+      "to": "domain:s5d-tests",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 125,
+          "kind": "spec",
+          "symbol": "s5d-tests"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.self-governance",
+      "to": "domain:s5d-validation",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 90,
+          "kind": "spec",
+          "symbol": "s5d-validation"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.self-governance",
+      "to": "entity:ent.s5d.arch-report",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 178,
+          "kind": "spec",
+          "symbol": "ent.s5d.arch-report"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.self-governance",
+      "to": "entity:ent.s5d.project",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 175,
+          "kind": "spec",
+          "symbol": "ent.s5d.project"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.self-governance",
+      "to": "entity:ent.s5d.record",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 172,
+          "kind": "spec",
+          "symbol": "ent.s5d.record"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.self-governance",
+      "to": "entity:ent.s5d.spec",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 169,
+          "kind": "spec",
+          "symbol": "ent.s5d.spec"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.self-governance",
+      "to": "feature:feat.s5d.self-governance",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 2,
+          "kind": "spec",
+          "symbol": "feat.s5d.self-governance"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.self-governance",
+      "to": "product:s5d",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 1,
+          "kind": "spec",
+          "symbol": "s5d"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.self-governance",
+      "to": "system:sys.s5d",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 191,
+          "kind": "spec",
+          "symbol": "sys.s5d"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.self-governance",
+      "to": "use_case:uc.s5d.verify-self",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 187,
+          "kind": "spec",
+          "symbol": "uc.s5d.verify-self"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.structure-outline-and-vertical-phases",
+      "to": "feature:feat.s5d.structure-outline-and-vertical-phases",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.structure-outline-and-vertical-phases__20260425.s5d.yaml",
+          "line": 2,
+          "kind": "spec",
+          "symbol": "feat.s5d.structure-outline-and-vertical-phases"
+        }
+      ]
+    },
+    {
+      "from": "spec:feat.s5d.structure-outline-and-vertical-phases",
+      "to": "product:s5d",
+      "kind": "declares",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.structure-outline-and-vertical-phases__20260425.s5d.yaml",
+          "line": 1,
+          "kind": "spec",
+          "symbol": "s5d"
+        }
+      ]
+    },
+    {
+      "from": "system:sys.s5d",
+      "to": "container:ctr.s5d.rust-crate",
+      "kind": "has_container",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml",
+          "line": 195,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "system:sys.s5d",
+      "to": "container:ctr.s5d.skill-docs",
+      "kind": "has_container",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml",
+          "line": 166,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    },
+    {
+      "from": "system:sys.s5d.cli",
+      "to": "container:ctr.s5d.rust-cli",
+      "kind": "has_container",
+      "status": "verified",
+      "confidence": 1.0,
+      "provenance": [
+        {
+          "path": ".s5d/packages/feat.s5d.discovery-index-graph__20260502.s5d.yaml",
+          "line": 118,
+          "kind": "spec",
+          "symbol": null
+        }
+      ]
+    }
+  ]
+}

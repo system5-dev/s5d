@@ -1,0 +1,588 @@
+schema: s5d.discovery.metamodel/1.0
+source_graph: graph.json
+products:
+- id: product:S5D
+  name: S5D
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.cli-surface-simplification__20260427.s5d.yaml
+    line: 4
+    kind: spec
+    symbol: S5D
+- id: product:s5d
+  name: s5d
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.discovery-index-graph__20260502.s5d.yaml
+    line: 1
+    kind: spec
+    symbol: s5d
+domains:
+- id: domain:dom.s5d.discovery
+  name: Discovery
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.discovery-index-graph__20260502.s5d.yaml
+    line: 93
+    kind: spec
+    symbol: dom.s5d.discovery
+- id: domain:dom.s5d.enforcement
+  name: S5D enforcement (project-local hooks gating tool calls and commits)
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.pretool-enforcement__20260427.s5d.yaml
+    line: 233
+    kind: spec
+    symbol: dom.s5d.enforcement
+- id: domain:s5d-adapters
+  name: Agent and CLI Adapters
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml
+    line: 118
+    kind: spec
+    symbol: s5d-adapters
+- id: domain:s5d-architecture
+  name: Architecture Enforcement
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml
+    line: 106
+    kind: spec
+    symbol: s5d-architecture
+- id: domain:s5d-core
+  name: Core Model
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml
+    line: 83
+    kind: spec
+    symbol: s5d-core
+- id: domain:s5d-execution
+  name: Execution
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml
+    line: 99
+    kind: spec
+    symbol: s5d-execution
+- id: domain:s5d-state
+  name: Project State
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml
+    line: 97
+    kind: spec
+    symbol: s5d-state
+- id: domain:s5d-tests
+  name: Regression Tests
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml
+    line: 113
+    kind: spec
+    symbol: s5d-tests
+- id: domain:s5d-validation
+  name: Validation
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml
+    line: 90
+    kind: spec
+    symbol: s5d-validation
+capabilities:
+- id: capability:cap.SimplifyCliSurface
+  name: Simplify CLI Surface
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.cli-surface-simplification__20260427.s5d.yaml
+    line: 98
+    kind: spec
+    symbol: cap.SimplifyCliSurface
+- id: capability:cap.s5d.adapters
+  name: ServeAgentsAndCLI
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml
+    line: 158
+    kind: spec
+    symbol: cap.s5d.adapters
+- id: capability:cap.s5d.architecture
+  name: EnforceArchitecture
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml
+    line: 153
+    kind: spec
+    symbol: cap.s5d.architecture
+- id: capability:cap.s5d.check-doc-component-paths
+  name: CheckDocComponentPaths
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml
+    line: 129
+    kind: spec
+    symbol: cap.s5d.check-doc-component-paths
+- id: capability:cap.s5d.discovery-index-graph
+  name: Discovery Index Graph
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.discovery-index-graph__20260502.s5d.yaml
+    line: 101
+    kind: spec
+    symbol: cap.s5d.discovery-index-graph
+- id: capability:cap.s5d.enforce-spec-required
+  name: Enforce spec-required policy on code-changing tool calls
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.pretool-enforcement__20260427.s5d.yaml
+    line: 238
+    kind: spec
+    symbol: cap.s5d.enforce-spec-required
+- id: capability:cap.s5d.enforcement-contract
+  name: Align mandatory enforcement contract with hook behavior
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.enforcement-contract__20260427.s5d.yaml
+    line: 101
+    kind: spec
+    symbol: cap.s5d.enforcement-contract
+- id: capability:cap.s5d.execute
+  name: RunWorkflowAndGates
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml
+    line: 148
+    kind: spec
+    symbol: cap.s5d.execute
+- id: capability:cap.s5d.external-engine-phase-run
+  name: External Engine Phase Run
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.external-engine-phase-run__20260501.s5d.yaml
+    line: 93
+    kind: spec
+    symbol: cap.s5d.external-engine-phase-run
+- id: capability:cap.s5d.guard-skill-doc-governance
+  name: GuardSkillDocGovernance
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml
+    line: 133
+    kind: spec
+    symbol: cap.s5d.guard-skill-doc-governance
+- id: capability:cap.s5d.model
+  name: MaintainCanonicalModel
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml
+    line: 133
+    kind: spec
+    symbol: cap.s5d.model
+- id: capability:cap.s5d.operational-harness
+  name: Operational Harness
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.operational-harness__20260502.s5d.yaml
+    line: 94
+    kind: spec
+    symbol: cap.s5d.operational-harness
+- id: capability:cap.s5d.regression
+  name: GuardRegressions
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml
+    line: 163
+    kind: spec
+    symbol: cap.s5d.regression
+- id: capability:cap.s5d.shape-product-intent
+  name: ShapeProductIntent
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml
+    line: 121
+    kind: spec
+    symbol: cap.s5d.shape-product-intent
+- id: capability:cap.s5d.state
+  name: ManageProjectState
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml
+    line: 143
+    kind: spec
+    symbol: cap.s5d.state
+- id: capability:cap.s5d.survey-discovery-sources
+  name: SurveyDiscoverySources
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml
+    line: 125
+    kind: spec
+    symbol: cap.s5d.survey-discovery-sources
+- id: capability:cap.s5d.validate
+  name: ValidateSpecs
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml
+    line: 138
+    kind: spec
+    symbol: cap.s5d.validate
+entities:
+- id: entity:ent.s5d.agent-mode
+  name: AgentMode
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml
+    line: 138
+    kind: spec
+    symbol: ent.s5d.agent-mode
+- id: entity:ent.s5d.arch-report
+  name: ArchitectureCheckReport
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml
+    line: 178
+    kind: spec
+    symbol: ent.s5d.arch-report
+- id: entity:ent.s5d.project
+  name: S5dProject
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml
+    line: 175
+    kind: spec
+    symbol: ent.s5d.project
+- id: entity:ent.s5d.record
+  name: Record
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml
+    line: 172
+    kind: spec
+    symbol: ent.s5d.record
+- id: entity:ent.s5d.source-survey
+  name: SourceSurvey
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml
+    line: 142
+    kind: spec
+    symbol: ent.s5d.source-survey
+- id: entity:ent.s5d.spec
+  name: Spec
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml
+    line: 169
+    kind: spec
+    symbol: ent.s5d.spec
+features:
+- id: feature:feat.s5d.cli-surface-simplification
+  name: cli-surface-simplification
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.cli-surface-simplification__20260427.s5d.yaml
+    line: 2
+    kind: spec
+    symbol: feat.s5d.cli-surface-simplification
+- id: feature:feat.s5d.discovery-index-graph
+  name: discovery-index-graph
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.discovery-index-graph__20260502.s5d.yaml
+    line: 2
+    kind: spec
+    symbol: feat.s5d.discovery-index-graph
+- id: feature:feat.s5d.domain-capability-mode
+  name: domain-capability-mode
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml
+    line: 2
+    kind: spec
+    symbol: feat.s5d.domain-capability-mode
+- id: feature:feat.s5d.enforcement-contract
+  name: enforcement-contract
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.enforcement-contract__20260427.s5d.yaml
+    line: 2
+    kind: spec
+    symbol: feat.s5d.enforcement-contract
+- id: feature:feat.s5d.external-engine-phase-run
+  name: external-engine-phase-run
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.external-engine-phase-run__20260501.s5d.yaml
+    line: 2
+    kind: spec
+    symbol: feat.s5d.external-engine-phase-run
+- id: feature:feat.s5d.operational-harness
+  name: operational-harness
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.operational-harness__20260502.s5d.yaml
+    line: 2
+    kind: spec
+    symbol: feat.s5d.operational-harness
+- id: feature:feat.s5d.pretool-enforcement
+  name: PreToolUse enforcement layer
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.pretool-enforcement__20260427.s5d.yaml
+    line: 2
+    kind: spec
+    symbol: feat.s5d.pretool-enforcement
+- id: feature:feat.s5d.self-governance
+  name: self-governance
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml
+    line: 2
+    kind: spec
+    symbol: feat.s5d.self-governance
+- id: feature:feat.s5d.structure-outline-and-vertical-phases
+  name: structure-outline-and-vertical-phases
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.structure-outline-and-vertical-phases__20260425.s5d.yaml
+    line: 2
+    kind: spec
+    symbol: feat.s5d.structure-outline-and-vertical-phases
+use_cases:
+- id: use_case:uc.s5d.constrain-agent-scope
+  name: Constrain implementation agents with domain boundaries
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml
+    line: 158
+    kind: spec
+    symbol: uc.s5d.constrain-agent-scope
+- id: use_case:uc.s5d.init-source-survey
+  name: Survey discovery sources before architecture mapping
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml
+    line: 152
+    kind: spec
+    symbol: uc.s5d.init-source-survey
+- id: use_case:uc.s5d.shape-product-intent
+  name: Shape product intent into S5D artifacts
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml
+    line: 155
+    kind: spec
+    symbol: uc.s5d.shape-product-intent
+- id: use_case:uc.s5d.verify-self
+  name: Verify S5D against its own architecture model
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml
+    line: 187
+    kind: spec
+    symbol: uc.s5d.verify-self
+systems:
+- id: system:sys.s5d
+  name: S5D Repository
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml
+    line: 162
+    kind: spec
+    symbol: sys.s5d
+- id: system:sys.s5d.cli
+  name: S5D CLI
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.discovery-index-graph__20260502.s5d.yaml
+    line: 114
+    kind: spec
+    symbol: sys.s5d.cli
+containers:
+- id: container:ctr.s5d.rust-cli
+  name: Rust CLI
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.discovery-index-graph__20260502.s5d.yaml
+    line: 118
+    kind: spec
+    symbol: ctr.s5d.rust-cli
+- id: container:ctr.s5d.rust-crate
+  name: Rust CLI and Library
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml
+    line: 195
+    kind: spec
+    symbol: ctr.s5d.rust-crate
+- id: container:ctr.s5d.skill-docs
+  name: S5D Skill Documentation
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml
+    line: 166
+    kind: spec
+    symbol: ctr.s5d.skill-docs
+components:
+- id: component:cmp.s5d.discovery
+  name: Discovery snapshot builder
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.discovery-index-graph__20260502.s5d.yaml
+    line: 123
+    kind: spec
+    symbol: cmp.s5d.discovery
+- id: component:comp.s5d.adapters
+  name: CLI and MCP adapters
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml
+    line: 246
+    kind: spec
+    symbol: comp.s5d.adapters
+- id: component:comp.s5d.arch-doc-paths
+  name: Architecture checker Markdown ownership
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml
+    line: 179
+    kind: spec
+    symbol: comp.s5d.arch-doc-paths
+- id: component:comp.s5d.architecture
+  name: Architecture linter
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml
+    line: 239
+    kind: spec
+    symbol: comp.s5d.architecture
+- id: component:comp.s5d.core
+  name: Core model and library surface
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml
+    line: 200
+    kind: spec
+    symbol: comp.s5d.core
+- id: component:comp.s5d.domain-capability-mode
+  name: S5D product-intent operating mode
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml
+    line: 171
+    kind: spec
+    symbol: comp.s5d.domain-capability-mode
+- id: component:comp.s5d.execution
+  name: Gates, workflow, router, and task execution
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml
+    line: 228
+    kind: spec
+    symbol: comp.s5d.execution
+- id: component:comp.s5d.skill-doc-governance-tests
+  name: Skill doc governance regression tests
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.domain-capability-mode__20260429.s5d.yaml
+    line: 186
+    kind: spec
+    symbol: comp.s5d.skill-doc-governance-tests
+- id: component:comp.s5d.state
+  name: Project state, import lifecycle, and codebase coverage
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml
+    line: 217
+    kind: spec
+    symbol: comp.s5d.state
+- id: component:comp.s5d.tests
+  name: Regression test suite
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml
+    line: 254
+    kind: spec
+    symbol: comp.s5d.tests
+- id: component:comp.s5d.validation
+  name: Spec validation and graph rules
+  status: verified
+  confidence: 1.0
+  evidence:
+  - path: .s5d/packages/feat.s5d.self-governance__20260423.s5d.yaml
+    line: 208
+    kind: spec
+    symbol: comp.s5d.validation
+- id: component_candidate:rust
+  name: rust
+  status: inferred
+  confidence: 0.55
+  evidence:
+  - path: rust/src/arch.rs
+    line: null
+    kind: path
+    symbol: null
+projections: []

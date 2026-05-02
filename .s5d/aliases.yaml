@@ -11,6 +11,24 @@ global:
   package_id: null
   owning_package: feat.s5d.enforcement-contract
   deprecated: false
+- uuid: 5771bea1-7aa8-44fd-be3e-83126bca60ce
+  artifact_id: dom.s5d.discovery
+  artifact_type: Domain
+  package_id: null
+  owning_package: feat.s5d.discovery-index-graph
+  deprecated: false
+- uuid: d8ac41ff-6b31-4492-8b78-5cd41d8dc5a3
+  artifact_id: sys.s5d.cli
+  artifact_type: SoftwareSystem
+  package_id: null
+  owning_package: feat.s5d.discovery-index-graph
+  deprecated: false
+- uuid: b6b382b7-fe1a-4829-bdcd-92bc90a1075f
+  artifact_id: ctr.s5d.rust-cli
+  artifact_type: Container
+  package_id: null
+  owning_package: feat.s5d.discovery-index-graph
+  deprecated: false
 packages:
 - uuid: 0d3f4abc-8b28-422f-ba12-3bdb515b33ac
   artifact_id: cap.LogError
@@ -70,5 +88,23 @@ packages:
   artifact_id: feat.s5d.operational-harness
   artifact_type: Feature
   package_id: feat.s5d.operational-harness
+  owning_package: null
+  deprecated: false
+- uuid: 19c52c56-3283-41d8-8061-683d85765066
+  artifact_id: cap.s5d.discovery-index-graph
+  artifact_type: Capability
+  package_id: feat.s5d.discovery-index-graph
+  owning_package: null
+  deprecated: false
+- uuid: 0ab185a6-ddf5-4b43-9617-ecd5abe0b6c3
+  artifact_id: feat.s5d.discovery-index-graph
+  artifact_type: Feature
+  package_id: feat.s5d.discovery-index-graph
+  owning_package: null
+  deprecated: false
+- uuid: b091e681-9c0e-489e-97bf-daa43eca0cc1
+  artifact_id: cmp.s5d.discovery
+  artifact_type: Component
+  package_id: feat.s5d.discovery-index-graph
   owning_package: null
   deprecated: false

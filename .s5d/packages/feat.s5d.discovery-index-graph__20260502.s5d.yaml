@@ -1,0 +1,147 @@
+s5d: '1.0'
+id: feat.s5d.discovery-index-graph
+version: 1.0.0
+product: s5d
+tier: lightweight
+allow_update: true
+meta:
+  title: discovery-index-graph
+  authors: []
+  date: 2026-05-02
+  tickets: []
+  adrs: []
+  renames: []
+context: |
+  ## Problem
+  Project discovery currently lives in prose, ad-hoc notes, and manual code reading. S5D specs can describe domains, capabilities, entities, components, and links, but there is no canonical artifact that retrospectively indexes the repository and projects those claims into a graph.
+
+  ## Goal
+  Add a stack-agnostic discovery surface that builds `.s5d/discovery/*` from repository files and S5D specs: file index, evidence JSONL, graph JSON, and metamodel projection. The first version should be deterministic and conservative; language-specific parsers can be added later as optional evidence providers.
+
+  ## Privacy
+  Classification: Internal
+workflow:
+  mode: plan
+  target_architecture:
+    summary: Discovery is a deterministic index/projection layer over repository files and S5D-authored artifacts, not a new source of truth.
+    invariants:
+    - S5D specs remain the source of truth for declared domains, capabilities, entities, features, components, and projection links.
+    - Discovery output is generated under `.s5d/discovery/` and can be checked for staleness.
+    - "The first pass is stack-agnostic: path, file metadata, hashes, S5D specs, and conservative component candidates only."
+    - Claims must carry status, confidence, and provenance so verified declarations stay distinct from inferred candidates.
+    - Discovery must not require a network, external model, sandbox, or language-specific parser to run.
+  delivery_strategy:
+    summary: Add `s5d discover sync/check` plus a small library module that builds and serializes the discovery snapshot.
+    rationale: This gives S5D a usable discovery artifact now while leaving parser-specific enrichment as later providers.
+  resources: null
+  role_map:
+    implementer: coder
+    reviewer: reviewer
+    verifier: reviewer
+    owner: human
+  review_policy:
+    cross_model_required: false
+    required_on: []
+  structure_outline: null
+  execution_mode:
+    engine: manual
+    max_iterations: null
+    stop_conditions:
+    - Phase acceptance reached
+    - Approved scope exhausted
+    - New decision required
+  phases:
+  - id: prototype
+    title: Prototype
+    scope: Reduce unknowns before committed implementation
+    roles:
+    - owner
+    - implementer
+    acceptance:
+    - Critical feasibility questions answered
+    - Telemetry approach identified
+    rollback:
+    - Discard spike output if assumptions fail
+  - id: build
+    title: Build
+    scope: Implement approved scope and pass local gates
+    roles:
+    - implementer
+    - reviewer
+    acceptance:
+    - Declared gates pass
+    - Change matches approved scope
+    rollback:
+    - Revert or reconcile if gates or review fail
+  - id: measure
+    title: Measure
+    scope: Collect telemetry and close the loop with an explicit verdict
+    roles:
+    - owner
+    - verifier
+    acceptance:
+    - Telemetry collected against success criteria
+    - Outcome verdict recorded
+    rollback:
+    - Iterate or kill if evidence stays weak
+artifacts:
+  products:
+  - id: s5d
+    name: s5d
+    organization: null
+  domains:
+  - id: dom.s5d.discovery
+    product: s5d
+    name: Discovery
+    classification: supporting
+    description: Repository introspection and metamodel projection for S5D-governed work.
+    team: null
+    maturity_level: genesis
+  capabilities:
+  - id: cap.s5d.discovery-index-graph
+    domain: dom.s5d.discovery
+    name: Discovery Index Graph
+    description: Build and check a stack-agnostic file index, evidence stream, graph, and metamodel projection from repository state and S5D specs.
+    since: null
+  entities: []
+  features:
+  - id: feat.s5d.discovery-index-graph
+    product: s5d
+    name: discovery-index-graph
+    description: CLI and library support for `.s5d/discovery/*` artifacts.
+  use_cases: []
+  systems:
+  - id: sys.s5d.cli
+    product: s5d
+    name: S5D CLI
+  containers:
+  - id: ctr.s5d.rust-cli
+    system: sys.s5d.cli
+    name: Rust CLI
+    technology: Rust
+  components:
+  - id: cmp.s5d.discovery
+    feature: feat.s5d.discovery-index-graph
+    domain: dom.s5d.discovery
+    container: ctr.s5d.rust-cli
+    name: Discovery snapshot builder
+    paths:
+    - rust/src/discovery.rs
+    - rust/src/bin/s5d.rs
+    - rust/tests/standalone_repos.rs
+  roles: []
+  concerns: []
+  metrics: []
+  supersystems: []
+  transports: []
+links: null
+contracts: []
+gates:
+- kind: schema
+roc: null
+problem: null
+hypotheses: []
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false

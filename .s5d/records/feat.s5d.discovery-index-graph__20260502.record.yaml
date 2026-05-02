@@ -1,0 +1,43 @@
+spec_ref: feat.s5d.discovery-index-graph__20260502.s5d.yaml
+spec_sha256: sha256:40e95ab30475c7b1f0455e54b7d1e71ae63fada125ff62bbe4bfe5056a31dbc7
+status: applied
+sync_status: synced
+status_history:
+- status: proposed
+  timestamp: 2026-05-02T12:08:44.384290+00:00
+- status: previewed
+  timestamp: 2026-05-02T13:27:44.256645+00:00
+- status: approved
+  timestamp: 2026-05-02T13:27:53.999687+00:00
+- status: applied
+  timestamp: 2026-05-02T13:28:24.626073+00:00
+active_phase: null
+phase_history: []
+phase_runs: []
+approvals:
+- reviewer: Diana
+  date: 2026-05-02T13:27:53.999639+00:00
+  spec_sha256: sha256:123091eb15c18e71e7514607c483fa1091de2855adc9218ef38c49feab245023
+  diff_sha256: sha256:3fea5e009248c891fbdb3e3835d473bf09eb13017f4af3efcab9d7691458e9cd
+preview:
+  diff_sha256: sha256:3fea5e009248c891fbdb3e3835d473bf09eb13017f4af3efcab9d7691458e9cd
+  previewed_spec_sha256: sha256:123091eb15c18e71e7514607c483fa1091de2855adc9218ef38c49feab245023
+  actions:
+    create: 6
+    link: 3
+    update: 1
+    delete: 0
+  log: null
+reflection: null
+gate_results:
+- kind: schema
+  status: passed
+  attempt: 1
+  timestamp: 2026-05-02T13:28:03.296839+00:00
+  log: schema validation passed (built-in)
+  exit_code: null
+  evidence_path: evidence/feat.s5d.discovery-index-graph/schema_1.log
+  command: null
+  duration_ms: 0
+decision: null
+verified_by: cargo-test

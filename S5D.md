@@ -83,6 +83,7 @@ Every active spec has two mutable surfaces:
 | Graph check | `s5d_graph_check` | `s5d graph-check` | Cycles/layering errors block preview. |
 | Architecture check | — | `s5d check <spec>` | Read-only. Validates component paths and declared source dependencies for specs with architecture ownership. |
 | Codebase coverage | — | `s5d codebase sync` / `s5d codebase check` | Maintains `.s5d/codebase/*` from source files and component paths. Pre-commit checks it when the snapshot exists. |
+| Discovery graph | — | `s5d discover sync` / `s5d discover check` | Maintains `.s5d/discovery/*`: stack-agnostic file index, evidence JSONL, graph JSON, and metamodel projection. |
 | Preview | `s5d_preview` | `s5d preview` | Records `previewed_spec_sha256`. Stale after spec change. |
 | Approve | `s5d_approve` | `s5d approve --reviewer <name>` | Must be `previewed`. Binds `spec_sha256` + `diff_sha256`. |
 | Run gates | `s5d_run_gates` | `s5d run-gates` | Schema/graph run built-in if no external command. Failed gate blocks import. |

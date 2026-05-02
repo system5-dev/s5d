@@ -1,0 +1,12 @@
+schema: s5d.discovery/1.0
+root: .
+target: .
+files: 57
+nodes: 158
+edges: 220
+evidence: 158
+artifacts:
+  files: files.jsonl
+  graph: graph.json
+  evidence: evidence.jsonl
+  metamodel: metamodel.yaml

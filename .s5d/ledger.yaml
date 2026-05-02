@@ -35,3 +35,10 @@ entries:
   status: success
   timestamp: 2026-05-02T08:33:52.198229+00:00
   record_ref: records/feat.s5d.operational-harness__20260502.record.yaml
+- spec_sha256: sha256:123091eb15c18e71e7514607c483fa1091de2855adc9218ef38c49feab245023
+  state_fingerprint: sha256:34f59aa5745d2d682da5a19d58c6f8ba4563b446ec4def1aa21585dfb7ac7b82
+  package_id: feat.s5d.discovery-index-graph
+  action: import
+  status: success
+  timestamp: 2026-05-02T13:28:24.610505+00:00
+  record_ref: records/feat.s5d.discovery-index-graph__20260502.record.yaml
