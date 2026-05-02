@@ -97,6 +97,7 @@ This skill is the human-facing conductor for the S5D CLI. It is not a second sta
 - `.s5d/config.yaml` stores approved local engine command templates.
 - `.s5d/runs/` stores external phase-run artifacts.
 - `.s5d/harness/` stores operational worktree journals and heartbeat/status only.
+- `.s5d/discovery/` stores stack-agnostic discovery artifacts: file index, evidence JSONL, graph JSON, and metamodel projection.
 
 **The skill may:**
 - route the request and choose the next S5D command;
@@ -152,6 +153,7 @@ After reading the three outputs, deduplicate and add hypotheses/evidence with `s
 | Graph check | `s5d_graph_check` | `s5d graph-check` | Cycles/layering errors block preview. |
 | Architecture check | — | `s5d check <spec>` | Read-only. Validates component paths and declared source dependencies for specs with architecture ownership. |
 | Codebase coverage | — | `s5d codebase sync` / `s5d codebase check` | Maintains `.s5d/codebase/*` from source files and component paths. Pre-commit checks it when the snapshot exists. |
+| Discovery graph | — | `s5d discover sync` / `s5d discover check` | Maintains `.s5d/discovery/*`: stack-agnostic file index, evidence JSONL, graph JSON, and metamodel projection. |
 | Preview | `s5d_preview` | `s5d preview` | Records `previewed_spec_sha256`. Stale after spec change. |
 | Approve | `s5d_approve` | `s5d approve --reviewer <name>` | Must be `previewed`. Binds `spec_sha256` + `diff_sha256`. |
 | Run gates | `s5d_run_gates` | `s5d run-gates` | Schema/graph run built-in if no external command. Failed gate blocks import. |

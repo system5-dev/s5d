@@ -245,6 +245,204 @@ fn seed_searchable_rust_repo(repo: &StandaloneRepo) {
     repo.mkdir("apps/mobile");
 }
 
+#[test]
+fn discovery_sync_builds_stack_agnostic_index_graph_and_projection() {
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+    run_ok(
+        repo.path(),
+        [
+            "new",
+            "feat.orders.discovery",
+            "--tier",
+            "lightweight",
+            "--product",
+            "s5d",
+        ],
+    );
+    repo.write("backend/orders.py", "class Order:\n    pass\n");
+    repo.write("web/features/orders.ts", "export const orderList = [];\n");
+    repo.write("README.md", "# Shop\n");
+
+    let spec = only_spec_path(&repo);
+    let mut feature: s5d::Spec = load_yaml(&spec);
+    let artifacts = feature.artifacts.as_mut().unwrap();
+    artifacts.domains.push(s5d::Domain {
+        id: "orders".into(),
+        product: "s5d".into(),
+        name: "Orders".into(),
+        classification: Some("core".into()),
+        description: None,
+        team: None,
+        maturity_level: None,
+    });
+    artifacts.capabilities.push(s5d::Capability {
+        id: "manage-orders".into(),
+        domain: "orders".into(),
+        name: "Manage Orders".into(),
+        description: None,
+        since: None,
+    });
+    artifacts.entities.push(s5d::Entity {
+        id: "order".into(),
+        domain: "orders".into(),
+        name: "Order".into(),
+    });
+    artifacts.systems.push(s5d::SoftwareSystem {
+        id: "shop".into(),
+        product: "s5d".into(),
+        name: "Shop".into(),
+    });
+    artifacts.containers.push(s5d::Container {
+        id: "app".into(),
+        system: "shop".into(),
+        name: "App".into(),
+        technology: None,
+    });
+    artifacts.components.push(s5d::Component {
+        id: "orders-backend".into(),
+        feature: feature.id.clone(),
+        domain: "orders".into(),
+        container: "app".into(),
+        name: "Orders backend".into(),
+        paths: vec!["backend/**".into()],
+    });
+    fs::write(&spec, serde_yaml::to_string(&feature).unwrap()).unwrap();
+
+    run_ok(repo.path(), ["discover", "sync"]);
+    run_ok(repo.path(), ["discover", "check"]);
+
+    let discovery_dir = repo.path().join(".s5d").join("discovery");
+    assert!(discovery_dir.join("manifest.yaml").exists());
+    assert!(discovery_dir.join("files.jsonl").exists());
+    assert!(discovery_dir.join("evidence.jsonl").exists());
+    assert!(discovery_dir.join("graph.json").exists());
+    assert!(discovery_dir.join("metamodel.yaml").exists());
+
+    let files = fs::read_to_string(discovery_dir.join("files.jsonl")).unwrap();
+    assert!(files.contains("backend/orders.py"));
+    assert!(files.contains("web/features/orders.ts"));
+    assert!(files.contains(".s5d/packages/"));
+
+    let graph: s5d::DiscoveryGraph =
+        serde_json::from_str(&fs::read_to_string(discovery_dir.join("graph.json")).unwrap())
+            .unwrap();
+    assert!(graph.nodes.iter().any(|node| node.id == "domain:orders"));
+    assert!(graph
+        .nodes
+        .iter()
+        .any(|node| node.id == "component_candidate:backend"));
+    assert!(graph
+        .edges
+        .iter()
+        .any(|edge| edge.kind == "claims_path" && edge.to == "path:backend/**"));
+    assert!(graph.nodes.iter().any(|node| node.id == "path:backend/**"));
+    assert!(graph
+        .edges
+        .iter()
+        .any(|edge| edge.kind == "contains_component"
+            && edge.from == "container:app"
+            && edge.to == "component:orders-backend"));
+
+    let metamodel: s5d::DiscoveryMetamodel =
+        serde_yaml::from_str(&fs::read_to_string(discovery_dir.join("metamodel.yaml")).unwrap())
+            .unwrap();
+    assert!(metamodel
+        .domains
+        .iter()
+        .any(|domain| domain.id == "domain:orders"));
+    assert!(metamodel
+        .components
+        .iter()
+        .any(|component| component.id == "component:orders-backend"));
+    assert!(metamodel
+        .systems
+        .iter()
+        .any(|system| system.id == "system:shop"));
+    assert!(metamodel
+        .containers
+        .iter()
+        .any(|container| container.id == "container:app"));
+}
+
+#[test]
+fn discovery_check_fails_when_snapshot_is_missing() {
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+    repo.write("src/lib.rs", "pub fn marker() {}\n");
+
+    let outcome = run_fail(repo.path(), ["discover", "check"]);
+    assert!(outcome.stderr.contains("snapshot missing"));
+    assert!(outcome.stderr.contains("s5d discover sync"));
+}
+
+#[test]
+fn discovery_check_fails_when_snapshot_is_stale() {
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+    repo.write("src/lib.rs", "pub fn first() {}\n");
+
+    run_ok(repo.path(), ["discover", "sync"]);
+    run_ok(repo.path(), ["discover", "check"]);
+
+    repo.write("src/second.rs", "pub fn second() {}\n");
+    let outcome = run_fail(repo.path(), ["discover", "check"]);
+    assert!(outcome.stderr.contains("discovery is stale"));
+    assert!(outcome.stderr.contains("s5d discover sync"));
+}
+
+#[test]
+fn discovery_sync_supports_target_path_and_custom_output_dir() {
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+    repo.write("backend/orders.py", "class Order:\n    pass\n");
+    repo.write("web/orders.ts", "export const orderList = [];\n");
+
+    run_ok(
+        repo.path(),
+        [
+            "discover",
+            "sync",
+            "backend",
+            "--out",
+            ".s5d/discovery-backend",
+        ],
+    );
+    run_ok(
+        repo.path(),
+        [
+            "discover",
+            "check",
+            "backend",
+            "--out",
+            ".s5d/discovery-backend",
+        ],
+    );
+
+    let discovery_dir = repo.path().join(".s5d").join("discovery-backend");
+    let manifest: s5d::DiscoveryManifest =
+        serde_yaml::from_str(&fs::read_to_string(discovery_dir.join("manifest.yaml")).unwrap())
+            .unwrap();
+    assert_eq!(manifest.target, "backend");
+
+    let files = fs::read_to_string(discovery_dir.join("files.jsonl")).unwrap();
+    assert!(files.contains("backend/orders.py"));
+    assert!(!files.contains("web/orders.ts"));
+}
+
+#[test]
+fn discovery_rejects_target_outside_project_root() {
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+
+    let outside = TempDir::new().unwrap();
+    fs::write(outside.path().join("outside.py"), "print('outside')\n").unwrap();
+    let outside_path = outside.path().to_string_lossy().to_string();
+
+    let outcome = run_fail(repo.path(), ["discover", "sync", outside_path.as_str()]);
+    assert!(outcome.stderr.contains("outside project root"));
+}
+
 fn seed_architecture_lint_repo(repo: &StandaloneRepo) {
     repo.write(
         "Cargo.toml",

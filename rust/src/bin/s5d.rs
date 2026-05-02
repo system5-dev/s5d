@@ -300,6 +300,11 @@ enum S5dCommand {
         #[command(subcommand)]
         command: CodebaseCommand,
     },
+    /// Stack-agnostic repository discovery index and evidence graph
+    Discover {
+        #[command(subcommand)]
+        command: DiscoverCommand,
+    },
     /// Git hook entrypoints implemented in Rust
     Hook {
         #[command(subcommand)]
@@ -376,6 +381,26 @@ enum CodebaseCommand {
     Check,
     /// Rebuild .s5d/codebase/*.yaml from current source and specs
     Sync,
+}
+
+#[derive(Subcommand)]
+enum DiscoverCommand {
+    /// Rebuild .s5d/discovery/* from files and S5D specs
+    Sync {
+        /// Target path to scan. Defaults to project root.
+        path: Option<String>,
+        /// Output directory. Defaults to .s5d/discovery.
+        #[arg(long, default_value = ".s5d/discovery")]
+        out: String,
+    },
+    /// Check .s5d/discovery/* against current files and specs
+    Check {
+        /// Target path to scan. Defaults to project root.
+        path: Option<String>,
+        /// Output directory. Defaults to .s5d/discovery.
+        #[arg(long, default_value = ".s5d/discovery")]
+        out: String,
+    },
 }
 
 #[derive(Subcommand)]
@@ -611,6 +636,14 @@ fn main() -> anyhow::Result<()> {
         S5dCommand::Codebase { command } => match command {
             CodebaseCommand::Check => run_codebase_check(),
             CodebaseCommand::Sync => run_codebase_sync(),
+        },
+        S5dCommand::Discover { command } => match command {
+            DiscoverCommand::Sync { path, out } => {
+                run_discover_sync(path.as_deref(), std::path::Path::new(&out))
+            }
+            DiscoverCommand::Check { path, out } => {
+                run_discover_check(path.as_deref(), std::path::Path::new(&out))
+            }
         },
         S5dCommand::Hook { command } => match command {
             HookCommand::PreCommit => run_hook_pre_commit(),
@@ -4290,6 +4323,66 @@ fn run_codebase_check() -> anyhow::Result<()> {
     } else {
         eprintln!(
             "  {} .s5d/codebase is stale — run `s5d codebase sync`",
+            "error:".red()
+        );
+        std::process::exit(1);
+    }
+    Ok(())
+}
+
+// ── Discovery index and graph ────────────────────────────────────────────────
+
+fn run_discover_sync(path: Option<&str>, out: &std::path::Path) -> anyhow::Result<()> {
+    let cwd = std::env::current_dir()?;
+    let project = s5d::S5dProject::find(&cwd).ok_or_else(|| anyhow::anyhow!("no .s5d/ found"))?;
+    let target = path
+        .map(std::path::PathBuf::from)
+        .unwrap_or_else(|| project.root.clone());
+    let snapshot = s5d::build_discovery_snapshot(&project, &target)?;
+    s5d::write_discovery_snapshot(&project, out, &snapshot)?;
+
+    println!(
+        "{} .s5d/discovery rebuilt ({} file(s), {} node(s), {} edge(s), {} evidence item(s))",
+        "ok".green(),
+        snapshot.manifest.files,
+        snapshot.manifest.nodes,
+        snapshot.manifest.edges,
+        snapshot.manifest.evidence
+    );
+    Ok(())
+}
+
+fn run_discover_check(path: Option<&str>, out: &std::path::Path) -> anyhow::Result<()> {
+    let cwd = std::env::current_dir()?;
+    let project = s5d::S5dProject::find(&cwd).ok_or_else(|| anyhow::anyhow!("no .s5d/ found"))?;
+    let target = path
+        .map(std::path::PathBuf::from)
+        .unwrap_or_else(|| project.root.clone());
+    let expected = s5d::build_discovery_snapshot(&project, &target)?;
+    let out_dir = if out.is_absolute() {
+        out.to_path_buf()
+    } else {
+        project.root.join(out)
+    };
+    let Some(actual) = s5d::read_discovery_snapshot(&out_dir)? else {
+        eprintln!(
+            "  {} .s5d/discovery snapshot missing — run `s5d discover sync`",
+            "error:".red()
+        );
+        std::process::exit(1);
+    };
+
+    if actual == expected {
+        println!(
+            "{} .s5d/discovery is current ({} file(s), {} node(s), {} edge(s))",
+            "ok".green(),
+            expected.manifest.files,
+            expected.manifest.nodes,
+            expected.manifest.edges
+        );
+    } else {
+        eprintln!(
+            "  {} .s5d/discovery is stale — run `s5d discover sync`",
             "error:".red()
         );
         std::process::exit(1);

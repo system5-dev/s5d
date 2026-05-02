@@ -44,6 +44,10 @@ s5d update apply
 s5d codebase sync
 s5d codebase check
 
+# Optional: build a stack-agnostic discovery index and evidence graph
+s5d discover sync
+s5d discover check
+
 # Create a spec
 s5d new feat.my-feature --product myapp
 
@@ -86,6 +90,7 @@ When a team already has its own delivery/discovery process, S5D can support it i
 - engine completion does not accept the phase; human `phase accept` remains explicit
 - `s5d harness start/status/exec` adds the operational layer: isolated git worktree, clean preflight, heartbeat/status, timeout, and journal under `.s5d/harness/`
 - harness state is not workflow truth; `.record.yaml` remains authoritative for phase state, evidence, gates, and approvals
+- `s5d discover sync/check` builds `.s5d/discovery/*`: file index, evidence JSONL, graph JSON, and a metamodel projection. The core is stack-agnostic; language parsers can be added later as optional evidence providers.
 - `ralph-init` warms repo context from docs, tests, environment setup, and current test results
 - `ralph-bugfix` enforces regression-first bugfix execution with explicit root-cause evidence
 - `s5d reflect --verdict --measurement-window --telemetry` records outcome evidence after rollout
@@ -122,7 +127,7 @@ Available as a plugin for Claude Code, Gemini CLI, and Codex.
 | Standard | Regular feature | Schema + Graph |
 | High | Auth / payment / PII | Schema + Graph |
 
-Schema, graph, and architecture gates run built-in validation. Add `architecture` to a spec to check component paths and declared source dependencies. Use `s5d codebase sync/check` when you track `.s5d/codebase/*` coverage snapshots. Add `lint`, `test`, `contract` gates to your spec when you've configured commands for them in `.s5d/config.yaml`.
+Schema, graph, and architecture gates run built-in validation. Add `architecture` to a spec to check component paths and declared source dependencies. Use `s5d codebase sync/check` when you track `.s5d/codebase/*` coverage snapshots, and `s5d discover sync/check` when you track `.s5d/discovery/*` discovery artifacts. Add `lint`, `test`, `contract` gates to your spec when you've configured commands for them in `.s5d/config.yaml`.
 
 `install.sh` must be run from a checked-out repository copy. `curl | bash` is intentionally unsupported.
 

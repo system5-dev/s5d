@@ -5,6 +5,7 @@
 
 pub mod arch;
 pub mod codebase;
+pub mod discovery;
 pub mod drift;
 pub mod gate;
 pub mod gates;
@@ -25,6 +26,12 @@ pub use arch::{architecture_check, ArchitectureCheckReport, ComponentCoverage, S
 pub use codebase::{
     build_codebase_snapshot, load_codebase_snapshot, write_codebase_snapshot, CodebaseCoverage,
     CodebaseModule, CodebaseSnapshot, CoverageStatus, ModuleCoverage,
+};
+pub use discovery::{
+    build_discovery_snapshot, read_discovery_snapshot, write_discovery_snapshot,
+    DiscoveryArtifactPaths, DiscoveryClaimStatus, DiscoveryClaimView, DiscoveryEdge,
+    DiscoveryEvidence, DiscoveryFile, DiscoveryGraph, DiscoveryManifest, DiscoveryMetamodel,
+    DiscoveryNode, DiscoveryProvenance, DiscoverySnapshot,
 };
 pub use drift::{check_drift, reconcile, DriftResult};
 pub use gates::run_gates;
@@ -490,7 +497,7 @@ mod tests {
         let (project, report) = S5dProject::init(dir.path()).unwrap();
 
         assert_eq!(report.root, dir.path());
-        assert_eq!(report.dirs_created.len(), 5);
+        assert_eq!(report.dirs_created.len(), 6);
         assert_eq!(report.files_created.len(), 3);
 
         // Verify all dirs exist
@@ -507,6 +514,7 @@ mod tests {
         assert!(project.s5d_dir().join("records").is_dir());
         assert!(project.s5d_dir().join("tasks").is_dir());
         assert!(project.s5d_dir().join("harness").is_dir());
+        assert!(project.s5d_dir().join("discovery").is_dir());
         assert!(project.s5d_dir().join(".locks").is_dir());
         assert!(project.s5d_dir().join("config.yaml").is_file());
         assert!(project.s5d_dir().join("ledger.yaml").is_file());
