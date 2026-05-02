@@ -817,6 +817,50 @@ pub struct WorkflowPhaseRun {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HarnessState {
+    pub schema: String,
+    pub id: String,
+    pub spec_ref: String,
+    pub phase_id: String,
+    pub source_root: String,
+    pub worktree_path: String,
+    pub branch: String,
+    pub status: String,
+    pub created_at: String,
+    pub updated_at: String,
+    pub heartbeat_at: String,
+    #[serde(default)]
+    pub last_event: Option<String>,
+    #[serde(default)]
+    pub current_command: Option<HarnessCommandState>,
+    #[serde(default)]
+    pub events: Vec<HarnessEvent>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HarnessCommandState {
+    pub argv: Vec<String>,
+    pub pid: u32,
+    pub started_at: String,
+    pub timeout_s: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HarnessEvent {
+    pub timestamp: String,
+    pub kind: String,
+    pub message: String,
+    #[serde(default)]
+    pub command: Vec<String>,
+    #[serde(default)]
+    pub exit_code: Option<i32>,
+    #[serde(default)]
+    pub stdout_path: Option<String>,
+    #[serde(default)]
+    pub stderr_path: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Approval {
     pub reviewer: String,
     pub date: String,

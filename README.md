@@ -84,6 +84,8 @@ When a team already has its own delivery/discovery process, S5D can support it i
 - `s5d execute loop --engine ralph [--mode init|bugfix]` emits a bounded task package for the active phase only
 - each `execute loop` call persists the package under `.s5d/tasks/`
 - engine completion does not accept the phase; human `phase accept` remains explicit
+- `s5d harness start/status/exec` adds the operational layer: isolated git worktree, clean preflight, heartbeat/status, timeout, and journal under `.s5d/harness/`
+- harness state is not workflow truth; `.record.yaml` remains authoritative for phase state, evidence, gates, and approvals
 - `ralph-init` warms repo context from docs, tests, environment setup, and current test results
 - `ralph-bugfix` enforces regression-first bugfix execution with explicit root-cause evidence
 - `s5d reflect --verdict --measurement-window --telemetry` records outcome evidence after rollout

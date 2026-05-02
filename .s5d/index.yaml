@@ -29,3 +29,8 @@ features:
   status: applied
   product: s5d
   version: 1.0.0
+- id: feat.s5d.operational-harness
+  spec_path: packages/feat.s5d.operational-harness__20260502.s5d.yaml
+  status: applied
+  product: s5d
+  version: 1.0.0

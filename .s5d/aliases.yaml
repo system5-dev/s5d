@@ -60,3 +60,15 @@ packages:
   package_id: feat.s5d.external-engine-phase-run
   owning_package: null
   deprecated: false
+- uuid: 1fd3f1e5-b276-4b2b-b3df-7b0c35ac1fd4
+  artifact_id: cap.s5d.operational-harness
+  artifact_type: Capability
+  package_id: feat.s5d.operational-harness
+  owning_package: null
+  deprecated: false
+- uuid: 95cbce5b-d92c-46f2-8332-c1c5036d507b
+  artifact_id: feat.s5d.operational-harness
+  artifact_type: Feature
+  package_id: feat.s5d.operational-harness
+  owning_package: null
+  deprecated: false

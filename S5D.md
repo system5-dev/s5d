@@ -101,6 +101,9 @@ Every active spec has two mutable surfaces:
 | Run external engine | — | `s5d phase run <spec> --id <phase> --engine <name>` | Phase must be active. Engine must be approved in `.s5d/config.yaml`. Captures stdout/stderr under `.s5d/runs/` and records output hash in `.record.yaml`. Does not accept the phase. |
 | Accept phase | `s5d_phase_accept` | `s5d phase accept <spec> --id <phase> --reviewer <name>` | Phase must already be active. Human reviewer required. |
 | Emit Ralph task package | `s5d_execute_loop` | `s5d execute loop <spec> --phase <id> --engine ralph [--mode init\|bugfix]` | Phase must be active. Workflow engine must match and currently only `ralph` is supported. Each run persists a task artifact under `.s5d/tasks/`. |
+| Start operational harness | — | `s5d harness start <spec> --phase <id> --name <id>` | Requires clean source worktree unless `--force`. Creates an isolated git worktree, starts the phase there, and writes `.s5d/harness/<id>.yaml`. |
+| Harness status | — | `s5d harness status <id>` | Shows worktree, branch, phase, heartbeat freshness, current command, and last event. Harness status is operational visibility only. |
+| Harness command | — | `s5d harness exec <id> --timeout-s <n> -- <cmd> ...` | Runs an argv command in the harness worktree, captures stdout/stderr under `.s5d/harness/<id>/commands/`, and records timeout/failure/completion in the journal. |
 
 ### Recovery Commands
 

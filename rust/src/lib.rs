@@ -490,7 +490,7 @@ mod tests {
         let (project, report) = S5dProject::init(dir.path()).unwrap();
 
         assert_eq!(report.root, dir.path());
-        assert_eq!(report.dirs_created.len(), 4);
+        assert_eq!(report.dirs_created.len(), 5);
         assert_eq!(report.files_created.len(), 3);
 
         // Verify all dirs exist
@@ -506,6 +506,7 @@ mod tests {
         assert!(project.s5d_dir().join("packages").is_dir());
         assert!(project.s5d_dir().join("records").is_dir());
         assert!(project.s5d_dir().join("tasks").is_dir());
+        assert!(project.s5d_dir().join("harness").is_dir());
         assert!(project.s5d_dir().join(".locks").is_dir());
         assert!(project.s5d_dir().join("config.yaml").is_file());
         assert!(project.s5d_dir().join("ledger.yaml").is_file());

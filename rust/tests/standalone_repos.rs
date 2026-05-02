@@ -989,6 +989,146 @@ fn workflow_phase_run_records_external_engine_artifact() {
 }
 
 #[test]
+fn operational_harness_creates_worktree_and_journals_commands() {
+    let repo = StandaloneRepo::new();
+    init_git_repo(&repo);
+    seed_searchable_rust_repo(&repo);
+    run_ok(repo.path(), ["init"]);
+
+    run_ok(
+        repo.path(),
+        [
+            "new",
+            "feat.billing.harness",
+            "--tier",
+            "lightweight",
+            "--product",
+            "Billing",
+        ],
+    );
+    let spec_path = only_spec_path(&repo);
+    let spec_str = spec_path.to_str().unwrap();
+    {
+        let mut spec: s5d::Spec = load_yaml(&spec_path);
+        if let Some(ref mut artifacts) = spec.artifacts {
+            artifacts.capabilities.push(s5d::Capability {
+                id: "cap.OperationalHarness".into(),
+                domain: "billing".into(),
+                name: "OperationalHarness".into(),
+                description: Some("Harness worktree and command journal".into()),
+                since: None,
+            });
+        }
+        fs::write(&spec_path, serde_yaml::to_string(&spec).unwrap()).unwrap();
+    }
+    run_ok(repo.path(), ["preview", spec_str]);
+    run_ok(repo.path(), ["approve", spec_str, "--reviewer", "Roman"]);
+    run_git_ok(repo.path(), ["add", "."]);
+    run_git_ok(repo.path(), ["commit", "-m", "seed approved harness spec"]);
+
+    repo.write("dirty.txt", "dirty");
+    let dirty = run_fail(
+        repo.path(),
+        [
+            "harness",
+            "start",
+            spec_str,
+            "--phase",
+            "prototype",
+            "--name",
+            "dirty-check",
+        ],
+    );
+    assert!(
+        dirty.stderr.contains("source worktree is not clean"),
+        "{}",
+        dirty.summary()
+    );
+    fs::remove_file(repo.path().join("dirty.txt")).unwrap();
+
+    let worktree = repo.path().parent().unwrap().join(format!(
+        "{}-s5d-harness-test-wt",
+        repo.path().file_name().unwrap().to_string_lossy()
+    ));
+    let worktree_str = worktree.to_str().unwrap();
+    let start = run_ok(
+        repo.path(),
+        [
+            "harness",
+            "start",
+            spec_str,
+            "--phase",
+            "prototype",
+            "--name",
+            "alpha",
+            "--worktree",
+            worktree_str,
+        ],
+    );
+    assert!(
+        start.stdout.contains("Harness started"),
+        "{}",
+        start.summary()
+    );
+    assert!(worktree.join(".s5d").is_dir());
+
+    let status = run_ok(repo.path(), ["harness", "status", "alpha"]);
+    assert!(status.stdout.contains("HARNESS"), "{}", status.summary());
+    assert!(status.stdout.contains("prototype"), "{}", status.summary());
+    assert!(status.stdout.contains("current:"), "{}", status.summary());
+    assert!(
+        status.stdout.contains("last event:"),
+        "{}",
+        status.summary()
+    );
+
+    let exec = run_ok(
+        repo.path(),
+        [
+            "harness",
+            "exec",
+            "alpha",
+            "--timeout-s",
+            "10",
+            "--",
+            "{s5d}",
+            "status",
+        ],
+    );
+    assert!(
+        exec.stdout.contains("Harness command completed"),
+        "{}",
+        exec.summary()
+    );
+
+    let state: s5d::HarnessState =
+        load_yaml(&repo.path().join(".s5d").join("harness").join("alpha.yaml"));
+    assert_eq!(state.id, "alpha");
+    assert_eq!(state.phase_id, "prototype");
+    assert!(state.current_command.is_none());
+    assert!(state
+        .events
+        .iter()
+        .any(|event| event.kind == "phase_started"));
+    let completed = state
+        .events
+        .iter()
+        .find(|event| event.kind == "command_completed")
+        .expect("command completion should be journaled");
+    assert!(completed
+        .stdout_path
+        .as_ref()
+        .is_some_and(|path| { repo.path().join(path).is_file() }));
+
+    let worktree_spec = worktree
+        .join(".s5d")
+        .join("packages")
+        .join(spec_path.file_name().unwrap());
+    let worktree_record: s5d::Record = load_yaml(&record_path_for(&worktree_spec));
+    assert_eq!(worktree_record.active_phase.as_deref(), Some("prototype"));
+}
+
+#[test]
 fn import_stays_blocked_when_declared_gate_only_skips() {
     let repo = StandaloneRepo::new();
     seed_searchable_rust_repo(&repo);
