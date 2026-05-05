@@ -1,0 +1,37 @@
+id: "E.5"
+title: "Four Guard‑Rails of FPF"
+kind: "pattern"
+part: "E"
+status: "Stable"
+token_estimate:
+  card: 252
+  full: 1589
+when_to_load:
+  - "four"
+  - "guard"
+  - "rails"
+  - "fpf"
+  - "guardrails"
+  - "constraints"
+  - "architecture"
+  - "rules"
+  - "safety"
+  - "GR-1 to GR-4"
+provides:
+  - "What are the main architectural constraints in FPF?"
+relations:
+  builds_on:
+    - "E.2"
+    - "E.3"
+  prerequisite_for:
+    - "E.5.1"
+    - "E.5.2"
+    - "E.5.3"
+    - "E.5.4"
+source:
+  module: "modules/E/E.5.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 45434
+  end_line: 45535
+summary: "1. Implementation gravity – concept prose accretes tool jargon. 2. Notation lock‑in – one diagram style becomes “the language.” 3. Convenience cycles – quick fixes create reverse dependencies. 4. Disciplinary monoculture – implicit bias colours “universal” rules."

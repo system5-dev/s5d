@@ -1,0 +1,46 @@
+id: "A.19.CN"
+title: "CN‑frame (comparability & normalization)"
+kind: "pattern"
+part: "A"
+status: "Stable"
+token_estimate:
+  card: 308
+  full: 9086
+when_to_load:
+  - "frame"
+  - "comparability"
+  - "normalization"
+  - "CN-frame"
+  - "CN-Spec"
+  - "chart"
+  - "comparability modes"
+  - "normalization refs"
+  - "indicator policy refs"
+  - "Γ-fold governance"
+  - "registry"
+  - "bridges"
+  - "CL/loss notes"
+  - "WLNK discipline"
+  - "conformance checklist"
+  - "SCR/RSCR harness"
+  - "RSG admission hooks"
+provides:
+  - "What is a CN-frame in FPF?"
+  - "How does CN-Spec govern comparability and normalization by reference?"
+  - "How do CN-frames use bridges and CL for cross-context reuse?"
+  - "What are the conformance and regression checks for CN-frames?"
+relations:
+  builds_on:
+    - "A.19"
+  coordinates_with:
+    - "A.6.1"
+    - "C.16"
+    - "F.9"
+    - "G.0"
+source:
+  module: "modules/A/A.19.CN.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 22967
+  end_line: 23348
+summary: "> Scope. This CN‑frame Algebra & Normalization Discipline extends A.19 by fixing the governance Standard for CN‑frames, defining a conformance checklist and regression harness, and providing didactic one‑pagers and anti‑patterns so teams can introduce CN‑frames without tool lock‑in. The mandatory pattern structure and authoring discipline from Part E (Style Guide, Tell‑Show‑Show, checklists, DRR, guard‑rails) are applied throughout. > > Single‑owner boundary (cite, don’t duplicate). A.19.CN owns the CN‑frame governance card, registry, bridges, and checklist/harness (CN‑Spec, registry, bridges, checklist/harness). It does not own any CHR‑mechanism intensions, term cards, or method taxonomies. Those are owned by the corresponding mechanism patterns (A.19.UNM / A.19.UINDM / A.19.USCM / A.19.U"

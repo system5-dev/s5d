@@ -1,0 +1,47 @@
+id: "A.6.C"
+title: "Contract Unpacking for Boundaries"
+kind: "pattern"
+part: "A"
+status: "Stable"
+token_estimate:
+  card: 276
+  full: 7336
+when_to_load:
+  - "contract"
+  - "unpacking"
+  - "boundaries"
+  - "contract bundle unpacking"
+  - "SLA/guarantee routing"
+  - "promise content (promise content) ≠ work"
+  - "promise-act/utterance/commitment separation"
+  - "Boundary Norm Square (L/A/D/E"
+  - "MVPK faces “no new semantics”"
+provides:
+  - "How to unpack contract language into promise content / utterance / commitment / work+evidence?"
+  - "How to prevent interface-as-agent / contract soup mistakes?"
+  - "How to stop MVPK faces becoming ‘second contracts’?"
+  - "When contract talk includes service-cluster tokens, what gets unpacked first?"
+relations:
+  builds_on:
+    - "A.6"
+    - "A.6.B"
+    - "A.6.8"
+    - "A.7"
+    - "A.2.3"
+    - "A.2.8"
+    - "A.2.9"
+    - "E.10"
+    - "E.17"
+    - "A.2.4"
+    - "A.15.1"
+    - "F.12"
+  coordinates_with:
+    - "F.12"
+    - "F.18"
+source:
+  module: "modules/A/A.6.C.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 8321
+  end_line: 8641
+summary: "> Type: Architectural (A) > Status: Stable > Normativity: Normative (unless explicitly marked informative) > Placement: Part A → A.6 Signature Stack & Boundary Discipline > Builds on: A.6 (stack + routing intent), A.6.B (L/A/D/E), A.6.8 (RPR‑SERV) (service‑cluster polysemy unpacking), A.7 (Object≠Description≠Carrier), A.2.3 (U.PromiseContent / promise content), A.2.4 (U.EvidenceRole), A.2.8 (U.Commitment), A.2.9 (U.SpeechAct), A.15.1 (U.Work), E.10 (L‑SERV / LEX‑BUNDLE), E.17 (MVPK “no new semantics” faces), F.12 (service acceptance/evidence discipline) > Lexical anchor: F.18 (NQD front for the service (promise) / utterance / commitment triad; naming, not ontology) > Mint/reuse (terminology): Reuses “contract / SLA / guarantee” as Plain-level boundary shorthand; mints Contract Bundle as an"

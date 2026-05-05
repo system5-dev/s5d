@@ -1,0 +1,47 @@
+id: "B.2"
+title: "Meta‑Holon Transition (MHT): Recognizing Emergence and Re‑identifying Wholes"
+kind: "pattern"
+part: "B"
+status: "Stable"
+token_estimate:
+  card: 268
+  full: 6097
+when_to_load:
+  - "meta"
+  - "holon"
+  - "transition"
+  - "mht"
+  - "recognizing"
+  - "emergence"
+  - "identifying"
+  - "wholes"
+  - "MHT"
+  - "meta-system"
+  - "new whole"
+  - "synergy"
+  - "system of systems"
+provides:
+  - "How does FPF model emergence?"
+  - "What is a Meta-Holon Transition?"
+  - "When does a collection become more than the sum of its parts?"
+relations:
+  builds_on:
+    - "B.1"
+    - "A.1"
+    - "A.12"
+    - "A.13"
+    - "A.14"
+    - "A.15"
+    - "B.1.x"
+    - "B.3"
+  prerequisite_for:
+    - "B.2.x"
+  used_by:
+    - "B.4"
+source:
+  module: "modules/B/B.2.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 28600
+  end_line: 28898
+summary: "> Plain‑English headline. > When composition yields a new, coherent whole—with its own boundary, objective, and capabilities that cannot be faithfully treated as “just parts folded together”—declare a Meta‑Holon Transition. Record the event that created the new holon and let the Γ‑invariants apply anew at the higher level."

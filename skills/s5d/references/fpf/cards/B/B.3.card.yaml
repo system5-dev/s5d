@@ -1,0 +1,57 @@
+id: "B.3"
+title: "Trust & Assurance Calculus (F–G–R with Congruence)"
+kind: "pattern"
+part: "B"
+status: "Stable"
+token_estimate:
+  card: 284
+  full: 7913
+when_to_load:
+  - "trust"
+  - "assurance"
+  - "calculus"
+  - "congruence"
+  - "reliability"
+  - "F-G-R"
+  - "formality"
+  - "scope"
+  - "evidence"
+  - "claim-strength posture"
+  - "probe/distributed/export assurance"
+provides:
+  - "How is trust calculated in FPF?"
+  - "What assurance burden fits a QL-lite or decision-bearing claim?"
+  - "How does FPF handle evidence and confidence?"
+relations:
+  builds_on:
+    - "A.10"
+    - "B.1"
+    - "B.1.1"
+    - "B.1.2"
+    - "B.1.3"
+    - "B.1.4"
+    - "A.12"
+    - "A.14"
+    - "A.15"
+    - "C.13"
+  coordinates_with:
+    - "C.26"
+    - "C.26.1"
+    - "C.26.2"
+    - "C.26.3"
+    - "C.16"
+    - "F.9"
+    - "E.14"
+    - "B.3.5"
+  prerequisite_for:
+    - "B.3.x"
+    - "D.4"
+  used_by:
+    - "B.4"
+source:
+  module: "modules/B/B.3.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 29357
+  end_line: 29767
+summary: "> Plain‑English headline. > B.3 defines how assurance (trust) is computed and propagated for both physical systems and knowledge artifacts, using a small typed assurance tuple (F–G–R: F/R characteristics plus G as scope object) and conservative aggregation rules that respect the Γ‑invariants and A.15 Strict Distinction. It treats the Working‑Model layer as the publication surface for claims, with assurance attached downward (Mapping - Logical - Constructive - Empirical) per E.14."

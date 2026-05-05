@@ -1,0 +1,24 @@
+id: "preface.fpf-as-an-evolutionary-architecture-for-thought"
+title: "FPF as an Evolutionary Architecture for Thought"
+kind: "preface_article"
+part: "preface"
+status: null
+token_estimate:
+  card: 220
+  full: 664
+when_to_load:
+  - "fpf"
+  - "evolutionary"
+  - "architecture"
+  - "thought"
+provides:
+  []
+relations:
+
+source:
+  module: "modules/preface/preface.fpf-as-an-evolutionary-architecture-for-thought.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 544
+  end_line: 555
+summary: "A method of thinking is itself a system. Like any system, it can be designed with ad-hoc, brittle connections that fail under pressure, or it can be architected for resilience, clarity, and growth. The First Principles Framework is not merely a collection of concepts or a static ontology; it is a formal architecture for a method of trans-disciplinary thinking. Its very structure—a collection of interconnected Architectural and Definitional Patterns presented as a series of an architecture/design records — is a deliberate choice that mirrors its function."

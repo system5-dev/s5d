@@ -1,0 +1,35 @@
+id: "E.3"
+title: "Principle Taxonomy & Precedence Model"
+kind: "pattern"
+part: "E"
+status: "Stable"
+token_estimate:
+  card: 280
+  full: 3908
+when_to_load:
+  - "principle"
+  - "taxonomy"
+  - "precedence"
+  - "model"
+  - "conflict resolution"
+  - "hierarchy"
+  - "principles"
+  - "classification"
+  - "Gov"
+  - "Arch"
+  - "Epist"
+  - "Prag"
+  - "Did"
+provides:
+  - "How does FPF resolve conflicting principles?"
+  - "What is the hierarchy of FPF rules?"
+relations:
+  builds_on:
+    - "E.2"
+source:
+  module: "modules/E/E.3.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 45211
+  end_line: 45363
+summary: "When two pillars or derived principles pull in opposite directions, architectural decisions stall—or worse, drift toward the loudest voice. Without an explicit taxonomy and precedence cascade, FPF risks devolving into subjective debate, breaking its claim to be a rigorously auditable “operating system for thought.”"

@@ -1,0 +1,42 @@
+id: "A.20"
+title: "U.Flow.ConstraintValidity — Eulerian"
+kind: "pattern"
+part: "A"
+status: "Stable"
+token_estimate:
+  card: 280
+  full: 8020
+when_to_load:
+  - "flow"
+  - "constraintvalidity"
+  - "eulerian"
+  - "ConstraintValidity"
+  - "Eulerian"
+  - "TransductionFlow"
+  - "GateFit"
+  - "MVPK"
+  - "SquareLaw"
+  - "Sentinel"
+  - "PathSlice"
+provides:
+  - "What is ConstraintValidity in FPF?"
+  - "What is the Eulerian stance in FPF flows?"
+  - "How does E.TGA relate to flows?"
+relations:
+  builds_on:
+    - "E.18"
+  coordinates_with:
+    - "A.21"
+    - "A.22"
+    - "A.25"
+    - "A.27"
+    - "A.28"
+    - "A.31"
+    - "A.45"
+source:
+  module: "modules/A/A.20.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 26067
+  end_line: 26363
+summary: "Tech‑name. U.Flow.ConstraintValidity (U.Flow genus) Plain‑name. Flow constraint validity (Eulerian interpretation) Type / Status. Architectural pattern — normative for flows hosted by E.TGA (E.18) under the Eulerian operational interpretation"

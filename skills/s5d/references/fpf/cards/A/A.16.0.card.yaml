@@ -1,0 +1,59 @@
+id: "A.16.0"
+title: "U.LanguageStateTransductionTrajectory - Optional trajectory-account normal form over the language-state U.CharacteristicSpace"
+kind: "pattern"
+part: "A"
+status: "Stable"
+token_estimate:
+  card: 264
+  full: 4984
+when_to_load:
+  - "languagestatetransductiontrajectory"
+  - "optional"
+  - "trajectory-account"
+  - "normal"
+  - "form"
+  - "over"
+  - "language-state"
+  - "characteristicspace"
+  - "trajectory account"
+  - "lineage"
+  - "fork"
+  - "merge"
+  - "supersedes"
+  - "handoff"
+  - "heavy history"
+provides:
+  - "When do I publish a language-state trajectory account?"
+  - "How does FPF record lineage and branch history?"
+relations:
+  builds_on:
+    - "A.16"
+    - "C.2.2a"
+    - "E.17"
+    - "E.18"
+    - "A.19"
+  used_by:
+    - "A.16.1"
+    - "A.16.2"
+    - "B.4.1"
+    - "B.5.2.0"
+  coordinates_with:
+    - "C.2.LS"
+    - "A.16.1"
+    - "A.16.2"
+    - "B.4.1"
+    - "B.5.2.0"
+    - "B.5.2"
+    - "A.6.P"
+    - "A.6.Q"
+    - "A.6.A"
+    - "F.9"
+    - "F.9.1"
+    - "E.17.1"
+source:
+  module: "modules/A/A.16.0.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 20439
+  end_line: 20683
+summary: "> Type: Architectural (A) > Status: Draft > Normativity: Normative unless marked informative"

@@ -1,0 +1,24 @@
+id: "preface.creativity-in-open-ended-evolution-and-assurance"
+title: "Creativity in Open-Ended Evolution and Assurance"
+kind: "preface_article"
+part: "preface"
+status: null
+token_estimate:
+  card: 220
+  full: 1286
+when_to_load:
+  - "creativity"
+  - "open-ended"
+  - "evolution"
+  - "assurance"
+provides:
+  []
+relations:
+
+source:
+  module: "modules/preface/preface.creativity-in-open-ended-evolution-and-assurance.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 487
+  end_line: 512
+summary: "Most engineering and management standards, methodologies and frameworks pick a side. They either optimise for assurance — audits, evidence, safety gates — or they celebrate open-ended evolution/agility based on creativity — ideas, leaps, pivots. First Principles Framework (FPF) is built to do both at once. It gives you a disciplined way to collectiverly generate and mature novel ideas with trust."

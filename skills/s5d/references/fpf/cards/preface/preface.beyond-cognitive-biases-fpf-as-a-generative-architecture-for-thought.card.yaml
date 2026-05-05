@@ -1,0 +1,27 @@
+id: "preface.beyond-cognitive-biases-fpf-as-a-generative-architecture-for-thought"
+title: "Beyond Cognitive Biases: FPF as a Generative Architecture for Thought"
+kind: "preface_article"
+part: "preface"
+status: null
+token_estimate:
+  card: 220
+  full: 1371
+when_to_load:
+  - "beyond"
+  - "cognitive"
+  - "biases"
+  - "fpf"
+  - "generative"
+  - "architecture"
+  - "thought"
+provides:
+  []
+relations:
+
+source:
+  module: "modules/preface/preface.beyond-cognitive-biases-fpf-as-a-generative-architecture-for-thought.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 583
+  end_line: 604
+summary: "The modern discipline of critical thinking has rightly focused on identifying and mitigating a long list of cognitive biases—the predictable glitches in our intuitive reasoning, from confirmation bias to the availability heuristic. The practice of \"bias hunting\" is a valuable diagnostic tool for improving our intellectual hygiene. However, it suffers from a fundamental limitation: it is primarily corrective, not constructive. It teaches us how to find flaws in existing arguments but offers little guidance on how to build a robust, complex argument from first principles."

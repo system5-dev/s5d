@@ -1,0 +1,38 @@
+id: "F.11"
+title: "Method Quartet Harmonisation"
+kind: "pattern"
+part: "F"
+status: "Stable"
+token_estimate:
+  card: 256
+  full: 6926
+when_to_load:
+  - "method"
+  - "quartet"
+  - "harmonisation"
+  - "Method"
+  - "MethodDescription"
+  - "Work"
+  - "Actuation"
+  - "Role–Method–Work alignment"
+provides:
+  - "How to align the concepts of 'method' and 'work' across domains?"
+  - "What is the method quartet?"
+relations:
+  builds_on:
+    - "F.9"
+    - "A.15"
+    - "E.10.D1"
+    - "A.3"
+    - "A.3.1"
+    - "A.3.2"
+    - "A.15.1"
+  uses:
+    - "F.10"
+source:
+  module: "modules/F/F.11.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 58783
+  end_line: 59122
+summary: "“Keep the how (Method), the recipe (MethodDescription), the happening (Work/Execution), and the control push (Actuation) in their own Contexts—then relate them explicitly.”"

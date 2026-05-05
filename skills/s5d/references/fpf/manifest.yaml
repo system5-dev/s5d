@@ -1,0 +1,16 @@
+schema: "s5d.fpf-corpus/0.1"
+source:
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  bytes: 6193789
+  lines: 68631
+  token_estimate: 1548447
+artifacts:
+  modules: 222
+  edges: 2050
+  cards: 222
+canonicality:
+  source: "canonical"
+  modules: "lossless_section_views"
+  cards: "navigation_only"
+  graph: "inferred_from_relation_markers"

@@ -1,0 +1,41 @@
+id: "C.2.6"
+title: "U.LanguageStateAnchoringMode"
+kind: "pattern"
+part: "C"
+status: "Draft"
+token_estimate:
+  card: 260
+  full: 2701
+when_to_load:
+  - "languagestateanchoringmode"
+  - "anchoring mode"
+  - "embodiment"
+  - "trace"
+  - "model state"
+  - "document"
+  - "operator loop"
+provides:
+  - "How is a language-state claim anchored in FPF?"
+  - "What is LanguageStateAnchoringMode?"
+relations:
+  builds_on:
+    - "C.2.2a"
+    - "A.18"
+    - "C.2.LS"
+  coordinates_with:
+    - "C.2.LS"
+    - "F.9.1"
+    - "A.7"
+    - "A.16.0"
+    - "A.16"
+    - "A.16.1"
+    - "B.4.1"
+    - "B.5.2.0"
+    - "C.2.7"
+source:
+  module: "modules/C/C.2.6.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 34038
+  end_line: 34200
+summary: "> Type: Definitional (D) > Status: Draft > Normativity: Normative unless marked informative"

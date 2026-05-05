@@ -1,0 +1,40 @@
+id: "D.5"
+title: "Bias-Audit & Ethical Assurance"
+kind: "pattern"
+part: "D"
+status: "Stable"
+token_estimate:
+  card: 320
+  full: 3201
+when_to_load:
+  - "bias-audit"
+  - "ethical"
+  - "assurance"
+  - "bias"
+  - "audit"
+  - "ethics"
+  - "fairness"
+  - "review cycle"
+  - "taxonomy"
+  - "AI ethics"
+  - "responsible AI"
+provides:
+  - "How does FPF handle bias?"
+  - "What is the Bias-Audit Cycle?"
+  - "How to ensure a model is fair?"
+  - "Whose voice, data, or perspective is missing from this model?"
+  - "Could our automated rule or formula unintentionally amplify unfairness for minority or edge cases?"
+  - "Does this diagram, color choice, or dashboard visualization steer the user towards a preferred conclusion?"
+  - "Are we chasing a metric that is easy to measure, at the expense of the real, harder-to-measure objective?"
+  - "Do our naming choices (e.g., 'master/slave', 'blacklist/whitelist') encode unintended value judgments or historical baggage?"
+relations:
+  builds_on:
+    - "E.5.4"
+    - "B.3.3"
+source:
+  module: "modules/D/D.5.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 44911
+  end_line: 45030
+summary: "FPF is designed to produce reliable, objective, and trustworthy holons. However, formal correctness (FV score) and empirical validation (EV score) are not sufficient on their own. Any artifact created by humans or trained on human-generated data is susceptible to hidden cognitive, cultural, and algorithmic biases. A perfectly verified control system can still be unsafe if its requirements were based on a biased assumption about operator behavior. A highly accurate machine learning model can be deeply unfair if its training data was not representative."

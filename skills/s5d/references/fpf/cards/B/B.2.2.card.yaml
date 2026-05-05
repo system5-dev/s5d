@@ -1,0 +1,34 @@
+id: "B.2.2"
+title: "Meta-System Transition (MST)"
+kind: "pattern"
+part: "B"
+status: "Stable"
+token_estimate:
+  card: 280
+  full: 2859
+when_to_load:
+  - "meta-system"
+  - "transition"
+  - "mst"
+  - "system emergence"
+  - "super-system"
+  - "physical emergence"
+provides:
+  - "How do new systems emerge from parts?"
+  - "What is a Meta-System Transition?"
+  - "Can I now operate this entire collection through a single dashboard or Standard, without having to talk to each individual part?"
+  - "Is this group now working towards a shared goal that is fundamentally different from what each member was doing alone?"
+  - "Is there a mechanism—whether a central brain or a distributed consensus—that is actively steering the parts to work together?"
+  - "Have we reached the point where trying to manage every individual interaction is causing more problems than it solves?"
+relations:
+  builds_on:
+    - "B.2"
+    - "B.2.1"
+    - "A.1"
+source:
+  module: "modules/B/B.2.2.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 28899
+  end_line: 28993
+summary: "The universal pattern for emergence, Meta-Holon Transition (MHT, Pattern B.2), describes how a collection of holons can become a new, coherent whole. This sub-pattern, MST (Sys), details the specific case where the constituent parts are physical or cyber-physical systems (U.System). This is the classic scenario of emergence in engineering and nature: a collection of robots forming a swarm, a group of servers becoming a self-healing cloud platform, or a set of components assembling into a functioning engine."

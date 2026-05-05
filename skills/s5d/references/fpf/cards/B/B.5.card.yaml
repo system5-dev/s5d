@@ -1,0 +1,35 @@
+id: "B.5"
+title: "Canonical Reasoning Cycle"
+kind: "pattern"
+part: "B"
+status: "Stable"
+token_estimate:
+  card: 276
+  full: 2866
+when_to_load:
+  - "canonical"
+  - "reasoning"
+  - "cycle"
+  - "problem-solving"
+  - "Abduction-Deduction-Induction"
+  - "scientific method"
+provides:
+  - "How does FPF model problem-solving?"
+  - "What is the canonical reasoning cycle?"
+  - "What is the most plausible new explanation or solution?"
+  - "If this hypothesis is true, what logically follows?"
+  - "Do the predicted consequences match reality?"
+relations:
+  builds_on:
+    - "A.10"
+  prerequisite_for:
+    - "B.5.x"
+  enables:
+    - "B.4"
+source:
+  module: "modules/B/B.5.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 30628
+  end_line: 30727
+summary: "While preceding patterns define the anatomy of trust (Assurance Levels in B.3) and the structure of holons (A.1, A.14), they do not specify the cognitive \"engine\" that drives the creation and evolution of knowledge within FPF. A framework for thinking must provide more than just a filing system for conclusions; it must offer a repeatable, rigorous method for arriving at them, especially when confronting novel, complex, or ill-defined problems."

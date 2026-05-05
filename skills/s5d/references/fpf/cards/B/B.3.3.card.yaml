@@ -1,0 +1,39 @@
+id: "B.3.3"
+title: "Assurance Subtypes & Levels"
+kind: "pattern"
+part: "B"
+status: "Stable"
+token_estimate:
+  card: 268
+  full: 2865
+when_to_load:
+  - "assurance"
+  - "subtypes"
+  - "levels"
+  - "assurance levels"
+  - "L0-L2"
+  - "TA"
+  - "VA"
+  - "LA"
+  - "typing"
+  - "verification"
+  - "validation"
+provides:
+  - "What are the assurance levels in FPF?"
+  - "How does an artifact mature in FPF?"
+relations:
+  builds_on:
+    - "B.3"
+    - "B.3.1"
+    - "A.10"
+    - "A.4"
+  enables:
+    - "B.4"
+    - "D.4"
+source:
+  module: "modules/B/B.3.3.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 29768
+  end_line: 29851
+summary: "A complex project may generate hundreds of artifacts: design specifications, simulation models, test suites, and operational logs. While the Trust & Assurance Calculus provides a framework for evaluating these artifacts, teams often face a critical challenge: how to aggregate this diverse evidence into a single, meaningful signal of an artifact's maturity. Simply counting the number of tests or documents can lead to \"paper compliance,\" where an artifact appears well-supported but has critical, unexamined weaknesses in its formal structure or conceptual alignment."

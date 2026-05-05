@@ -1,0 +1,34 @@
+id: "A.14"
+title: "Advanced Mereology: Components, Portions, Aspects & Phases"
+kind: "pattern"
+part: "A"
+status: "Stable"
+token_estimate:
+  card: 252
+  full: 7334
+when_to_load:
+  - "advanced"
+  - "mereology"
+  - "components"
+  - "portions"
+  - "aspects"
+  - "phases"
+  - "part-of"
+  - "ComponentOf"
+  - "PortionOf"
+  - "PhaseOf"
+  - "composition"
+provides:
+  - "How to model different kinds of 'part-of' relationships?"
+relations:
+  refines:
+    - "A.1"
+  prerequisite_for:
+    - "B.1.1"
+source:
+  module: "modules/A/A.14.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 18571
+  end_line: 18846
+summary: "FPF’s holonic modelling relies on part–whole relations to build structural and conceptual holarchies (systems and epistemes). But U.Holon is not synonymous with “mereological whole”: some holons (notably Roles and Methods) are bounded identity‑bearing objects whose primary composition is handled by other algebras (A.2 role algebra; A.15 method/description graphs), not by partOf. Early drafts distinguished structural vs. conceptual parthood (e.g., ComponentOf, ConstituentOf) but practical modelling kept hitting two recurrent gaps:"

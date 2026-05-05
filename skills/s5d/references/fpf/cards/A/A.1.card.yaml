@@ -1,0 +1,35 @@
+id: "A.1"
+title: "Holonic Foundation: Entity → Holon"
+kind: "pattern"
+part: "A"
+status: "Stable"
+token_estimate:
+  card: 260
+  full: 5081
+when_to_load:
+  - "holonic"
+  - "foundation"
+  - "entity"
+  - "holon"
+  - "part-whole composition"
+  - "system boundary"
+  - "U.System"
+  - "U.Episteme"
+provides:
+  - "How does FPF model a system and its parts?"
+  - "What is a holon?"
+relations:
+  builds_on:
+    - "P-8"
+  prerequisite_for:
+    - "A.1.1"
+    - "A.2"
+    - "A.14"
+    - "B.1"
+source:
+  module: "modules/A/A.1.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 1107
+  end_line: 1291
+summary: "> “Name the thing without smuggling in its parts.”"

@@ -1,0 +1,45 @@
+id: "C.26"
+title: "Quantum-Like Modeling Lens"
+kind: "pattern"
+part: "C"
+status: "Dyn2 vocabulary escalates into quantum-like modeling."
+token_estimate:
+  card: 252
+  full: 16043
+when_to_load:
+  - "quantum-like"
+  - "modeling"
+  - "lens"
+provides:
+  - "does quantum-like help here?"
+  - "what representational mistake does this lens prevent here?"
+  - "which single metric wins?"
+  - "What representational mistake does this lens prevent here?"
+relations:
+  builds_on:
+    - "E.8"
+    - "E.9"
+    - "C.11"
+    - "C.16"
+    - "C.25"
+    - "A.6"
+    - "A.6.P"
+    - "F.9"
+    - "A.15"
+    - "A.10"
+    - "B.3"
+    - "A.3"
+    - "C.18"
+    - "C.19"
+    - "A.19"
+  constrains:
+    - "C.26.1"
+    - "C.26.2"
+    - "C.26.3"
+source:
+  module: "modules/C/C.26.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 41284
+  end_line: 41860
+summary: "> Type: Architectural pattern > Status: Stable > Normativity: Normative unless explicitly marked informative"

@@ -1,0 +1,93 @@
+schema: "s5d.fpf.entrypoints/0.1"
+entrypoints:
+  -
+    id: "problem-framing"
+    triggers:
+      - "problem"
+      - "anomaly"
+      - "hypothesis"
+      - "acceptance"
+    load_cards:
+      - "E.10"
+      - "G.0"
+      - "A.1.1"
+    expand:
+      - "builds_on"
+      - "refines"
+      - "coordinates_with"
+  -
+    id: "bounded-context"
+    triggers:
+      - "domain"
+      - "context"
+      - "meaning"
+      - "ambiguity"
+    load_cards:
+      - "A.1.1"
+      - "E.10"
+      - "F.1"
+    expand:
+      - "builds_on"
+      - "refines"
+      - "coordinates_with"
+  -
+    id: "multi-view"
+    triggers:
+      - "view"
+      - "publication"
+      - "dashboard"
+      - "projection"
+    load_cards:
+      - "E.17.0"
+      - "E.17"
+      - "A.6.3"
+    expand:
+      - "builds_on"
+      - "refines"
+      - "coordinates_with"
+  -
+    id: "evidence"
+    triggers:
+      - "evidence"
+      - "traceability"
+      - "assurance"
+      - "provenance"
+    load_cards:
+      - "A.10"
+      - "B.3"
+      - "G.6"
+    expand:
+      - "builds_on"
+      - "refines"
+      - "coordinates_with"
+  -
+    id: "comparison"
+    triggers:
+      - "compare"
+      - "characteristic"
+      - "pareto"
+      - "selection"
+    load_cards:
+      - "A.18"
+      - "A.19"
+      - "G.0"
+      - "G.5"
+    expand:
+      - "builds_on"
+      - "refines"
+      - "coordinates_with"
+  -
+    id: "unification"
+    triggers:
+      - "term"
+      - "bridge"
+      - "glossary"
+      - "alignment"
+    load_cards:
+      - "F.17"
+      - "F.9"
+      - "A.6.9"
+    expand:
+      - "builds_on"
+      - "refines"
+      - "coordinates_with"

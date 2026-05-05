@@ -1,0 +1,58 @@
+id: "G.1"
+title: "CG‑Frame‑Ready Generator"
+kind: "pattern"
+part: "G"
+status: "Stable"
+token_estimate:
+  card: 304
+  full: 7332
+when_to_load:
+  - "frame"
+  - "ready"
+  - "generator"
+  - "generator chassis"
+  - "generator / selector / set-surface scaffold"
+  - "six-card kit (M1-M6"
+  - "CGKitId manifest"
+  - "SoTA_SetId"
+  - "VariantPoolId"
+  - "ShortlistId"
+  - "CGFrameLibraryId"
+  - "RefreshReadinessCardId"
+  - "set-return selection"
+  - "set-surface outcome"
+  - "UTS/Name Cards"
+  - "RSCR linkage surfaces"
+  - "edition pins"
+  - "shipping/refresh boundaries"
+provides:
+  - "How do I author a reusable CG-Frame generator kit?"
+  - "What belongs in the six-card chassis M1-M6?"
+  - "How do G.2 harvesting, G.5 set-return selection, G.10 shipping, and G.11 refresh connect without becoming one method spec?"
+relations:
+  builds_on:
+    - "E.8"
+    - "E.10"
+    - "E.19"
+  uses:
+    - "A.10"
+    - "A.15.3"
+    - "A.19"
+    - "G.0"
+    - "G.2"
+    - "G.3"
+    - "G.4"
+    - "G.5"
+    - "G.10"
+    - "G.11"
+    - "C.17"
+    - "C.18"
+    - "C.19"
+    - "C.23"
+source:
+  module: "modules/G/G.1.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 62647
+  end_line: 63080
+summary: "Tag. architectural pattern; generator chassis (design‑time kit / authoring scaffold) Status. stable (Phase‑2 universalisation) Normativity. normative, except sections explicitly marked informative Stage. design‑time authoring of a generator‑kit with a run‑time execution façade (policy‑governed; edition‑aware) Primary output. the six‑card chassis M1…M6 published as a complete, reusable CG‑Frame kit, plus a versioned kit manifest CGKitId that binds the six cards as a single reusable unit (view‑friendly inventory + wiring surface) Primary hooks. see §12 Relations (notably G.Core, G.0, G.2, G.5, G.10, G.11) Working‑model first (informative). prefer working models and didactic micro‑examples; escalate to formal harnesses only when risk warrants (per E.8). Non‑duplication note. universal Part‑G "

@@ -1,0 +1,31 @@
+id: "E.5.1"
+title: "DevOps Lexical Firewall"
+kind: "pattern"
+part: "E"
+status: "Stable"
+token_estimate:
+  card: 256
+  full: 937
+when_to_load:
+  - "devops"
+  - "lexical"
+  - "firewall"
+  - "lexical firewall"
+  - "jargon"
+  - "tool-agnostic"
+  - "conceptual purity"
+  - "DevOps"
+  - "CI/CD"
+  - "yaml"
+provides:
+  - "Can I use terms like 'CI/CD' in FPF core patterns?"
+relations:
+  refines:
+    - "E.5"
+source:
+  module: "modules/E/E.5.1.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 45536
+  end_line: 45610
+summary: "1. Forbidden lexicon Normative patterns SHALL NOT contain tool‑or file‑specific words (e.g. protocol keywords, file extensions, IDE commands). Permissible wording: “a reference parser”, “a serialisation schema”."

@@ -1,0 +1,23 @@
+id: "preface.architectural-characteristic-of-thought"
+title: "Architectural Characteristic of Thought"
+kind: "preface_article"
+part: "preface"
+status: null
+token_estimate:
+  card: 228
+  full: 2059
+when_to_load:
+  - "architectural"
+  - "characteristic"
+  - "thought"
+provides:
+  - "Why is this true?"
+relations:
+
+source:
+  module: "modules/preface/preface.architectural-characteristic-of-thought.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 556
+  end_line: 582
+summary: "Therefore, FPF should be understood not as a passive library of terms, but as an engineered method for thinking. Its patterns are the architectural decisions that shape this method. Its ultimate value is not in any single model it can produce, but in the enduring quality of the reasoning process it sustains—a discipline that is auditable, evolvable, and coherent by design."

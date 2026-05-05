@@ -1,0 +1,56 @@
+id: "G.5"
+title: "Multi‑Method Dispatcher & MethodFamily Registry"
+kind: "pattern"
+part: "G"
+status: "Stable"
+token_estimate:
+  card: 296
+  full: 14821
+when_to_load:
+  - "multi"
+  - "method"
+  - "dispatcher"
+  - "methodfamily"
+  - "registry"
+  - "method-family registry"
+  - "generator-family registry"
+  - "SelectorOutcomeKind"
+  - "selected-set publication"
+  - "set-surface outcome"
+  - "Shortlist"
+  - "RankedShortlist"
+  - "ShortlistId"
+  - "SpecialistHandoff"
+  - "abstain/escalation result"
+  - "basis pins"
+  - "no hidden scalar winner"
+provides:
+  - "How does FPF dispatch among rival method families without hidden scalarization?"
+  - "How do I publish a Shortlist or RankedShortlist honestly?"
+  - "When does G.5 begin after C.11 choice, C.19 pool policy, or C.24 planning?"
+relations:
+  builds_on:
+    - "G.0"
+    - "G.2"
+    - "G.3"
+    - "G.4"
+    - "G.6"
+  coordinates_with:
+    - "C.11"
+    - "C.19"
+    - "C.24"
+    - "G.9"
+    - "G.10"
+    - "G.11"
+  uses:
+    - "C.19"
+    - "C.23"
+    - "C.18"
+    - "G.2"
+source:
+  module: "modules/G/G.5.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 64495
+  end_line: 65106
+summary: "> Type: General (G) > Status: Stable > Normativity: Normative"

@@ -1,0 +1,65 @@
+id: "A.6.9"
+title: "U.CrossContextSamenessDisambiguation - Repairing cross-context “same / equivalent / align” via explicit Bridges (RPR‑XCTX)"
+kind: "pattern"
+part: "A"
+status: "Stable"
+token_estimate:
+  card: 276
+  full: 13867
+when_to_load:
+  - "crosscontextsamenessdisambiguation"
+  - "repairing"
+  - "cross-context"
+  - "same"
+  - "equivalent"
+  - "align"
+  - "via"
+  - "explicit"
+  - "bridges"
+  - "rpr"
+  - "xctx"
+  - "cross-context sameness"
+  - "bridge"
+  - "alignment"
+  - "mapping"
+  - "direction"
+  - "substitution licence"
+  - "loss notes"
+  - "CL"
+  - "SenseCells"
+  - "weakest-link"
+provides:
+  - "How to disambiguate 'same' across contexts?"
+  - "How to avoid silent inversion in mappings?"
+relations:
+  builds_on:
+    - "A.6.P"
+    - "F.9"
+    - "E.10.D1"
+    - "A.7"
+    - "F.0.1:2.3"
+    - "E.10.U9"
+    - "F.7"
+    - "F.8"
+    - "F.5"
+    - "E.19"
+  coordinates_with:
+    - "E.17"
+    - "C.3.3"
+    - "A.6.6"
+    - "F.7"
+    - "F.8"
+    - "E.10"
+    - "B.3"
+    - "F.5"
+  specializes:
+    - "A.6.P"
+  uses:
+    - "F.9"
+source:
+  module: "modules/A/A.6.9.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 16053
+  end_line: 16474
+summary: "> Type: Architectural (A) — A.6.P specialisation (RPR) > Status: Stable > Normativity: Normative > Placement: A.6 cluster; immediately after A.6.8 > Builds on: A.6.P (RPR); F.0.1:2.3 (Explicit Bridge Principle); E.10.D1 (Context discipline); E.10.U9 (Alignment/Bridge lexical discipline); F.9 (Bridge discipline + reasoning primitives); F.7/F.8 (Concept‑Set rows & weakest‑link); F.5 (labels); A.7 (Strict Distinction: lanes + stance hygiene); E.19 (normative precision) > Coordinates with: E.17 (Viewpoints / Views / Correspondences, when the prose is really about views/projections); C.3.3 (KindBridge, when the claim is about kind/classification transfer); A.6.6 (Identification/indexing, when the umbrella is really about IDs); Concept‑Set row scope rules; E.10 lexical SD (umbrella tokens); B.3 "

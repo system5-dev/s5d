@@ -1,0 +1,48 @@
+id: "C.21"
+title: "Field Health & Structure (Discipline-CHR)"
+kind: "pattern"
+part: "C"
+status: "Stable"
+token_estimate:
+  card: 260
+  full: 5006
+when_to_load:
+  - "field"
+  - "health"
+  - "structure"
+  - "discipline-chr"
+  - "discipline"
+  - "field health"
+  - "reproducibility"
+  - "standardisation"
+  - "alignment"
+  - "disruption"
+provides:
+  - "How to measure the health of a scientific field?"
+  - "What is reproducibility rate?"
+relations:
+  builds_on:
+    - "C.16"
+    - "C.2"
+    - "A.2.6"
+    - "B.3"
+    - "A.17"
+    - "A.18"
+  coordinates_with:
+    - "C.20"
+    - "G.2"
+    - "G.12"
+    - "G.0"
+    - "G.9"
+  constrains:
+    - "G.10"
+    - "G.11"
+    - "G.5"
+    - "F.9"
+source:
+  module: "modules/C/C.21.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 39795
+  end_line: 40007
+summary: "> Purpose. Give FPF a typed, auditable way to speak about the health, maturity, and structure of a scientific/engineering discipline, without collapsing into taste, anecdotes, or single-number scores. The pattern defines a portable set of Characteristics and guards (legality, freshness, scope) that any Context can specialize."

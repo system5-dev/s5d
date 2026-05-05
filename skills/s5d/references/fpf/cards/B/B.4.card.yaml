@@ -1,0 +1,39 @@
+id: "B.4"
+title: "Canonical Evolution Loop"
+kind: "pattern"
+part: "B"
+status: "Stable"
+token_estimate:
+  card: 288
+  full: 3921
+when_to_load:
+  - "canonical"
+  - "evolution"
+  - "loop"
+  - "evolution loop"
+  - "design/run feedback"
+  - "observe-notice-stabilize-route"
+  - "drift repair"
+  - "open-ended evolution"
+provides:
+  - "How does FPF evolve a system or episteme without design-reality drift?"
+  - "Where does pre-abductive routing sit in the canonical loop?"
+  - "What is the holon doing in use or in the field?"
+  - "What anomaly, opportunity, or mismatch is now visible to a responsible Transformer?"
+  - "What design-time change would better fit what has been observed?"
+  - "How is that refined design-time content instantiated back into run-time reality?"
+relations:
+  builds_on:
+    - "A.4"
+    - "A.12"
+  prerequisite_for:
+    - "B.4.1"
+    - "B.4.2"
+    - "B.4.3"
+source:
+  module: "modules/B/B.4.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 30276
+  end_line: 30397
+summary: "The FPF is built on the Principle of Open-Ended Evolution (P-10). This is not merely a philosophical stance, but a pragmatic recognition that any useful holon—whether a physical system, a scientific theory, or a method—is in a perpetual state of becoming. A static model is a dead model. The framework, therefore, requires a universal, repeatable method that governs how holons adapt and improve over time. This process must bridge the abstract world of design-time blueprints with the concrete, messy reality of run-time operations, as mandated by the Temporal Duality principle (Pattern A.4)."

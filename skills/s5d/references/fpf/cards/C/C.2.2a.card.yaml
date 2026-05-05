@@ -1,0 +1,53 @@
+id: "C.2.2a"
+title: "U.LanguageStateSpace - Language-state chart over U.CharacteristicSpace"
+kind: "pattern"
+part: "C"
+status: "Stable"
+token_estimate:
+  card: 260
+  full: 5138
+when_to_load:
+  - "languagestatespace"
+  - "language-state"
+  - "chart"
+  - "over"
+  - "characteristicspace"
+  - "language-state chart"
+  - "characteristic space"
+  - "position claim"
+  - "partial coordinates"
+  - "thresholds"
+  - "governed episteme publication"
+provides:
+  - "What is the language-state space in FPF?"
+  - "How do I publish a position claim before endpoint ownership?"
+relations:
+  builds_on:
+    - "A.19"
+    - "E.10"
+    - "F.18"
+  used_by:
+    - "C.2.LS"
+    - "A.16"
+    - "B.4.1"
+    - "A.6.Q"
+    - "A.6.A"
+  coordinates_with:
+    - "C.2.LS"
+    - "C.2.3"
+    - "C.2.4"
+    - "C.2.5"
+    - "C.2.6"
+    - "C.2.7"
+    - "A.16.0"
+    - "A.16"
+    - "F.9"
+    - "F.9.1"
+    - "E.17.1"
+source:
+  module: "modules/C/C.2.2a.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 32858
+  end_line: 33125
+summary: "> Type: Architectural (A) > Status: Draft > Normativity: Normative unless marked informative"

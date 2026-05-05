@@ -1,0 +1,52 @@
+id: "C.11"
+title: "Decision Theory (Decsn-CAL)"
+kind: "pattern"
+part: "C"
+status: "Stable"
+token_estimate:
+  card: 304
+  full: 18405
+when_to_load:
+  - "decision"
+  - "theory"
+  - "decsn-cal"
+  - "decision theory"
+  - "DecisionSubject"
+  - "OptionSet"
+  - "comparison basis"
+  - "ChoiceRule"
+  - "ChoiceResult"
+  - "question order"
+  - "probe-worthiness"
+  - "non-shared comparison frame"
+  - "ValueOfInformation"
+  - "ValueOfComputation"
+  - "choose now"
+  - "reject current set"
+  - "probe again"
+  - "reroute"
+provides:
+  - "When should one choose now versus probe again?"
+  - "What must be explicit before a choice among already-available options is lawful?"
+  - "When do question order or incompatible frames require C.26 rather than ordinary choice?"
+relations:
+  builds_on:
+    - "A.6.P"
+    - "A.6.5"
+    - "A.13"
+    - "C.9"
+    - "A.18"
+    - "A.19"
+  coordinates_with:
+    - "C.26"
+    - "C.18"
+    - "C.19"
+    - "C.24"
+    - "G.5"
+source:
+  module: "modules/C/C.11.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 37038
+  end_line: 37718
+summary: "> Type: Calculus (C) > Status: Stable > Normativity: Normative unless marked informative"

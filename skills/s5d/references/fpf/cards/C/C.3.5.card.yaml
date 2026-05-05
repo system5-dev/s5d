@@ -1,0 +1,32 @@
+id: "C.3.5"
+title: "KindAT — Intentional Abstraction Facet for Kinds (K0…K3)"
+kind: "pattern"
+part: "C"
+status: "Stable"
+token_estimate:
+  card: 256
+  full: 3031
+when_to_load:
+  - "kindat"
+  - "intentional"
+  - "abstraction"
+  - "facet"
+  - "kinds"
+  - "KindAT"
+  - "abstraction tier"
+  - "K0-K3"
+  - "informative facet"
+  - "planning"
+provides:
+  - "What are the abstraction tiers for Kinds?"
+  - "How to plan formalization effort?"
+relations:
+  builds_on:
+    - "C.3.1"
+source:
+  module: "modules/C/C.3.5.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 36103
+  end_line: 36273
+summary: "> One‑line summary. Defines KindAT as an informative facet attached to U.Kind that classifies the intentional abstraction stance of a kind—K0 Instance, K1 Behavioral Pattern, K2 Formal Kind/Class, K3 Up‑to‑Iso—to guide ΔF/ΔR planning, bridge expectations, catalog/search, and refactoring. KindAT is not a Characteristic: it has no algebra, no thresholds, and MUST NOT appear in guards or composition math. All assurance remains in F–G–R; typed semantics remain in C.3.1–C.3.4."

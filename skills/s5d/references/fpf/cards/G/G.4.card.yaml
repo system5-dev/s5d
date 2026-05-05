@@ -1,0 +1,69 @@
+id: "G.4"
+title: "CAL Authoring for a CG-Frame: Operators, Acceptance Clauses, Evidence Wiring"
+kind: "pattern"
+part: "G"
+status: "Stable"
+token_estimate:
+  card: 276
+  full: 8687
+when_to_load:
+  - "cal"
+  - "authoring"
+  - "cg-frame"
+  - "operators"
+  - "acceptance"
+  - "clauses"
+  - "evidence"
+  - "wiring"
+  - "CAL authoring"
+  - "acceptance clauses"
+  - "evidence profiles"
+  - "tri-state admissibility"
+  - "Γ-fold hooks"
+  - "Φ/Ψ/Φ_plane policy pins"
+  - "legality gates"
+  - "edition pins"
+  - "RSCRTriggerKindId"
+provides:
+  - "How to author CAL operators and acceptance clauses for CG-Frames?"
+  - "How to keep acceptance/evidence wiring auditable and refreshable?"
+relations:
+  builds_on:
+    - "G.3"
+    - "G.0"
+    - "B.3"
+    - "A.18"
+    - "G.6"
+    - "E.8"
+  prerequisite_for:
+    - "G.5"
+  used_by:
+    - "G.5"
+    - "G.8"
+    - "G.10"
+    - "G.11"
+    - "G.9"
+  uses:
+    - "G.6"
+    - "C.18"
+    - "C.19"
+    - "C.23"
+    - "G.1"
+    - "G.2"
+    - "G.3"
+    - "G.0"
+    - "A.19"
+    - "A.18"
+    - "A.10"
+    - "B.3"
+    - "E.18"
+    - "A.21"
+    - "A.27"
+    - "F.9"
+source:
+  module: "modules/G/G.4.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 64024
+  end_line: 64494
+summary: "Tag. Architectural pattern (publishes CAL Pack@CG-Frame; consumes CHR Pack@CG-Frame; constrains selector/dispatcher usage; binds GateCrossing discipline; exposes ReferencePlane and penalty/guard policy pins to SCR)"

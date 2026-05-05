@@ -1,0 +1,48 @@
+id: "A.21"
+title: "GateProfilization: OperationalGate(profile) (GateFit core)"
+kind: "pattern"
+part: "A"
+status: "Stable"
+token_estimate:
+  card: 284
+  full: 7044
+when_to_load:
+  - "gateprofilization"
+  - "operationalgate"
+  - "profile"
+  - "gatefit"
+  - "core"
+  - "OperationalGate"
+  - "GateFit"
+  - "GateProfile"
+  - "GateChecks"
+  - "join-semilattice"
+  - "GateDecision"
+  - "DecisionLog"
+  - "EquivalenceWitness"
+  - "LaunchGate"
+  - "CV⇒GF"
+provides:
+  - "What is GateProfilization in FPF?"
+  - "How does OperationalGate aggregate GateChecks?"
+  - "What is the CV⇒GF activation predicate?"
+relations:
+  builds_on:
+    - "E.18"
+    - "E.17"
+    - "A.7"
+  coordinates_with:
+    - "A.20"
+    - "A.23"
+    - "A.24"
+    - "A.25"
+    - "A.26"
+    - "A.27"
+    - "A.41"
+source:
+  module: "modules/A/A.21.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 26364
+  end_line: 26718
+summary: "ID: A.21 Type: Architectural pattern"

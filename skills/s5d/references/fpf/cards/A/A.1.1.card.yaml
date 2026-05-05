@@ -1,0 +1,43 @@
+id: "A.1.1"
+title: "U.BoundedContext: The Semantic Frame"
+kind: "pattern"
+part: "A"
+status: "Stable"
+token_estimate:
+  card: 272
+  full: 5815
+when_to_load:
+  - "boundedcontext"
+  - "semantic"
+  - "frame"
+  - "local meaning"
+  - "context"
+  - "semantic boundary"
+  - "domain"
+  - "invariants"
+  - "glossary"
+  - "DDD"
+provides:
+  - "How does FPF handle ambiguity?"
+  - "What is a Bounded Context in FPF?"
+  - "How to define rules for a specific project?"
+relations:
+  builds_on:
+    - "A.1"
+  prerequisite_for:
+    - "A.2.1"
+    - "F.0.1"
+  constitutes:
+    - "A.2"
+    - "A.13"
+  constrained_by:
+    - "E.10.D1"
+  enables:
+    - "D.3"
+source:
+  module: "modules/A/A.1.1.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 1292
+  end_line: 1492
+summary: "> Type: Architectural (A) > Status: Stable > Normativity: Normative"

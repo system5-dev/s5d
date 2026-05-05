@@ -1,0 +1,46 @@
+id: "C.2.1"
+title: "U.Episteme — Epistemes and their slot graph"
+kind: "pattern"
+part: "C"
+status: "Stable"
+token_estimate:
+  card: 280
+  full: 15485
+when_to_load:
+  - "episteme"
+  - "epistemes"
+  - "their"
+  - "slot"
+  - "graph"
+  - "EpistemeSlotGraph"
+  - "DescribedEntitySlot"
+  - "GroundingHolonSlot"
+  - "ClaimGraphSlot"
+  - "ViewpointSlot"
+  - "ReferenceScheme"
+  - "RepresentationScheme"
+  - "View/Viewpoint"
+provides:
+  - "What is an episteme in FPF?"
+  - "How are DescribedEntity, ClaimGraph, GroundingHolon and Viewpoint organised as slots?"
+  - "How do KD-CAL epistemes connect to views/viewpoints and multi-view descriptions?"
+relations:
+  builds_on:
+    - "C.2"
+    - "A.1"
+    - "A.6.5"
+    - "E.10.D2"
+  used_by:
+    - "A.6.2"
+    - "A.6.4"
+    - "E.17.0"
+    - "E.17.2"
+    - "E.17"
+    - "B.1.3"
+source:
+  module: "modules/C/C.2.1.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 31677
+  end_line: 32482
+summary: "> One-line summary. U.Episteme is the holon type for epistemes; its internal ontology is given by U.EpistemeSlotGraph, which replaces the legacy semantic triangle with a typed graph n-ary relation over DescribedEntity, GroundingHolon, ClaimGraph, Viewpoint, View, and ReferenceScheme, aligned with U.RelationSlotDiscipline and ready for both symbolic and distributed representations."

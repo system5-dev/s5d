@@ -1,0 +1,35 @@
+id: "E.12"
+title: "Didactic Primacy & Cognitive Ergonomics"
+kind: "pattern"
+part: "E"
+status: "Stable"
+token_estimate:
+  card: 284
+  full: 2474
+when_to_load:
+  - "didactic"
+  - "primacy"
+  - "cognitive"
+  - "ergonomics"
+  - "cognitive load"
+  - "usability"
+  - "Rationale Mandate"
+  - "HF-Loop"
+provides:
+  - "How does FPF ensure it's understandable?"
+  - "What is the 'So What?' test in FPF?"
+  - "How does achieving this level of formal assurance tangibly help the agent better understand the problem or make a more reliable decision?"
+  - "So What?"
+  - "This is impressive, but so what? How does this help us ship a better product, make a smarter investment, or avoid a critical risk?"
+relations:
+  builds_on:
+    - "E.2"
+    - "P-2"
+    - "E.13"
+source:
+  module: "modules/E/E.12.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 48855
+  end_line: 48943
+summary: "The FPF is designed as an \"Operating System for Thought,\" a tool intended to augment and clarify human (and artificial) reasoning. This mission places a unique demand on its architecture: the framework's internal elegance and formal power are secondary to its primary function of being understandable and usable. A perfectly consistent but incomprehensible system fails in its didactic purpose. As formal mechanisms like Assurance Levels and epistemic scores are introduced, there is a significant risk that the pursuit of these metrics becomes an end in itself, overshadowing the ultimate goal of fostering clearer thought."

@@ -1,0 +1,31 @@
+id: "E.5.2"
+title: "Notational Independence"
+kind: "pattern"
+part: "E"
+status: "Stable"
+token_estimate:
+  card: 264
+  full: 1096
+when_to_load:
+  - "notational"
+  - "independence"
+  - "notation"
+  - "syntax"
+  - "semantics"
+  - "tool-agnostic"
+  - "diagram"
+  - "UML"
+  - "BPMN"
+provides:
+  - "Does FPF require a specific diagram style?"
+  - "How is meaning defined in FPF?"
+relations:
+  refines:
+    - "E.5"
+source:
+  module: "modules/E/E.5.2.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 45611
+  end_line: 45689
+summary: "1. Semantics primacy Normative content SHALL define concepts in linguistic form first (plain English + mathematics if needed). Visual or syntax examples are secondary illustrations."

@@ -1,0 +1,44 @@
+id: "C.2.3"
+title: "Unified Formality Characteristic F"
+kind: "pattern"
+part: "C"
+status: "Stable"
+token_estimate:
+  card: 264
+  full: 4727
+when_to_load:
+  - "unified"
+  - "formality"
+  - "characteristic"
+  - "Formality"
+  - "F-scale"
+  - "F0-F9"
+  - "rigor"
+  - "proof"
+  - "specification"
+  - "language-state separation"
+provides:
+  - "What is Formality F in FPF?"
+  - "How does F differ from articulation, closure, or anchoring?"
+relations:
+  builds_on:
+    - "C.2"
+    - "A.18"
+    - "A.19"
+  coordinates_with:
+    - "C.2.2"
+    - "B.3"
+    - "F.9"
+    - "C.2.LS"
+    - "A.16"
+    - "C.2.4"
+    - "C.2.5"
+    - "C.2.6"
+    - "C.2.7"
+source:
+  module: "modules/C/C.2.3.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 33126
+  end_line: 33437
+summary: "> Type: Definitional (D) > Status: Stable > Normativity: Normative unless marked informative"

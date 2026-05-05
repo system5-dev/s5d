@@ -1,0 +1,33 @@
+id: "C.3.4"
+title: "RoleMask — Contextual Adaptation of Kinds (without cloning)"
+kind: "pattern"
+part: "C"
+status: "Stable"
+token_estimate:
+  card: 252
+  full: 4207
+when_to_load:
+  - "rolemask"
+  - "contextual"
+  - "adaptation"
+  - "kinds"
+  - "without"
+  - "cloning"
+  - "RoleMask"
+  - "context-local adaptation"
+  - "constraints"
+  - "subkind promotion"
+provides:
+  - "How to adapt a Kind for a local context?"
+  - "What is a RoleMask in FPF?"
+relations:
+  builds_on:
+    - "C.3.1"
+    - "C.3.2"
+source:
+  module: "modules/C/C.3.4.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 35869
+  end_line: 36102
+summary: "> One‑line summary. Defines U.RoleMask(kind, Context) as a context‑local adaptation of a U.Kind that (a) adds constraints and/or vocabulary bindings, and (b) may narrow membership deterministically within a U.ContextSlice, without creating a new kind. RoleMasks are catalogued, versioned, and guard‑addressable; frequent, stable constraint masks SHOULD be promoted to explicit subkinds. Cross‑context use of a RoleMask requires a KindBridge (for kinds) and, when needed, a MaskAdapter (for mask constraints). All penalties route to R; F/G remain unchanged."

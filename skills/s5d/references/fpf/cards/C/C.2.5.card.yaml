@@ -1,0 +1,39 @@
+id: "C.2.5"
+title: "U.LanguageStateClosureDegree"
+kind: "pattern"
+part: "C"
+status: "Draft"
+token_estimate:
+  card: 256
+  full: 2564
+when_to_load:
+  - "languagestateclosuredegree"
+  - "closure degree"
+  - "candidate-space closure"
+  - "reopen"
+  - "rival routes"
+  - "settledness"
+provides:
+  - "How closed is the current candidate space?"
+  - "What is LanguageStateClosureDegree in FPF?"
+relations:
+  builds_on:
+    - "C.2.2a"
+    - "A.18"
+    - "C.2.LS"
+  coordinates_with:
+    - "C.2.LS"
+    - "A.16"
+    - "C.2.4"
+    - "A.16.0"
+    - "A.16.1"
+    - "A.16.2"
+    - "B.4.1"
+    - "B.5.2.0"
+source:
+  module: "modules/C/C.2.5.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 33854
+  end_line: 34037
+summary: "> Type: Definitional (D) > Status: Draft > Normativity: Normative unless marked informative"

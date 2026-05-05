@@ -1,0 +1,55 @@
+id: "E.17.AUD"
+title: "AuthoredUnitDiscipline - keep one authored unit stable enough to read honestly"
+kind: "pattern"
+part: "E"
+status: "Stable"
+token_estimate:
+  card: 268
+  full: 6833
+when_to_load:
+  - "authoredunitdiscipline"
+  - "keep"
+  - "one"
+  - "authored"
+  - "unit"
+  - "stable"
+  - "enough"
+  - "read"
+  - "honestly"
+  - "authored unit"
+  - "primary object of talk"
+  - "carried move"
+  - "outside-work boundary"
+  - "umbrella routing"
+  - "authored-unit stability"
+provides:
+  - "How do I keep one note or memo honest as one readable unit?"
+  - "What is AuthoredUnitDiscipline in FPF?"
+  - "When is the real burden local head repair, whole-unit stabilization, bounded comparison, or another neighboring pattern?"
+relations:
+  builds_on:
+    - "C.2.2a"
+    - "A.16.0"
+    - "A.7"
+    - "E.10"
+    - "F.18"
+    - "E.14"
+    - "E.19"
+  coordinates_with:
+    - "E.17.AUD.LHR"
+    - "E.17.AUD.OOTD"
+    - "E.17.ID.CR"
+    - "E.17.EFP"
+    - "A.6.3"
+    - "A.6.3.CR"
+    - "A.6.3.RT"
+    - "A.15"
+    - "A.20"
+    - "A.21"
+source:
+  module: "modules/E/E.17.AUD.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 52351
+  end_line: 52621
+summary: "Placement. First umbrella routing pattern for one authored-readable unit whose burden may still narrow into local head repair, whole-unit object-of-talk stabilization, bounded comparison, or a neighboring non-authored-unit pattern."

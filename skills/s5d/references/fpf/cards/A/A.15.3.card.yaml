@@ -1,0 +1,43 @@
+id: "A.15.3"
+title: "SlotFillingsPlanItem"
+kind: "pattern"
+part: "A"
+status: "Stable"
+token_estimate:
+  card: 280
+  full: 9249
+when_to_load:
+  - "slotfillingsplanitem"
+  - "planned baseline"
+  - "slot owner"
+  - "planned filler"
+  - "edition pins"
+  - "Γ_time selector"
+  - "guard pins"
+  - "WorkPlanning"
+  - "P2W seam"
+  - "variance trail"
+provides:
+  - "What is SlotFillingsPlanItem in FPF?"
+  - "How to keep planned slot filling separate from FinalizeLaunchValues?"
+  - "How to pin editions and time in WorkPlanning baselines?"
+relations:
+  builds_on:
+    - "A.15.2"
+    - "A.6.5"
+    - "E.10.D1"
+    - "E.17"
+    - "E.18"
+    - "E.19"
+    - "E.8"
+    - "A.15.1"
+    - "A.6.7"
+  used_by:
+    - "A.6.7"
+source:
+  module: "modules/A/A.15.3.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 19683
+  end_line: 20088
+summary: "> Tech-name: SlotFillingsPlanItem > Plain-name: planned slot-fillings baseline item (planned baseline) > Type: Architectural (A) > Status: Stable > Normativity: Normative (unless explicitly marked informative) > Placement: Part A → A.15 (Work & WorkPlanning) > Builds on: pattern template (E.8), U.WorkPlan (A.15.2), Work enactment discipline (A.15.1 / TGA), Context discipline (E.10.D1), MechSuiteDescription (A.6.7), conformance discipline (E.19), publication/view discipline (E.17; views are projections, not places of meaning) > Used by: planned-baseline requirements from suites/kits; P2W (selection → WorkPlanning → WorkEnactment); Part G universalization > Purpose (one line): provide a universal, context-explicit planned baseline that maps a slot-owner’s SlotKinds to planned fillers, to be "

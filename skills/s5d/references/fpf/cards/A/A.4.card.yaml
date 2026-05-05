@@ -1,0 +1,35 @@
+id: "A.4"
+title: "Temporal Duality & Open‑Ended Evolution Principle"
+kind: "pattern"
+part: "A"
+status: "Stable"
+token_estimate:
+  card: 260
+  full: 1936
+when_to_load:
+  - "temporal"
+  - "duality"
+  - "open"
+  - "ended"
+  - "evolution"
+  - "principle"
+  - "design-time"
+  - "run-time"
+  - "versioning"
+  - "lifecycle"
+  - "continuous improvement"
+provides:
+  - "How does FPF handle plan vs. reality?"
+  - "How are systems updated?"
+relations:
+  builds_on:
+    - "P-10"
+  prerequisite_for:
+    - "B.4"
+source:
+  module: "modules/A/A.4.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 6587
+  end_line: 6717
+summary: "“A holon is born in design‑time, lives in run‑time, and is reborn when the world talks back.”"

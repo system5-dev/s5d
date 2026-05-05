@@ -1,0 +1,58 @@
+id: "G.13"
+title: "External Interop Hooks for SoTA Discipline Packs (conceptual)"
+kind: "pattern"
+part: "G"
+status: "Stable"
+token_estimate:
+  card: 300
+  full: 7127
+when_to_load:
+  - "external"
+  - "interop"
+  - "hooks"
+  - "sota"
+  - "discipline"
+  - "packs"
+  - "conceptual"
+  - "external index"
+  - "claim mapper"
+  - "mapping policy"
+  - "plane map"
+  - "embedding spec"
+  - "ExternalIndexCard@Context"
+  - "ClaimMapperCard@Context"
+  - "InteropSurface@Context"
+  - "CHR-typed SoS features"
+  - "edition pins"
+  - "UTS twins"
+  - "RSCRTriggerKindId"
+  - "telemetry pin"
+provides:
+  - "How does FPF integrate external scholarly indexes into Part G?"
+  - "What is an ExternalIndexCard / ClaimMapperCard / InteropSurface in FPF?"
+  - "How to make interop refreshable with RSCR trigger kinds and edition pins?"
+relations:
+  builds_on:
+    - "G.2"
+    - "G.7"
+    - "G.9"
+    - "G.12"
+    - "A.19"
+    - "A.18"
+    - "G.0"
+    - "F.17"
+    - "E.5.2"
+    - "E.18"
+  uses:
+    - "G.13"
+    - "A.19"
+    - "E.5.2"
+    - "F.17"
+    - "E.10"
+source:
+  module: "modules/G/G.13.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 67927
+  end_line: 68268
+summary: "Tag. Architectural kit pattern (conceptual interop kit; notation‑independent; normative when used) Stage. design‑time registration & alignment → run‑time ingestion, telemetry, refresh Primary hooks. G.Core (Part‑G core invariants + trigger catalogue + default ownership), G.2 (SoTA Synthesis Pack), G.3 (CHR Pack), G.4 (CAL Pack), G.5 (selector & registries), G.6 (EvidenceGraph + PathId/PathSliceId), G.7 (BridgeMatrix + CL/planes), G.8 (SoS‑LOG bundle surfaces), G.9 (parity harness), G.10 (shipping), G.11 (refresh orchestration), G.12 (dashboards), A.19 (CN‑Spec), A.18 (CSLC legality), G.0 (CG‑Spec), F.17 (UTS), E.5.2 (notation independence), E.18/A.21/A.27 (GateCrossing/CrossingBundle checks)."

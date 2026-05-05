@@ -1,0 +1,31 @@
+id: "E.10.P"
+title: "Conceptual Prefixes policy & registry"
+kind: "pattern"
+part: "E"
+status: "Stable"
+token_estimate:
+  card: 256
+  full: 617
+when_to_load:
+  - "conceptual"
+  - "prefixes"
+  - "policy"
+  - "registry"
+  - "U"
+  - "Γ_"
+  - "ut"
+  - "tv"
+  - "namespace"
+provides:
+  - "What do the prefixes like 'U.' mean in FPF?"
+relations:
+  constrains:
+    - "E.5.1"
+    - "E.5.2"
+source:
+  module: "modules/E/E.10.P.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 47580
+  end_line: 47609
+summary: "Policy (normative). 1. Purpose. A conceptual prefix exists to aid reasoning, not to name files, serialisations, or APIs. It labels a role in thought (e.g., meta‑type, calculus operator, relation family). 2. Anchoring. Every prefix MUST be anchored to a Core extension patterns (CAL/LOG/CHR) or Kernel construct and documented in its Relations. 3. No tool lock‑in. A prefix MUST NOT imply a particular notation or machine binding (see E.5.1–E.5.2). 4. Minting rule. New prefixes are introduced by a DRR (E.9) that demonstrates (a) cross‑pattern need, (b) non‑overlap with existing prefixes, (c) alignment with Pillars P‑1/P‑5. 5. Scope. Prefixes are globally reserved within the Core; domain patterns MAY mint local shorthands only inside their Contexts and MUST NOT collide with this registry."

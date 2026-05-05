@@ -1,0 +1,35 @@
+id: "C.24"
+title: "Agentic Tool‑Use & Call‑Planning (C.Agent‑Tools‑CAL)"
+kind: "pattern"
+part: "C"
+status: "C.24 is asked to carry C.27 fields whenever tool-use prose mentions speed."
+token_estimate:
+  card: 220
+  full: 6796
+when_to_load:
+  - "agentic"
+  - "tool"
+  - "use"
+  - "call"
+  - "planning"
+  - "agent"
+  - "tools"
+  - "cal"
+provides:
+  []
+relations:
+  builds_on:
+    - "A.15"
+    - "B.3"
+    - "C.5"
+    - "C.18"
+    - "C.19"
+  constrains:
+    - "B.3"
+source:
+  module: "modules/C/C.24.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 40562
+  end_line: 40875
+summary: "> Type: Calculus (C) > Status: Stable > Normativity: Normative"

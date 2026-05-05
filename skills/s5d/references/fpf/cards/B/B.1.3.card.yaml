@@ -1,0 +1,40 @@
+id: "B.1.3"
+title: "Γ_epist - Knowledge‑Specific Aggregation"
+kind: "pattern"
+part: "B"
+status: "Stable"
+token_estimate:
+  card: 256
+  full: 6654
+when_to_load:
+  - "epist"
+  - "knowledge"
+  - "specific"
+  - "aggregation"
+  - "knowledge aggregation"
+  - "epistemic"
+  - "provenance"
+  - "trust"
+  - "KD-CAL"
+provides:
+  - "How to combine knowledge artifacts?"
+  - "How does trust propagate in FPF?"
+relations:
+  builds_on:
+    - "B.1"
+    - "A.1"
+    - "C.2"
+    - "A.12"
+    - "A.14"
+    - "A.15"
+  coordinates_with:
+    - "B.1.1"
+    - "B.1.4"
+    - "B.1.6"
+source:
+  module: "modules/B/B.1.3.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 27381
+  end_line: 27680
+summary: "> ► decided‑by: A.14 Advanced Mereology A.14 compliance — Use ConstituentOf for semantic parts; PortionOf only for quantitative splits of texts/data with declared μ (token/byte, etc.); PhaseOf for versions/revisions of MethodDescription/documents; no ComponentOf here."

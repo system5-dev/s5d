@@ -1,0 +1,55 @@
+id: "A.0"
+title: "Onboarding Glossary (NQD & E/E‑LOG)"
+kind: "pattern"
+part: "A"
+status: "Stable"
+token_estimate:
+  card: 292
+  full: 8102
+when_to_load:
+  - "onboarding"
+  - "glossary"
+  - "nqd"
+  - "log"
+  - "novelty"
+  - "quality-diversity (NQD"
+  - "explore/exploit (E/E-LOG"
+  - "declared set surface"
+  - "typed portfolio publication"
+  - "SearchSpaceRef"
+  - "OutcomeSpaceRef"
+  - "CrossSurfaceSupportView"
+  - "TypedSetViews"
+  - "ParetoOnly default"
+  - "scale-probe"
+  - "BLP"
+provides:
+  - "What terms must I publish when generating, selecting, or shipping a set surface?"
+  - "How do I explain search-side vs outcome-side spaces and support views on first use?"
+  - "How does FPF avoid single-winner bias in creative search?"
+relations:
+  builds_on:
+    - "E.2"
+    - "A.5"
+    - "C.17"
+    - "C.18"
+    - "C.19"
+  coordinates_with:
+    - "E.7"
+    - "E.8"
+    - "E.10"
+    - "F.17"
+    - "A.19.SURF-SPACE"
+    - "A.19.SUPPORT-VIEW"
+    - "G.5"
+    - "G.9"
+    - "G.10"
+    - "G.11"
+    - "G.12"
+source:
+  module: "modules/A/A.0.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 859
+  end_line: 1106
+summary: "Builds on. E.2 (P‑10 Open‑Ended Evolution; P‑2 Didactic Primacy), A.5, C.17–C.19 - Coordinates with. E.7, E.8, E.10; F.17 (UTS); G.5, G.9–G.12 - Constrains. Any pattern/UTS row that describes a generator, selector, or typed portfolio-publication / set-return surface."

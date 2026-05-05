@@ -1,0 +1,32 @@
+id: "E.5.3"
+title: "Unidirectional Dependency"
+kind: "pattern"
+part: "E"
+status: "Stable"
+token_estimate:
+  card: 260
+  full: 1158
+when_to_load:
+  - "unidirectional"
+  - "dependency"
+  - "layers"
+  - "architecture"
+  - "modularity"
+  - "acyclic"
+  - "Core"
+  - "Tooling"
+  - "Pedagogy"
+provides:
+  - "What are the dependency rules between FPF artifact families?"
+relations:
+  refines:
+    - "E.5"
+  constrains:
+    - "E.4"
+source:
+  module: "modules/E/E.5.3.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 45690
+  end_line: 45769
+summary: "imports is a dependency DAG, not a specialisation relation (normative). Whenever an artefact exposes an explicit imports : [...] list (e.g., SignatureManifest.imports in A.6.0), treat imports as dependency edges governed by this section: the induced imports graph MUST be acyclic (a DAG) and MUST respect the declared direction. imports MUST NOT be used to encode specialisation (e.g., ⊑ / ⊑⁺ between mechanisms); specialisation relations are declared separately via the relevant morphism/ladder rules (e.g., A.6.1 U.MechMorph)."

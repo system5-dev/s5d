@@ -1,0 +1,46 @@
+id: "C.22"
+title: "Problem Typing & TaskSignature Assignment (Problem-CHR)"
+kind: "pattern"
+part: "C"
+status: "Stable"
+token_estimate:
+  card: 260
+  full: 6944
+when_to_load:
+  - "problem"
+  - "typing"
+  - "tasksignature"
+  - "assignment"
+  - "problem-chr"
+  - "Problem‑CHR"
+  - "TaskSignature"
+  - "TaskKind"
+  - "ScopeSlice(G"
+  - "unknown handling"
+  - "specialization anchor"
+provides:
+  - "How does FPF bind a typed TaskSignature for lawful selection?"
+  - "How does TaskSignature stay separate from method choice and specialization claims?"
+relations:
+  builds_on:
+    - "C.16"
+    - "G.0"
+    - "G.5"
+  coordinates_with:
+    - "G.4"
+    - "C.22.1"
+    - "C.23"
+    - "C.18"
+    - "C.19"
+    - "E.10"
+    - "G.5"
+  constrained_by:
+    - "E.10"
+    - "E.18"
+source:
+  module: "modules/C/C.22.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 40008
+  end_line: 40211
+summary: "Purpose. Give FPF a lawful, minimal, and portable way to speak about “the problem we face” so that the selector (G.5) can legally admit/abstain without prose or guesswork. We do this by (i) typing problems with CHR‑grounded traits and (ii) attaching them to a TaskSignature (S2) record that downstream patterns can consume. The Standard is Context‑local, evidence‑anchored, tri‑state‑aware, and bridge‑savvy. TaskSignature is minimal but sufficient for eligibility, acceptance, and policy‑governed choice."

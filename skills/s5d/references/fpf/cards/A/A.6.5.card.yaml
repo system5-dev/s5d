@@ -1,0 +1,49 @@
+id: "A.6.5"
+title: "U.RelationSlotDiscipline - SlotKind / ValueKind / RefKind discipline for n‑ary relations (with slot‑operation lexicon)"
+kind: "pattern"
+part: "A"
+status: "Stable"
+token_estimate:
+  card: 252
+  full: 13038
+when_to_load:
+  - "relationslotdiscipline"
+  - "slotkind"
+  - "valuekind"
+  - "refkind"
+  - "discipline"
+  - "ary"
+  - "relations"
+  - "slot"
+  - "operation"
+  - "lexicon"
+  - "argument position"
+  - "value"
+  - "reference"
+  - "signature"
+  - "substitution"
+  - "pass-by-value"
+  - "pass-by-reference"
+provides:
+  []
+relations:
+  builds_on:
+    - "A.6.0"
+    - "A.1"
+    - "A.7"
+    - "E.8"
+    - "E.10"
+  used_by:
+    - "C.2.1"
+    - "A.6.2"
+    - "A.6.4"
+    - "B.5"
+    - "C.3"
+    - "E.17.0"
+source:
+  module: "modules/A/A.6.5.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 13808
+  end_line: 14570
+summary: "Plain‑name. Relation slot discipline."

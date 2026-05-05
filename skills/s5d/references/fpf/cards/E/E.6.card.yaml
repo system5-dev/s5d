@@ -1,0 +1,31 @@
+id: "E.6"
+title: "Didactic Architecture of the Specification"
+kind: "pattern"
+part: "E"
+status: "Stable"
+token_estimate:
+  card: 260
+  full: 1339
+when_to_load:
+  - "didactic"
+  - "architecture"
+  - "specification"
+  - "pedagogy"
+  - "structure"
+  - "narrative flow"
+  - "on-ramp"
+  - "learning"
+provides:
+  - "How is the FPF specification structured for learning?"
+  - "What is the 'On-Ramp first' principle?"
+relations:
+  builds_on:
+    - "E.2"
+    - "P-2"
+source:
+  module: "modules/E/E.6.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 45855
+  end_line: 45954
+summary: "Disciplinary – systems engineers, knowledge scientists, ethicists. Experience – newcomers need intuition; experts need rigour."

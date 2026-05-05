@@ -1,0 +1,51 @@
+id: "A.19.UNM"
+title: "Unified Normalization Mechanism (UNM)"
+kind: "pattern"
+part: "A"
+status: "Stable"
+token_estimate:
+  card: 256
+  full: 8844
+when_to_load:
+  - "unified"
+  - "normalization"
+  - "mechanism"
+  - "unm"
+  - "CV→NCV"
+  - "≡_UNM"
+  - "NormalizationMethodId"
+  - "NormalizationMethodInstanceId"
+  - "NormalizationInvariant"
+  - "NormalizationFixSpec"
+  - "validity window (no implicit “latest”"
+  - "fail-closed tri-state guard (pass"
+provides:
+  []
+relations:
+  builds_on:
+    - "A.19.CN"
+    - "A.6.1"
+    - "A.6.5"
+    - "A.19.CHR"
+    - "A.17"
+    - "A.18"
+    - "C.16"
+    - "G.0"
+    - "E.18"
+    - "E.20"
+    - "F.18"
+  used_by:
+    - "A.19.CHR"
+    - "A.19.USCM"
+    - "A.19.CPM"
+    - "A.19.SelectorMechanism"
+  coordinates_with:
+    - "G.2"
+    - "B.3"
+source:
+  module: "modules/A/A.19.UNM.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 24032
+  end_line: 24454
+summary: "> Type: Architectural (A) > Status: Stable > Normativity: Normative (unless explicitly marked informative) > Placement: Part A / CN‑Spec cluster (A.19) / CHR mechanism owner patterns > Semantic owner note (Phase‑3 canonicalization): This pattern is the designated single semantic owner of the meaning of UNM.IntensionRef (per E.20). The canonical publication anchor for UNM.IntensionRef remains A.19.UNM, while A.6.1 remains the owner of the U.Mechanism.Intension template. > Non‑ownership note: The CN_Spec surface itself (incl. CN_Spec.normalization and CN_Spec.comparability) remains owned by A.19.CN; this pattern specifies only UNM’s stable semantic surface and how UNM consumes/interprets the CN‑frame routing fields (no shadow CN‑spec). > ID‑continuity: legacy UNM mentions remain valid via Te"

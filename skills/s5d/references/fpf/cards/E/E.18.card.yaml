@@ -1,0 +1,45 @@
+id: "E.18"
+title: "Transduction Graph Architecture (E.TGA)"
+kind: "pattern"
+part: "E"
+status: "Stable"
+token_estimate:
+  card: 268
+  full: 16915
+when_to_load:
+  - "transduction"
+  - "graph"
+  - "architecture"
+  - "tga"
+  - "transduction graph"
+  - "nodes=morphisms"
+  - "edge=U.Transfer (single-edge kind"
+  - "OperationalGate(profile"
+  - "CV⇒GF (ConstraintValidity → GateFit"
+  - "MVPK faces"
+  - "SquareLaw"
+  - "UNM single-writer"
+  - "CSLC normalize-then-compare"
+  - "Set-return selection"
+  - "PathSlice/Sentinel refresh"
+  - "DesignRunTag"
+provides:
+  []
+relations:
+  builds_on:
+    - "E.17"
+    - "E.8"
+    - "E.10"
+    - "A.7"
+  coordinates_with:
+    - "A.20"
+    - "A.26"
+    - "F.9"
+    - "G.11"
+source:
+  module: "modules/E/E.18.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 53300
+  end_line: 53782
+summary: "> Tech‑name: E.TGA (pattern label) > Plain‑name: Architecture of the transduction graph > Twin labels: Tech / Plain per E.10; faces emitted via E.17 MVPK (no schemas in Part E)."

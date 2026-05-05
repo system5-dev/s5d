@@ -1,0 +1,33 @@
+id: "C.3.2"
+title: "KindSignature (+F) & Extension/MemberOf"
+kind: "pattern"
+part: "C"
+status: "Stable"
+token_estimate:
+  card: 260
+  full: 3874
+when_to_load:
+  - "kindsignature"
+  - "extension"
+  - "memberof"
+  - "KindSignature"
+  - "intension"
+  - "MemberOf"
+  - "Formality F"
+  - "determinism"
+provides:
+  - "How to define the meaning of a Kind?"
+  - "What is the difference between intent and extent in FPF?"
+relations:
+  builds_on:
+    - "C.3.1"
+  prerequisite_for:
+    - "C.3.3"
+    - "C.3.4"
+source:
+  module: "modules/C/C.3.2.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 35411
+  end_line: 35621
+summary: "> One‑line summary. Specifies the intent and extent of kinds: (i) a KindSignature(k) (the intensional definition of kind k) that declares its own Formality F; (ii) an Extension(k, slice) ⊆ U.EntitySet(slice) and the membership predicate MemberOf(e, k, slice) that are deterministic per U.ContextSlice; (iii) monotonicity of extension under SubkindOf; (iv) a definedness policy that fails closed outside its domain. Kinds still carry no Scope (that rule lives in C.3.1); Scope stays on claims/capabilities (USM). This pattern gives managers and reviewers the observable basis to check “what counts as a member here and now” without entangling applicability (G) or assurance (R)."

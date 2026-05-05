@@ -1,0 +1,36 @@
+id: "F.10"
+title: "Status Families Mapping (Evidence • Standard • Requirement)"
+kind: "pattern"
+part: "F"
+status: "Stable"
+token_estimate:
+  card: 260
+  full: 7604
+when_to_load:
+  - "status"
+  - "families"
+  - "mapping"
+  - "evidence"
+  - "standard"
+  - "requirement"
+  - "polarity"
+  - "applicability windows"
+provides:
+  - "How to map different types of status like 'evidence' and 'requirement'?"
+  - "How does FPF handle compliance?"
+relations:
+  builds_on:
+    - "F.9"
+    - "B.3"
+    - "E.10.D1"
+    - "F.1"
+    - "F.2"
+    - "F.3"
+    - "F.4"
+source:
+  module: "modules/F/F.10.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 58411
+  end_line: 58782
+summary: "“Keep statuses in their native modality; translate between Contexts explicitly.” Status. Architectural pattern. Builds on: E.10.D1 D.CTX (Context ≡ U.BoundedContext); F.1 (Contexts), F.2 (Seeds), F.3 (Local‑Senses → SenseCells), F.4 (Role Description Status templates), F.9 (Bridges). Coordinates with. B.3 Trust & Assurance Calculus (interprets CL penalties); Part C patterns: KD‑CAL (measurement semantics), Norm‑CAL (deontic logic), Method‑CAL (DesignRunTag)."

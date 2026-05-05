@@ -1,0 +1,68 @@
+id: "G.12"
+title: "DHC Dashboards (Discipline‑Health time‑series; lawful telemetry; generation‑first)"
+kind: "pattern"
+part: "G"
+status: "Stable"
+token_estimate:
+  card: 284
+  full: 7535
+when_to_load:
+  - "dhc"
+  - "dashboards"
+  - "discipline"
+  - "health"
+  - "time"
+  - "series"
+  - "lawful"
+  - "telemetry"
+  - "generation"
+  - "first"
+  - "dashboard"
+  - "DHC"
+  - "discipline health"
+  - "time-series"
+  - "lawful telemetry"
+  - "view-only slices"
+  - "PathId/PathSliceId"
+  - "edition pins"
+  - "UTS twins"
+  - "RSCR/refresh wiring"
+provides:
+  - "How to build DHC dashboards in FPF?"
+  - "How to publish lawful DHC time-series with evidence and edition pins?"
+  - "How to wire dashboard telemetry into RSCR refresh?"
+relations:
+  builds_on:
+    - "C.21"
+    - "G.6"
+    - "G.11"
+    - "A.19"
+    - "G.0"
+    - "F.17"
+    - "F.18"
+    - "E.5.2"
+    - "E.10"
+  coordinates_with:
+    - "G.5"
+    - "G.7"
+    - "G.8"
+    - "G.10"
+    - "C.18"
+    - "C.19"
+    - "G.2"
+  uses:
+    - "G.2"
+    - "G.5"
+    - "G.6"
+    - "C.18"
+    - "G.11"
+    - "C.19"
+    - "G.8"
+    - "G.10"
+source:
+  module: "modules/G/G.12.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 67516
+  end_line: 67926
+summary: "Tag: Architectural kit pattern (conceptual; notation‑independent; dashboard‑kit owner)"

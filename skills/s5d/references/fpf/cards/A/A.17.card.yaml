@@ -1,0 +1,42 @@
+id: "A.17"
+title: "Canonical “Characteristic” (A.CHR‑NORM)"
+kind: "pattern"
+part: "A"
+status: "Stable"
+token_estimate:
+  card: 260
+  full: 5778
+when_to_load:
+  - "canonical"
+  - "characteristic"
+  - "chr"
+  - "norm"
+  - "measurement"
+  - "property"
+  - "attribute"
+  - "dimension"
+  - "axis"
+provides:
+  - "What is the correct term for a measurable property?"
+  - "How to define a metric?"
+relations:
+  prerequisite_for:
+    - "A.18"
+    - "A.19"
+    - "C.16"
+  constrains:
+    - "A.3.3"
+    - "A.2.3"
+    - "B.3"
+    - "D.3"
+    - "E.10"
+  coordinates_with:
+    - "A.18"
+    - "A.17"
+source:
+  module: "modules/A/A.17.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 21199
+  end_line: 21336
+summary: "To have reproducibility and explainability there is a need to measure various aspects of systems or knowledge artifacts. A dedicated measurement backbone (see C.MM‑CHR, Measurement & Metrics Characterization) already exists, prescribing the CSLC discipline – i.e. define a Characteristic, choose a Scale (with a Unit if applicable), record a Level/Value, and thus obtain a Coordinate on that scale, optionally mapping to a Score via a ScoringMethod (USCM). However, historically multiple near-synonyms (“axis”, “dimension”, “property”, “feature”, \"metric\") have been used interchangeably for “what is being measured,” and often the _aspect itself_ gets conflated with _how it is expressed_ (units, ranges, labels). This pattern enters the FPF Kernel lexicon to canonize a single term for the measured"

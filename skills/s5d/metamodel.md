@@ -4,31 +4,92 @@ Structural vocabulary for architectural decomposition. Every system decomposes i
 
 ---
 
-## Artifact Graph
+## Abstract Metamodel
+
+The S5D abstract metamodel is a graph of typed concepts and explicit relations between them. Each concept has UUID identity. Rust structures in [`rust/src/models.rs`](../../rust/src/models.rs) are a projection of this graph; YAML spec shape (next section) is the authored surface.
+
+### Concepts
+
+| Concept | Belongs to | Required attrs | Optional attrs |
+|---|---|---|---|
+| **Product** | Organization (external boundary) | `name`, `organization` | `description`, `logo` |
+| **Domain** | Product, Team (external boundary) | `name`, `product`, `team` | `description`, `classification`, `maturity_level` |
+| **Capability** | Domain | `name`, `domain` | `description` |
+| **Entity** | Domain | `name`, `domain` | `description` |
+| **SuperSystem** | Product | `name`, `kind`, `product` | `description` |
+| **Role** | (free-standing stakeholder) | `name`, `kind` | `description` |
+| **Concern** | Role, optionally SuperSystem | `name`, `role` | `description`, `confirmed`, `supersystem` |
+| **AcceptanceMetric** | optionally SuperSystem | `name`, `units` | `description`, `how_to_measure`, `supersystem` |
+| **DomainLevelDiagram** | Product | `product`, `data`, `revision` | — |
+| **KnowledgeProvenance** | any concept (polymorphic ref) | `origin_type`, `status`, `context_type`, `target_concept_id` | `raw_artifact`, `recognized_contexts` |
+
+S5D extends with implementation-side concepts: **Feature** (`spec.id == feature.id`), **UseCase**, **SoftwareSystem / Container / Component** (C4-like), **Contract**, **Gate**, **Hypothesis**, **HypothesisEvidence**, **DecisionRecord**, **Reflection** — see "Spec File Shape" below.
+
+### Enums
+
+| Enum | Values | Used by |
+|---|---|---|
+| `DomainClassification` | `Generic`, `Supporting`, `Core` | Domain.classification |
+| `DomainArchetype` | `Partnership`, `Shared Kernel`, `Customer/Supplier Development`, `Conformist`, `Anticorruption Layer`, `Open-host Service`, `Published Language`, `Separate Ways`, `Big Ball of Mud` | Domain→Capability edge.archetype |
+| `MaturityLevel` (Wardley) | `Genesis`, `Custom`, `Product`, `Commodity` | Domain.maturity_level |
+| `RelationShipType` | `1:0..1`, `1:1..1`, `1:0..N`, `1:1..N`, `N:0..N`, `M:1..N` | Entity↔Entity edge.relationship_type |
+| `SuperSystemKind` | `Value Stream`, `JTBD` | SuperSystem.kind |
+| `RoleKind` | `Internal`, `External` | Role.kind |
+| `Units` | `Percentage`, `Number` | AcceptanceMetric.units |
+| `ContextType` | `Product`, `Architecture`, `Marketing`, `Organization`, `Other` | KnowledgeProvenance.context_type |
+| `OriginType` | `Manual`, `Generated from External Definition`, `Generated from System Input` | KnowledgeProvenance.origin_type |
+| `OriginStatus` | `Draft`, `Confirmed` | KnowledgeProvenance.status |
+
+### Relations — Composition (ownership)
 
 ```
-Product (name, organization)
-├── SuperSystem (kind: value_stream | jtbd)
-│   ├── Role (kind: internal | external)
-│   │   └── Concern (confirmed: bool)
-│   │       └── AcceptanceMetric (units: percentage | number, how_to_measure)
-│   └── AcceptanceMetric
-├── Domain (classification REQUIRED, maturity_level, team)
-│   ├── Capability (VerbNoun naming, domain REQUIRED)
-│   │   ├── → Concern (addresses)
-│   │   └── → Entity (operates on)
-│   └── Entity (domain REQUIRED)
-│       └── → Entity (relationship_type, cardinality, projection, aggregate_root)
-├── SoftwareSystem
-│   └── Container (technology)
-│       └── Component (domain REQUIRED, feature REQUIRED, container REQUIRED, paths REQUIRED)
-└── Feature (single-feature invariant: spec.id == feature.id)
-    └── UseCase (scenario name only; steps live in verification.scenarios)
+Organization (ext)
+  └─◇ Product
+        ├─◇ Domain ──◊ Team (ext)
+        │     ├─◇ Capability
+        │     └─◇ Entity
+        ├─◇ SuperSystem
+        ├─◇ DomainLevelDiagram        (versioned snapshot)
+        └── KnowledgeProvenance       (polymorphic ref to any concept)
+
+Role (free-standing)
+  └─◇ Concern ──◊ SuperSystem (optional)
+
+SuperSystem
+  └─◇ AcceptanceMetric (optional ownership)
 ```
 
-Edge: `Domain → Domain` via archetype (ohs | customer_supplier | acl | conformist | shared_kernel | published_language | partnership | separate_ways)
+`◇` = composition (cascade delete). `◊` = association (link, no ownership).
 
-Transport: attached to Edge (`rest | grpc | messaging | graphql | websocket`)
+### Relations — M2M (with edge attributes)
+
+Each row is an edge type carrying its own data on the connection itself (not on either endpoint).
+
+| Edge | Endpoints | Edge attrs | Semantics |
+|---|---|---|---|
+| **Domain → Capability** (downstream) | upstream Domain → downstream Capability | `archetype: DomainArchetype` | DDD context-mapping pattern between bounded contexts. The downstream Domain is implied via the target Capability's owning Domain. |
+| **Capability ↔ Entity** | Capability ↔ Entity | (no extra attrs) | A capability operates on entities; can be read as message/request-response. |
+| **Capability ↔ Concern** | Capability ↔ Concern | (no extra attrs) | A capability addresses a concern. |
+| **Entity → Entity** | Entity → Entity (self-ref, directional) | `relationship_type: RelationShipType`, `projection: bool`, `aggregate_root: bool` | Entity-knows-about-Entity (not symmetric). `projection=true` → read model; `aggregate_root=true` → DDD aggregate. |
+| **Concern ↔ AcceptanceMetric** | Concern ↔ AcceptanceMetric | `confirmed: bool` | A metric applied to a concern; `confirmed` tracks whether acceptance criteria have been met for this pairing. |
+
+### Uniqueness & Lifecycle Constraints
+
+- Product `(name, organization)` is unique — product names unique per org.
+- Domain `(name, product)` is unique — domain names unique per product.
+- SuperSystem `(name, product)` is unique — supersystem names unique per product.
+- Concern `(role, name)` is unique — same role can't raise two concerns with the same name.
+- AcceptanceMetric `(name, supersystem)` is unique — metric names unique per supersystem.
+- DomainLevelDiagram `revision` is auto-incremented per Product. Append-only versioning.
+- Composition is cascade-delete: removing an owner (Product / Domain / SuperSystem / Role) removes its composed concepts.
+
+### Knowledge Provenance (cross-cutting)
+
+`KnowledgeProvenance` attaches via polymorphic reference to **any** concept and carries: who/what produced it (`OriginType`), where it stands in the lifecycle (`OriginStatus: Draft | Confirmed`), what kind of context (`ContextType`), and optional source artifact + structured postprocessing output. This is the metamodel's record of ML/LLM-generated provenance — distinct from FPF's evidence chain in S5D's Hypothesis records.
+
+### Projection Status
+
+Already projected into `rust/src/models.rs`: Product, Domain, Capability, Entity, SuperSystem, Role, Concern, AcceptanceMetric, plus all enums above. **Not yet projected**: `DomainLevelDiagram` (versioned snapshot), `KnowledgeProvenance` (polymorphic ref), per-edge identities (s5d uses simpler `Edge` + `Link` records without their own UUIDs). Adding them is mechanical when needed; defer until a use case requires them.
 
 ---
 
@@ -248,6 +309,8 @@ Code module implementing capabilities. All five structural fields are required �
 
 Component has no `capabilities[]` or `entities[]` fields. Binding to capabilities and entities happens through the `links` section (`component_to_capability`, `component_to_entity` link kinds), not via direct fields on the component.
 
+`s5d trace <path>` / `s5d_trace` uses `component.paths` as the entry point, then follows `component_to_capability` and decision `hypotheses[].spec_ref` links. If a source file should be governed by S5D and trace returns no match, the owning spec is missing a component path claim.
+
 ### Feature
 
 Deliverable unit of work. One per spec file (single-feature invariant).
@@ -430,6 +493,7 @@ All rules enforced by `validate`. Violations block preview and approve.
 - `hypotheses[].evidence[].formality`: integer 0–9 in raw YAML; command surfaces `s5d add-evidence --formality` / `s5d_add_evidence.formality` accept **1–5** only
 - `hypotheses[].evidence[].congruence_level`: integer 0–3
 - `confirmed_by` is required at `s5d_decide` time and is stored in the record file; `s5d_validate` does not enforce it
+- Effective gates default to `review` for Decision tier when `gates:` is empty. The built-in handler passes only when ≥1 evidence record carries `evidence_type=gate:review` and `verdict=pass` on any hypothesis. Reviewers (human or agent) attach their result via `s5d add-evidence --evidence-type gate:review`.
 
 ### Tier: Feature (Lightweight / Standard / High)
 - Exactly 1 feature
@@ -446,6 +510,39 @@ All rules enforced by `validate`. Violations block preview and approve.
 ### Tier: High (additional)
 - Spec `context` field must contain the word `"privacy"` — this is a keyword check. It ensures that privacy was explicitly considered when authoring the spec. Any mention of the word satisfies the gate; it does not parse or interpret the surrounding text.
 - Declare at least one contract when the feature crosses an external or cross-service interface. Current contract checks validate declared contracts; they do not reject `contracts: []` by themselves.
+- Effective gates default to `schema`, `graph`, and `review` for High tier when `gates:` is empty. The `review` handler requires ≥1 `evidence_type=gate:review` with `verdict=pass`.
+
+### Gate: review (built-in)
+Available kind in `gates[]` and in the effective tier defaults. Built-in handler scans `hypotheses[].evidence[]` for any record with `evidence_type=gate:review` (or `gate:review:<sub>`) and `verdict=pass`. Passes when count ≥ 1. Decision and High tiers use this gate by default when `gates:` is empty; other tiers may add it explicitly. External reviewers (tribunal, reviewer agent, human) record their findings as evidence — S5D does not invoke them, only verifies that review evidence exists.
+
+### FPF-Aligned Fields (Round-1)
+
+S5D records carry FPF-derived fields. Cite module ids when authoring or reviewing; cards under `skills/s5d/references/fpf/cards/` index full module text.
+
+**Hypothesis (FPF B.5.2:13.3 prime-hypothesis L0 record).** `hypothesis.prompt` — explicit question this hypothesis answers (cite of `problem.signal`). `hypothesis.next_move` — typed next move: `deduction|probe|build|defer`. Validator-enforced enum on Decision tier. CLI: `s5d add-hypothesis --prompt ... --next-move ...`.
+
+**Evidence (FPF C.2:4.2 Δ-moves).** `evidence.refine_kind` — required when `verdict=refine`. Allowed: `formalise|generalise|specialise|calibrate|validate|congrue`. Validator rejects `verdict=refine` without `refine_kind` on Decision tier. CLI: `s5d add-evidence --refine-kind ...`.
+
+**DecisionRecord (FPF C.11 Decsn-CAL + C.18 NQD).** `decision_subject` (who/what is the decision about), `decision_subject_granularity` (system|component|module|line|...), `evaluative_surface` (named axes + policy), `belief_state` (what was assumed), `outcome_model` (what is predicted), `pareto_set` (Vec of non-dominated hypothesis IDs, distinct from `rejected_ids`), `choice_rule` (e.g. "lex-order(thinness>auditability)", "policy:minimize-coupling"). CLI: `s5d decide --decision-subject ... --pareto-set ... --choice-rule ...`. **FPF C.18 forbids weighted scalarization** — `evaluative_surface` containing markers like `weighted sum`, `0.5*`, `scalar fold` is rejected by the validator unless `--force` is passed.
+
+**ProblemCard (FPF C.17:14 Anti-Goodhart).** `problem.goodhart_guard` — free-form prose naming which `indicators` are observation-only (not optimization targets), so the agent cannot game them by accident.
+
+**GateResult (FPF B.3.4:5 CC-ED.5 + C.22:5.4 Eligibility/Acceptance).** `gate_result.waiver_expires_at` — RFC3339 timestamp; required when `status=waived`. `s5d import` auto-revokes waivers past their expiry. `s5d_waiver` MCP tool defaults to `now+90d` when `expires_at` is omitted. `gate_result.kind_class` — `eligibility` (admission, schema/graph/architecture by default) or `acceptance` (threshold). `s5d run-gates` runs eligibility gates first; on failure, fast-fails remaining acceptance gates.
+
+**Record (FPF A.3.3:9.3 conformance/drift).** `record.drift_tolerance` — free-form policy string like `"schema=block, code=block, doc=warn"`. Allowed actions per artifact: `block|warn|allow`. `s5d drift-check` returns tri-state `{Synced|Drifted|Partial|Degraded}`: when policy contains only `warn|allow` rules and no `block`, drift is reported as `Partial` (does not block import) instead of `Drifted`. Default (no policy): binary behavior preserved.
+
+### Lifecycle ↔ FPF ADI Mapping
+
+S5D's lifecycle stages map onto the FPF reasoning kernel:
+
+| S5D stage | FPF kernel | Cards |
+|---|---|---|
+| Explore | Abduction (FPF B.5.2 — generate prime hypotheses with prompts, real rivals, filters) | `B.5.2`, `B.5.2.0`, `B.5.2.1` |
+| Shape | Deduction (FPF C.11/C.18 — derive predictions, declare evaluative surface, hold Pareto front) | `C.11`, `C.18`, `C.2` |
+| Evidence | Induction (FPF B.3 — close loop with corroboration/refutation; F-G-R triad with min-rules across chain) | `B.3`, `B.3.4`, `C.2` |
+| Operate | Evolution Loop (FPF B.4 — Observe→Refine→Deploy with B.3 assurance metrics + Anti-Goodhart guards from C.17) | `B.4`, `C.17`, `B.3.4` |
+
+**Discipline:** No induction without prior deduction. No deduction without prior abduction. Skipping a stage is a methodological waiver — record the reason, name the responsible authority, and set a short-term expiry (`s5d waiver --expires-at`).
 
 ### Domain Fields
 - `classification`: must be one of `core`, `supporting`, `generic`
@@ -468,8 +565,9 @@ All rules enforced by `validate`. Violations block preview and approve.
 - `contract.binds_to` must be non-empty
 
 ### Gate Kinds
-- Valid kinds: `schema`, `graph`, `architecture`, `contract`, `lint`, `test`, `typecheck`, `policy`
+- Valid kinds: `schema`, `graph`, `architecture`, `review`, `contract`, `lint`, `test`, `typecheck`, `policy`
 - `architecture` is built in: it validates the spec/graph first, checks that `components[].paths` resolve to source files, rejects overlapping component ownership, and requires cross-domain source imports to be represented by `links.edges`.
+- `review` is built in: it validates that review evidence exists (`evidence_type=gate:review`, `verdict=pass`).
 - `.s5d/codebase/modules.yaml` and `.s5d/codebase/coverage.yaml` are optional coverage snapshots. `s5d codebase sync` rebuilds them from source files and component paths; `s5d codebase check` fails when the snapshot is stale.
 
 ### Concern/Metric Supersystem Reference

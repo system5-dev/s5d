@@ -1,0 +1,46 @@
+id: "B.5.2.0"
+title: "U.AbductivePrompt"
+kind: "pattern"
+part: "B"
+status: "Draft"
+token_estimate:
+  card: 256
+  full: 3388
+when_to_load:
+  - "abductiveprompt"
+  - "abductive prompt"
+  - "prompt species"
+  - "rival-set discipline"
+  - "threshold crossing"
+  - "explanation-ready cue"
+provides:
+  - "When is a routed cue ready to enter abduction?"
+  - "What prompt species does FPF distinguish before hypothesis work begins?"
+relations:
+  builds_on:
+    - "B.4.1"
+    - "A.16"
+    - "C.2.2a"
+    - "A.16.1"
+    - "C.2.LS"
+    - "C.2.4"
+    - "C.2.5"
+  coordinates_with:
+    - "A.6.P"
+    - "A.6.A"
+    - "A.6.Q"
+    - "A.16.0"
+    - "A.16.2"
+    - "C.2.6"
+    - "C.2.7"
+    - "B.5.2"
+    - "F.9.1"
+  used_by:
+    - "B.5.2"
+source:
+  module: "modules/B/B.5.2.0.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 31087
+  end_line: 31269
+summary: "> Type: Definitional (D) > Status: Draft > Normativity: Normative unless marked informative"

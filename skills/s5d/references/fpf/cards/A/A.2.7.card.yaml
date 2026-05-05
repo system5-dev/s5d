@@ -1,0 +1,40 @@
+id: "A.2.7"
+title: "U.RoleAlgebra: In‑Context Role Relations"
+kind: "pattern"
+part: "A"
+status: "Stable"
+token_estimate:
+  card: 268
+  full: 925
+when_to_load:
+  - "rolealgebra"
+  - "context"
+  - "role"
+  - "relations"
+  - "role algebra"
+  - "specialization (≤"
+  - "incompatibility (⊥"
+  - "bundles (⊗"
+  - "separation of duties (SoD"
+  - "requiredRoles substitution"
+provides:
+  - "What does RoleS ≤ RoleG mean in FPF?"
+  - "How do I encode Separation of Duties with ⊥?"
+  - "How do role bundles (⊗) work?"
+relations:
+  builds_on:
+    - "A.2"
+    - "A.1.1"
+  prerequisite_for:
+    - "A.15"
+    - "A.2.5"
+  coordinates_with:
+    - "A.2.1"
+    - "A.15"
+source:
+  module: "modules/A/A.2.7.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 4869
+  end_line: 4941
+summary: "> Type: Definitional (D) > Status: Stable > Normativity: Normative"

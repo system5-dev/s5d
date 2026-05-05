@@ -1,0 +1,40 @@
+id: "A.19.UINDM"
+title: "Unified Indicatorization Mechanism (UINDM)"
+kind: "pattern"
+part: "A"
+status: "Stable"
+token_estimate:
+  card: 244
+  full: 6905
+when_to_load:
+  - "unified"
+  - "indicatorization"
+  - "mechanism"
+  - "uindm"
+  - "indicator set"
+  - "IndicatorChoicePolicy"
+  - "CN-Spec.indicator_policy"
+  - "CHR suite stage indicatorize"
+  - "tri-state admissibility (pass"
+provides:
+  []
+relations:
+  builds_on:
+    - "A.19.CN"
+    - "A.6.1"
+    - "A.6.5"
+    - "A.19.CHR"
+  used_by:
+    - "A.19.CHR"
+  coordinates_with:
+    - "G.0"
+    - "G.2"
+    - "E.20"
+    - "F.18"
+source:
+  module: "modules/A/A.19.UINDM.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 24455
+  end_line: 24743
+summary: "> Type: Architectural (A) > Status: Stable > Normativity: Normative (unless explicitly marked informative) > Placement: Part A / CN‑Spec cluster (A.19) / CHR mechanism owner patterns (Phase‑3) > Source: FPF / CHR Phase‑3 mechanism owner patterns > Modified: 2026‑01‑19 > > Semantic owner note (Phase‑3 canonicalization): this pattern is the designated single semantic owner of the canonical U.Mechanism.Intension for UINDM.IntensionRef (CHR suite stage indicatorize). This matches the “single‑owner route map” discipline: mechanism‑intension semantics live in A.19.<MechId>. > A.6.1 remains the owner of the template of U.Mechanism.Intension. > > Canonicalization hook (ID‑continuity‑safe): any other appearances of the UINDM intension (e.g., a legacy grounding stub in A.6.1 or suite prose in A.19.C"

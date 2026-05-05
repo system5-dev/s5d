@@ -1,0 +1,42 @@
+id: "A.15.1"
+title: "U.Work"
+kind: "pattern"
+part: "A"
+status: "Stable"
+token_estimate:
+  card: 260
+  full: 7793
+when_to_load:
+  - "work"
+  - "execution"
+  - "event"
+  - "run"
+  - "actuals"
+  - "log"
+  - "occurrence"
+provides:
+  - "What is a Work record?"
+  - "Where are actual resource costs stored?"
+relations:
+  refines:
+    - "A.15"
+  used_by:
+    - "B.1.6"
+  builds_on:
+    - "A.1"
+    - "A.1.1"
+    - "A.2"
+    - "A.2.1"
+    - "A.2.2"
+    - "A.3.1"
+    - "A.3.2"
+  coordinates_with:
+    - "A.15"
+    - "B.1"
+source:
+  module: "modules/A/A.15.1.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 19155
+  end_line: 19523
+summary: "After we have agreed who is assigned (via Role assignment), what they can do (via Capability), and how in principle it should be done (via Method/MethodDescription), we still need a precise concept for what actually happened in real time and space."

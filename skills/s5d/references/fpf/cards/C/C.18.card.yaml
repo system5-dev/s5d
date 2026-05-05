@@ -1,0 +1,54 @@
+id: "C.18"
+title: "Open‑Ended Search Calculus (NQD‑CAL)"
+kind: "pattern"
+part: "C"
+status: "Stable"
+token_estimate:
+  card: 300
+  full: 3081
+when_to_load:
+  - "open"
+  - "ended"
+  - "search"
+  - "calculus"
+  - "nqd"
+  - "cal"
+  - "NQD-CAL"
+  - "Γ_nqd.generate"
+  - "Γ_nqd.updateArchive"
+  - "Γ_nqd.illuminate"
+  - "Γ_nqd.selectFront"
+  - "DescriptorMapRef"
+  - "DistanceDefRef"
+  - "NQDArchive"
+  - "CandidateSet"
+  - "Front vs ExplorationArchive"
+  - "IlluminationSummary report-only telemetry"
+  - "EmitterPolicyRef"
+  - "InsertionPolicyRef"
+  - "provenance editions"
+provides:
+  - "How does FPF run open-ended search without illegal scalarization?"
+  - "What is the difference between a front and an exploration archive?"
+  - "What provenance must an NQD generation call publish?"
+relations:
+  builds_on:
+    - "C.16"
+    - "C.2"
+    - "A.17"
+    - "A.18"
+    - "A.19"
+  coordinates_with:
+    - "B.5.2.1"
+    - "C.17"
+    - "C.19"
+    - "G.5"
+    - "G.6"
+    - "G.11"
+source:
+  module: "modules/C/C.18.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 39068
+  end_line: 39178
+summary: "Status. Calculus specification (CAL). Exports Γ_nqd. operators for open‑ended, illumination‑style generation. ΔKernel = 0 (no kernel primitives added). Minting note: this CAL does not mint new U‑types; it defines CAL‑records that MAY alias to registered U‑types where present via E.10/UTS."

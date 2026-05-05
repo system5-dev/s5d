@@ -1,0 +1,30 @@
+id: "A.2.4"
+title: "U.EvidenceRole"
+kind: "pattern"
+part: "A"
+status: "Stable"
+token_estimate:
+  card: 248
+  full: 6786
+when_to_load:
+  - "evidencerole"
+  - "evidence"
+  - "claim"
+  - "support"
+  - "justification"
+  - "episteme"
+provides:
+  - "How does an episteme serve as evidence?"
+relations:
+  builds_on:
+    - "A.2"
+  informs:
+    - "A.10"
+    - "B.3"
+source:
+  module: "modules/A/A.2.4.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 2966
+  end_line: 3371
+summary: "> This pattern defines how a knowledge artefact (“episteme”) serves as evidence for a specific claim or theory inside a bounded context. It is a non-behavioural role enacted via U.RoleAssignment; the evidence-role assignment must declare the target claim, the claim-scope, and a timespan of relevance. Evidence is a classificatory status of an episteme; it is not an action and it is not an assignment of an actor."
