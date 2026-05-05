@@ -1,0 +1,133 @@
+s5d: '1.0'
+id: decision.fpf.gate-discipline
+version: 1.0.0
+product: s5d
+tier: decision
+allow_update: true
+meta:
+  title: gate-discipline
+  authors: []
+  date: 2026-05-03
+  tickets: []
+  adrs: []
+  renames: []
+context: null
+workflow: null
+artifacts: null
+links: null
+contracts: []
+gates:
+- kind: review
+roc: null
+problem:
+  signal: How to formalize gate discipline per FPF B.3.4:5 (waiver expiry) and C.22:5.4
+    (Eligibility vs Acceptance split)?
+  constraints:
+  - Backward-compatible with existing specs
+  - Graduated enforcement (high-tier required, lower tiers optional)
+  - No new CLI surface unless feature requires it
+  targets:
+  - FPF compliance for the cited section
+  - Auditability of the artifact
+  - Thinness — keep S5D as a recording layer
+  indicators:
+  - Adoption per spec (count of new fields populated)
+  - Schema migration errors (observation, not optimization)
+  acceptance: 'Decision adopts the FPF-aligned hypothesis (variant A) iff: (i) winner
+    is the full FPF adoption variant; (ii) >=1 normative FPF citation backs the winner;
+    (iii) backward-compat preserved (existing specs unaffected); (iv) graduated enforcement
+    (tier-aware required fields).'
+  blast_radius: metamodel + validator + docs
+  reversibility: high — additive fields, removable without data loss
+  status: framed
+hypotheses:
+- id: full-split-waiver-expiry-mandatory
+  title: Full split + waiver expiry mandatory
+  content: 'Add gate.kind_class: eligibility|acceptance (eligibility=schema/graph,
+    acceptance=review/test/contract). run-gates orders eligibility before acceptance,
+    fails fast on eligibility. Waiver --expires-at made required; expired waivers
+    auto-revoked at run-gates. Both per FPF C.22:5.4 + B.3.4:5.'
+  scope: gates+waivers
+  kind: system
+  layer: L2
+  r_eff: null
+  evidence:
+  - id: 20260503-internal-full-split-waiver-expiry-mandatory
+    type: internal
+    content: 'FPF C.22:5.4 distinguishes Eligibility (admittance) and Acceptance (thresholds).
+      FPF B.3.4:5 CC-ED.5 mandates waiver expiry as auditable property. Both citations
+      normative. Combining is natural: gate-discipline is one concept.'
+    verdict: pass
+    valid_until: 2026-08-01 15:07:33.548304+00:00
+    carrier_ref: null
+    formality: 4
+    claim_scope:
+    - fpf-citation
+    congruence_level: null
+    reliability: 0.9
+  - id: 20260503-internal-full-split-waiver-expiry-mandatory
+    type: internal
+    content: 'Eligibility-fail-fast saves work: if schema is broken, no point running
+      review/test gates. Operational ergonomics improvement.'
+    verdict: pass
+    valid_until: 2026-08-01 15:07:33.552233+00:00
+    carrier_ref: null
+    formality: 3
+    claim_scope:
+    - ergonomics
+    congruence_level: null
+    reliability: 0.8
+  depends_on: []
+  rationale: null
+  spec_ref: feat.s5d.fpf-gate-discipline__20260503.s5d.yaml
+- id: waiver-expiry-only-gates-unchanged
+  title: Waiver expiry only, gates unchanged
+  content: Make --expires-at required for waivers (B.3.4:5 mandate). Skip eligibility/acceptance
+    split — current gate kinds already work. Minimal change, addresses CC-ED.5 directly.
+  scope: waivers
+  kind: system
+  layer: L0
+  r_eff: null
+  evidence:
+  - id: 20260503-internal-waiver-expiry-only-gates-unchanged
+    type: internal
+    content: Gets B.3.4:5 mandate but leaves C.22:5.4 split unaddressed. Half-compliance.
+      Smaller scope — viable as Round-1.
+    verdict: refine
+    valid_until: 2026-08-01 15:07:33.555893+00:00
+    carrier_ref: null
+    formality: 3
+    claim_scope:
+    - partial-fpf
+    congruence_level: null
+    reliability: 0.75
+  depends_on: []
+  rationale: null
+  spec_ref: null
+- id: document-no-enforcement
+  title: Document, no enforcement
+  content: Document gate kind classification + waiver expiry as recommended. No CLI/validator
+    changes.
+  scope: documentation
+  kind: system
+  layer: invalid
+  r_eff: null
+  evidence:
+  - id: 20260503-internal-document-no-enforcement
+    type: internal
+    content: No enforcement = waivers persist forever, fails CC-ED.5 audit obligation.
+    verdict: fail
+    valid_until: 2026-08-01 15:07:33.559542+00:00
+    carrier_ref: null
+    formality: 3
+    claim_scope:
+    - audit
+    congruence_level: null
+    reliability: 0.85
+  depends_on: []
+  rationale: null
+  spec_ref: null
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false

@@ -1,0 +1,138 @@
+s5d: '1.0'
+id: decision.fpf.hypothesis-record-extension
+version: 1.0.0
+product: s5d
+tier: decision
+allow_update: true
+meta:
+  title: hypothesis-record-extension
+  authors: []
+  date: 2026-05-03
+  tickets: []
+  adrs: []
+  renames: []
+context: null
+workflow: null
+artifacts: null
+links: null
+contracts: []
+gates:
+- kind: review
+roc: null
+problem:
+  signal: How to extend hypothesis/evidence schema to comply with FPF B.5.2:13 prime-hypothesis
+    L0 record and C.2:4.2 Δ-moves?
+  constraints:
+  - Backward-compatible with existing specs
+  - Graduated enforcement (high-tier required, lower tiers optional)
+  - No new CLI surface unless feature requires it
+  targets:
+  - FPF compliance for the cited section
+  - Auditability of the artifact
+  - Thinness — keep S5D as a recording layer
+  indicators:
+  - Adoption per spec (count of new fields populated)
+  - Schema migration errors (observation, not optimization)
+  acceptance: 'Decision adopts the FPF-aligned hypothesis (variant A) iff: (i) winner
+    is the full FPF adoption variant; (ii) >=1 normative FPF citation backs the winner;
+    (iii) backward-compat preserved (existing specs unaffected); (iv) graduated enforcement
+    (tier-aware required fields).'
+  blast_radius: metamodel + validator + docs
+  reversibility: high — additive fields, removable without data loss
+  status: framed
+hypotheses:
+- id: full-fpf-l0-record-moves-enum
+  title: Full FPF L0 record + Δ-moves enum
+  content: 'Extend Hypothesis: prompt (cite problem.prompt), filters (acceptance predicate),
+    next_move (deduction|probe|build|defer). Extend evidence: replace verdict=refine
+    with refine_kind enum (formalise, generalise, specialise, calibrate, validate,
+    congrue). All fields optional initially, required when tier=high.'
+  scope: metamodel
+  kind: system
+  layer: L2
+  r_eff: null
+  evidence:
+  - id: 20260503-internal-full-fpf-l0-record-moves-enum
+    type: internal
+    content: FPF B.5.2:13.3 explicitly normative for L0 hypothesis records. Schema
+      additions are backward-compatible (Option fields). Validator promotes to required
+      only at high tier — graduated enforcement avoids breakage.
+    verdict: pass
+    valid_until: 2026-08-01 15:07:33.517073+00:00
+    carrier_ref: null
+    formality: 4
+    claim_scope:
+    - fpf-citation
+    - backward-compat
+    congruence_level: null
+    reliability: 0.9
+  - id: 20260503-internal-full-fpf-l0-record-moves-enum
+    type: internal
+    content: 'Δ-moves enum (C.2:4.2) preserves existing verdict=refine via mapping
+      refine→formalise as default. Existing specs unaffected. NQD characterization:
+      thin=4, audit=5, ergo=4, schema=4, couple=5, rev=5. Pareto-dominates B and C.'
+    verdict: pass
+    valid_until: 2026-08-01 15:07:33.521196+00:00
+    carrier_ref: null
+    formality: 4
+    claim_scope:
+    - nqd
+    - migration
+    congruence_level: null
+    reliability: 0.85
+  depends_on: []
+  rationale: null
+  spec_ref: feat.s5d.fpf-hypothesis-record__20260503.s5d.yaml
+- id: docs-only-no-schema-change
+  title: Docs only, no schema change
+  content: Document FPF B.5.2:13 fields as recommended-but-not-validated. No schema
+    additions, no validator changes. Status quo + best-practice doc.
+  scope: documentation
+  kind: system
+  layer: invalid
+  r_eff: null
+  evidence:
+  - id: 20260503-internal-docs-only-no-schema-change
+    type: internal
+    content: No structural enforcement — same problem as approval-only in earlier
+      code-review-evidence decision. Auditability fails.
+    verdict: fail
+    valid_until: 2026-08-01 15:07:33.528876+00:00
+    carrier_ref: null
+    formality: 3
+    claim_scope:
+    - auditability
+    congruence_level: null
+    reliability: 0.8
+  depends_on: []
+  rationale: null
+  spec_ref: null
+- id: minimal-additions-only
+  title: Minimal additions only
+  content: Add only hypothesis.prompt and hypothesis.next_move; leave verdict=refine
+    as-is, document Δ-mapping in metamodel.md without enum split. Smaller schema impact,
+    weaker FPF compliance.
+  scope: metamodel
+  kind: system
+  layer: L0
+  r_eff: null
+  evidence:
+  - id: 20260503-internal-minimal-additions-only
+    type: internal
+    content: Skips Δ-moves enum; refine remains opaque. FPF compliance partial — fails
+      C.2:4.2 conformance. Acceptable as transition step but not target state.
+    verdict: refine
+    valid_until: 2026-08-01 15:08:10.325987+00:00
+    carrier_ref: null
+    formality: 3
+    claim_scope:
+    - fpf-partial
+    congruence_level: null
+    reliability: 0.7
+  depends_on: []
+  rationale: null
+  spec_ref: null
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false

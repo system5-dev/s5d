@@ -1,0 +1,35 @@
+spec_ref: decision.fpf.hypothesis-record-extension__20260503.s5d.yaml
+spec_sha256: sha256:789eaa419b5f306464bdbba6c275a31c1c41bbda48dfd98f012fb46e38f62204
+status: proposed
+sync_status: unknown
+status_history:
+- status: proposed
+  timestamp: 2026-05-03T15:06:21.708933+00:00
+active_phase: null
+phase_history: []
+phase_runs: []
+approvals: []
+preview: null
+reflection: null
+gate_results: []
+decision:
+  title: Adopt full FPF L0 hypothesis record + Δ-moves enum
+  winner_id: full-fpf-l0-record-moves-enum
+  rejected_ids:
+  - minimal-additions-only
+  - docs-only-no-schema-change
+  context: Hypothesis schema lacks FPF B.5.2:13 fields.
+  decision: Add Hypothesis.prompt, Hypothesis.next_move, Evidence.refine_kind. Optional in low tiers, required in high.
+  rationale: Pareto winner; FPF normative compliance + backward-compat.
+  consequences: Schema additions; tier-aware validator; metamodel.md update.
+  decided_at: 2026-05-03T15:10:47.402938+00:00
+  confirmed_by: Roman
+  expires_at: 2026-08-01
+  do_list: []
+  dont_list: []
+  challenge:
+    mode: standard
+    passed: true
+    summary: 5 probes passed; Δ-mapping refine→formalise default; tier-graduated requirements.
+    checks: []
+verified_by: null

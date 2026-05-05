@@ -1,0 +1,35 @@
+spec_ref: decision.fpf.decision-record-extension__20260503.s5d.yaml
+spec_sha256: sha256:8d06751b7cd12c62512b551e5ffda26ce315b03f5d2475ec8af14b10a411705a
+status: proposed
+sync_status: unknown
+status_history:
+- status: proposed
+  timestamp: 2026-05-03T15:06:21.710654+00:00
+active_phase: null
+phase_history: []
+phase_runs: []
+approvals: []
+preview: null
+reflection: null
+gate_results: []
+decision:
+  title: Adopt Decsn-CAL + Pareto + Anti-Goodhart
+  winner_id: full-decsn-cal-subject-pareto-goodhart
+  rejected_ids:
+  - subject-only-lint-warnings
+  - docs-only
+  context: Decision/reflection records lack FPF C.11/C.18/C.17 fields.
+  decision: Extend record.decision with subject/granularity/evaluative_surface/belief_state/outcome_model/pareto_set/choice_rule. Forbid scalar weights. Reflection.indicators[].observation flag.
+  rationale: Pareto winner on auditability + FPF compliance.
+  consequences: Record schema extended; selection scalarization rejected; lint enforces observation flag.
+  decided_at: 2026-05-03T15:10:47.419664+00:00
+  confirmed_by: Roman
+  expires_at: 2026-08-01
+  do_list: []
+  dont_list: []
+  challenge:
+    mode: standard
+    passed: true
+    summary: 5 probes passed; record additions optional except subject; scalarization ban forward-only.
+    checks: []
+verified_by: null

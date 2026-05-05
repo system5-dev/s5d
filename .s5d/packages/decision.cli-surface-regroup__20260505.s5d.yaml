@@ -1,0 +1,148 @@
+s5d: '1.0'
+id: decision.cli-surface-regroup
+version: 1.0.0
+product: s5d
+tier: decision
+allow_update: true
+meta:
+  title: cli-surface-regroup
+  authors: []
+  date: 2026-05-05
+  tickets: []
+  adrs: []
+  renames: []
+context: null
+workflow: null
+artifacts: null
+links: null
+contracts: []
+gates:
+- kind: review
+roc: null
+problem:
+  signal: '31 public top-level commands violate Zen of Python: There should be one obvious way. First-screen overload makes the entry point feel arbitrary. Closely-related verbs (add-hypothesis/add-evidence/decide; validate/graph-check/check/run-gates; preview/approve/import/drift-check/reconcile/rollback/reflect) are siblings of unrelated verbs (init, status, trace).'
+  constraints:
+  - 'Backward-compatible: existing scripts/CI/docs invoking old top-level commands must keep working'
+  - No new functionality — pure surface reshape
+  - MCP tool names must remain stable (s5d_add_hypothesis etc.) — they are independent of CLI grouping
+  - Test-fixture command strings must be updatable in one pass
+  targets:
+  - Reduce top-level command count to 8-12 (verb-noun groups for related operations)
+  - Make the first-screen output communicate the canonical flow (Route→Frame→Decide→Spec→Build→Verify→Ship→Learn)
+  indicators:
+  - Top-level command count (observation, not optimization target — could be slightly higher if a regroup hurts ergonomics)
+  - User-facing breakage reports (must stay zero — observation)
+  - Hidden-alias count (informational)
+  goodhart_guard: null
+  acceptance: 'Re-grouped CLI is adopted iff: (i) all old commands continue to work as hidden aliases (no breakage); (ii) top-level help shows <=12 visible commands; (iii) cargo check + all tests pass; (iv) MCP tools unchanged; (v) self-trace via s5d trace still resolves correctly.'
+  blast_radius: CLI surface only; no model/runtime change
+  reversibility: high — surface change, hidden aliases preserve old paths; reversible by un-hiding
+  status: framed
+hypotheses:
+- id: full-regroup-with-hidden-aliases
+  title: Full regroup with hidden aliases
+  content: 'Group 31 commands into 12 visible verbs: init/new/status/show/trace/decision (add-hypothesis,add-evidence,decide)/verify (validate,graph-check,check,run-gates)/apply (preview,approve,import,drift-check,reconcile,rollback,reflect)/phase (+loop,harness)/discover/codebase/admin (install,update). Old commands kept as #[command(hide=true)] aliases via clap. No CLI breakage.'
+  scope: CLI surface
+  kind: system
+  layer: L2
+  r_eff: null
+  evidence:
+  - id: 20260505-internal-full-regroup-with-hidden-aliases
+    type: internal
+    content: 'Clap supports #[command(hide=true)] for aliases — backward-compat is mechanical. Verb-noun grouping is idiomatic in major CLIs (git, kubectl, gh) and well understood. Reduces cognitive load on first-screen.'
+    verdict: pass
+    valid_until: 2026-08-03T04:19:41.121908+00:00
+    carrier_ref: null
+    formality: 4
+    claim_scope:
+    - ergonomics
+    - compat
+    congruence_level: null
+    reliability: 0.9
+    refine_kind: null
+  - id: 20260505-internal-full-regroup-with-hidden-aliases
+    type: internal
+    content: 'NQD on 6 axes (1=worst,5=best): full thin=4 ergo=5 compat=5 audit=5 effort=3 reverse=5; partial thin=3 ergo=4 compat=5 audit=4 effort=4 reverse=5; status-quo thin=5 ergo=2 compat=5 audit=3 effort=5 reverse=5. Pareto front {full, status-quo}. Status-quo fails ergonomics (the framed problem). Full wins by selection policy ''maximize ergo subject to compat>=5''.'
+    verdict: pass
+    valid_until: 2026-08-03T04:19:41.126649+00:00
+    carrier_ref: null
+    formality: 4
+    claim_scope:
+    - nqd
+    - pareto
+    congruence_level: null
+    reliability: 0.85
+    refine_kind: null
+  - id: 20260505-gate-review-full-regroup-with-hidden-aliases
+    type: gate:review
+    content: 'Self-review by Diana: Phase A shipped — all 27 cluster S5dCommand variants + 4 HookCommand internal subcommands marked #[command(hide=true)]. Top-level visible reduced 31→12 (matches test contract exactly). cargo check + 86 lib + 45 standalone + 8 + 12 = 151 tests all green. Backward compat preserved: every old command still works by exact name.'
+    verdict: pass
+    valid_until: 2026-08-03T04:36:56.203883+00:00
+    carrier_ref: null
+    formality: 4
+    claim_scope:
+    - code
+    - tests
+    - acceptance
+    congruence_level: null
+    reliability: 0.9
+    refine_kind: null
+  depends_on: []
+  rationale: null
+  spec_ref: feat.s5d.cli-surface-regroup__20260505.s5d.yaml
+  prompt: How to reduce 31-command first-screen overload while preserving compat?
+  next_move: build
+- id: partial-regroup-only-decision-verify-apply
+  title: Partial regroup — only decision/verify/apply
+  content: Group only the three biggest clusters (decision/verify/apply, ~13 commands), leave init/new/status/show/trace/phase/discover/codebase/install/update as standalone. Smaller change, ~14 visible top-levels (still better than 31). Less compat risk.
+  scope: CLI surface
+  kind: system
+  layer: L0
+  r_eff: null
+  evidence:
+  - id: 20260505-internal-partial-regroup-only-decision-verify-apply
+    type: internal
+    content: 'Half-step: ergonomics improves but visible count still ~14, first-screen still cluttered. Acceptable transition state but not target.'
+    verdict: refine
+    valid_until: 2026-08-03T04:19:41.131793+00:00
+    carrier_ref: null
+    formality: 3
+    claim_scope:
+    - partial-fpf
+    congruence_level: null
+    reliability: 0.7
+    refine_kind: specialise
+  depends_on: []
+  rationale: null
+  spec_ref: null
+  prompt: Same prompt — partial answer
+  next_move: build
+- id: status-quo-better-help
+  title: Status quo + better help
+  content: Keep all 31 top-level commands, improve --help output to group them visually with section headers. No clap restructure. Zero risk, zero ergonomics gain — first-screen still has 31 entries even if grouped visually.
+  scope: documentation
+  kind: system
+  layer: invalid
+  r_eff: null
+  evidence:
+  - id: 20260505-internal-status-quo-better-help
+    type: internal
+    content: Doesn't address the framed problem (first-screen overload). Visual grouping in help text doesn't reduce decision space — user still picks from 31 verbs.
+    verdict: fail
+    valid_until: 2026-08-03T04:19:41.136390+00:00
+    carrier_ref: null
+    formality: 3
+    claim_scope:
+    - framing
+    congruence_level: null
+    reliability: 0.85
+    refine_kind: null
+  depends_on: []
+  rationale: null
+  spec_ref: null
+  prompt: Same prompt — null hypothesis (real rival)
+  next_move: defer
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false

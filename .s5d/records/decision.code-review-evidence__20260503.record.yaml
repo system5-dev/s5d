@@ -1,0 +1,35 @@
+spec_ref: decision.code-review-evidence__20260503.s5d.yaml
+spec_sha256: sha256:cec85c05757d8a19f45a96c7e96441a189cc05ac93bfd0a28d8750254018fccc
+status: proposed
+sync_status: unknown
+status_history:
+- status: proposed
+  timestamp: 2026-05-03T14:17:10.316573+00:00
+active_phase: null
+phase_history: []
+phase_runs: []
+approvals: []
+preview: null
+reflection: null
+gate_results: []
+decision:
+  title: Code review enters S5D as evidence_type gate:review
+  winner_id: review-as-evidence-type
+  rejected_ids:
+  - review-as-workflow-phase
+  - review-as-approval-only
+  context: S5D lacks a structured way to record code review. approve --reviewer captures only signature, not verdict/scope/findings. For decision and high-tier specs this is insufficient for audit.
+  decision: 'Add evidence_type ''gate:review'' with fields {reviewer, scope, verdict, findings} via existing s5d_add_evidence. Add tier-aware gate rule: decision and high tiers require >=1 review-evidence with verdict=pass before import. No new CLI surface.'
+  rationale: Variant A wins on Pareto front against pre-declared policy (minimize coupling+schema-impact subject to auditability>=structured). C fails auditability hard constraint. B violates thin-layer principle and duplicates existing phase machinery.
+  consequences: 'Schema enum gains one value. Run-gates rule extended for decision/high tiers. Docs updated (session-protocol.md, SKILL.md). External reviewers (tribunal, reviewer agent, human) attach output as evidence with no S5D coupling. Existing imported specs grandfathered. Reversible: enum is additive, gate rule revertible.'
+  decided_at: 2026-05-03T14:32:06.903565+00:00
+  confirmed_by: Roman
+  expires_at: 2026-08-01
+  do_list: []
+  dont_list: []
+  challenge:
+    mode: standard
+    passed: true
+    summary: '5 probes run: (1) verdict semantics weak — mitigated by findings array + formality; (2) reviewer hallucination — mitigated by reviewer name in commit ledger; (3) evidence weakness internal-only — tribunal/reviewer agents produce external evidence; (4) cargo-cult risk — same as any gate, formality forces explicit rigor; (5) could gate:test cover by convention — no, judgment vs measurement, conflation muddles audit. No fatal flaw.'
+    checks: []
+verified_by: null

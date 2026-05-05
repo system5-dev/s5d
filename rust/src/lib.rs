@@ -20,6 +20,7 @@ pub mod project;
 pub mod ralph;
 pub mod router;
 pub mod template;
+pub mod trace;
 pub mod validate;
 
 pub use arch::{architecture_check, ArchitectureCheckReport, ComponentCoverage, SourceDependency};
@@ -34,7 +35,7 @@ pub use discovery::{
     DiscoveryNode, DiscoveryProvenance, DiscoverySnapshot,
 };
 pub use drift::{check_drift, reconcile, DriftResult};
-pub use gates::run_gates;
+pub use gates::{effective_gates_for_spec, run_gates};
 pub use graph::{check_domain_layering, graph_check, tarjan_scc};
 pub use identity::{AliasEntry, AliasTable};
 pub use import::{compute_diff, compute_state_fingerprint, execute_import, DiffActions};
@@ -47,6 +48,10 @@ pub use project::S5dProject;
 pub use ralph::{build_ralph_task_package, RalphPreset};
 pub use router::{route, RouteMode, RouteResult};
 pub use template::*;
+pub use trace::{
+    format_code_trace, trace_code_path, CodeTrace, CodeTraceCapability, CodeTraceDecision,
+    CodeTraceMatch,
+};
 pub use validate::validate_spec;
 
 pub mod infer;
@@ -1042,6 +1047,7 @@ mod tests {
                 blast_radius: Some("All API consumers".into()),
                 reversibility: Some("moderate".into()),
                 status: Some("in_progress".into()),
+                goodhart_guard: None,
             })),
             hypotheses: vec![
                 Hypothesis {
@@ -1063,10 +1069,13 @@ mod tests {
                         claim_scope: vec!["throughput".into(), "latency".into()],
                         congruence_level: Some(3),
                         reliability: Some(0.85),
+                        refine_kind: None,
                     }],
                     depends_on: vec![],
                     rationale: Some("Industry standard, well-understood operationally".into()),
                     spec_ref: None,
+                    prompt: None,
+                    next_move: None,
                 },
                 Hypothesis {
                     id: "h2-in-process".into(),
@@ -1087,10 +1096,13 @@ mod tests {
                         claim_scope: vec!["consistency".into()],
                         congruence_level: Some(2),
                         reliability: Some(0.6),
+                        refine_kind: None,
                     }],
                     depends_on: vec![],
                     rationale: None,
                     spec_ref: None,
+                    prompt: None,
+                    next_move: None,
                 },
             ],
             decision: Some(DecisionRecord {
@@ -1107,6 +1119,13 @@ mod tests {
                 do_list: vec!["Use Redis for all shared cache".into()],
                 dont_list: vec!["Don't use in-process cache for shared state".into()],
                 challenge: None,
+                decision_subject: None,
+                decision_subject_granularity: None,
+                evaluative_surface: None,
+                belief_state: None,
+                outcome_model: None,
+                pareto_set: vec![],
+                choice_rule: None,
             }),
             note_rationale: None,
             expires_at: None,
@@ -1582,7 +1601,10 @@ mod tests {
                 claim_scope: vec!["throughput".into(), "latency".into()],
                 congruence_level: Some(3),
                 reliability: Some(0.85),
+                refine_kind: None,
             }],
+            prompt: None,
+            next_move: None,
         }];
         let yaml = serde_yaml::to_string(&spec).unwrap();
         let parsed: Spec = serde_yaml::from_str(&yaml).unwrap();

@@ -1,0 +1,82 @@
+spec_ref: feat.s5d.fpf-drift-tolerance__20260503.s5d.yaml
+spec_sha256: sha256:6b3e24900266b302de85cfa774df9d42eb06c9464cf5a3316dee2306404258b3
+status: operated
+sync_status: synced
+status_history:
+- status: proposed
+  timestamp: 2026-05-03 15:09:10.786859+00:00
+- status: previewed
+  timestamp: 2026-05-03 15:12:04.888075+00:00
+- status: approved
+  timestamp: 2026-05-03 15:12:26.906307+00:00
+- status: previewed
+  timestamp: 2026-05-03 15:25:52.414986+00:00
+- status: approved
+  timestamp: 2026-05-03 15:25:52.433010+00:00
+- status: applied
+  timestamp: 2026-05-03 15:25:52.480496+00:00
+- status: operated
+  timestamp: 2026-05-03 15:26:34.803857+00:00
+- status: operated
+  timestamp: 2026-05-03 16:49:14.318046+00:00
+- status: operated
+  timestamp: 2026-05-03T16:50:08.453524+00:00
+active_phase: null
+phase_history: []
+phase_runs: []
+approvals:
+- reviewer: Roman
+  date: 2026-05-03 15:12:26.906305+00:00
+  spec_sha256: sha256:7b8447e67c7ef54f112b5c68e61ded0e7c9ce8bfaf1bea17656022ef1ea3848c
+  diff_sha256: sha256:4b6d5568e875dc353bfabe824c9d1293b1c7b9d71f1271aef99f5b0bb3611943
+- reviewer: Roman
+  date: 2026-05-03 15:25:52.433008+00:00
+  spec_sha256: sha256:7b8447e67c7ef54f112b5c68e61ded0e7c9ce8bfaf1bea17656022ef1ea3848c
+  diff_sha256: sha256:f0100a609c18d634d698e67cf4b88555ced315fd2b203490e22bb4d072a78189
+preview:
+  diff_sha256: sha256:f0100a609c18d634d698e67cf4b88555ced315fd2b203490e22bb4d072a78189
+  previewed_spec_sha256: sha256:7b8447e67c7ef54f112b5c68e61ded0e7c9ce8bfaf1bea17656022ef1ea3848c
+  actions:
+    create: 6
+    link: 9
+    update: 4
+    delete: 0
+  log: null
+reflection:
+  verdict: confirmed
+  measurement_window: null
+  telemetry_refs: []
+  summary: 'Round-2 added drift_tolerance parser per FPF A.3.3:9.3 fits(D,trace,tol). Policy syntax: ''schema=block, code=warn, doc=allow''. Behavior verified live: warn-only policy → DriftResult::Partial (does not block import); policy with any block → Drifted; no policy → binary behavior preserved.'
+  worked: []
+  issues: []
+  structured_issues: []
+  follow_ups: []
+  evidence: []
+  heuristics:
+  - When extending an enum-result with a tolerance variant, key the policy parsing on absence-of-block rather than presence-of-warn — preserves binary safety as default and only relaxes on explicit author intent.
+gate_results:
+- kind: schema
+  status: passed
+  attempt: 1
+  timestamp: 2026-05-03 15:25:36.993694+00:00
+  log: schema validation passed (built-in)
+  exit_code: null
+  evidence_path: evidence/feat.s5d.fpf-drift-tolerance/schema_1.log
+  command: null
+  duration_ms: 0
+  waiver_expires_at: null
+  kind_class: null
+- kind: graph
+  status: passed
+  attempt: 1
+  timestamp: 2026-05-03 15:25:36.993868+00:00
+  log: graph check passed (built-in)
+  exit_code: null
+  evidence_path: evidence/feat.s5d.fpf-drift-tolerance/graph_1.log
+  command: null
+  duration_ms: 0
+  waiver_expires_at: null
+  kind_class: null
+decision: null
+verified_by: Diana
+drift_tolerance: null

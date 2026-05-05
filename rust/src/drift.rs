@@ -6,14 +6,24 @@ use chrono::Utc;
 
 pub enum DriftResult {
     Synced,
-    Drifted { expected: String, actual: String },
-    Degraded { reason: String },
+    Drifted {
+        expected: String,
+        actual: String,
+    },
+    /// FPF A.3.3:9.3 partial — drift detected but tolerated by record.drift_tolerance policy.
+    Partial {
+        policy: String,
+        note: String,
+    },
+    Degraded {
+        reason: String,
+    },
 }
 
 pub fn check_drift(
     project: &S5dProject,
     spec: &Spec,
-    _spec_filename: &str,
+    spec_filename: &str,
 ) -> anyhow::Result<DriftResult> {
     let s5d_dir = project.s5d_dir();
     let ledger = project.load_ledger()?;
@@ -34,17 +44,64 @@ pub fn check_drift(
     };
 
     let aliases = AliasTable::load(&s5d_dir)?;
-    let spec = crate::infer::materialize_spec(spec);
-    let actual_fp = compute_state_fingerprint(&spec, &aliases);
+    let spec_mat = crate::infer::materialize_spec(spec);
+    let actual_fp = compute_state_fingerprint(&spec_mat, &aliases);
 
     if actual_fp == *expected_fp {
-        Ok(DriftResult::Synced)
-    } else {
-        Ok(DriftResult::Drifted {
-            expected: expected_fp.clone(),
-            actual: actual_fp,
-        })
+        return Ok(DriftResult::Synced);
     }
+
+    // FPF A.3.3:9.3 — fits(D, trace, tol) → {pass|fail|partial} under tolerance policy.
+    // record.drift_tolerance is free-form prose like "schema=block, code=block, doc=warn".
+    // If all rules are warn/allow → Partial; if any block → Drifted.
+    let record = project.load_record(spec_filename)?;
+    if let Some(rec) = record {
+        if let Some(policy) = rec.drift_tolerance.as_ref() {
+            let parsed = parse_tolerance(policy);
+            // Policy is free-form. Conservative interpretation: if every rule is warn|allow
+            // (no "block"), treat drift as Partial. If any rule is block (or no rules),
+            // keep Drifted.
+            let any_block = parsed.iter().any(|(_, action)| action == "block");
+            let has_warn_or_allow = parsed
+                .iter()
+                .any(|(_, action)| action == "warn" || action == "allow");
+            if !any_block && has_warn_or_allow {
+                return Ok(DriftResult::Partial {
+                    policy: policy.clone(),
+                    note: format!(
+                        "drift detected (expected={} actual={}) tolerated by policy",
+                        &expected_fp[..16.min(expected_fp.len())],
+                        &actual_fp[..16.min(actual_fp.len())],
+                    ),
+                });
+            }
+        }
+    }
+
+    Ok(DriftResult::Drifted {
+        expected: expected_fp.clone(),
+        actual: actual_fp,
+    })
+}
+
+/// Parse a drift_tolerance string like "schema=block, code=warn, doc=allow"
+/// into a Vec of (artifact, action) pairs. Allowed actions: block|warn|allow.
+fn parse_tolerance(policy: &str) -> Vec<(String, String)> {
+    policy
+        .split(',')
+        .filter_map(|pair| {
+            let mut parts = pair.split('=');
+            let key = parts.next()?.trim().to_lowercase();
+            let val = parts.next()?.trim().to_lowercase();
+            if key.is_empty() || val.is_empty() {
+                return None;
+            }
+            if !["block", "warn", "allow"].contains(&val.as_str()) {
+                return None;
+            }
+            Some((key, val))
+        })
+        .collect()
 }
 
 pub fn reconcile(

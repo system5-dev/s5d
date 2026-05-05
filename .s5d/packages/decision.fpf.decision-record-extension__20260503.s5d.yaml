@@ -1,0 +1,137 @@
+s5d: '1.0'
+id: decision.fpf.decision-record-extension
+version: 1.0.0
+product: s5d
+tier: decision
+allow_update: true
+meta:
+  title: decision-record-extension
+  authors: []
+  date: 2026-05-03
+  tickets: []
+  adrs: []
+  renames: []
+context: null
+workflow: null
+artifacts: null
+links: null
+contracts: []
+gates:
+- kind: review
+roc: null
+problem:
+  signal: How to extend decision/reflection records to comply with FPF C.11 (Decsn-CAL
+    DecisionSubject), C.18 (NQD Pareto), C.17 (Anti-Goodhart guard)?
+  constraints:
+  - Backward-compatible with existing specs
+  - Graduated enforcement (high-tier required, lower tiers optional)
+  - No new CLI surface unless feature requires it
+  targets:
+  - FPF compliance for the cited section
+  - Auditability of the artifact
+  - Thinness — keep S5D as a recording layer
+  indicators:
+  - Adoption per spec (count of new fields populated)
+  - Schema migration errors (observation, not optimization)
+  acceptance: 'Decision adopts the FPF-aligned hypothesis (variant A) iff: (i) winner
+    is the full FPF adoption variant; (ii) >=1 normative FPF citation backs the winner;
+    (iii) backward-compat preserved (existing specs unaffected); (iv) graduated enforcement
+    (tier-aware required fields).'
+  blast_radius: metamodel + validator + docs
+  reversibility: high — additive fields, removable without data loss
+  status: framed
+hypotheses:
+- id: full-decsn-cal-subject-pareto-goodhart
+  title: 'Full Decsn-CAL: subject+pareto+goodhart'
+  content: 'Extend DecisionRecord: decision_subject, decision_subject_granularity,
+    evaluative_surface (axes+policy), belief_state, outcome_model, pareto_set (id-list
+    non-dominated), choice_rule. Forbid scalar weights in selection. Reflection.indicators:
+    each marked observation:true|false (Goodhart guard). Validator rejects scalarized
+    selection.'
+  scope: decision/reflection records
+  kind: system
+  layer: L2
+  r_eff: null
+  evidence:
+  - id: 20260503-internal-full-decsn-cal-subject-pareto-goodhart
+    type: internal
+    content: 'FPF C.11:4.5.1 lists explicit objects required in usable decision records.
+      C.18 forbids weighted sums across mixed scales. C.17:14 mandates Anti-Goodhart
+      guards. Rejecting these = noncompliance with three normative kernel extensions.
+      NQD: thin=3, audit=5, ergo=3, schema=3, couple=5, rev=4 — wins on audit/couple.'
+    verdict: pass
+    valid_until: 2026-08-01 15:07:33.532967+00:00
+    carrier_ref: null
+    formality: 4
+    claim_scope:
+    - fpf-citation
+    - nqd
+    congruence_level: null
+    reliability: 0.85
+  - id: 20260503-internal-full-decsn-cal-subject-pareto-goodhart
+    type: internal
+    content: Pareto_set field captures non-dominated alternatives explicitly — replaces
+      ad-hoc 'rejected' list with structured shape. choice_rule names HOW we pick
+      (max-vote, lex-order, declared-policy).
+    verdict: pass
+    valid_until: 2026-08-01 15:07:33.536829+00:00
+    carrier_ref: null
+    formality: 4
+    claim_scope:
+    - structure
+    congruence_level: null
+    reliability: 0.85
+  depends_on: []
+  rationale: null
+  spec_ref: feat.s5d.fpf-decision-record__20260503.s5d.yaml
+- id: subject-only-lint-warnings
+  title: Subject only + lint warnings
+  content: 'Add only decision_subject + decision_subject_granularity. Pareto/choice_rule
+    remain free-form prose in rationale. Goodhart guard: lint warning if reflection.indicators
+    have no observation: marker. Smaller change, weaker enforcement.'
+  scope: decision record
+  kind: system
+  layer: L0
+  r_eff: null
+  evidence:
+  - id: 20260503-internal-subject-only-lint-warnings
+    type: internal
+    content: 'Partial: gets DecisionSubject (C.11) but skips Pareto/Goodhart. Lint
+      warnings are advisory, not enforced. Acceptable transition, not target state.'
+    verdict: refine
+    valid_until: 2026-08-01 15:07:33.540675+00:00
+    carrier_ref: null
+    formality: 3
+    claim_scope:
+    - partial
+    congruence_level: null
+    reliability: 0.7
+  depends_on: []
+  rationale: null
+  spec_ref: null
+- id: docs-only
+  title: Docs-only
+  content: Document FPF C.11 fields as authoring guidance. No schema changes.
+  scope: documentation
+  kind: system
+  layer: invalid
+  r_eff: null
+  evidence:
+  - id: 20260503-internal-docs-only
+    type: internal
+    content: No enforcement, same auditability fail mode.
+    verdict: fail
+    valid_until: 2026-08-01 15:07:33.544400+00:00
+    carrier_ref: null
+    formality: 3
+    claim_scope:
+    - auditability
+    congruence_level: null
+    reliability: 0.8
+  depends_on: []
+  rationale: null
+  spec_ref: null
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false

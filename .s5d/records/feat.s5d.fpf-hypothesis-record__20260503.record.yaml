@@ -1,0 +1,80 @@
+spec_ref: feat.s5d.fpf-hypothesis-record__20260503.s5d.yaml
+spec_sha256: sha256:8f990b145f6b5a6372b28d87d1e65763f54864609e384457abd0fe1a74dc83e2
+status: operated
+sync_status: synced
+status_history:
+- status: proposed
+  timestamp: 2026-05-03T15:09:10.733590+00:00
+- status: previewed
+  timestamp: 2026-05-03T15:12:04.920089+00:00
+- status: approved
+  timestamp: 2026-05-03T15:12:26.934307+00:00
+- status: previewed
+  timestamp: 2026-05-03T15:25:52.595662+00:00
+- status: approved
+  timestamp: 2026-05-03T15:25:52.612051+00:00
+- status: applied
+  timestamp: 2026-05-03T15:25:52.664617+00:00
+- status: operated
+  timestamp: 2026-05-03T15:26:34.761628+00:00
+- status: operated
+  timestamp: 2026-05-03T16:50:08.466184+00:00
+active_phase: null
+phase_history: []
+phase_runs: []
+approvals:
+- reviewer: Roman
+  date: 2026-05-03T15:12:26.934305+00:00
+  spec_sha256: sha256:4b8acca59ff711de83eca7c2f698bdb14bb5fd55af3b2c2c776d8b65608420ef
+  diff_sha256: sha256:b10f8ffe476f90ed509e05126372ef3fef11639e4367265020100745b4414d61
+- reviewer: Roman
+  date: 2026-05-03T15:25:52.612048+00:00
+  spec_sha256: sha256:4b8acca59ff711de83eca7c2f698bdb14bb5fd55af3b2c2c776d8b65608420ef
+  diff_sha256: sha256:e836f3cd5074e412fa7401aaaf68780e0e7e9b965c071fc4de53deaca45fd223
+preview:
+  diff_sha256: sha256:e836f3cd5074e412fa7401aaaf68780e0e7e9b965c071fc4de53deaca45fd223
+  previewed_spec_sha256: sha256:4b8acca59ff711de83eca7c2f698bdb14bb5fd55af3b2c2c776d8b65608420ef
+  actions:
+    create: 6
+    link: 9
+    update: 4
+    delete: 0
+  log: null
+reflection:
+  verdict: confirmed
+  measurement_window: null
+  telemetry_refs: []
+  summary: 'Round-2 closed: docs in metamodel.md cover all FPF-aligned fields (Hypothesis, Evidence, DecisionRecord, ProblemCard, GateResult, Record) with module-id citations from skills/fpf-modules/references/corpus/cards. Lifecycle ↔ ADI mapping documented (Explore=Abduction, Shape=Deduction, Evidence=Induction, Operate=Evolution-Loop). #8 docs-only item completed without S5D wrapper per project rule.'
+  worked: []
+  issues: []
+  structured_issues: []
+  follow_ups: []
+  evidence: []
+  heuristics:
+  - Doc-only items (lifecycle vocabulary mappings) belong in metamodel.md, not in S5D's decision flow — keeps S5D bounded to actionable changes; vocabulary lives where readers look for it.
+gate_results:
+- kind: schema
+  status: passed
+  attempt: 1
+  timestamp: 2026-05-03T15:25:37.042596+00:00
+  log: schema validation passed (built-in)
+  exit_code: null
+  evidence_path: evidence/feat.s5d.fpf-hypothesis-record/schema_1.log
+  command: null
+  duration_ms: 0
+  waiver_expires_at: null
+  kind_class: null
+- kind: graph
+  status: passed
+  attempt: 1
+  timestamp: 2026-05-03T15:25:37.042711+00:00
+  log: graph check passed (built-in)
+  exit_code: null
+  evidence_path: evidence/feat.s5d.fpf-hypothesis-record/graph_1.log
+  command: null
+  duration_ms: 0
+  waiver_expires_at: null
+  kind_class: null
+decision: null
+verified_by: Diana
+drift_tolerance: null

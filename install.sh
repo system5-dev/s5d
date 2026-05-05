@@ -32,7 +32,8 @@ echo "Installing S5D..."
 
 # 1. Skills — symlink into vendor-agnostic location + agent runtimes
 #    Source of truth: $SCRIPT_DIR/skills/
-SKILLS="s5d fpf"
+SKILLS="s5d"
+RETIRED_SKILLS="fpf fpf-modules domain-capability-design"
 
 link_skill() {
     local target_dir="$1"
@@ -43,8 +44,16 @@ link_skill() {
     ln -sf "$src" "$target_dir/$skill_name"
 }
 
+cleanup_retired_skills() {
+    local target_dir="$1"
+    for skill_name in $RETIRED_SKILLS; do
+        rm -rf "$target_dir/$skill_name"
+    done
+}
+
 # Vendor-agnostic canonical location (always installed)
 mkdir -p "${HOME}/.agents/skills"
+cleanup_retired_skills "${HOME}/.agents/skills"
 for skill in $SKILLS; do
     link_skill "${HOME}/.agents/skills" "$skill"
 done
@@ -53,6 +62,7 @@ echo "✓ Skills linked to ~/.agents/skills/ (vendor-agnostic)"
 # Claude Code — symlink from vendor-agnostic
 if [ -d "${HOME}/.claude" ] || command -v claude &>/dev/null; then
     mkdir -p "${HOME}/.claude/skills"
+    cleanup_retired_skills "${HOME}/.claude/skills"
     for skill in $SKILLS; do
         link_skill "${HOME}/.claude/skills" "$skill"
     done
@@ -62,6 +72,7 @@ fi
 # Codex CLI
 if [ -d "${HOME}/.codex" ] || command -v codex &>/dev/null; then
     mkdir -p "${HOME}/.codex/skills"
+    cleanup_retired_skills "${HOME}/.codex/skills"
     for skill in $SKILLS; do
         link_skill "${HOME}/.codex/skills" "$skill"
     done
@@ -71,6 +82,7 @@ fi
 # Gemini CLI
 if [ -d "${HOME}/.gemini" ] || command -v gemini &>/dev/null; then
     mkdir -p "${HOME}/.gemini/skills"
+    cleanup_retired_skills "${HOME}/.gemini/skills"
     for skill in $SKILLS; do
         link_skill "${HOME}/.gemini/skills" "$skill"
     done
@@ -79,6 +91,7 @@ fi
 
 # Diana
 if [ -d "${HOME}/.diana/src/skills" ]; then
+    cleanup_retired_skills "${HOME}/.diana/src/skills"
     for skill in $SKILLS; do
         link_skill "${HOME}/.diana/src/skills" "$skill"
     done
@@ -111,7 +124,7 @@ fi
 echo ""
 echo "What was installed:"
 echo "  s5d binary — CLI for decisions, features, gates"
-echo "  s5d skills — /s5d and /fpf for agent runtimes"
+echo "  s5d skill — /s5d for agent runtimes (FPF references live inside /s5d)"
 echo ""
 echo "MCP server is registered per-project by 's5d init' (.mcp.json)."
 echo "Marketplace installs (Claude/Gemini/Codex) register MCP globally via manifest."
@@ -121,7 +134,7 @@ echo "  s5d init installs .git/hooks/pre-commit when run inside a git repo"
 echo "  manual entrypoint: s5d hook pre-commit"
 echo ""
 echo "Self-update:"
-echo "  s5d update check"
-echo "  s5d update apply"
+echo "  s5d admin update check"
+echo "  s5d admin update apply"
 echo ""
 echo "Usage: /s5d <problem>  or  s5d --help"

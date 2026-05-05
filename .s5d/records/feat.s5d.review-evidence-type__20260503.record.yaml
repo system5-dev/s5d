@@ -1,0 +1,65 @@
+spec_ref: feat.s5d.review-evidence-type__20260503.s5d.yaml
+spec_sha256: sha256:2360c60caed5b4877a43d93279b63a451b468f99f5cf1751d5b8f29b99b97555
+status: operated
+sync_status: synced
+status_history:
+- status: proposed
+  timestamp: 2026-05-03T14:31:40.590958+00:00
+- status: previewed
+  timestamp: 2026-05-03T14:35:21.415729+00:00
+- status: approved
+  timestamp: 2026-05-03T14:37:13.308330+00:00
+- status: applied
+  timestamp: 2026-05-03T14:45:03.882521+00:00
+- status: operated
+  timestamp: 2026-05-03T14:45:18.357010+00:00
+active_phase: null
+phase_history: []
+phase_runs: []
+approvals:
+- reviewer: Roman
+  date: 2026-05-03T14:37:13.308327+00:00
+  spec_sha256: sha256:df7c05fa3b17bf8fd7a7cb3b33fd0cdb65773fe367e05c8b38fba0cf28a2b340
+  diff_sha256: sha256:5f3267168166cdd39f05659606b40f825b8f67275a66400d2e16e29a146b182b
+preview:
+  diff_sha256: sha256:5f3267168166cdd39f05659606b40f825b8f67275a66400d2e16e29a146b182b
+  previewed_spec_sha256: sha256:df7c05fa3b17bf8fd7a7cb3b33fd0cdb65773fe367e05c8b38fba0cf28a2b340
+  actions:
+    create: 6
+    link: 7
+    update: 3
+    delete: 0
+  log: null
+reflection:
+  verdict: confirmed
+  measurement_window: null
+  telemetry_refs: []
+  summary: gate:review evidence type added with built-in review-gate handler. validate.rs registers 'review' as valid kind; gates.rs scans hypotheses for evidence_type=gate:review verdict=pass; default_gates_for_tier adds review for Decision and High; generate_decision_spec uses default_gates. Doc updates in metamodel.md, SKILL.md, session-protocol.md. cargo check + 85 unit tests + 4 GWT scenarios on fresh repo all pass.
+  worked: []
+  issues: []
+  structured_issues: []
+  follow_ups: []
+  evidence: []
+  heuristics:
+  - 'When extending S5D with a new gate kind, the chain is: register in validate.rs valid_gates, add built-in handler arm in gates.rs (count_attempts + save_evidence + GateResult), wire into default_gates_for_tier, AND audit per-tier spec generators (template.rs::generate_decision_spec hardcodes gates) — they are not all routed through default_gates_for_tier.'
+gate_results:
+- kind: schema
+  status: passed
+  attempt: 1
+  timestamp: 2026-05-03T14:44:58.414498+00:00
+  log: schema validation passed (built-in)
+  exit_code: null
+  evidence_path: evidence/feat.s5d.review-evidence-type/schema_1.log
+  command: null
+  duration_ms: 0
+- kind: graph
+  status: passed
+  attempt: 1
+  timestamp: 2026-05-03T14:44:58.414600+00:00
+  log: graph check passed (built-in)
+  exit_code: null
+  evidence_path: evidence/feat.s5d.review-evidence-type/graph_1.log
+  command: null
+  duration_ms: 0
+decision: null
+verified_by: Diana

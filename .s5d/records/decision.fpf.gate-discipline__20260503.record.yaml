@@ -1,0 +1,35 @@
+spec_ref: decision.fpf.gate-discipline__20260503.s5d.yaml
+spec_sha256: sha256:41f03c90ea0309dd331a9a5379c8c8f968691b60a687bdfbfec8609e16a004c1
+status: proposed
+sync_status: unknown
+status_history:
+- status: proposed
+  timestamp: 2026-05-03T15:06:21.710752+00:00
+active_phase: null
+phase_history: []
+phase_runs: []
+approvals: []
+preview: null
+reflection: null
+gate_results: []
+decision:
+  title: Eligibility/acceptance gate split + waiver expiry
+  winner_id: full-split-waiver-expiry-mandatory
+  rejected_ids:
+  - waiver-expiry-only-gates-unchanged
+  - document-no-enforcement
+  context: Gates lack FPF C.22:5.4 split; waivers lack B.3.4:5 expiry.
+  decision: gate.kind_class field; eligibility-fail-fast in run-gates; waiver.expires_at required (default 90d); auto-revoke at run-gates.
+  rationale: Two FPF citations addressed cohesively.
+  consequences: Gate model extended; run-gates ordering explicit; existing specs grandfathered.
+  decided_at: 2026-05-03T15:10:47.433922+00:00
+  confirmed_by: Roman
+  expires_at: 2026-08-01
+  do_list: []
+  dont_list: []
+  challenge:
+    mode: standard
+    passed: true
+    summary: 5 probes passed; legacy waivers grandfathered with 90d default; opt-out flag for fast-fail.
+    checks: []
+verified_by: null

@@ -471,7 +471,7 @@ pub struct WorkflowPhase {
 
 // ── Decision tier types ───────────────────────────────────────────────────────
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Hypothesis {
     pub id: String,
     pub title: String,
@@ -493,6 +493,14 @@ pub struct Hypothesis {
     /// Required for the winner hypothesis before /s5d-decide; optional for rejected hypotheses.
     #[serde(default)]
     pub spec_ref: Option<String>,
+    /// FPF B.5.2:13.3 — explicit prompt the hypothesis answers (cite of problem.signal).
+    /// Optional in low/standard tiers; required at high tier.
+    #[serde(default)]
+    pub prompt: Option<String>,
+    /// FPF B.5.2:13.3 — typed next downstream move.
+    /// Allowed values: deduction | probe | build | defer.
+    #[serde(default)]
+    pub next_move: Option<String>,
 }
 
 /// Problem field accepts either a structured ProblemCard or a plain string (for feature specs).
@@ -520,7 +528,7 @@ impl ProblemField {
 }
 
 /// Structured problem framing — what's broken, what matters, how we'll know it's solved.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct ProblemCard {
     /// What anomaly or pain triggered this? One sentence.
     pub signal: String,
@@ -533,6 +541,11 @@ pub struct ProblemCard {
     /// Observation indicators — monitor but don't optimize (Anti-Goodhart)
     #[serde(default)]
     pub indicators: Vec<String>,
+    /// FPF C.17:14 — Anti-Goodhart guard. Names which indicators are observation-only
+    /// (not optimization targets), so the agent cannot game them by accident.
+    /// Free-form prose; kept as a string to avoid schema migration of Vec<String> indicators.
+    #[serde(default)]
+    pub goodhart_guard: Option<String>,
     /// How will we know the problem is solved?
     #[serde(default)]
     pub acceptance: Option<String>,
@@ -547,7 +560,7 @@ pub struct ProblemCard {
     pub status: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct HypothesisEvidence {
     pub id: String,
     #[serde(rename = "type")]
@@ -566,9 +579,14 @@ pub struct HypothesisEvidence {
     pub congruence_level: Option<u8>,
     #[serde(default)]
     pub reliability: Option<f64>,
+    /// FPF C.2:4.2 — typed Δ-move when verdict=refine.
+    /// Allowed values: formalise | generalise | specialise | calibrate | validate | congrue.
+    /// Required when verdict=refine (validator-enforced); ignored otherwise.
+    #[serde(default)]
+    pub refine_kind: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct DecisionRecord {
     pub title: String,
     pub winner_id: String,
@@ -594,6 +612,28 @@ pub struct DecisionRecord {
     /// Adversarial challenge results — must be present before decide (methodological gate).
     #[serde(default)]
     pub challenge: Option<Challenge>,
+    /// FPF C.11:4.5.1 — DecisionSubject (who/what is the decision about).
+    #[serde(default)]
+    pub decision_subject: Option<String>,
+    /// FPF C.11 — granularity at which decision_subject applies (system|component|module|line|...).
+    #[serde(default)]
+    pub decision_subject_granularity: Option<String>,
+    /// FPF C.11 — evaluative surface used in selection (named axes + policy).
+    #[serde(default)]
+    pub evaluative_surface: Option<String>,
+    /// FPF C.11 — belief_state at decision time (what was assumed true).
+    #[serde(default)]
+    pub belief_state: Option<String>,
+    /// FPF C.11 — outcome_model (what the decision predicts will happen).
+    #[serde(default)]
+    pub outcome_model: Option<String>,
+    /// FPF C.18 — Pareto-non-dominated alternatives (hypothesis IDs). Distinct from rejected_ids.
+    #[serde(default)]
+    pub pareto_set: Vec<String>,
+    /// FPF C.11 — explicit choice rule used to pick the winner from pareto_set.
+    /// Example: "lex-order(thinness > auditability)", "policy:minimize-coupling".
+    #[serde(default)]
+    pub choice_rule: Option<String>,
 }
 
 /// Adversarial challenge — pre-decision verification.
@@ -677,7 +717,7 @@ impl std::fmt::Display for Phase {
 
 // ── Record ────────────────────────────────────────────────────────────────────
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Record {
     pub spec_ref: String,
     pub spec_sha256: String,
@@ -704,11 +744,18 @@ pub struct Record {
     pub decision: Option<DecisionRecord>,
     #[serde(default)]
     pub verified_by: Option<String>,
+    /// FPF A.3.3:9.3 — tolerance policy for drift-check.
+    /// Free-form prose describing per-artifact rules: "schema=block, code=block, doc=warn".
+    /// When set, drift-check returns tri-state {passed|partial|failed} per the policy.
+    /// Default policy (when None): all drift = failed (binary, current behavior).
+    #[serde(default)]
+    pub drift_tolerance: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum SpecStatus {
+    #[default]
     Proposed,
     InReview,
     Previewed,
@@ -947,7 +994,7 @@ pub struct Evidence {
     pub reliability: Option<f64>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct GateResult {
     pub kind: String,
     pub status: String,
@@ -964,6 +1011,14 @@ pub struct GateResult {
     pub command: Option<Vec<String>>,
     #[serde(default)]
     pub duration_ms: Option<u64>,
+    /// FPF B.3.4:5 (CC-ED.5) — required when status="waived". RFC3339 timestamp.
+    /// run-gates auto-revokes waivers past this date.
+    #[serde(default)]
+    pub waiver_expires_at: Option<String>,
+    /// FPF C.22:5.4 — gate kind class: eligibility (admission) or acceptance (threshold).
+    /// Optional; defaults to acceptance when unset. Eligibility gates fail-fast in run-gates.
+    #[serde(default)]
+    pub kind_class: Option<String>,
 }
 
 // ── Config, Ledger, Index ─────────────────────────────────────────────────────
