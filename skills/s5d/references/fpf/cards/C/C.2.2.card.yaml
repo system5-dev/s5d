@@ -1,0 +1,58 @@
+id: "C.2.2"
+title: "Reliability R in the F–G–R triad"
+kind: "pattern"
+part: "C"
+status: "Stable"
+token_estimate:
+  card: 288
+  full: 9494
+when_to_load:
+  - "reliability"
+  - "triad"
+  - "Reliability (R"
+  - "warrant"
+  - "evidence-bound"
+  - "F–G–R"
+  - "ClaimScope (G"
+  - "Bridge-only reuse"
+  - "Congruence Level (CL / CL^k / CL^plane"
+  - "weakest-link"
+  - "pathwise justification (PathId"
+  - "TA/VA/LA lanes"
+  - "no implicit averaging"
+provides:
+  - "What is R in F–G–R?"
+  - "How does FPF propagate reliability?"
+  - "How do CL penalties route under transport?"
+relations:
+  builds_on:
+    - "C.2"
+    - "A.2.6"
+    - "C.2.3"
+    - "B.3"
+    - "B.1.3"
+    - "C.3"
+    - "F.9"
+    - "B.3.3"
+    - "B.3.4"
+    - "G.6"
+    - "G.7"
+  coordinates_with:
+    - "G.6"
+    - "G.7"
+    - "E.14"
+    - "E.18"
+    - "C.16"
+    - "A.27"
+    - "C.25"
+  used_by:
+    - "C.3.3"
+    - "C.3.A"
+    - "C.21"
+source:
+  module: "modules/C/C.2.2.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 32483
+  end_line: 32857
+summary: "> Reliability (R) is a conservative, evidence-bound warrant signal for a typed claim under an explicit claim scope (G). Cross-context reuse is Bridge-only: scope may be re-expressed via translate(Bridge,·) (often narrowing), while congruence penalties route to R only."

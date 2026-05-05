@@ -1,0 +1,40 @@
+id: "A.2"
+title: "Role Taxonomy"
+kind: "pattern"
+part: "A"
+status: "Stable"
+token_estimate:
+  card: 264
+  full: 6724
+when_to_load:
+  - "role"
+  - "taxonomy"
+  - "assignment"
+  - "holder"
+  - "context"
+  - "function vs identity"
+  - "responsibility"
+  - "U.RoleAssignment"
+provides:
+  - "How to model responsibilities?"
+  - "What is the difference between what a thing is and what it does?"
+relations:
+  builds_on:
+    - "A.1"
+    - "A.1.1"
+  prerequisite_for:
+    - "A.2.1"
+    - "A.2.2"
+    - "A.2.3"
+    - "A.2.4"
+    - "A.2.5"
+    - "A.2.6"
+    - "A.13"
+    - "A.15"
+source:
+  module: "modules/A/A.2.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 1493
+  end_line: 1702
+summary: "A holon’s essence tells us what it is; its roles tell us what it is being, here and now."

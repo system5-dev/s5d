@@ -1,0 +1,32 @@
+id: "A.5"
+title: "Open‑Ended Kernel & Extension Layering"
+kind: "pattern"
+part: "A"
+status: "Transitional stub"
+token_estimate:
+  card: 252
+  full: 1161
+when_to_load:
+  - "open"
+  - "ended"
+  - "kernel"
+  - "extension"
+  - "layering"
+  - "FPF architecture"
+  - "specialization vs dependancy hierarhies"
+  - "modularity"
+  - "extensibility"
+provides:
+  - "What is the architecture of FPF?"
+  - "How are new domains added?"
+relations:
+  builds_on:
+    - "P-4"
+    - "P-5"
+source:
+  module: "modules/A/A.5.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 6718
+  end_line: 6766
+summary: "Status. Transitional stub (informative). This section defines no dedicated “module” subsystem. Enforceable boundary discipline lives in A.6.0 U.Signature and A.6.1 U.Mechanism, with guard‑rails in E.5.3 (Unidirectional Dependency) and E.10 (LEX‑BUNDLE stratification)."

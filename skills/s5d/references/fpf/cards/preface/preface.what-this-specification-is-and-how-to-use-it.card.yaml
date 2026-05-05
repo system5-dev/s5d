@@ -1,0 +1,24 @@
+id: "preface.what-this-specification-is-and-how-to-use-it"
+title: "What this specification is (and how to use it)"
+kind: "preface_article"
+part: "preface"
+status: null
+token_estimate:
+  card: 228
+  full: 2905
+when_to_load:
+  - "what"
+  - "specification"
+  - "how"
+  - "use"
+provides:
+  - "what description is this?"
+relations:
+
+source:
+  module: "modules/preface/preface.what-this-specification-is-and-how-to-use-it.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 386
+  end_line: 486
+summary: "This document is the Core Conceptual Specification of the First Principles Framework (FPF). It defines a small, domain-agnostic kernel and a set of extension patterns for publishing, checking, and evolving conceptual work about systems and epistemes (knowledge claims) — and about the organisations and communities that build them. In FPF terms these are all holons: things that can be treated as wholes and as parts."

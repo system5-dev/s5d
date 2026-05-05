@@ -1,0 +1,57 @@
+id: "E.17.AUD.OOTD"
+title: "AuthoredUnitDiscipline / AuthoredUnit Object-of-Talk Discipline - authored-unit stability over one primary object of talk"
+kind: "pattern"
+part: "E"
+status: "Stable"
+token_estimate:
+  card: 268
+  full: 6316
+when_to_load:
+  - "authoredunitdiscipline"
+  - "authoredunit"
+  - "object-of-talk"
+  - "discipline"
+  - "authored-unit"
+  - "stability"
+  - "over"
+  - "one"
+  - "primary"
+  - "object"
+  - "talk"
+  - "authored unit"
+  - "object of talk"
+  - "authored-unit drift"
+  - "carried move"
+  - "outside-work boundary"
+  - "explicit transition"
+provides:
+  - "How do I keep one note about one thing at a time?"
+  - "What is AuthoredUnit Object-of-Talk Discipline in FPF?"
+  - "When do I need authored-unit stabilization rather than only local wording repair?"
+relations:
+  builds_on:
+    - "A.6.P"
+    - "A.7"
+    - "E.10"
+    - "F.18"
+    - "E.14"
+    - "E.19"
+    - "C.2.2a"
+    - "A.16.0"
+  coordinates_with:
+    - "E.17.AUD.LHR"
+    - "E.17.ID.CR"
+    - "E.17.EFP"
+    - "A.6.3"
+    - "A.6.3.CR"
+    - "A.6.3.RT"
+    - "A.15"
+    - "A.20"
+    - "A.21"
+source:
+  module: "modules/E/E.17.AUD.OOTD.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 52980
+  end_line: 53299
+summary: "Placement. Narrow authored-unit stability branch inside the broader AuthoredUnitDiscipline umbrella."

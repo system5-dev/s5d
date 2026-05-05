@@ -1,0 +1,26 @@
+id: "E.13"
+title: "Pragmatic Utility & Value Alignment"
+kind: "pattern"
+part: "E"
+status: "C.27 becomes value-alignment or proxy-audit law."
+token_estimate:
+  card: 244
+  full: 2570
+when_to_load:
+  - "pragmatic"
+  - "utility"
+  - "value"
+  - "alignment"
+provides:
+  - "Is optimizing for this proxy still reliably driving progress toward the actual U.Objective it represents, or have we observed a divergence?"
+  - "Are these the right metrics?"
+  - "Are we still measuring what matters?"
+relations:
+
+source:
+  module: "modules/E/E.13.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 48944
+  end_line: 49036
+summary: "The FPF provides a powerful engine for constructing formally correct and highly reliable holons. This power, however, introduces a subtle but profound risk: a team can create a perfectly verified and validated artifact (AssuranceLevel:L2) that solves an irrelevant, misunderstood, or non-existent problem. The framework guarantees that the solution is correct, but it does not, by itself, guarantee that the solution is useful."

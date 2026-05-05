@@ -1,0 +1,37 @@
+id: "C.26.3"
+title: "Viability-Envelope Boundary Regulation"
+kind: "pattern"
+part: "C"
+status: "C.27 becomes a viability-envelope or stability-through-change pattern."
+token_estimate:
+  card: 220
+  full: 7359
+when_to_load:
+  - "viability-envelope"
+  - "boundary"
+  - "regulation"
+provides:
+  []
+relations:
+  builds_on:
+    - "C.26"
+    - "C.25"
+    - "A.6"
+    - "A.15"
+    - "C.16"
+    - "A.10"
+    - "B.3"
+    - "A.3"
+    - "A.19"
+    - "C.18"
+    - "C.19"
+  coordinates_with:
+    - "C.26.1"
+    - "C.26.2"
+source:
+  module: "modules/C/C.26.3.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 42511
+  end_line: 42840
+summary: "> Type: Architectural pattern > Status: Stable > Normativity: Normative unless explicitly marked informative"

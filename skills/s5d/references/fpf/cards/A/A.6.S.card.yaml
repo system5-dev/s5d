@@ -1,0 +1,55 @@
+id: "A.6.S"
+title: "U.SignatureEngineeringPair - Signature engineering via a ConstructorSignature and a TargetSignature"
+kind: "pattern"
+part: "A"
+status: "Stable"
+token_estimate:
+  card: 288
+  full: 9996
+when_to_load:
+  - "signatureengineeringpair"
+  - "signature"
+  - "engineering"
+  - "via"
+  - "constructorsignature"
+  - "targetsignature"
+  - "signature engineering"
+  - "TargetSignature"
+  - "ConstructorSignature"
+  - "two-signature arrangement"
+  - "EFEM"
+  - "editioning"
+  - "retargeting"
+  - "slot/base change lexicon"
+  - "MVPK views (no new semantics"
+  - "claim register"
+  - "no epistemic agency"
+provides:
+  - "What is U.SignatureEngineeringPair in FPF?"
+  - "How do I model TargetSignature vs ConstructorSignature (and keep Work out of edits)?"
+  - "How do slot/base change verbs compose into a reproducible signature evolution workflow?"
+relations:
+  builds_on:
+    - "A.6.0"
+    - "A.6.2"
+    - "A.6.3"
+    - "A.6.4"
+    - "A.6.5"
+    - "A.6.6"
+    - "A.6.B"
+    - "A.3"
+    - "A.7"
+    - "A.12"
+    - "C.2.1"
+    - "E.17"
+    - "E.10"
+  coordinates_with:
+    - "E.18"
+    - "E.19"
+source:
+  module: "modules/A/A.6.S.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 16475
+  end_line: 16906
+summary: "> Type: Architectural (A) > Status: Stable > Normativity: Mixed (normative where RFC 2119 keywords appear; quadrant routing is governed by A.6.B) > One-liner: explicitly modelling signature engineering as a two‑signature arrangement (TargetSignature + ConstructorSignature), with strict separation between operator description and enactment as Work by transformer Systems."

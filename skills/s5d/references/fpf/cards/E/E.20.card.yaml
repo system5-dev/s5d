@@ -1,0 +1,51 @@
+id: "E.20"
+title: "Mechanism Introduction Protocol"
+kind: "pattern"
+part: "E"
+status: "Draft"
+token_estimate:
+  card: 304
+  full: 7675
+when_to_load:
+  - "mechanism"
+  - "introduction"
+  - "protocol"
+  - "mechanism introduction"
+  - "authoring protocol"
+  - "owner routing"
+  - "MIP-run manifest"
+  - "canonical card-first"
+  - "no dangling …IntensionRef"
+  - "suite boundary hygiene"
+  - "P2W seam"
+  - "SlotKind lexicon discipline"
+  - "alias docking"
+  - "typed RSCR triggers"
+  - "regression envelope"
+  - "PQG profiles"
+provides:
+  - "How to introduce a new mechanism in FPF?"
+  - "How to avoid dangling IntensionRefs in suites?"
+  - "How to route mechanism changes by semantic owner?"
+  - "How to evolve mechanism suites without drift?"
+relations:
+  builds_on:
+    - "E.8"
+    - "E.9"
+    - "E.10"
+    - "E.15"
+    - "E.19"
+  coordinates_with:
+    - "A.6.1"
+    - "A.6.7"
+    - "A.15.3"
+    - "F.18"
+    - "E.18"
+    - "G.2"
+source:
+  module: "modules/E/E.20.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 54404
+  end_line: 54738
+summary: "> Type: Architectural pattern > Status: Draft > Normativity: Normative"

@@ -1,0 +1,29 @@
+id: "preface.navigating-uncertainty-building-closed-worlds-within-an-open-world-non-normative"
+title: "Navigating Uncertainty: Building Closed Worlds within an Open World (non-normative)"
+kind: "preface_article"
+part: "preface"
+status: null
+token_estimate:
+  card: 220
+  full: 1086
+when_to_load:
+  - "navigating"
+  - "uncertainty"
+  - "building"
+  - "closed"
+  - "worlds"
+  - "within"
+  - "open"
+  - "world"
+  - "non-normative"
+provides:
+  []
+relations:
+
+source:
+  module: "modules/preface/preface.navigating-uncertainty-building-closed-worlds-within-an-open-world-non-normative.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 513
+  end_line: 543
+summary: "A fundamental challenge in any rigorous thinking is how to handle incomplete information. To build reliable systems and make trustworthy claims, we must make decisive judgments based on what we know, while remaining aware of the vast ocean of what we don't. This tension is formally captured by two opposing assumptions about the world: the Open-World Assumption and the Closed-World Assumption. FPF does not force a choice between them; instead, it provides a principled architecture for using both where they are most appropriate."

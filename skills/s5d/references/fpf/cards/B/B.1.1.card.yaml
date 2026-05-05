@@ -1,0 +1,42 @@
+id: "B.1.1"
+title: "Dependency Graph & Proofs"
+kind: "pattern"
+part: "B"
+status: "Stable"
+token_estimate:
+  card: 260
+  full: 7130
+when_to_load:
+  - "dependency"
+  - "graph"
+  - "proofs"
+  - "dependency graph"
+  - "structural aggregators"
+  - "sum"
+  - "set"
+  - "slice"
+provides:
+  - "What is the input for the Gamma operator?"
+  - "How are aggregation invariants proven in FPF?"
+relations:
+  builds_on:
+    - "B.1"
+    - "A.1"
+    - "A.14"
+    - "A.15"
+    - "A.12"
+  constrained_by:
+    - "B.1"
+  used_by:
+    - "B.1.2"
+    - "B.1.3"
+    - "B.1.4"
+    - "B.1.5"
+    - "B.1.6"
+source:
+  module: "modules/B/B.1.1.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 26895
+  end_line: 27234
+summary: "In FPF, every aggregation is a material act:"

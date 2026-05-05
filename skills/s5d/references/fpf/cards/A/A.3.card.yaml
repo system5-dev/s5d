@@ -1,0 +1,36 @@
+id: "A.3"
+title: "Transformer Constitution (Quartet)"
+kind: "pattern"
+part: "A"
+status: "Stable"
+token_estimate:
+  card: 264
+  full: 4467
+when_to_load:
+  - "transformer"
+  - "constitution"
+  - "quartet"
+  - "action"
+  - "causality"
+  - "change"
+  - "System-in-Role"
+  - "MethodDescription"
+  - "Method"
+  - "Work"
+provides:
+  - "How does FPF model an action or a change?"
+  - "What is the transformer quartet?"
+relations:
+  builds_on:
+    - "A.2"
+  prerequisite_for:
+    - "A.3.1"
+    - "A.3.2"
+    - "A.15"
+source:
+  module: "modules/A/A.3.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 5556
+  end_line: 5768
+summary: "Establish a single, substrate‑neutral way to say who acts, under which role, according to which description, by which capability, and what actually happened—without “self‑magic” and without blurring design‑time and run‑time. The pattern fixes the Transformer Quartet so all kernel and Γ‑patterns reuse the same four anchors. It builds directly on Holon‑Role Duality (A.2) and Temporal Duality (A.4) and is guarded by Strict Distinction (A.7) and Evidence Graph Referring (A.10)."

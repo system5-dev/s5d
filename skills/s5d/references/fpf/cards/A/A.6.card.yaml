@@ -1,0 +1,54 @@
+id: "A.6"
+title: "Signature Stack & Boundary Discipline"
+kind: "pattern"
+part: "A"
+status: "Stable"
+token_estimate:
+  card: 280
+  full: 12555
+when_to_load:
+  - "signature"
+  - "stack"
+  - "boundary"
+  - "discipline"
+  - "signature stack"
+  - "boundary route fields"
+  - "laws"
+  - "admissibility"
+  - "deontics"
+  - "evidence"
+  - "probe/order/frame/export claims"
+  - "state-reading claims"
+provides:
+  - "How do I route boundary statements?"
+  - "Where do probe, frame, export, and state-reading claims belong?"
+  - "How to avoid contract-soup drift in boundary descriptions?"
+relations:
+  builds_on:
+    - "E.8"
+    - "A.6.0"
+    - "A.6.1"
+    - "A.6.3"
+    - "E.17.0"
+    - "E.17"
+    - "A.7"
+    - "F.18"
+    - "E.10.D2"
+    - "E.10"
+    - "A.6.B"
+  coordinates_with:
+    - "A.6.B"
+    - "A.6.P"
+    - "C.26"
+    - "C.26.1"
+    - "F.9"
+    - "A.10"
+    - "B.3"
+    - "E.19"
+source:
+  module: "modules/A/A.6.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 6769
+  end_line: 7224
+summary: "> Type: Architectural (A) > Status: Stable > Normativity: Mixed (normative only where explicitly marked; routing semantics live normatively in A.6.B) > Placement: Part A → A.6.\\ (cluster overview; coordinates A.6.0 / A.6.1 / A.6.3 / A.6.B / A.6.5 / A.6.6 / A.6.7) > Builds on: E.8 (authoring template), A.6.B (Boundary Norm Square — quadrant semantics & link discipline), A.6.0 (U.Signature), A.6.1 (U.Mechanism), A.6.3 (U.EpistemicViewing — views as episteme-level projections under viewpoints), E.17.0 (U.MultiViewDescribing), E.17 (MVPK — fixed face kinds & “no new semantics” publication), A.7 (Object≠Description≠Carrier), F.18 (promise/utterance/commitment), E.10.D2 (I/D/S vs Surface), E.10/L‑SURF (Surface token discipline) > Purpose (one line): Keep boundary claims evolvable by routing each"

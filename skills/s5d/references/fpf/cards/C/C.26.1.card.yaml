@@ -1,0 +1,51 @@
+id: "C.26.1"
+title: "Probe-Coupled Boundary Interaction"
+kind: "pattern"
+part: "C"
+status: "Stable"
+token_estimate:
+  card: 296
+  full: 7638
+when_to_load:
+  - "probe-coupled"
+  - "boundary"
+  - "interaction"
+  - "probe-coupled boundary"
+  - "passive read"
+  - "dashboard as instrument"
+  - "workshop as state-changing interaction"
+  - "API read"
+  - "survey"
+  - "bridge result"
+  - "export loss"
+  - "evidence window"
+provides:
+  - "When does a dashboard, workshop, metric, or API read change what it reports?"
+  - "How do I stop treating a boundary interaction as a passive read?"
+  - "When should a probe-coupled case reroute to evidence or assurance owners?"
+  - "who owns incidents?"
+  - "which context owns payment failure?"
+relations:
+  builds_on:
+    - "C.26"
+    - "A.6"
+    - "A.6.B"
+    - "A.10"
+    - "B.3"
+    - "C.16"
+    - "F.9"
+    - "A.15"
+    - "A.6.P"
+    - "C.25"
+    - "A.1.1"
+  coordinates_with:
+    - "C.26.2"
+    - "C.26.3"
+    - "A.6.8"
+source:
+  module: "modules/C/C.26.1.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 41861
+  end_line: 42164
+summary: "> Type: Architectural pattern > Status: Stable > Normativity: Normative unless explicitly marked informative"

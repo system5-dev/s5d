@@ -1,0 +1,44 @@
+id: "A.2.9"
+title: "U.SpeechAct (Communicative Work Object)"
+kind: "pattern"
+part: "A"
+status: "Stable"
+token_estimate:
+  card: 276
+  full: 5861
+when_to_load:
+  - "speechact"
+  - "communicative"
+  - "work"
+  - "object"
+  - "speech act"
+  - "communicative work"
+  - "approval/authorization/publication/revocation"
+  - "provenance"
+  - "act≠utterance≠carrier"
+  - "judgement context"
+  - "window/freshness"
+  - "institutes"
+provides:
+  - "How to model approvals/authorizations as Work?"
+  - "How to separate act vs utterance vs carrier?"
+  - "How to link commitments to instituting acts without commitment-by-publication?"
+relations:
+  refines:
+    - "A.2"
+  builds_on:
+    - "A.2.1"
+    - "A.2.6"
+    - "A.7"
+    - "A.10"
+    - "A.15.1"
+  used_by:
+    - "A.2.8"
+    - "A.6.C"
+source:
+  module: "modules/A/A.2.9.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 5263
+  end_line: 5555
+summary: "> Type: Definitional (D) > Status: Stable > Normativity: Normative (unless explicitly marked informative) > Placement: Part A → A.2 Roles & Agency Kernel > Refines: A.2 (Role Taxonomy) > Builds on: A.2.1 (RoleAssignment), A.2.6 (Γ_time / windows), A.7 (Object≠Description≠Carrier), A.10 (SCR/RSCR carrier discipline), A.15.1 (U.Work) > Purpose (one line): Provide a minimal, lintable kernel object for communicative enactments (approvals, authorizations, revocations, notices, declarations, publications) as U.Work, explicitly separating the act from its utterance descriptions and evidence carriers, so governance and gating can cite SpeechActRef without “contract soup” or episteme‑as‑agent mistakes."

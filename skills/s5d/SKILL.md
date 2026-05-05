@@ -26,9 +26,10 @@ Route → Frame → Decide → Spec → Build → Verify → Ship → Learn
 Applies only to work grounded in an existing repository. No codebase, no S5D.
 
 **Reference docs** (read when needed, not upfront):
-- [metamodel.md](metamodel.md) — artifact graph, DDD decomposition, validation rules
+- [metamodel.md](metamodel.md) — abstract metamodel: concepts, relations, enums, constraints
 - [domain-capability-mode.md](domain-capability-mode.md) — Product Intent → domain/capability design → implementation scope mode
 - [session-protocol.md](session-protocol.md) — WAL format, spec:// URI, REVIEW markers, conflicts, effectiveness metrics
+- [references/fpf/](references/fpf/) — FPF (First Principles Framework) modular corpus. Load via `references/fpf/agent/load-policy.md`: start with `entrypoints.yaml` / `glossary.yaml` / `query-index.jsonl`, then load 1–5 cards from `cards/`, expand to a full `modules/*.md` only when exact wording is needed. Cite by module id + source span (e.g. `B.5.2:13.3`).
 
 ---
 
@@ -71,7 +72,7 @@ Do not create or invoke a separate `domain-capability-design` skill. Keep the ou
 
 **Conflicts** — see [session-protocol.md](session-protocol.md). Priority: Human > Spec > Code > Tests.
 
-**Metamodel** — enforced by `s5d validate`. Lightweight specs require capabilities; standard/high specs require domains, capabilities, and components.
+**Metamodel** — enforced by `s5d verify validate` (legacy alias: `s5d validate`). Lightweight specs require capabilities; standard/high specs require domains, capabilities, and components.
 
 ---
 
@@ -83,6 +84,34 @@ Every active spec has two mutable surfaces:
 - `.s5d/records/<spec-id>__<date>.record.yaml` — runtime state: preview diff, approvals, gate results, import fingerprint, decision record, reflection, outcome verdict.
 
 `s5d_new` creates both. `s5d_add_hypothesis` / `s5d_add_evidence` edit spec YAML. Lifecycle commands such as preview, approve, gates, import, phase, and reflect update the record file; read-only commands do not.
+
+---
+
+## Code Decision & Change Tracking
+
+S5D's job is to answer two questions for code:
+
+1. **Why is this code shaped this way?** Follow `component.paths` → component → capability/domain → decision hypothesis/record.
+2. **Did the code drift from the approved architecture?** Use discovery/codebase snapshots, gates, import hashes, and drift-check.
+
+Use `s5d trace <path>` / `s5d_trace` when the question starts from code. Trace is read-only and shows the specs, components, capabilities, and decision records that claim a source path.
+
+Decision records are not generic notes. A decision that changes code must bind to:
+- a problem signal and competing hypotheses;
+- the winning hypothesis and its linked feature spec (`spec_ref`);
+- affected domains, capabilities, components, contracts, and `component.paths`;
+- evidence/gates that justify the change;
+- the record decision fields written by `s5d decision decide`.
+
+Code tracking uses one path:
+
+```text
+spec artifacts -> preview diff -> human approval -> code change -> gates -> import hash -> drift-check -> reflect
+```
+
+Use `s5d discover sync/check` for a repository evidence graph and `s5d codebase sync/check` for source coverage. These snapshots support investigation; the `.record.yaml` approval/import chain remains the runtime truth.
+
+Effective gates are part of the code decision contract. If `gates:` is empty, CLI/MCP use tier defaults from the Rust core (`decision: review`, `lightweight: schema`, `standard: schema+graph`, `high: schema+graph+review`). Explicit `gates:` override the defaults.
 
 ---
 
@@ -131,7 +160,7 @@ s5d phase run <decision-spec> --id frame --engine claude-sonnet
 s5d phase run <decision-spec> --id frame --engine gemini-pro
 ```
 
-After reading the three outputs, deduplicate and add hypotheses/evidence with `s5d add-hypothesis` / `s5d add-evidence` or by editing the decision spec followed by `s5d validate`.
+After reading the three outputs, deduplicate and add hypotheses/evidence with `s5d decision add-hypothesis` / `s5d decision add-evidence` or by editing the decision spec followed by `s5d verify validate`. Legacy hidden aliases such as `s5d add-hypothesis` remain callable for scripts.
 
 ---
 
@@ -142,26 +171,26 @@ After reading the three outputs, deduplicate and add hypotheses/evidence with `s
 | Action | MCP | CLI | Hard preconditions |
 |---|---|---|---|
 | Bootstrap workspace | `s5d_init` | `s5d init [--claude] [--all]` | Safe to re-run. |
-| Rust pre-commit hook | — | `s5d hook pre-commit` | Read-only. Runs on staged specs/source. Installed by `s5d init` when `.git/` exists. |
-| Self-update check | — | `s5d update check` | Read-only. Plugin SessionStart runs `s5d update check --hook`. |
-| Self-update apply | — | `s5d update apply` | Fast-forwards the S5D checkout, relinks skills, replaces installed binary. |
+| Rust pre-commit hook | — | `s5d hook pre-commit` hidden alias | Read-only. Runs on staged specs/source. Installed by `s5d init` when `.git/` exists. |
+| Self-update check | — | `s5d admin update check` | Read-only. Plugin SessionStart may still run legacy `s5d update check --hook`. |
+| Self-update apply | — | `s5d admin update apply` | Fast-forwards the S5D checkout, relinks skills, replaces installed binary. Legacy alias: `s5d update apply`. |
 | Create scaffold | `s5d_new` | `s5d new` | Scaffold only — does not populate problem/artifacts. CLI `--hypothesis-id` auto-links `spec_ref`. |
-| Quick note | `s5d_note` | `s5d note` | Shorthand for `s5d new note.<slug> --tier note`. |
-| Add hypothesis | `s5d_add_hypothesis` | `s5d add-hypothesis` | Decision tier only. Duplicate IDs rejected. |
-| Add evidence | `s5d_add_evidence` | `s5d add-evidence` | Decision tier only. `formality` 1–5 on command surface. |
-| Validate | `s5d_validate` | `s5d validate` | Read-only. Must pass before preview. |
-| Graph check | `s5d_graph_check` | `s5d graph-check` | Cycles/layering errors block preview. |
-| Architecture check | — | `s5d check <spec>` | Read-only. Validates component paths and declared source dependencies for specs with architecture ownership. |
+| Quick note | `s5d_note` | `s5d new note.<slug> --tier note` | Hidden shorthand alias: `s5d note`. |
+| Add hypothesis | `s5d_add_hypothesis` | `s5d decision add-hypothesis` | Decision tier only. Duplicate IDs rejected. Legacy alias: `s5d add-hypothesis`. |
+| Add evidence | `s5d_add_evidence` | `s5d decision add-evidence` | Decision tier only. `formality` 1–5 on command surface. Legacy alias: `s5d add-evidence`. |
+| Validate | `s5d_validate` | `s5d verify validate` | Read-only. Must pass before preview. Legacy alias: `s5d validate`. |
+| Graph check | `s5d_graph_check` | `s5d verify graph-check` | Cycles/layering errors block preview. Legacy alias: `s5d graph-check`. |
+| Architecture check | — | `s5d verify check <spec>` | Read-only. Validates component paths and declared source dependencies for specs with architecture ownership. Legacy alias: `s5d check`. |
 | Codebase coverage | — | `s5d codebase sync` / `s5d codebase check` | Maintains `.s5d/codebase/*` from source files and component paths. Pre-commit checks it when the snapshot exists. |
 | Discovery graph | — | `s5d discover sync` / `s5d discover check` | Maintains `.s5d/discovery/*`: stack-agnostic file index, evidence JSONL, graph JSON, and metamodel projection. |
-| Preview | `s5d_preview` | `s5d preview` | Records `previewed_spec_sha256`. Stale after spec change. |
-| Approve | `s5d_approve` | `s5d approve --reviewer <name>` | Must be `previewed`. Binds `spec_sha256` + `diff_sha256`. |
-| Run gates | `s5d_run_gates` | `s5d run-gates` | Schema/graph run built-in if no external command. Failed gate blocks import. |
-| Waive gate | `s5d_waiver` | MCP only | Gate kind must exist in spec. |
-| Import | `s5d_import` | `s5d import --verified-by <name> [--force]` | Requires: explicit verifier, approved spec, spec hash match, diff hash match, all gates passed/waived. |
-| Decide | `s5d_decide` | `s5d decide --confirmed-by <name>` | Decision tier. Winner must have `spec_ref`. Human confirmation required. |
-| Reflect | `s5d_reflect` | `s5d reflect --summary ... --heuristic ... [--verdict ...] [--measurement-window ...] [--telemetry ...]` | Writes to record only (not spec). |
-| Route | `s5d_route` | `s5d route` | Classifies into tier + mode + entry point. |
+| Preview | `s5d_preview` | `s5d apply preview` | Records `previewed_spec_sha256`. Stale after spec change. Legacy alias: `s5d preview`. |
+| Approve | `s5d_approve` | `s5d apply approve --reviewer <name>` | Must be `previewed`. Binds `spec_sha256` + `diff_sha256`. Legacy alias: `s5d approve`. |
+| Run gates | `s5d_run_gates` | `s5d verify run-gates` | Runs effective gates. Built-ins: schema, graph, review, architecture. `review` requires ≥1 `evidence_type=gate:review` with `verdict=pass`. Legacy alias: `s5d run-gates`. |
+| Waive gate | `s5d_waiver` | MCP only | Gate kind must exist in the effective gate contract. |
+| Import | `s5d_import` | `s5d apply import --verified-by <name> [--force]` | Requires: explicit verifier, approved spec, spec hash match, diff hash match, all gates passed/waived. Legacy alias: `s5d import`. |
+| Decide | `s5d_decide` | `s5d decision decide --confirmed-by <name>` | Decision tier. Winner must have `spec_ref`. Human confirmation required. Legacy alias: `s5d decide`. |
+| Reflect | `s5d_reflect` | `s5d apply reflect --summary ... --heuristic ... [--verdict ...] [--measurement-window ...] [--telemetry ...]` | Writes to record only (not spec). Legacy alias: `s5d reflect`. |
+| Route | `s5d_route` | `s5d route` hidden alias | Classifies into tier + mode + entry point. |
 
 ### Workflow Shell Commands
 
@@ -171,10 +200,10 @@ After reading the three outputs, deduplicate and add hypotheses/evidence with `s
 | Start phase | `s5d_phase_start` | `s5d phase start <spec> --id <phase>` | Spec must be approved or later. No other phase may already be active. |
 | Run external engine | — | `s5d phase run <spec> --id <phase> --engine <name>` | Phase must be active. Engine must be approved in `.s5d/config.yaml`. Captures stdout/stderr under `.s5d/runs/` and records output hash in `.record.yaml`. Does not accept the phase. |
 | Accept phase | `s5d_phase_accept` | `s5d phase accept <spec> --id <phase> --reviewer <name>` | Phase must already be active. Human reviewer required. |
-| Emit Ralph task package | `s5d_execute_loop` | `s5d execute loop <spec> --phase <id> --engine ralph [--mode init|bugfix]` | Phase must be active. Workflow engine must match and currently only `ralph` is supported. Each run persists a task artifact under `.s5d/tasks/`. |
-| Start operational harness | — | `s5d harness start <spec> --phase <id> --name <id>` | Requires clean source worktree unless `--force`. Creates an isolated git worktree, starts the phase there, and writes `.s5d/harness/<id>.yaml`. |
-| Harness status | — | `s5d harness status <id>` | Shows worktree, branch, phase, heartbeat freshness, current command, and last event. Harness status is operational visibility only. |
-| Harness command | — | `s5d harness exec <id> --timeout-s <n> -- <cmd> ...` | Runs an argv command in the harness worktree, captures stdout/stderr under `.s5d/harness/<id>/commands/`, records timeout/failure/completion in the journal. |
+| Emit Ralph task package | `s5d_execute_loop` | `s5d phase loop <spec> --phase <id> --engine ralph [--mode init|bugfix]` | Phase must be active. Workflow engine must match and currently only `ralph` is supported. Each run persists a task artifact under `.s5d/tasks/`. Legacy alias: `s5d execute loop`. |
+| Start operational harness | — | `s5d phase harness start <spec> --phase <id> --name <id>` | Requires clean source worktree unless `--force`. Creates an isolated git worktree, starts the phase there, and writes `.s5d/harness/<id>.yaml`. Legacy alias: `s5d harness start`. |
+| Harness status | — | `s5d phase harness status <id>` | Shows worktree, branch, phase, heartbeat freshness, current command, and last event. Harness status is operational visibility only. Legacy alias: `s5d harness status`. |
+| Harness command | — | `s5d phase harness exec <id> --timeout-s <n> -- <cmd> ...` | Runs an argv command in the harness worktree, captures stdout/stderr under `.s5d/harness/<id>/commands/`, records timeout/failure/completion in the journal. Legacy alias: `s5d harness exec`. |
 
 Ralph run modes stay runtime-only for now:
 - `init` — warm up repository context from docs, tests, environment setup, and test-suite output
@@ -187,9 +216,10 @@ Ralph run modes stay runtime-only for now:
 |---|---|---|
 | Check lifecycle state | `s5d_status` / `s5d status` | Lists spec status and sync state. |
 | Inspect spec | `s5d_show` / `s5d show` | Spec shape. For approval/gate truth, check `.record.yaml`. |
-| Verify applied state | `s5d_drift_check` / `s5d drift-check` | Compares live state to last applied fingerprint. |
-| Fix drifted state | `s5d_reconcile` / `s5d reconcile` | Re-imports without re-approval. |
-| Undo import | `s5d_rollback` / `s5d rollback` | Tombstones last import for that spec. |
+| Trace code path | `s5d_trace` / `s5d trace <path>` | Shows specs, components, capabilities, and decisions that claim a source path. |
+| Verify applied state | `s5d_drift_check` / `s5d apply drift-check` | Compares live state to last applied fingerprint. Legacy alias: `s5d drift-check`. |
+| Fix drifted state | `s5d_reconcile` / `s5d apply reconcile` | Re-imports without re-approval. Legacy alias: `s5d reconcile`. |
+| Undo import | `s5d_rollback` / `s5d apply rollback` | Tombstones last import for that spec. Legacy alias: `s5d rollback`. |
 
 ---
 
@@ -204,9 +234,9 @@ s5d new decision.refresh-rotation --tier decision --product auth \
   --question "How should refresh tokens rotate?"
 
 # 2. Hypotheses + evidence
-s5d add-hypothesis <spec> --title "Server-side rotation" \
+s5d decision add-hypothesis <spec> --title "Server-side rotation" \
   --content "Rotate on every refresh, persist token family state" --scope "auth boundary"
-s5d add-evidence <spec> --hypothesis-id server-side-rotation \
+s5d decision add-evidence <spec> --hypothesis-id server-side-rotation \
   --evidence-type internal --content "Revocation lookup <5ms at p95" \
   --verdict pass --formality 4 --claim-scope latency --reliability 0.8
 
@@ -215,29 +245,31 @@ s5d new feat.refresh-rotation --tier standard --product auth \
   --hypothesis-id server-side-rotation
 
 # 4. Validate + decide + preview
-s5d validate <feature-spec>
-s5d graph-check <feature-spec>
-s5d decide <decision-spec> --title "Use server-side rotation" \
+s5d verify validate <feature-spec>
+s5d verify graph-check <feature-spec>
+s5d decision decide <decision-spec> --title "Use server-side rotation" \
   --winner server-side-rotation --confirmed-by Roman \
   --context "Revocation correctness > token statelessness" \
   --decision "Adopt server-side rotation" \
   --rationale "Best revocation/complexity balance" \
   --consequences "Needs persistent token-family store"
-s5d preview <feature-spec>
+s5d apply preview <feature-spec>
 # → WAL: status=AWAITING_HUMAN, pending=approve
 
 # 5. After human approval: approve → build → gates → import → verify
-s5d approve <feature-spec> --reviewer Roman
+s5d apply approve <feature-spec> --reviewer Roman
 # implement code
-s5d run-gates <feature-spec>
-s5d import <feature-spec> --verified-by Diana
+s5d verify run-gates <feature-spec>
+s5d apply import <feature-spec> --verified-by Diana
 
 # 6. Ship (explicit human permission for push/deploy)
 
 # 7. Learn
-s5d reflect <feature-spec> --summary "Shipped cleanly" \
+s5d apply reflect <feature-spec> --summary "Shipped cleanly" \
   --heuristic "Link winner to feature spec before decide"
 ```
+
+Hidden legacy CLI aliases such as `s5d add-hypothesis`, `s5d validate`, `s5d execute loop`, and `s5d harness start` remain supported for existing scripts, but the grouped forms above are the canonical surface.
 
 ---
 

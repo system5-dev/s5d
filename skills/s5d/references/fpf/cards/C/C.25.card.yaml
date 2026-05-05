@@ -1,0 +1,55 @@
+id: "C.25"
+title: "Q-Bundle: Authoring \"-ilities\" as Structured Quality Bundles"
+kind: "pattern"
+part: "C"
+status: "Stable"
+token_estimate:
+  card: 284
+  full: 6880
+when_to_load:
+  - "q-bundle"
+  - "authoring"
+  - "ilities"
+  - "structured"
+  - "quality"
+  - "bundles"
+  - "quality bundle"
+  - "-ility"
+  - "quality family"
+  - "characteristic plus scope"
+  - "mechanism/status slots"
+  - "endpoint routing"
+  - "viability envelope"
+  - "proxy metric"
+  - "supported use"
+  - "failure mode"
+provides:
+  - "What is a Q-Bundle in FPF?"
+  - "When is an -ility one characteristic and when is it a bundle?"
+  - "When does a viability claim need C.26.3 rather than one metric?"
+relations:
+  builds_on:
+    - "A.2.6"
+    - "A.6.1"
+    - "C.16"
+    - "B.3"
+    - "A.18"
+  coordinates_with:
+    - "A.6.Q"
+    - "A.15"
+    - "C.26.3"
+    - "C.2.2a"
+    - "A.16.0"
+    - "B.3"
+    - "C.17"
+    - "C.18"
+    - "C.19"
+    - "F.9"
+    - "F.9.1"
+source:
+  module: "modules/C/C.25.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 40876
+  end_line: 41283
+summary: "> Type: Definitional (D) > Status: Stable > Normativity: Normative unless marked informative"

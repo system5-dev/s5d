@@ -1,0 +1,49 @@
+id: "A.6.3.CR"
+title: "ConservativeRetextualization — same-described-entity textual re-expression"
+kind: "pattern"
+part: "A"
+status: "Stable"
+token_estimate:
+  card: 276
+  full: 8169
+when_to_load:
+  - "conservativeretextualization"
+  - "same-described-entity"
+  - "textual"
+  - "re-expression"
+  - "retextualization"
+  - "summary"
+  - "report rewrite"
+  - "translation"
+  - "filtering"
+  - "same-described-entity textual re-expression"
+  - "direct vs correspondence-mediated rewrite"
+  - "source tether"
+provides:
+  - "When is a summary still a conservative same-entity view?"
+  - "How does FPF treat same-entity translation or report rewriting?"
+  - "When does a softened rewrite need Controlled Semantic Coarsening instead?"
+relations:
+  builds_on:
+    - "A.6.3"
+    - "A.6.2"
+    - "A.7"
+    - "E.10.D2"
+    - "E.17.0"
+    - "E.17"
+    - "F.9"
+    - "F.18"
+    - "E.10"
+  coordinates_with:
+    - "A.6.3.CSC"
+    - "E.17.ID.CR"
+    - "A.6.4"
+    - "B.5.2"
+    - "A.15"
+source:
+  module: "modules/A/A.6.3.CR.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 10415
+  end_line: 10739
+summary: "Placement. Specialization under A.6.3 U.EpistemicViewing for same-described-entity textual re-expression. Builds on. A.6.3 U.EpistemicViewing; A.6.2 U.EffectFreeEpistemicMorphing; A.7; E.10.D2; E.17.0; E.17; F.9; F.18; E.10. Coordinates with. ExplanationFaithfulnessProfile; RepresentationTransduction; E.17.ID.CR ComparativeReading; A.6.4 U.EpistemicRetargeting; B.5.2; A.15."

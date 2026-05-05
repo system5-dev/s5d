@@ -1,0 +1,43 @@
+id: "A.2.8"
+title: "U.Commitment (Deontic Commitment Object)"
+kind: "pattern"
+part: "A"
+status: "Stable"
+token_estimate:
+  card: 276
+  full: 6030
+when_to_load:
+  - "commitment"
+  - "deontic"
+  - "object"
+  - "deontics"
+  - "obligation/permission/prohibition"
+  - "modality normalization"
+  - "scope+validity window"
+  - "adjudication hooks"
+  - "evidenceRefs"
+  - "BCP‑14 (RFC 2119/8174"
+provides:
+  - "How to represent MUST/SHALL as a lintable object?"
+  - "How to keep deontics separate from admissibility gates?"
+  - "How to make commitments auditable via evidence hooks?"
+relations:
+  refines:
+    - "A.2"
+  builds_on:
+    - "A.2.1"
+    - "A.2.3"
+    - "A.2.6"
+    - "A.7"
+    - "A.15.1"
+    - "E.8"
+  used_by:
+    - "A.6.B"
+    - "A.6.C"
+source:
+  module: "modules/A/A.2.8.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 4942
+  end_line: 5262
+summary: "> Type: Definitional (D) > Status: Stable > Normativity: Normative (unless explicitly marked informative) > Placement: Part A → A.2 Roles & Agency Kernel > Refines: A.2 (Role Taxonomy) > Builds on: E.8 (authoring template), A.2.1 (RoleAssignment), A.2.6 (Scope & Γ_time), A.7 (Object≠Description≠Carrier), A.2.3 (U.PromiseContent as promise), A.15.1 (U.Work) > Purpose (one line): Provide a minimal, reusable kernel object for deontic commitments (who is accountable, under what modality, in what scope/window, with respect to which referents, with which adjudication hooks), explicitly separating the commitment object from its utterance descriptions (A.7), so deontics stop “living” in naming patterns and become stable across A.6 and later governance patterns."

@@ -1,0 +1,60 @@
+id: "G.8"
+title: "SoS‑LOG Bundles & Maturity Ladders"
+kind: "pattern"
+part: "G"
+status: "Stable"
+token_estimate:
+  card: 236
+  full: 8338
+when_to_load:
+  - "sos"
+  - "log"
+  - "bundles"
+  - "maturity"
+  - "ladders"
+  - "SoS-LOG"
+  - "rule ids"
+  - "admissibility ledger"
+  - "tri-state {pass"
+provides:
+  []
+relations:
+  builds_on:
+    - "C.23"
+    - "G.4"
+    - "G.6"
+    - "G.5"
+    - "C.22"
+  coordinates_with:
+    - "G.7"
+    - "G.10"
+    - "G.11"
+    - "F.8"
+    - "F.9"
+    - "E.18"
+    - "E.10"
+    - "E.5.2"
+  uses:
+    - "C.23"
+    - "G.4"
+    - "G.7"
+    - "F.9"
+    - "C.18"
+    - "G.5"
+    - "C.19"
+    - "A.10"
+    - "F.8"
+    - "G.11"
+    - "G.10"
+    - "E.10"
+    - "E.5.2"
+    - "E.18"
+    - "A.21"
+    - "A.27"
+source:
+  module: "modules/G/G.8.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 65871
+  end_line: 66339
+summary: "Tag. Architectural pattern (packaging kit). Stage. Design‑time packaging (authoring & publication) with a run‑time consumption facade for G.5 (selector/registry). Primary hooks: G.Core (Part‑G invariants), C.23 (SoS‑LOG semantics), C.22 (TaskSignature), G.4 (Acceptance & EvidenceProfiles), G.6 (EvidenceGraph & PathId/PathSliceId), G.5 (registry/selector), G.11 (refresh orchestration), G.10 (shipping boundary), F.9 (BridgeCard & CL), G.7 (bridge calibration & Φ/Ψ/Φ_plane), F.8 (Policy pins: PolicySpecRef/MintDecisionRef resolvability), A.10 (anchors), E.10 (LEX twin registers), E.5.2 (notational independence), E.18/A.21/A.27 (GateCrossing visibility)."

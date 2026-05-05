@@ -1,0 +1,38 @@
+id: "C.2"
+title: "Epistemic holon composition (KD-CAL)"
+kind: "pattern"
+part: "C"
+status: "Stable"
+token_estimate:
+  card: 284
+  full: 3450
+when_to_load:
+  - "epistemic"
+  - "holon"
+  - "composition"
+  - "kd-cal"
+  - "knowledge"
+  - "evidence"
+  - "trust"
+  - "assurance"
+  - "F-G-R"
+  - "Formality"
+  - "ClaimScope"
+  - "Reliability"
+  - "provenance"
+provides:
+  - "What is F-G-R?"
+  - "How does FPF handle evidence and trust?"
+  - "How to model a scientific theory?"
+relations:
+  builds_on:
+    - "A.1"
+    - "A.10"
+    - "B.3"
+source:
+  module: "modules/C/C.2.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 31560
+  end_line: 31676
+summary: "Scope & exports. A substrate‑neutral calculus for composing epistemic holons (U.Episteme) and reasoning about their motion and equivalence. Exports: (i) three point‑characteristics—Formality F, ClaimScope G, Reliability R—that locate a single episteme; (ii) a pairwise ladder of Congruence Levels (CL 0…3); (iii) four Δ‑moves (Formalise, Generalise/Specialise, Calibrate/Validate, Congrue); (iv) composition rules (Γ_epist) for aggregates; (v) propagation laws for CL through mappings and notation bridges. KD‑CAL sits on the U.Episteme semantic triangle (Symbol–Concept–Object) and never confuses notation with carrier. All F–G–R computations are context‑local; Cross‑context traversals require an explicit Bridge with CL and apply the B.3 congruence penalty Φ(CL) to R. // Contexts ≡ U.BoundedConte"

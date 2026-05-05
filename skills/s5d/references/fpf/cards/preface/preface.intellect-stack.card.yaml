@@ -1,0 +1,22 @@
+id: "preface.intellect-stack"
+title: "Intellect Stack"
+kind: "preface_article"
+part: "preface"
+status: null
+token_estimate:
+  card: 220
+  full: 865
+when_to_load:
+  - "intellect"
+  - "stack"
+provides:
+  []
+relations:
+
+source:
+  module: "modules/preface/preface.intellect-stack.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 800
+  end_line: 823
+summary: "Complex problems fail more often from mis‑aligned competencies than from missing facts. Inside one brain—or one team—model builders, testers, and decision makers can behave like separate departments. The Intellect Stack offers a layered map of cognitive skills, showing how FPF’s patterns combine into an “operating system for thought.”"

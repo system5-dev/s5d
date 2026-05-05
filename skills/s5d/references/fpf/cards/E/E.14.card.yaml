@@ -1,0 +1,37 @@
+id: "E.14"
+title: "Human‑Centric Working‑Model"
+kind: "pattern"
+part: "E"
+status: "Stable"
+token_estimate:
+  card: 256
+  full: 9024
+when_to_load:
+  - "human"
+  - "centric"
+  - "working"
+  - "model"
+  - "working model"
+  - "human-centric"
+  - "publication surface"
+  - "grounding"
+  - "assurance layers"
+provides:
+  - "What is the main interface for FPF users?"
+  - "How does FPF separate human-readable models from formal assurance?"
+relations:
+  builds_on:
+    - "E.7"
+    - "E.8"
+    - "C.2.3"
+  coordinates_with:
+    - "B.3.5"
+    - "C.13"
+    - "E.10"
+source:
+  module: "modules/E/E.14.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 49037
+  end_line: 49343
+summary: "Establish a single, human‑centric Working‑Model that practitioners can read, discuss, and evolve without exposure to formal machinery. Each statement declares a justification stance (validationMode) and, when assurance is sought, attaches appropriate grounding via one or more assurance shoulders — Mapping, Logical, Constructive — and may additionally attach Empirical Validation (evidence) as defined by the Trust & Assurance calculus. Empirical Validation can accompany any stance; it is required when the stance is postulate. Assurance shoulders sit beneath the Working‑Model and never define its vocabulary. Put bluntly: one model people work in; three assurance shoulders — plus empirical checks when the world is the judge."

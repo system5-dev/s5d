@@ -1,0 +1,35 @@
+id: "B.1.2"
+title: "System‑specific Aggregation Γ\\_sys"
+kind: "pattern"
+part: "B"
+status: "Stable"
+token_estimate:
+  card: 260
+  full: 3071
+when_to_load:
+  - "system"
+  - "specific"
+  - "aggregation"
+  - "sys"
+  - "system aggregation"
+  - "physical systems"
+  - "mass"
+  - "energy"
+  - "boundary rules"
+  - "Sys-CAL"
+provides:
+  - "How to aggregate physical systems?"
+  - "Conservation laws in FPF aggregation?"
+relations:
+  builds_on:
+    - "B.1"
+    - "A.1"
+    - "C.1"
+    - "A.3"
+source:
+  module: "modules/B/B.1.2.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 27235
+  end_line: 27380
+summary: "► decided‑by: A.14 Advanced Mereology A.14 compliance — Treat PortionOf as Σ‑additive stocks; ComponentOf must respect boundary integration (BIC); PhaseOf is not aggregated here (handled by Γ\\_time); mapping/representations are not parthood."

@@ -1,0 +1,65 @@
+id: "G.2"
+title: "SoTA Harvester & Synthesis"
+kind: "pattern"
+part: "G"
+status: "Stable"
+token_estimate:
+  card: 292
+  full: 11994
+when_to_load:
+  - "sota"
+  - "harvester"
+  - "synthesis"
+  - "SoTA harvest"
+  - "SoTA Synthesis Pack@CG-Frame"
+  - "SoTAPaletteDescription"
+  - "Tradition"
+  - "TraditionAtlasView"
+  - "CrossSurfaceAtlasView"
+  - "TypedSetViews"
+  - "BridgeMatrix"
+  - "GammaEpistSynthId"
+  - "FlowRecord"
+  - "palette-first"
+provides:
+  - "How does FPF harvest and synthesize SoTA for a CG-Frame?"
+  - "When is TraditionAtlasView lawful and when is palette-first or thinner support enough?"
+  - "How do competing Traditions stay plural while bridgeable and refreshable?"
+relations:
+  builds_on:
+    - "E.8"
+    - "E.10"
+    - "E.19"
+    - "A.10"
+    - "B.3"
+    - "F.9"
+    - "F.17"
+    - "G.0"
+  used_by:
+    - "G.1"
+    - "G.3"
+    - "G.4"
+    - "G.5"
+    - "G.10"
+    - "G.11"
+  coordinates_with:
+    - "A.19.SUPPORT-VIEW"
+    - "A.6.P"
+    - "G.13"
+  uses:
+    - "B.3"
+    - "F.9"
+    - "G.6"
+    - "A.10"
+    - "C.21"
+    - "G.7"
+    - "C.18"
+    - "C.19"
+    - "G.13"
+source:
+  module: "modules/G/G.2.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 63081
+  end_line: 63584
+summary: "> Type: Architectural (A) > Status: Stable > Normativity: Normative (unless explicitly marked informative) > > Purpose. Provide a repeatable, auditable way to discover, triage, and synthesize state‑of‑the‑art (SoTA) across competing Tradition lineages before minting CHR/CAL/LOG assets for a CG‑Frame. > The primary output is a SoTA Synthesis Pack@CG‑Frame that feeds: > > naming/publication (UTS), > CHR authoring (G.3), > CAL authoring (G.4), > method/generator registries and dispatch (G.5). > > Scope note. This pattern owns the harvesting + synthesis generator in Part G. Shipping ownership is in G.10, refresh orchestration ownership is in G.11. > > Terminology note (normative). In normative clauses below, Tradition refers to the Tech token Tradition (a plural lineage with internally coheren"

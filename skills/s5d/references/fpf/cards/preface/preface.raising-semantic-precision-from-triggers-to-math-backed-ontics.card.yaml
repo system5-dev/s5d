@@ -1,0 +1,27 @@
+id: "preface.raising-semantic-precision-from-triggers-to-math-backed-ontics"
+title: "Raising Semantic Precision: From Triggers to Math‑Backed Ontics"
+kind: "preface_article"
+part: "preface"
+status: null
+token_estimate:
+  card: 220
+  full: 732
+when_to_load:
+  - "raising"
+  - "semantic"
+  - "precision"
+  - "triggers"
+  - "math"
+  - "backed"
+  - "ontics"
+provides:
+  []
+relations:
+
+source:
+  module: "modules/preface/preface.raising-semantic-precision-from-triggers-to-math-backed-ontics.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 709
+  end_line: 731
+summary: "FPF does not assume people will speak in fully‑typed relational algebra on day one. Early thought is sketchy, and that is healthy. What matters is having a repeatable upgrade path—a way to go from “useful but ambiguous” to “auditable and reusable” when a statement starts carrying load."

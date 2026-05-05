@@ -158,6 +158,26 @@ Rules: always include `spec://` URI, state what-was-implemented vs. what-AI-pref
 
 ---
 
+## 6.1 Code Review as Evidence (`gate:review`)
+
+REVIEW markers above are inline annotations. **Code review of the change itself** — done by an external reviewer (human, tribunal, reviewer agent) — is recorded as an evidence record with `evidence_type=gate:review`.
+
+```bash
+s5d add-evidence <spec> --hypothesis-id <id> \
+  --evidence-type gate:review \
+  --content "Reviewer findings: ..." \
+  --verdict pass \
+  --formality 3 \
+  --claim-scope "code-quality,security" \
+  --reliability 0.85
+```
+
+**Built-in `review` gate** (decision/high tiers, default) passes when ≥1 such evidence exists with `verdict=pass`. S5D does not invoke reviewers — it records and verifies.
+
+Reviewer identity: include reviewer name in `content` (or commit ledger via `s5d approve --reviewer`). Verdicts: `pass` / `fail` / `refine`. Findings go in `content` (markdown allowed). Sub-types via colon: `gate:review:security`, `gate:review:performance`.
+
+---
+
 ## 7. Atomicity
 
 One commit = one logical change. Each commit references its spec point:

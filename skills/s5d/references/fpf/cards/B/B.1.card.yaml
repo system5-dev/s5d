@@ -1,0 +1,39 @@
+id: "B.1"
+title: "Universal Algebra of Aggregation (Γ)"
+kind: "pattern"
+part: "B"
+status: "Stable"
+token_estimate:
+  card: 284
+  full: 4094
+when_to_load:
+  - "universal"
+  - "algebra"
+  - "aggregation"
+  - "composition"
+  - "holon"
+  - "invariants"
+  - "IDEM"
+  - "COMM"
+  - "LOC"
+  - "WLNK"
+  - "MONO"
+  - "gamma operator"
+provides:
+  - "How does FPF combine parts into a whole?"
+  - "What are the rules for aggregation?"
+  - "What is the Gamma (Γ) operator?"
+relations:
+  builds_on:
+    - "A.1"
+    - "A.9"
+  prerequisite_for:
+    - "B.1.x"
+    - "B.2"
+source:
+  module: "modules/B/B.1.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 26721
+  end_line: 26894
+summary: "FPF views reality as a nested holarchy: parts → assemblies → systems → ecosystems; axioms → lemmas → theories → paradigms (this is only example, exact levels of holarhy as hierarhy of holons is not defined and project-depended). Each level is a U.Holon that becomes the part of a wider holon one tier up — but only after an explicit act of construction has glued the parts together. That act is performed by a physical Transformer playing TransformerRole executing a method over an explicit Dependency Graph. Without a domain‑neutral law of composition binding these moves, the logical ladder between scales would break, violating the core rule Cross‑Scale Consistency."

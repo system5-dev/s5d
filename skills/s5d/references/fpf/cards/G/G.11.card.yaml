@@ -1,0 +1,58 @@
+id: "G.11"
+title: "Telemetry-Driven Refresh & Decay Orchestrator"
+kind: "pattern"
+part: "G"
+status: "Stable"
+token_estimate:
+  card: 288
+  full: 7700
+when_to_load:
+  - "telemetry-driven"
+  - "refresh"
+  - "decay"
+  - "orchestrator"
+  - "telemetry"
+  - "RSCR"
+  - "PathSlice"
+  - "Bridge Sentinels"
+  - "edition-aware"
+  - "epistemic debt"
+  - "deprecation"
+  - "edition bumps"
+  - "re-shipping"
+provides:
+  - "How does FPF keep SoTA packs up-to-date?"
+  - "What triggers refresh / RSCR reruns?"
+  - "How are deprecations and edition bumps governed?"
+relations:
+  builds_on:
+    - "G.6"
+    - "G.7"
+    - "G.5"
+    - "G.8"
+    - "G.9"
+    - "G.10"
+    - "B.3.4"
+    - "E.18"
+  coordinates_with:
+    - "G.12"
+    - "C.18"
+    - "C.19"
+    - "C.23"
+    - "F.15"
+  uses:
+    - "B.3.4"
+    - "G.6"
+    - "C.18"
+    - "C.19"
+    - "G.5"
+    - "G.8"
+    - "G.9"
+    - "G.11"
+source:
+  module: "modules/G/G.11.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 67157
+  end_line: 67515
+summary: "Tag. Architectural pattern (architectural; notation-independent) Status. Stable Normativity. Normative (unless explicitly marked informative)"

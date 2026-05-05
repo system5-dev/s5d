@@ -1,0 +1,54 @@
+id: "A.6.B"
+title: "Boundary Norm Square (Laws / Admissibility / Deontics / Work‑Effects)"
+kind: "pattern"
+part: "A"
+status: "Stable"
+token_estimate:
+  card: 276
+  full: 12759
+when_to_load:
+  - "boundary"
+  - "norm"
+  - "square"
+  - "laws"
+  - "admissibility"
+  - "deontics"
+  - "work"
+  - "effects"
+  - "boundary norm square"
+  - "atomic claims"
+  - "L/A/D/E routing"
+  - "laws vs gates vs commitments vs evidence"
+  - "supported use"
+  - "unsupported use"
+  - "claim IDs"
+  - "triangle decomposition"
+provides:
+  - "What is the Boundary Norm Square in FPF?"
+  - "How do I decompose probe-coupled or mixed boundary statements?"
+  - "Where do RFC keywords and use conditions belong in FPF patterns?"
+relations:
+  builds_on:
+    - "E.8"
+    - "A.6.0"
+    - "A.6.1"
+    - "A.6.3"
+    - "E.17.0"
+    - "E.17"
+    - "A.7"
+    - "F.18"
+    - "E.10.D2"
+    - "E.10"
+  coordinates_with:
+    - "A.6"
+    - "A.6.P"
+    - "C.26.1"
+    - "A.10"
+    - "B.3"
+source:
+  module: "modules/A/A.6.B.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 7645
+  end_line: 8320
+summary: "> Type: Architectural (A) > Status: Stable > Normativity: Normative (unless explicitly marked informative) > Placement: Part A → A.6.B (matrix module; referenced by A.6 cluster overview) > Builds on: E.8 (authoring template), A.6.0 (U.Signature), A.6.1 (U.Mechanism), A.6.3 (U.EpistemicViewing), E.17.0/E.17 (MVPK + “no new semantics” faces), A.7 (Object≠Description≠Carrier), F.18 (promise/utterance/commitment), E.10.D2 (I/D/S vs Surface), E.10/L‑SURF (Surface token discipline) > Purpose (one line): Provide a canonical 2×2 norm square that classifies boundary statements (L/A/D/E), constrains how each quadrant is written, and defines explicit cross‑quadrant reference rules so boundaries remain evolvable and audit‑ready."

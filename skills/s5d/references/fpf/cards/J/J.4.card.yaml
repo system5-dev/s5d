@@ -1,0 +1,25 @@
+id: "J.4"
+title: "First Practical Entry Neighborhood Index"
+kind: "pattern"
+part: "J"
+status: "Stable"
+token_estimate:
+  card: 220
+  full: 1727
+when_to_load:
+  - "first"
+  - "practical"
+  - "entry"
+  - "neighborhood"
+  - "index"
+provides:
+  []
+relations:
+
+source:
+  module: "modules/J/J.4.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 68491
+  end_line: 68535
+summary: "This index is informative navigation only. It helps one reader compare plausible first pattern entries under one live burden. It is not one route table, not one workflow, not one learning syllabus, and not one pattern-local recognition role. It is one compact comparison of nearby starting points."

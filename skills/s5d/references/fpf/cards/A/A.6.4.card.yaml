@@ -1,0 +1,40 @@
+id: "A.6.4"
+title: "U.EpistemicRetargeting — describedEntity‑retargeting morphism"
+kind: "pattern"
+part: "A"
+status: "Stable"
+token_estimate:
+  card: 268
+  full: 7376
+when_to_load:
+  - "epistemicretargeting"
+  - "describedentity"
+  - "retargeting"
+  - "morphism"
+  - "subject retargeting"
+  - "describedEntity shift"
+  - "KindBridge"
+  - "SquareLaw-retargeting"
+  - "StructuralReinterpretation"
+provides:
+  - "How to change the object-of-talk without losing truth?"
+  - "What is StructuralReinterpretation in FPF terms?"
+  - "When is a Fourier-like transform a retargeting rather than a new Γ-construction?"
+relations:
+  builds_on:
+    - "A.6.2"
+    - "A.1"
+    - "F.9"
+    - "C.2.1"
+    - "C.2"
+    - "E.18:5.9"
+    - "E.18:5.12"
+  used_by:
+    - "E.18"
+source:
+  module: "modules/A/A.6.4.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 11140
+  end_line: 11581
+summary: "One‑line summary. U.EpistemicRetargeting is the describedEntity‑retargetning species of U.EffectFreeEpistemicMorphing: an effect‑free episteme→episteme morphism that intentionally changes what the episteme is about (the occupant of DescribedEntitySlot in C.2.1) under a declared KindBridge and invariant, while remaining conservative with respect to that invariant."

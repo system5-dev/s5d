@@ -1,0 +1,42 @@
+id: "A.16.2"
+title: "Reopen / SketchBackoff / Respecify"
+kind: "pattern"
+part: "A"
+status: "Stable"
+token_estimate:
+  card: 264
+  full: 3806
+when_to_load:
+  - "reopen"
+  - "sketchbackoff"
+  - "respecify"
+  - "backoff"
+  - "retire"
+  - "retreat"
+  - "branch withdrawal"
+  - "authority withdrawal"
+provides:
+  - "How do I lawfully reopen or back off a language-state publication?"
+  - "How do I retire a branch without silent deletion?"
+relations:
+  builds_on:
+    - "A.16"
+    - "A.16.0"
+    - "C.2.2a"
+    - "C.2.5"
+  coordinates_with:
+    - "A.6.P"
+    - "B.4.1"
+    - "C.2.2a"
+    - "A.16.0"
+    - "A.16.1"
+    - "B.5.2"
+    - "A.6.A"
+    - "A.6.Q"
+source:
+  module: "modules/A/A.16.2.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 20972
+  end_line: 21198
+summary: "> Type: Architectural (A) > Status: Draft > Normativity: Normative unless marked informative"

@@ -1,0 +1,3925 @@
+schema: "s5d.fpf.glossary/0.1"
+terms:
+  a.15 docking:
+    - "A.6.A"
+  abduction:
+    - "B.5.2"
+    - "B.5.2.1"
+  abduction-deduction-induction:
+    - "B.5"
+  abductive:
+    - "B.5.2"
+  abductive prompt:
+    - "B.5.2.0"
+  abductiveprompt:
+    - "B.5.2.0"
+  ability:
+    - "A.2.2"
+  abstain:
+    - "C.23"
+  abstain/escalation result:
+    - "G.5"
+  abstract process:
+    - "A.3.1"
+  abstraction:
+    - "C.3.5"
+  abstraction tier:
+    - "C.3.5"
+  acceptance:
+    - "F.12"
+    - "G.4"
+  acceptance clauses:
+    - "G.4"
+  acceptance criteria:
+    - "F.12"
+  acceptance tests:
+    - "F.15"
+  acceptancespec:
+    - "A.2.3"
+  accessspec:
+    - "A.2.3"
+  across:
+    - "F.9"
+  act-inv:
+    - "A.6.A"
+  action:
+    - "A.2.2"
+    - "A.3"
+  action invitation:
+    - "A.6.A"
+  action-first language:
+    - "A.6.A"
+  action-invitation:
+    - "A.6.A"
+  actioninvitationprecisionrestoration:
+    - "A.6.A"
+  active lane:
+    - "E.17.AUD.LHR"
+  actuals:
+    - "A.15.1"
+  actuation:
+    - "F.11"
+  act≠utterance≠carrier:
+    - "A.2.9"
+  acyclic:
+    - "E.5.3"
+  adaptation:
+    - "C.3.4"
+    - "C.22.1"
+  adaptive workflow:
+    - "B.2.4"
+  adequacy:
+    - "C.27"
+  adjudication hooks:
+    - "A.2.8"
+  admissibility:
+    - "A.6"
+    - "A.6.B"
+  admissibility ledger:
+    - "G.8"
+  admissibilityconditions:
+    - "A.6.1"
+  admissible faces:
+    - "E.17.EFP"
+  admit:
+    - "C.23"
+  advanced:
+    - "A.14"
+  affordance:
+    - "A.6.A"
+  agency:
+    - "A.12"
+    - "A.13"
+  agency as role:
+    - "A.13"
+  agency spectrum:
+    - "A.13"
+  agent:
+    - "C.24"
+  agential:
+    - "A.13"
+  agentic:
+    - "C.24"
+  aggregation:
+    - "A.9"
+    - "A.19.ULSAM"
+    - "B.1"
+    - "B.1.2"
+    - "B.1.3"
+    - "B.1.4"
+  ai ethics:
+    - "D.5"
+  algebra:
+    - "B.1"
+  alias:
+    - "F.8"
+  alias discipline:
+    - "E.17.1"
+  alias docking:
+    - "E.20"
+  align:
+    - "A.6.9"
+  alignment:
+    - "A.6.9"
+    - "A.15"
+    - "C.21"
+    - "E.13"
+    - "F.9"
+  anchor:
+    - "E.10.D1"
+  anchoring:
+    - "A.6.6"
+    - "C.2.LS"
+  anchoring mode:
+    - "C.2.6"
+  annex:
+    - "C.3.A"
+  anti:
+    - "F.14"
+  api read:
+    - "C.26.1"
+  api read/export:
+    - "A.6.8"
+  applicability:
+    - "A.2.6"
+    - "A.6.0"
+  applicability windows:
+    - "F.10"
+  application:
+    - "A.6.1"
+  approval/authorization/publication/revocation:
+    - "A.2.9"
+  arch:
+    - "E.3"
+  archetypal:
+    - "E.7"
+  archetypes:
+    - "E.7"
+  architectural:
+    - "preface.architectural-characteristic-of-thought"
+  architecture:
+    - "preface.fpf-as-an-evolutionary-architecture-for-thought"
+    - "preface.beyond-cognitive-biases-fpf-as-a-generative-architecture-for-thought"
+    - "preface.descriptive-ontologies-vs-a-thinking-oriented-architecture"
+    - "preface.from-flat-documents-to-high-dimensional-truth-the-multi-view-architecture"
+    - "preface.fpf-as-a-culinary-architecture-for-collective-thought-why-we-formalize-obvious-ideas"
+    - "E.4"
+    - "E.5"
+    - "E.5.3"
+    - "E.6"
+    - "E.18"
+  argument position:
+    - "A.6.5"
+  artefact:
+    - "E.4"
+  artefact–referent level:
+    - "A.6.H"
+  articulation:
+    - "C.2.LS"
+  articulation explicitness:
+    - "C.2.4"
+  articulationexplicitness:
+    - "C.2.4"
+  artifact:
+    - "E.4"
+  ary:
+    - "A.6.5"
+  aspects:
+    - "A.14"
+  asserting status:
+    - "F.6"
+  assignment:
+    - "A.2"
+    - "A.2.1"
+    - "C.22"
+    - "F.6"
+  assurance:
+    - "preface.creativity-in-open-ended-evolution-and-assurance"
+    - "B.3"
+    - "B.3.3"
+    - "C.2"
+    - "D.5"
+  assurance layer:
+    - "B.3.5"
+  assurance layers:
+    - "E.14"
+  assurance levels:
+    - "B.3.3"
+  atlas alias docking:
+    - "F.18"
+  atlas support:
+    - "A.19.SUPPORT-VIEW"
+  atomic claims:
+    - "A.6.B"
+  attribute:
+    - "A.17"
+  audit:
+    - "A.10"
+    - "D.5"
+    - "E.5.4"
+  auditpins:
+    - "G.10"
+  auth:
+    - "E.15"
+  authored:
+    - "E.17.AUD"
+    - "E.17.AUD.LHR"
+  authored unit:
+    - "E.17.AUD"
+    - "E.17.AUD.OOTD"
+  authored-unit:
+    - "E.17.AUD.OOTD"
+  authored-unit drift:
+    - "E.17.AUD.OOTD"
+  authored-unit stability:
+    - "E.17.AUD"
+  authoredunit:
+    - "E.17.AUD.OOTD"
+  authoredunitdiscipline:
+    - "E.17.AUD"
+    - "E.17.AUD.LHR"
+    - "E.17.AUD.OOTD"
+  authoring:
+    - "C.25"
+    - "E.8"
+    - "E.15"
+    - "G.3"
+    - "G.4"
+  authoring protocol:
+    - "E.20"
+  authoritative source:
+    - "F.1"
+  authority withdrawal:
+    - "A.16.2"
+  autonomy:
+    - "E.16"
+  autonomy grading:
+    - "A.13"
+  axis:
+    - "A.17"
+  backed:
+    - "preface.raising-semantic-precision-from-triggers-to-math-backed-ontics"
+  backoff:
+    - "A.16.2"
+  base:
+    - "A.6.6"
+  base declaration:
+    - "A.6.6"
+  base-change:
+    - "A.6.6"
+  basedeclarationdiscipline:
+    - "A.6.6"
+  basedness:
+    - "A.6.6"
+  baserelation:
+    - "A.6.6"
+  basetype:
+    - "A.6.0"
+    - "A.6.1"
+  basis pins:
+    - "G.5"
+  bcp‑14 (rfc 2119/8174:
+    - "A.2.8"
+  bct:
+    - "G.7"
+  bearing:
+    - "preface.the-big-storylines-unique-to-fpf-load-bearing-commitments"
+  becomes:
+    - "preface.boundary-statements-where-language-becomes-a-system-boundary"
+  before:
+    - "E.17.AUD.LHR"
+  benchmark:
+    - "G.9"
+  beyond:
+    - "preface.beyond-cognitive-biases-fpf-as-a-generative-architecture-for-thought"
+  bias:
+    - "D.5"
+    - "E.5.4"
+  bias-audit:
+    - "D.5"
+  biases:
+    - "preface.beyond-cognitive-biases-fpf-as-a-generative-architecture-for-thought"
+  big:
+    - "preface.the-big-storylines-unique-to-fpf-load-bearing-commitments"
+  binding:
+    - "C.18.1"
+    - "F.12"
+  bitter:
+    - "preface.the-bitter-lesson-trajectory-compute-data-and-freedom-over-hand-tuned-rules-fpf-stance"
+    - "C.19.1"
+  bitter lesson:
+    - "C.19.1"
+  blp:
+    - "A.0"
+    - "C.19.1"
+  blp-waiver:
+    - "C.19.1"
+  boundaries:
+    - "A.6.C"
+  boundary:
+    - "preface.boundary-statements-where-language-becomes-a-system-boundary"
+    - "A.6"
+    - "A.6.B"
+    - "A.6.H"
+    - "C.26.1"
+    - "C.26.3"
+  boundary exchange:
+    - "A.6.8"
+  boundary norm square:
+    - "A.6.B"
+  boundary norm square (l/a/d/e:
+    - "A.6.C"
+  boundary route fields:
+    - "A.6"
+  boundary rules:
+    - "B.1.2"
+  bounded:
+    - "E.17.ID.CR"
+  bounded comparison:
+    - "E.17.ID.CR"
+  bounded context:
+    - "A.6.0"
+  bounded lift:
+    - "E.17.ID.CR"
+  boundedcontext:
+    - "A.1.1"
+  bpmn:
+    - "E.5.2"
+  braking:
+    - "C.27"
+  branch withdrawal:
+    - "A.16.2"
+  bridge:
+    - "A.6.9"
+    - "B.5.3"
+    - "F.0.1"
+    - "F.9"
+    - "F.9.1"
+    - "G.7"
+  bridge calibration:
+    - "G.7"
+  bridge reading:
+    - "A.6.Q"
+    - "F.9"
+  bridge result:
+    - "C.26.1"
+  bridge sentinels:
+    - "G.11"
+  bridge stance:
+    - "F.9.1"
+  bridge talk:
+    - "F.18"
+  bridge-only reuse:
+    - "C.2.2"
+  bridge-only transport:
+    - "A.19.CHR"
+  bridgecalibrationtable (bct:
+    - "G.7"
+  bridgecard:
+    - "G.7"
+  bridgecards:
+    - "G.7"
+  bridgematrix:
+    - "G.2"
+    - "G.7"
+  bridges:
+    - "A.6.9"
+    - "A.19.CN"
+  bridgesentinel:
+    - "G.7"
+  bridge‑only:
+    - "A.6.1"
+  budget:
+    - "E.16"
+  building:
+    - "preface.navigating-uncertainty-building-closed-worlds-within-an-open-world-non-normative"
+  bundle:
+    - "E.10"
+    - "E.17.2"
+  bundles:
+    - "C.25"
+    - "E.17.1"
+    - "F.14"
+    - "G.8"
+  bundles (⊗:
+    - "A.2.7"
+  cal:
+    - "C.3"
+    - "C.13"
+    - "C.18"
+    - "C.20"
+    - "C.24"
+    - "G.4"
+  cal authoring:
+    - "G.4"
+  calculus:
+    - "B.3"
+    - "C.18"
+  calibration:
+    - "G.7"
+  call:
+    - "C.24"
+  candidate hypotheses:
+    - "B.5.2"
+  candidate-space closure:
+    - "C.2.5"
+  candidateset:
+    - "C.18"
+  canon:
+    - "E.4"
+    - "F.1"
+  canonical:
+    - "A.17"
+    - "B.4"
+    - "B.5"
+  canonical card-first:
+    - "E.20"
+  capability:
+    - "A.2.2"
+  capability emergence:
+    - "B.2.4"
+  carried move:
+    - "E.17.AUD"
+    - "E.17.AUD.OOTD"
+  category error:
+    - "A.7"
+  causality:
+    - "A.3"
+    - "A.12"
+  centric:
+    - "E.14"
+  cg-frame:
+    - "G.0"
+    - "G.4"
+  cg-spec:
+    - "A.6.7"
+    - "A.19.CHR"
+    - "G.0"
+  cg-spec.minimalevidence:
+    - "A.19.USCM"
+  cg-spec.scp:
+    - "A.19.ULSAM"
+  cg-spec.γ_fold:
+    - "A.19.ULSAM"
+  cgframelibraryid:
+    - "G.1"
+  cgkitid manifest:
+    - "G.1"
+  change:
+    - "A.3"
+    - "C.27"
+  characterising:
+    - "C.17"
+  characteristic:
+    - "preface.architectural-characteristic-of-thought"
+    - "A.17"
+    - "A.18"
+    - "C.2.3"
+  characteristic plus scope:
+    - "C.25"
+  characteristic space:
+    - "C.2.2a"
+  characteristics:
+    - "G.3"
+  characteristicspace:
+    - "A.16.0"
+    - "A.19"
+    - "C.2.2a"
+  characterization:
+    - "C.16"
+  characterization core:
+    - "A.19.CHR"
+  chart:
+    - "A.19.CN"
+    - "C.2.2a"
+  checklists:
+    - "F.4"
+  checkpoint return:
+    - "A.15"
+  choiceresult:
+    - "C.11"
+  choicerule:
+    - "C.11"
+  choose now:
+    - "C.11"
+  chr:
+    - "A.17"
+    - "A.19"
+    - "C.16"
+    - "C.17"
+    - "G.3"
+  chr authoring:
+    - "G.3"
+  chr pack@cg-frame:
+    - "G.3"
+  chr suite:
+    - "A.19.CHR"
+  chr suite stage indicatorize:
+    - "A.19.UINDM"
+  chr-typed sos features:
+    - "G.13"
+  chr/unm/cg-spec anchoring:
+    - "E.17"
+  chrmechanismsuite:
+    - "A.19.CHR"
+  ci/cd:
+    - "E.5.1"
+  cl-routing:
+    - "G.0"
+  cl/loss notes:
+    - "A.19.CN"
+  cl^k:
+    - "C.3.3"
+  claim:
+    - "A.2.4"
+    - "C.27"
+  claim ids:
+    - "A.6.B"
+  claim mapper:
+    - "G.13"
+  claim register:
+    - "A.6.S"
+  claim scope (g:
+    - "A.2.3"
+  claim support:
+    - "A.10"
+  claim-strength posture:
+    - "B.3"
+  claimgraph:
+    - "A.6.3"
+  claimgraphslot:
+    - "C.2.1"
+  claimmappercard@context:
+    - "G.13"
+  claimscope:
+    - "C.2"
+  claimscope (g:
+    - "A.2.6"
+    - "C.2.2"
+  clarity:
+    - "A.7"
+  classification:
+    - "C.3"
+    - "E.3"
+    - "E.17.EFP"
+  clauses:
+    - "G.4"
+  cloning:
+    - "C.3.4"
+  closed:
+    - "preface.navigating-uncertainty-building-closed-worlds-within-an-open-world-non-normative"
+  closure:
+    - "C.2.LS"
+  closure degree:
+    - "C.2.5"
+  clustering:
+    - "F.3"
+  cn-frame:
+    - "A.19.CN"
+  cn-spec:
+    - "A.6.7"
+    - "A.19.CN"
+    - "A.19.CHR"
+  cn-spec.indicator_policy:
+    - "A.19.UINDM"
+  coarsening:
+    - "A.6.3.CSC"
+  coasting:
+    - "C.27"
+  code:
+    - "A.3.2"
+  cognitive:
+    - "preface.beyond-cognitive-biases-fpf-as-a-generative-architecture-for-thought"
+    - "E.12"
+  cognitive load:
+    - "E.12"
+  collective:
+    - "preface.fpf-as-a-culinary-architecture-for-collective-thought-why-we-formalize-obvious-ideas"
+  columns:
+    - "F.7"
+  comm:
+    - "B.1"
+  commitment:
+    - "A.2.8"
+  commitments:
+    - "preface.the-big-storylines-unique-to-fpf-load-bearing-commitments"
+  communicative:
+    - "A.2.9"
+  communicative work:
+    - "A.2.9"
+  comparability:
+    - "A.19.CN"
+    - "G.0"
+  comparability modes:
+    - "A.19.CN"
+  comparative:
+    - "E.17.ID.CR"
+  comparative reading:
+    - "E.17.ID.CR"
+  comparative review unit:
+    - "E.17.ID.CR"
+  comparativereading:
+    - "E.17.ID.CR"
+  comparator:
+    - "A.19.CPM"
+  comparatorset:
+    - "A.19.CPM"
+    - "G.0"
+  comparatorspecref:
+    - "A.19.CPM"
+  comparison:
+    - "A.19.CPM"
+  comparison basis:
+    - "C.11"
+  comparisons:
+    - "F.7"
+  completeness:
+    - "A.6.H"
+  componentof:
+    - "A.14"
+  components:
+    - "A.14"
+  compose:
+    - "C.13"
+  compose-cal:
+    - "B.3.5"
+  composition:
+    - "A.9"
+    - "A.14"
+    - "B.1"
+    - "B.1.4"
+    - "B.1.5"
+    - "C.2"
+    - "C.13"
+    - "C.20"
+  compute:
+    - "preface.the-bitter-lesson-trajectory-compute-data-and-freedom-over-hand-tuned-rules-fpf-stance"
+  concept:
+    - "F.7"
+  concept bridge:
+    - "B.5.3"
+  concept-set:
+    - "F.7"
+    - "F.8"
+  conceptual:
+    - "preface.thinking-through-writing-the-fpf-discipline-of-conceptual-work"
+    - "E.10.P"
+    - "G.13"
+  conceptual auditability:
+    - "E.9"
+  conceptual core:
+    - "E.4"
+  conceptual moves:
+    - "F.6"
+  conceptual purity:
+    - "E.5.1"
+  concurrent:
+    - "B.1.5"
+  conflict resolution:
+    - "E.3"
+  conformance checklist:
+    - "A.19.CN"
+  congruence:
+    - "B.3"
+    - "F.0.1"
+  congruence level (cl / cl^k / cl^plane:
+    - "C.2.2"
+  congruence level (cl/cl^k/cl^plane:
+    - "G.7"
+  consequences:
+    - "E.9"
+  conservativeretextualization:
+    - "A.6.3.CR"
+  consistency:
+    - "A.9"
+  constitution:
+    - "A.3"
+    - "E.2"
+  constraintfit:
+    - "C.17"
+  constraints:
+    - "C.3.4"
+    - "E.5"
+  constraintvalidity:
+    - "A.20"
+  constructional:
+    - "C.13"
+  constructive trace:
+    - "B.3.5"
+  constructorsignature:
+    - "A.6.S"
+  content:
+    - "A.2.3"
+  context:
+    - "A.1.1"
+    - "A.2"
+    - "A.2.1"
+    - "A.2.6"
+    - "A.2.7"
+    - "C.3.3"
+    - "E.9"
+    - "E.10.D1"
+    - "F.0.1"
+    - "F.3"
+    - "F.18"
+  context map:
+    - "F.1"
+  context-local adaptation:
+    - "C.3.4"
+  contexts:
+    - "F.9"
+  contextual:
+    - "A.2.1"
+    - "A.15"
+    - "B.1.4"
+    - "C.3.4"
+    - "F.0.1"
+  contextual enactment:
+    - "A.15"
+  contextual role assignment:
+    - "A.13"
+  continuity:
+    - "F.13"
+  continuous improvement:
+    - "A.4"
+  contract:
+    - "A.6.C"
+  contract bundle unpacking:
+    - "A.6.C"
+  contract pins:
+    - "A.6.7"
+  control:
+    - "F.14"
+  control architecture:
+    - "B.2.5"
+  control loop:
+    - "A.12"
+  controlled:
+    - "A.6.3.CSC"
+  controlled semantic coarsening:
+    - "A.6.3.CSC"
+  conventions:
+    - "E.8"
+  coordinate:
+    - "A.18"
+  coordinated work:
+    - "C.26.2"
+  coordinated-work evidence:
+    - "A.15"
+  coordinates:
+    - "G.3"
+  coordinatewise comparability:
+    - "A.19"
+  coordination:
+    - "A.16"
+  core:
+    - "A.8"
+    - "A.21"
+    - "C.3.1"
+    - "E.5.3"
+  core values:
+    - "E.2"
+  correspondence model:
+    - "E.17.0"
+  correspondencemodel:
+    - "A.6.3"
+  correspondences:
+    - "E.17.0"
+  cost:
+    - "B.1.6"
+  counter-examples:
+    - "F.3"
+  coupling:
+    - "A.6.P"
+  cpm:
+    - "A.19.CPM"
+  creative:
+    - "B.5.2.1"
+  creative abduction:
+    - "B.5.2.1"
+  creativity:
+    - "preface.creativity-in-open-ended-evolution-and-assurance"
+    - "C.17"
+  creativity-chr:
+    - "B.5.2.1"
+    - "C.17"
+  cross:
+    - "A.9"
+    - "C.3.3"
+    - "E.5.4"
+    - "F.16"
+    - "G.7"
+  cross-context:
+    - "A.6.9"
+  cross-context alignment:
+    - "F.9"
+  cross-context mapping:
+    - "C.3.3"
+  cross-context sameness:
+    - "A.6.9"
+  cross-domain illustration:
+    - "F.16"
+  cross-space:
+    - "A.19.SURF-SPACE"
+  cross-surface:
+    - "A.19.SURF-SPACE"
+    - "A.19.SUPPORT-VIEW"
+  cross-surface substrate:
+    - "A.19.SURF-SPACE"
+  crosscontextsamenessdisambiguation:
+    - "A.6.9"
+  crossing visibility:
+    - "A.6.7"
+    - "A.19.CHR"
+  crossingbundle:
+    - "G.6"
+    - "G.10"
+  crosssurfaceatlasview:
+    - "A.19.SUPPORT-VIEW"
+    - "G.2"
+  crosssurfacesupportview:
+    - "A.0"
+    - "A.19.SUPPORT-VIEW"
+  cslc:
+    - "A.18"
+    - "C.16"
+  cslc legality:
+    - "G.3"
+  cslc normalize-then-compare:
+    - "E.18"
+  cslc-lawful transforms:
+    - "A.19.USCM"
+  ct2r:
+    - "B.3.5"
+  ct2r-log:
+    - "B.3.5"
+  ctx:
+    - "B.1.4"
+    - "E.10.D1"
+  cue nucleus:
+    - "A.16.1"
+  cue pack:
+    - "A.16.1"
+  culinary:
+    - "preface.fpf-as-a-culinary-architecture-for-collective-thought-why-we-formalize-obvious-ideas"
+  cv→ncv:
+    - "A.19.UNM"
+  cv⇒gf:
+    - "A.21"
+  cv⇒gf (constraintvalidity → gatefit:
+    - "E.18"
+  cycle:
+    - "B.5"
+    - "F.6"
+  d/s→surface (no i→d/d→s:
+    - "E.17"
+  dashboard:
+    - "G.12"
+  dashboard as instrument:
+    - "C.26.1"
+  dashboard tile:
+    - "A.6.3.CSC"
+  dashboards:
+    - "G.12"
+  data:
+    - "preface.the-bitter-lesson-trajectory-compute-data-and-freedom-over-hand-tuned-rules-fpf-stance"
+  ddd:
+    - "A.1.1"
+  debt:
+    - "B.3.4"
+  decay:
+    - "B.3.4"
+    - "G.11"
+  decision:
+    - "C.11"
+  decision lattice:
+    - "F.8"
+  decision record:
+    - "E.9"
+  decision theory:
+    - "C.11"
+  decisionlog:
+    - "A.21"
+  decisionsubject:
+    - "C.11"
+  decisionsubject note:
+    - "B.5.2.1"
+  declaration:
+    - "A.6.0"
+    - "A.6.6"
+  declared characteristics and scales:
+    - "A.19"
+  declared q components:
+    - "B.5.2.1"
+  declared set surface:
+    - "A.0"
+  decsn-cal:
+    - "C.11"
+  degrade:
+    - "C.23"
+  delta-classes:
+    - "E.15"
+  deontic:
+    - "A.2.8"
+  deontics:
+    - "A.2.8"
+    - "A.6"
+    - "A.6.B"
+  dependency:
+    - "B.1.1"
+    - "E.5.3"
+  dependency graph:
+    - "B.1.1"
+  deprecation:
+    - "F.13"
+    - "G.11"
+  describedentity:
+    - "A.6.2"
+    - "A.6.3"
+    - "A.6.4"
+  describedentity preservation:
+    - "A.6.3"
+  describedentity shift:
+    - "A.6.4"
+  describedentityslot:
+    - "C.2.1"
+  description:
+    - "A.6.7"
+    - "E.10.D2"
+    - "F.4"
+    - "F.8"
+  description families:
+    - "E.17.0"
+  descriptions:
+    - "A.6.RSIG"
+  descriptive:
+    - "preface.descriptive-ontologies-vs-a-thinking-oriented-architecture"
+  descriptormapref:
+    - "C.18"
+  design:
+    - "E.9"
+  design rationale:
+    - "E.9"
+  design-time:
+    - "A.4"
+  design/run feedback:
+    - "B.4"
+  designruntag:
+    - "E.18"
+  detailed:
+    - "I.2"
+  determinism:
+    - "C.3.2"
+  development cycle:
+    - "B.5.1"
+  devops:
+    - "E.5.1"
+  dhc:
+    - "G.12"
+  diagram:
+    - "A.6.3.RT"
+    - "E.5.2"
+  did:
+    - "E.3"
+  didactic:
+    - "E.6"
+    - "E.12"
+  didactic retelling:
+    - "E.17.EFP"
+  didactic template:
+    - "F.16"
+  differences:
+    - "F.7"
+  dimension:
+    - "A.17"
+  direct comparability:
+    - "C.16"
+  direct vs correspondence viewing:
+    - "A.6.3"
+  direct vs correspondence-mediated rewrite:
+    - "A.6.3.CR"
+  direction:
+    - "A.6.9"
+    - "F.9"
+  disambiguation:
+    - "F.3"
+  disciplinary:
+    - "E.5.4"
+  discipline:
+    - "preface.thinking-through-writing-the-fpf-discipline-of-conceptual-work"
+    - "A.6"
+    - "A.6.P"
+    - "A.6.5"
+    - "A.6.6"
+    - "C.20"
+    - "C.21"
+    - "E.10.D1"
+    - "E.10.D2"
+    - "E.11"
+    - "E.17.AUD.OOTD"
+    - "F.5"
+  discipline health:
+    - "G.12"
+  discipline-chr:
+    - "C.21"
+  discoverability:
+    - "E.11"
+  dispatcher:
+    - "G.5"
+  displayed fibration:
+    - "A.6.3"
+  disruption:
+    - "C.21"
+  distancedefref:
+    - "C.18"
+  distinct:
+    - "A.6.7"
+  distinct mechanisms:
+    - "A.6.7"
+  distinctdeclaredspacefrom:
+    - "A.19.SURF-SPACE"
+  distinction:
+    - "A.7"
+  distortionposture:
+    - "A.19.SURF-SPACE"
+  distributed:
+    - "C.26.2"
+  distributed-state evidence:
+    - "A.10"
+    - "C.26.2"
+  distributed-state reading:
+    - "A.15"
+  diversity_p:
+    - "C.17"
+  document:
+    - "C.2.6"
+  documents:
+    - "preface.from-flat-documents-to-high-dimensional-truth-the-multi-view-architecture"
+  domain:
+    - "A.1.1"
+    - "E.10.D1"
+    - "F.1"
+    - "F.16"
+  domain-agnostic:
+    - "A.8"
+  domain-specific vocabulary:
+    - "B.5.3"
+  domain‑family survey:
+    - "F.1"
+  drift repair:
+    - "B.4"
+  drr:
+    - "E.9"
+  duality:
+    - "A.4"
+  dynamic benchmark:
+    - "C.27"
+  dynamics:
+    - "A.3.3"
+    - "A.19"
+  e.tga bindings:
+    - "E.17.2"
+  e/e-log:
+    - "B.5.2.1"
+  early publication:
+    - "A.16.1"
+  early repair readiness:
+    - "C.2.4"
+  edge=u.transfer (single-edge kind:
+    - "E.18"
+  edition bumps:
+    - "G.11"
+  edition pins:
+    - "A.15.3"
+    - "G.0"
+    - "G.1"
+    - "G.3"
+    - "G.4"
+    - "G.10"
+    - "G.12"
+    - "G.13"
+  edition-aware:
+    - "G.11"
+  editioning:
+    - "A.6.S"
+  efem:
+    - "A.6.S"
+  effect:
+    - "A.6.2"
+  effect-free:
+    - "A.6.2"
+  effectfreeepistemicmorphing:
+    - "A.6.2"
+  effects:
+    - "A.6.B"
+  effort window:
+    - "C.27"
+  eleven:
+    - "E.2"
+  embedding:
+    - "A.19"
+  embedding spec:
+    - "G.13"
+  embodiment:
+    - "C.2.6"
+  emergence:
+    - "B.2"
+  emitterpolicyref:
+    - "C.18"
+  enactability:
+    - "A.2.5"
+  enacted:
+    - "C.26.2"
+  enacted state:
+    - "C.26.2"
+  enactment:
+    - "A.15"
+    - "B.1.5"
+    - "F.6"
+  ended:
+    - "A.4"
+    - "A.5"
+    - "C.18"
+  endpoint referential compression:
+    - "A.6.P"
+  endpoint routing:
+    - "A.6.Q"
+    - "C.25"
+  energy:
+    - "B.1.2"
+  energy consumption:
+    - "B.1.6"
+  enforcement:
+    - "E.16"
+  engineering:
+    - "A.6.S"
+    - "E.17.2"
+  engineering viewpoints:
+    - "E.17.2"
+  engineering vs publication viewpoints:
+    - "E.17.0"
+  engineering/management/research bundles:
+    - "E.17.1"
+  enough:
+    - "E.17.AUD"
+  entity:
+    - "A.1"
+  entity-of-interest:
+    - "E.17.0"
+  entry:
+    - "E.11"
+    - "J.4"
+  environment:
+    - "A.6.H"
+  eoiclass = u.holon:
+    - "E.17.2"
+  epist:
+    - "B.1.3"
+    - "E.3"
+  episteme:
+    - "A.2.4"
+    - "A.6.2"
+    - "A.6.3"
+    - "C.2.1"
+  episteme corpus:
+    - "C.20"
+  epistemes:
+    - "A.6.2"
+    - "C.2.1"
+  epistemeslotgraph:
+    - "C.2.1"
+  epistemic:
+    - "B.1.3"
+    - "B.3.4"
+    - "C.2"
+  epistemic artifact:
+    - "A.3.2"
+  epistemic debt:
+    - "B.3.4"
+    - "G.11"
+  epistemicretargeting:
+    - "A.6.4"
+  epistemicviewing:
+    - "A.6.3"
+  equivalencewitness:
+    - "A.21"
+  equivalent:
+    - "A.6.9"
+  ergonomics:
+    - "E.12"
+  esg:
+    - "C.3.A"
+  essential concepts:
+    - "A.11"
+  ethical:
+    - "D.5"
+  ethics:
+    - "D.5"
+    - "E.5.4"
+  eulerian:
+    - "A.20"
+  evaluative ascription:
+    - "A.6.Q"
+  event:
+    - "A.15.1"
+  evidence:
+    - "A.2.4"
+    - "A.6"
+    - "A.10"
+    - "B.3"
+    - "B.3.4"
+    - "B.5.1"
+    - "C.2"
+    - "C.17"
+    - "C.23"
+    - "C.26.2"
+    - "F.10"
+    - "F.12"
+  evidence aging:
+    - "B.3.4"
+  evidence binding:
+    - "E.17.EFP"
+  evidence carrier:
+    - "A.10"
+    - "C.26.2"
+  evidence profiles:
+    - "G.4"
+  evidence window:
+    - "C.26.1"
+  evidence-bound:
+    - "C.2.2"
+  evidencegraph:
+    - "G.6"
+  evidencerefs:
+    - "A.2.8"
+  evidencerole:
+    - "A.2.4"
+  evolution:
+    - "preface.creativity-in-open-ended-evolution-and-assurance"
+    - "A.4"
+    - "B.4"
+    - "E.15"
+    - "F.13"
+  evolution loop:
+    - "B.4"
+  evolution protocol:
+    - "E.15"
+  evolutionary:
+    - "preface.fpf-as-an-evolutionary-architecture-for-thought"
+  example:
+    - "F.16"
+  examples:
+    - "E.7"
+  execution:
+    - "A.15.1"
+  existing:
+    - "E.17.EFP"
+  explanation:
+    - "E.17.EFP"
+  explanation-ready cue:
+    - "B.5.2.0"
+  explanationfaithfulnessprofile:
+    - "E.17.EFP"
+  explanatory prompt:
+    - "B.5.2"
+  explicit:
+    - "preface.purpose-scope-and-explicit-non-goals"
+    - "A.6.P"
+    - "A.6.9"
+  explicit transition:
+    - "E.17.AUD.OOTD"
+  explicitness:
+    - "C.2.4"
+  exploit:
+    - "C.19"
+  explore:
+    - "B.5.1"
+    - "C.19"
+  explore/exploit (e/e-log:
+    - "A.0"
+  explosion:
+    - "F.14"
+  export:
+    - "A.6.P"
+  export evidence:
+    - "A.10"
+  export loss:
+    - "C.26.1"
+  extensibility:
+    - "A.5"
+  extension:
+    - "A.5"
+    - "C.3"
+    - "C.3.2"
+  extensional identity:
+    - "C.13"
+  extent:
+    - "C.3"
+  external:
+    - "A.12"
+    - "G.13"
+  external agent:
+    - "A.12"
+  external index:
+    - "G.13"
+  externalindexcard@context:
+    - "G.13"
+  f-g-r:
+    - "B.3"
+    - "C.2"
+  f-scale:
+    - "C.2.3"
+  f0-f9:
+    - "C.2.3"
+  faces:
+    - "E.17.EFP"
+  facet:
+    - "C.3.5"
+  facet profile:
+    - "C.2.LS"
+  facets:
+    - "C.2.LS"
+  factor bundle:
+    - "C.2.7"
+  fail-closed tri-state guard (pass:
+    - "A.19.UNM"
+  failure mode:
+    - "C.25"
+  fairness:
+    - "D.5"
+    - "E.5.4"
+  families:
+    - "E.4"
+    - "F.10"
+  family:
+    - "F.1"
+  feedback:
+    - "B.2.5"
+  feedback loop:
+    - "B.2.5"
+  field:
+    - "C.21"
+  field health:
+    - "C.21"
+  filtering:
+    - "A.6.3.CR"
+  firewall:
+    - "E.5.1"
+  first:
+    - "F.18"
+    - "G.12"
+    - "J.4"
+  first-practical:
+    - "E.11"
+  flat:
+    - "preface.from-flat-documents-to-high-dimensional-truth-the-multi-view-architecture"
+  flow:
+    - "A.20"
+  flowrecord:
+    - "G.2"
+  fold_γ?:
+    - "A.19.ULSAM"
+  forbidden stronger uptake:
+    - "E.17.ID.CR"
+  forecast:
+    - "A.15.2"
+  fork:
+    - "A.16.0"
+  form:
+    - "A.16.0"
+  formality:
+    - "B.3"
+    - "C.2"
+    - "C.2.3"
+  formality f:
+    - "C.3.2"
+  formalize:
+    - "preface.fpf-as-a-culinary-architecture-for-collective-thought-why-we-formalize-obvious-ideas"
+  foundation:
+    - "A.1"
+  four:
+    - "E.5"
+  fpf:
+    - "preface.fpf-as-an-evolutionary-architecture-for-thought"
+    - "preface.beyond-cognitive-biases-fpf-as-a-generative-architecture-for-thought"
+    - "preface.thinking-through-writing-the-fpf-discipline-of-conceptual-work"
+    - "preface.the-bitter-lesson-trajectory-compute-data-and-freedom-over-hand-tuned-rules-fpf-stance"
+    - "preface.the-big-storylines-unique-to-fpf-load-bearing-commitments"
+    - "preface.fpf-as-a-culinary-architecture-for-collective-thought-why-we-formalize-obvious-ideas"
+    - "E.4"
+    - "E.5"
+    - "E.8"
+    - "E.10"
+  fpf architecture:
+    - "A.5"
+  frame:
+    - "A.1.1"
+    - "A.19.CN"
+    - "E.10.D1"
+    - "G.0"
+    - "G.1"
+    - "G.3"
+  free:
+    - "A.6.2"
+  freedom:
+    - "preface.the-bitter-lesson-trajectory-compute-data-and-freedom-over-hand-tuned-rules-fpf-stance"
+  freshness:
+    - "B.3.4"
+  front vs explorationarchive:
+    - "C.18"
+  function:
+    - "E.10"
+  function vs identity:
+    - "A.2"
+  functional emergence:
+    - "B.2.4"
+  functional/procedural/role-enactor/module-interface views:
+    - "E.17.2"
+  functorial views:
+    - "E.17"
+  functoriality:
+    - "A.6.2"
+  f–g–r:
+    - "C.2.2"
+  gamma operator:
+    - "B.1"
+  gammaepistsynthid:
+    - "G.2"
+  gatechecks:
+    - "A.21"
+  gatecrossing:
+    - "G.6"
+    - "G.7"
+  gatedecision:
+    - "A.21"
+  gatefit:
+    - "A.20"
+    - "A.21"
+  gateprofile:
+    - "A.21"
+  gateprofilization:
+    - "A.21"
+  gates:
+    - "E.19"
+  generalization:
+    - "A.8"
+  generation:
+    - "G.12"
+  generative:
+    - "preface.beyond-cognitive-biases-fpf-as-a-generative-architecture-for-thought"
+    - "C.17"
+  generator:
+    - "G.1"
+  generator / selector / set-surface scaffold:
+    - "G.1"
+  generator chassis:
+    - "G.1"
+  generator-family registry:
+    - "G.5"
+  glossary:
+    - "A.0"
+    - "A.1.1"
+    - "F.17"
+  goals:
+    - "preface.purpose-scope-and-explicit-non-goals"
+    - "E.1"
+  gov:
+    - "E.3"
+  governance:
+    - "E.17.1"
+    - "G.0"
+  governed:
+    - "A.6.0"
+    - "A.6.1"
+  governed episteme publication:
+    - "C.2.2a"
+  governed object:
+    - "E.17.AUD.LHR"
+  governor:
+    - "C.19"
+  gr-1 to gr-4:
+    - "E.5"
+  graph:
+    - "A.10"
+    - "B.1.1"
+    - "C.2.1"
+    - "E.18"
+    - "G.6"
+  grounding:
+    - "B.3.5"
+    - "E.7"
+    - "E.14"
+  groundingholonslot:
+    - "C.2.1"
+  guard:
+    - "C.3.A"
+    - "E.5"
+  guard pins:
+    - "A.15.3"
+  guard-rails:
+    - "F.14"
+  guarded-head note:
+    - "F.18"
+  guardrails:
+    - "E.5"
+  guide:
+    - "E.8"
+  hand:
+    - "preface.the-bitter-lesson-trajectory-compute-data-and-freedom-over-hand-tuned-rules-fpf-stance"
+  handoff:
+    - "A.16"
+    - "A.16.0"
+  harmonisation:
+    - "F.11"
+  harness:
+    - "F.15"
+    - "G.9"
+  harvester:
+    - "G.2"
+  harvesting:
+    - "F.2"
+  head:
+    - "E.17.AUD.LHR"
+  head kind:
+    - "E.17.AUD.LHR"
+  health:
+    - "C.21"
+    - "G.12"
+  heavy history:
+    - "A.16.0"
+  hf-loop:
+    - "E.12"
+  hierarchy:
+    - "E.3"
+  high-dimensional:
+    - "preface.from-flat-documents-to-high-dimensional-truth-the-multi-view-architecture"
+  holarchy:
+    - "A.9"
+  holder:
+    - "A.2"
+    - "A.2.1"
+  holon:
+    - "A.1"
+    - "B.1"
+    - "B.2"
+    - "C.2"
+    - "E.17.2"
+  holonic:
+    - "A.1"
+  honestly:
+    - "E.17.AUD"
+  hook:
+    - "A.19"
+  hooks:
+    - "G.13"
+  how:
+    - "preface.what-this-specification-is-and-how-to-use-it"
+  how-to:
+    - "A.3.1"
+  human:
+    - "E.14"
+  human-centric:
+    - "E.14"
+  human-readable output:
+    - "F.17"
+  i/d/s:
+    - "E.10.D2"
+  ideas:
+    - "preface.fpf-as-a-culinary-architecture-for-collective-thought-why-we-formalize-obvious-ideas"
+  idem:
+    - "B.1"
+  identifying:
+    - "B.2"
+  ilities:
+    - "C.25"
+  illuminationsummary report-only telemetry:
+    - "C.18"
+  import discipline:
+    - "E.17.1"
+  incompatibility (⊥:
+    - "A.2.7"
+  independence:
+    - "E.5.2"
+  index:
+    - "J.4"
+  indicator policy refs:
+    - "A.19.CN"
+  indicator set:
+    - "A.19.UINDM"
+  indicatorchoicepolicy:
+    - "A.19.UINDM"
+  indicatorization:
+    - "A.19.UINDM"
+  informative facet:
+    - "C.3.5"
+  inherits:
+    - "E.17.AUD.LHR"
+  insertionpolicyref:
+    - "C.18"
+  institutes:
+    - "A.2.9"
+  institutions:
+    - "C.20"
+  integrity:
+    - "A.6.H"
+  intellect:
+    - "preface.intellect-stack"
+  intension:
+    - "C.3"
+    - "C.3.2"
+    - "E.10.D2"
+  intent:
+    - "A.15.2"
+    - "C.3"
+  intentional:
+    - "C.3.5"
+  interaction:
+    - "C.26.1"
+  interface semantics:
+    - "A.6.8"
+  interop:
+    - "G.13"
+  interopsurface@context:
+    - "G.13"
+  interpretationdiscipline branch:
+    - "E.17.ID.CR"
+  interpretive gloss:
+    - "F.9.1"
+  intervention-sensitive:
+    - "C.27"
+  intervention-sensitive temporal change:
+    - "C.27"
+  intra:
+    - "F.3"
+  introduction:
+    - "E.20"
+  invariants:
+    - "A.1.1"
+    - "A.9"
+    - "B.1"
+    - "E.2"
+    - "F.4"
+  iso 42010 alignment:
+    - "E.17.0"
+  iso 42010 mapping:
+    - "E.17.2"
+  jargon:
+    - "E.5.1"
+  join-semilattice:
+    - "A.21"
+  judgement context:
+    - "A.2.9"
+  justification:
+    - "A.2.4"
+  k0-k3:
+    - "C.3.5"
+  kd-cal:
+    - "B.1.3"
+    - "C.2"
+  keep:
+    - "E.17.AUD"
+  kernel:
+    - "A.5"
+    - "A.18"
+    - "A.19.SelectorMechanism"
+  kind:
+    - "A.6.P"
+    - "C.3"
+    - "C.3.1"
+    - "F.18"
+  kind-cal:
+    - "C.3.A"
+  kind-explicit:
+    - "A.6.6"
+  kindat:
+    - "C.3.5"
+  kindbridge:
+    - "A.6.4"
+    - "C.3.3"
+  kinds:
+    - "C.3"
+    - "C.3.3"
+    - "C.3.4"
+    - "C.3.5"
+    - "C.3.A"
+  kindsignature:
+    - "C.3.2"
+  kit:
+    - "E.17"
+    - "G.7"
+  knowledge:
+    - "B.1.3"
+    - "C.2"
+  knowledge aggregation:
+    - "B.1.3"
+  knowledge emergence:
+    - "B.2.3"
+  l/a/d/e routing:
+    - "A.6.B"
+  l0-l2:
+    - "B.3.3"
+  ladders:
+    - "G.8"
+  landscape:
+    - "F.1"
+  lane tags (ta/va/la:
+    - "G.6"
+  language:
+    - "preface.boundary-statements-where-language-becomes-a-system-boundary"
+    - "A.6.H"
+  language-state:
+    - "A.16"
+    - "A.16.0"
+    - "C.2.2a"
+    - "C.2.LS"
+  language-state chart:
+    - "C.2.2a"
+  language-state comparisons:
+    - "F.9.1"
+  language-state seam:
+    - "A.6.P"
+    - "A.6.Q"
+    - "A.6.A"
+  language-state separation:
+    - "C.2.3"
+  languagestateanchoringmode:
+    - "C.2.6"
+  languagestateclosuredegree:
+    - "C.2.5"
+  languagestatefacetprofile:
+    - "C.2.LS"
+  languagestaterepresentationfactorbundle:
+    - "C.2.7"
+  languagestatespace:
+    - "C.2.2a"
+  languagestatetransductiontrajectory:
+    - "A.16.0"
+  lat:
+    - "E.15"
+  lattice:
+    - "A.7"
+  launchgate:
+    - "A.21"
+  law:
+    - "A.6.0"
+    - "A.6.1"
+    - "C.18.1"
+  lawful:
+    - "A.19.ULSAM"
+    - "G.12"
+  lawful aggregation:
+    - "A.19.ULSAM"
+  lawful comparability:
+    - "A.18"
+  lawful moves:
+    - "A.16"
+  lawful telemetry:
+    - "G.12"
+  laws:
+    - "A.6"
+    - "A.6.B"
+    - "A.6.0"
+  laws vs gates vs commitments vs evidence:
+    - "A.6.B"
+  lawset:
+    - "A.6.1"
+  layered control:
+    - "B.2.5"
+  layering:
+    - "A.5"
+  layers:
+    - "E.5.3"
+  learning:
+    - "E.6"
+  ledger:
+    - "G.6"
+  legality gate:
+    - "A.19.CHR"
+    - "G.0"
+  legality gates:
+    - "G.4"
+  lens:
+    - "C.18.1"
+    - "C.26"
+  lenses:
+    - "A.6.2"
+  lesson:
+    - "preface.the-bitter-lesson-trajectory-compute-data-and-freedom-over-hand-tuned-rules-fpf-stance"
+    - "C.19.1"
+  level:
+    - "A.18"
+  levels:
+    - "B.3.3"
+    - "G.3"
+  lex:
+    - "E.10"
+    - "E.15"
+  lexical:
+    - "E.5.1"
+    - "E.10"
+    - "E.10.D1"
+    - "E.15"
+    - "F.13"
+  lexical authoring:
+    - "E.15"
+  lexical firewall:
+    - "E.5.1"
+  lexical guardrails:
+    - "A.6.P"
+  lexical rules:
+    - "E.10"
+    - "F.5"
+  lexical unit:
+    - "F.2"
+  lexicon:
+    - "A.6.5"
+    - "A.6.6"
+    - "F.0.1"
+  lifecycle:
+    - "A.2.5"
+    - "A.4"
+    - "B.5.1"
+  lifecycle actions:
+    - "F.18"
+  lineage:
+    - "A.16.0"
+  link:
+    - "F.12"
+  linter:
+    - "E.4"
+  load:
+    - "preface.the-big-storylines-unique-to-fpf-load-bearing-commitments"
+  loc:
+    - "B.1"
+  local:
+    - "E.17.AUD.LHR"
+    - "F.18"
+  local meaning:
+    - "A.1.1"
+    - "F.0.1"
+  local repair:
+    - "E.17.AUD.LHR"
+  local wording repair:
+    - "E.17.AUD.LHR"
+  local-first naming:
+    - "F.18"
+  local-sense:
+    - "F.3"
+  locality:
+    - "C.2.7"
+  log:
+    - "A.0"
+    - "A.15.1"
+    - "C.19"
+    - "C.23"
+    - "G.8"
+  lookup handle:
+    - "A.6.3.CSC"
+  loop:
+    - "B.2.5"
+    - "B.4"
+    - "B.5.2"
+  loss notes:
+    - "A.6.9"
+    - "F.9"
+    - "G.7"
+  macros:
+    - "C.3.A"
+  mapping:
+    - "A.6.9"
+    - "B.5.3"
+    - "C.3.3"
+    - "F.10"
+  mapping policy:
+    - "G.13"
+  mass:
+    - "B.1.2"
+  math:
+    - "preface.raising-semantic-precision-from-triggers-to-math-backed-ontics"
+  maturity:
+    - "C.23"
+    - "G.8"
+  measurement:
+    - "A.6.P"
+    - "A.17"
+    - "C.16"
+  measurement interpretability:
+    - "A.18"
+  measurement template:
+    - "C.16"
+  measures:
+    - "A.2.2"
+  mechanism:
+    - "A.2.6"
+    - "A.6.1"
+    - "A.19.UNM"
+    - "A.19.UINDM"
+    - "A.19.USCM"
+    - "A.19.ULSAM"
+    - "A.19.CPM"
+    - "E.20"
+  mechanism introduction:
+    - "E.20"
+  mechanism suite:
+    - "A.6.7"
+  mechanism/status slots:
+    - "C.25"
+  mechanisms:
+    - "A.6.7"
+  mechsuitedescription:
+    - "A.6.7"
+  memberof:
+    - "C.3.2"
+  mereology:
+    - "A.6.H"
+    - "A.14"
+    - "C.13"
+  merge:
+    - "A.16.0"
+  merging terms:
+    - "F.13"
+  met:
+    - "B.2.3"
+  meta:
+    - "preface.transdisciplinarity-as-a-meta-theory-of-thinking"
+    - "B.2"
+  meta-epistemic:
+    - "B.2.3"
+  meta-functional:
+    - "B.2.4"
+  meta-system:
+    - "B.2"
+    - "B.2.2"
+  meta-theory:
+    - "B.2.3"
+  method:
+    - "A.3"
+    - "A.3.1"
+    - "A.15"
+    - "B.1.5"
+    - "C.23"
+    - "E.9"
+    - "F.11"
+    - "G.5"
+  method composition:
+    - "B.1.5"
+  method-family registry:
+    - "G.5"
+  method-work:
+    - "C.3.A"
+  methoddescription:
+    - "A.3"
+    - "A.3.2"
+    - "F.11"
+  methodfamily:
+    - "C.23"
+    - "G.5"
+  metrics:
+    - "C.16"
+  mft:
+    - "B.2.4"
+  mht:
+    - "B.2"
+  minimal:
+    - "A.18"
+  minimalevidence:
+    - "A.19.ULSAM"
+    - "G.0"
+  minimalism:
+    - "A.11"
+  mint:
+    - "F.8"
+  minting new types:
+    - "F.8"
+  mip-run manifest:
+    - "E.20"
+  mission:
+    - "E.1"
+  mm-chr measurement templates:
+    - "C.17"
+  modality normalization:
+    - "A.2.8"
+  model:
+    - "A.3.2"
+    - "A.3.3"
+    - "E.3"
+    - "E.14"
+  model state:
+    - "C.2.6"
+  modeling:
+    - "C.26"
+  modularity:
+    - "A.5"
+    - "E.5.3"
+  mono:
+    - "B.1"
+  moomanifest:
+    - "G.10"
+  morphism:
+    - "A.6.2"
+    - "A.6.3"
+    - "A.6.4"
+  morphisms:
+    - "A.6.2"
+    - "E.17"
+  morphology:
+    - "F.5"
+  mst:
+    - "B.2.2"
+  multi:
+    - "E.17"
+    - "G.5"
+  multi-view:
+    - "preface.from-flat-documents-to-high-dimensional-truth-the-multi-view-architecture"
+    - "E.17"
+  multi-view describing:
+    - "E.17.0"
+  multiviewdescribing:
+    - "E.17.0"
+  mvpk:
+    - "A.20"
+    - "E.17.EFP"
+  mvpk faces:
+    - "E.18"
+  mvpk faces “no new semantics”:
+    - "A.6.C"
+  mvpk views (no new semantics:
+    - "A.6.S"
+  name card:
+    - "F.18"
+  named:
+    - "A.2.5"
+  namespace:
+    - "E.10.P"
+  naming:
+    - "E.10"
+    - "F.5"
+    - "F.18"
+  naming conventions:
+    - "F.5"
+  narrative flow:
+    - "E.6"
+  narrower supported use:
+    - "A.6.3.CSC"
+  navigating:
+    - "preface.navigating-uncertainty-building-closed-worlds-within-an-open-world-non-normative"
+  neighborhood:
+    - "J.4"
+  neutrality:
+    - "E.5.4"
+  new process:
+    - "B.2.4"
+  new whole:
+    - "B.2"
+  no dangling …intensionref:
+    - "E.20"
+  no epistemic agency:
+    - "A.6.S"
+  no group mind:
+    - "C.26.2"
+  no hidden scalar winner:
+    - "G.5"
+  no hidden scalarization:
+    - "A.19.CHR"
+  no hidden thresholds:
+    - "A.19.CHR"
+  no illegal averaging:
+    - "A.18"
+  no implicit averaging:
+    - "C.2.2"
+  no semantic respecification:
+    - "G.10"
+  nodes=morphisms:
+    - "E.18"
+  non:
+    - "preface.purpose-scope-and-explicit-non-goals"
+  non-goals:
+    - "E.1"
+  non-normative:
+    - "preface.navigating-uncertainty-building-closed-worlds-within-an-open-world-non-normative"
+  non-shared comparison frame:
+    - "C.11"
+  norm:
+    - "A.6.B"
+    - "A.17"
+  normal:
+    - "A.16.0"
+  normalisation:
+    - "F.2"
+  normalization:
+    - "A.19.CN"
+    - "A.19.UNM"
+    - "F.2"
+  normalization refs:
+    - "A.19.CN"
+  normalizationfixspec:
+    - "A.19.UNM"
+  normalizationinvariant:
+    - "A.19.UNM"
+  normalizationmethodid:
+    - "A.19.UNM"
+  normalizationmethodinstanceid:
+    - "A.19.UNM"
+  notation:
+    - "E.5.2"
+  notation shift:
+    - "A.6.3.RT"
+  notation-independent pack:
+    - "G.10"
+  notational:
+    - "E.5.2"
+  notice:
+    - "B.4.1"
+  novelty:
+    - "A.0"
+    - "C.17"
+  novelty@context:
+    - "B.5.2.1"
+    - "C.17"
+  nqd:
+    - "A.0"
+    - "B.5.2.1"
+    - "C.18"
+  nqd binding:
+    - "B.5.2.1"
+  nqd-cal:
+    - "C.18"
+  nqd-front label candidates:
+    - "F.18"
+  nqdarchive:
+    - "C.18"
+  object:
+    - "A.2.8"
+    - "A.2.9"
+    - "E.17.AUD.OOTD"
+  object of talk:
+    - "E.17.AUD.OOTD"
+  object ≠ description:
+    - "A.7"
+  object-of-talk:
+    - "E.17.AUD.OOTD"
+  obligation/permission/prohibition:
+    - "A.2.8"
+  observation:
+    - "F.12"
+  observe:
+    - "B.4.1"
+  observe-notice-stabilize-route:
+    - "B.4"
+  obvious:
+    - "preface.fpf-as-a-culinary-architecture-for-collective-thought-why-we-formalize-obvious-ideas"
+  occam's razor:
+    - "A.11"
+  occurrence:
+    - "A.15.1"
+  on-ramp:
+    - "E.6"
+  onboarding:
+    - "A.0"
+  one:
+    - "E.17.AUD"
+    - "E.17.AUD.OOTD"
+  one-characteristic-one-scale rule:
+    - "A.18"
+  ontics:
+    - "preface.raising-semantic-precision-from-triggers-to-math-backed-ontics"
+  ontological:
+    - "A.11"
+  ontologies:
+    - "preface.descriptive-ontologies-vs-a-thinking-oriented-architecture"
+  ontology:
+    - "A.7"
+  open:
+    - "preface.navigating-uncertainty-building-closed-worlds-within-an-open-world-non-normative"
+    - "A.4"
+    - "A.5"
+    - "C.18"
+  open-ended:
+    - "preface.creativity-in-open-ended-evolution-and-assurance"
+  open-ended evolution:
+    - "B.4"
+  operate:
+    - "B.5.1"
+  operating:
+    - "E.1"
+  operating system for thought:
+    - "E.1"
+  operation:
+    - "A.6.5"
+  operationalgate:
+    - "A.21"
+  operationalgate(profile:
+    - "E.18"
+  operationalgebra:
+    - "A.6.1"
+  operator loop:
+    - "C.2.6"
+  operators:
+    - "G.4"
+  optics:
+    - "A.6.3"
+  optional:
+    - "A.16.0"
+  optionset:
+    - "C.11"
+  orchestrator:
+    - "G.11"
+  order:
+    - "B.1.5"
+  order-sensitive:
+    - "B.1.4"
+  order/time:
+    - "A.6.H"
+  ordinal vs cardinal scale:
+    - "A.18"
+  origin trace:
+    - "B.5.2"
+  originality:
+    - "C.17"
+  outcome-side space ref:
+    - "A.19.SURF-SPACE"
+  outcomespaceref:
+    - "A.0"
+  outside-work boundary:
+    - "E.17.AUD"
+    - "E.17.AUD.LHR"
+    - "E.17.AUD.OOTD"
+  over:
+    - "preface.the-bitter-lesson-trajectory-compute-data-and-freedom-over-hand-tuned-rules-fpf-stance"
+    - "A.6.1"
+    - "A.16.0"
+    - "C.2.2a"
+    - "E.17.EFP"
+    - "E.17.ID.CR"
+    - "E.17.AUD.OOTD"
+  overlay:
+    - "F.9.1"
+  overlay annotation:
+    - "F.9.1"
+  owner:
+    - "C.2.LS"
+  owner routing:
+    - "E.20"
+  p-1 to p-11:
+    - "E.2"
+  p2w:
+    - "A.6.7"
+  p2w seam:
+    - "A.15.3"
+    - "A.19.CHR"
+    - "E.20"
+  pack:
+    - "G.10"
+  pack-boundary owner:
+    - "G.10"
+  packs:
+    - "G.13"
+  palette-first:
+    - "G.2"
+  paradigm shift:
+    - "B.2.3"
+  paretoonly default:
+    - "A.0"
+  parity:
+    - "G.9"
+  parity pins:
+    - "G.10"
+  parsimony:
+    - "A.11"
+    - "F.8"
+  part-of:
+    - "A.6.H"
+    - "A.14"
+  part-whole:
+    - "C.13"
+  part-whole composition:
+    - "A.1"
+  partial coordinates:
+    - "C.2.2a"
+  partial order:
+    - "A.19.CPM"
+    - "C.3.1"
+  pass-by-reference:
+    - "A.6.5"
+  pass-by-value:
+    - "A.6.5"
+  passive read:
+    - "C.26.1"
+  pathid:
+    - "G.6"
+  pathid/pathsliceid:
+    - "G.10"
+    - "G.12"
+  pathslice:
+    - "A.20"
+    - "G.11"
+  pathslice/sentinel refresh:
+    - "E.18"
+  pathsliceid:
+    - "G.6"
+    - "G.7"
+  pathwise justification (pathid:
+    - "C.2.2"
+  pattern:
+    - "E.19"
+  pattern-use:
+    - "E.11"
+  pc.characteristicspaceref:
+    - "E.17"
+  pc.comparatorsetref:
+    - "E.17"
+  pc.evidencebinding:
+    - "E.17"
+  pedagogy:
+    - "E.4"
+    - "E.5.3"
+    - "E.6"
+    - "F.16"
+  penalties→r_eff:
+    - "A.19.CHR"
+  performance:
+    - "A.2.2"
+  phaseof:
+    - "A.14"
+  phases:
+    - "A.14"
+  physical emergence:
+    - "B.2.2"
+  physical systems:
+    - "B.1.2"
+  pillars:
+    - "E.2"
+  pin discipline:
+    - "E.17"
+  plainview/techcard/interopcard/assurancelane:
+    - "E.17"
+  plan:
+    - "A.15.2"
+  plan vs run:
+    - "B.1.5"
+  plane map:
+    - "G.13"
+  planned baseline:
+    - "A.6.7"
+    - "A.15.3"
+    - "A.19.CHR"
+  planned filler:
+    - "A.15.3"
+  planning:
+    - "C.3.5"
+    - "C.24"
+  plausibility filters:
+    - "B.5.2"
+  polarity:
+    - "A.18"
+    - "C.16"
+    - "F.10"
+  policy:
+    - "E.10.P"
+  polysemy:
+    - "A.6.8"
+  portfolio composition:
+    - "C.17"
+  portfoliorosterid:
+    - "G.10"
+  portionof:
+    - "A.14"
+  portions:
+    - "A.14"
+  position claim:
+    - "C.2.2a"
+  post-threshold routing:
+    - "A.6.A"
+  pqg profiles:
+    - "E.20"
+  practical:
+    - "J.4"
+  prag:
+    - "E.3"
+  pragmatic:
+    - "E.13"
+  pre-abductive seam:
+    - "B.4.1"
+  pre-articulation:
+    - "A.16.1"
+  prearticulationcuepack:
+    - "A.16.1"
+  precedence:
+    - "E.3"
+  precision:
+    - "preface.raising-semantic-precision-from-triggers-to-math-backed-ontics"
+    - "A.6.P"
+    - "A.6.Q"
+    - "A.6.A"
+  preference:
+    - "C.19.1"
+  prefixes:
+    - "E.10.P"
+  preserving:
+    - "A.6.3"
+  pressured:
+    - "E.17.AUD.LHR"
+  pressured head:
+    - "E.17.AUD.LHR"
+  primacy:
+    - "E.12"
+  primary:
+    - "E.17.AUD.OOTD"
+  primary object of talk:
+    - "E.17.AUD"
+  primary witness:
+    - "A.16.1"
+  principle:
+    - "A.4"
+    - "A.8"
+    - "E.3"
+    - "E.7"
+  principles:
+    - "E.2"
+    - "E.3"
+    - "F.0.1"
+  probe:
+    - "A.6.P"
+  probe again:
+    - "C.11"
+  probe evidence:
+    - "A.10"
+  probe-changing-state:
+    - "C.16"
+  probe-coupled:
+    - "C.26.1"
+  probe-coupled boundary:
+    - "C.26.1"
+  probe-worthiness:
+    - "C.11"
+  probe/distributed/export assurance:
+    - "B.3"
+  probe/order/frame/export claims:
+    - "A.6"
+  problem:
+    - "C.22"
+  problem-chr:
+    - "C.22"
+  problem-solving:
+    - "B.5"
+  problem‑chr:
+    - "C.22"
+  procedure:
+    - "A.3.1"
+  process:
+    - "E.10"
+  product:
+    - "A.19"
+  profile:
+    - "A.21"
+  profiles:
+    - "E.19"
+  projection note:
+    - "F.9.1"
+  promise:
+    - "A.2.3"
+  promise content:
+    - "A.2.3"
+    - "A.6.8"
+  promise content (promise content) ≠ work:
+    - "A.6.C"
+  promise-act/utterance/commitment separation:
+    - "A.6.C"
+  promisecontent:
+    - "A.2.3"
+  prompt species:
+    - "B.5.2.0"
+  proof:
+    - "C.2.3"
+  proofs:
+    - "B.1.1"
+  property:
+    - "A.17"
+  protocol:
+    - "E.15"
+    - "E.20"
+    - "F.18"
+  provenance:
+    - "A.2.9"
+    - "A.10"
+    - "B.1.3"
+    - "C.2"
+    - "F.2"
+    - "G.6"
+  provenance editions:
+    - "C.18"
+  provider principal:
+    - "A.6.8"
+  provider/consumer roles:
+    - "A.2.3"
+  proxy metric:
+    - "C.25"
+  publication:
+    - "E.17"
+    - "F.17"
+  publication characteristics (pc.number:
+    - "E.17"
+  publication surface:
+    - "E.14"
+  publicationscope (usm:
+    - "E.17"
+  purpose:
+    - "preface.purpose-scope-and-explicit-non-goals"
+    - "E.1"
+  purpose/use-domain:
+    - "F.18"
+  q-bundle:
+    - "C.25"
+  q-front:
+    - "B.5.2.1"
+  q-term:
+    - "A.6.Q"
+  qualified:
+    - "A.6.P"
+  qualifiedrelationrecord:
+    - "A.6.P"
+  quality:
+    - "A.6.Q"
+    - "C.25"
+    - "E.19"
+  quality bundle:
+    - "C.25"
+  quality family:
+    - "C.25"
+  quality senses:
+    - "A.6.Q"
+  quality-diversity (nqd:
+    - "A.0"
+  quality-term precision restoration:
+    - "A.6.Q"
+  qualitytermprecisionrestoration:
+    - "A.6.Q"
+  quantum-like:
+    - "C.26"
+  quartet:
+    - "A.3"
+    - "F.11"
+  question order:
+    - "C.11"
+  r penalty:
+    - "C.3.3"
+  rails:
+    - "E.5"
+  raising:
+    - "preface.raising-semantic-precision-from-triggers-to-math-backed-ontics"
+  rankedshortlist:
+    - "G.5"
+  rate reading:
+    - "C.27"
+  rate-change:
+    - "C.27"
+  rationale:
+    - "E.9"
+  rationale mandate:
+    - "E.12"
+  rcs:
+    - "F.4"
+  rcs/rsg:
+    - "A.2.1"
+  re-expression:
+    - "A.6.3.CR"
+  re-shipping:
+    - "G.11"
+  read:
+    - "E.17.AUD"
+  reading:
+    - "E.17.ID.CR"
+  readings:
+    - "C.27"
+  ready:
+    - "G.1"
+  reasoning:
+    - "B.5"
+    - "C.3"
+  reasoning medium:
+    - "A.6.3.RT"
+  rebase:
+    - "A.6.6"
+  recipe:
+    - "A.3.1"
+    - "A.3.2"
+  recognition:
+    - "A.6.RSIG"
+  recognizing:
+    - "B.2"
+  reconstruction:
+    - "E.17.EFP"
+  record:
+    - "E.9"
+  recoverability:
+    - "A.6.3.RT"
+  recovery:
+    - "C.27"
+  redaction:
+    - "A.6.3.CSC"
+  reference:
+    - "A.6.5"
+  referencebase:
+    - "C.17"
+  referenceplane:
+    - "G.0"
+    - "G.3"
+    - "G.7"
+  referencescheme:
+    - "C.2.1"
+  referring:
+    - "A.10"
+  refkind:
+    - "A.6.5"
+  reflexive:
+    - "A.12"
+  refresh:
+    - "E.19"
+    - "G.11"
+  refreshreadinesscardid:
+    - "G.1"
+  registers:
+    - "E.10"
+  registry:
+    - "A.19.CN"
+    - "E.10.P"
+    - "G.5"
+  regression envelope:
+    - "E.20"
+  regression tests:
+    - "F.15"
+  regressionset:
+    - "G.7"
+  regulation:
+    - "C.26.3"
+  regulatory profile:
+    - "C.3.A"
+  reindexing (promoteview[s→t:
+    - "E.17"
+  reject current set:
+    - "C.11"
+  relation:
+    - "A.6.P"
+  relation precision restoration:
+    - "A.6.P"
+  relational:
+    - "A.6.P"
+  relationalprecisionrestorationsuite:
+    - "A.6.P"
+  relationkind:
+    - "A.6.P"
+  relations:
+    - "A.2.7"
+    - "A.6.5"
+    - "B.3.5"
+  relationslotdiscipline:
+    - "A.6.5"
+  reliability:
+    - "B.3"
+    - "C.2"
+    - "C.2.2"
+  reliability (r:
+    - "C.2.2"
+  rename note:
+    - "F.9.1"
+  renaming:
+    - "F.13"
+  rendering:
+    - "E.17.EFP"
+  reopen:
+    - "A.16"
+    - "A.16.2"
+    - "C.2.5"
+  reopen trigger:
+    - "A.6.3.CSC"
+  repair:
+    - "E.17.AUD.LHR"
+  repairing:
+    - "A.6.9"
+  report rewrite:
+    - "A.6.3.CR"
+  report/export loss:
+    - "C.26.2"
+  representation factors:
+    - "C.2.LS"
+    - "C.2.7"
+  representation organization:
+    - "C.2.7"
+  representation transduction:
+    - "A.6.3.RT"
+  representation-scheme:
+    - "A.6.3.RT"
+  representationscheme:
+    - "A.6.3"
+    - "C.2.1"
+  representationtransduction:
+    - "A.6.3.RT"
+  reproducibility:
+    - "A.6.2"
+    - "C.21"
+  requiredroles substitution:
+    - "A.2.7"
+  requirement:
+    - "F.10"
+  reroute:
+    - "C.11"
+  rescope:
+    - "A.6.6"
+  resistance/inertia:
+    - "C.27"
+  resource:
+    - "B.1.6"
+  resource aggregation:
+    - "B.1.6"
+  resourceefficiency:
+    - "C.17"
+  respecify:
+    - "A.16"
+    - "A.16.2"
+  responsibility:
+    - "A.2"
+  responsible ai:
+    - "D.5"
+  resrc-cal:
+    - "B.1.6"
+  restoration:
+    - "A.6.P"
+    - "A.6.Q"
+    - "A.6.A"
+    - "E.17.AUD.LHR"
+  retained exploration/archive evidence:
+    - "B.5.2.1"
+  retargeting:
+    - "A.6.4"
+    - "A.6.S"
+  retextualization:
+    - "A.6.3.CR"
+  retime:
+    - "A.6.6"
+  retire:
+    - "A.16"
+    - "A.16.2"
+  retreat:
+    - "A.16.2"
+  reusable:
+    - "E.17.1"
+  reusable viewpoint family:
+    - "E.17.1"
+  reuse:
+    - "F.8"
+    - "F.14"
+  review:
+    - "E.5.4"
+    - "E.17.ID.CR"
+    - "E.19"
+  review cycle:
+    - "D.5"
+  rewrite rules:
+    - "E.10"
+  rhythm/cadence:
+    - "C.27"
+  rigor:
+    - "C.2.3"
+  rival explanation:
+    - "C.26.2"
+  rival routes:
+    - "C.2.5"
+  rival-set discipline:
+    - "B.5.2.0"
+  roc:
+    - "E.16"
+  role:
+    - "A.2"
+    - "A.2.1"
+    - "A.2.5"
+    - "A.2.7"
+    - "A.13"
+    - "A.15"
+    - "F.4"
+    - "F.6"
+    - "F.8"
+  role algebra:
+    - "A.2.7"
+  role assignment:
+    - "F.6"
+  role characterisation space (rcs:
+    - "F.4"
+  role state:
+    - "A.2.5"
+  role template:
+    - "F.4"
+  role ≠ work:
+    - "A.7"
+  role-method-work split:
+    - "A.15"
+  role-projection:
+    - "B.5.3"
+  role-specific space refs stay outside a.19:
+    - "A.19"
+  rolealgebra:
+    - "A.2.7"
+  roleassignment:
+    - "A.2.1"
+  roleenactment:
+    - "A.2.1"
+  rolemask:
+    - "C.3.4"
+  roles:
+    - "F.5"
+    - "F.14"
+  rolestategraph:
+    - "A.2.5"
+    - "F.4"
+  rolestategraph (rsg:
+    - "F.4"
+  role–method–work:
+    - "A.6.H"
+  role–method–work alignment:
+    - "F.11"
+  roll-up:
+    - "A.9"
+  route:
+    - "B.4.1"
+  route plurality:
+    - "B.4.1"
+  route pressure:
+    - "A.16.1"
+  route selection:
+    - "B.4.1"
+  route-to-hypothesis:
+    - "B.5.2"
+  routed cue set:
+    - "B.4.1"
+  row:
+    - "F.7"
+  rpr:
+    - "A.6.P"
+    - "A.6.8"
+    - "A.6.9"
+  rpr-whole:
+    - "A.6.H"
+  rscr:
+    - "F.15"
+    - "G.11"
+  rscr linkage surfaces:
+    - "G.1"
+  rscr wiring:
+    - "G.10"
+  rscr/refresh wiring:
+    - "G.12"
+  rscrtriggerkindid:
+    - "G.0"
+    - "G.3"
+    - "G.4"
+    - "G.7"
+    - "G.13"
+  rsg:
+    - "A.2.5"
+  rsg admission hooks:
+    - "A.19.CN"
+  rule ids:
+    - "G.8"
+  rules:
+    - "preface.the-bitter-lesson-trajectory-compute-data-and-freedom-over-hand-tuned-rules-fpf-stance"
+    - "E.2"
+    - "E.5"
+    - "E.10"
+  run:
+    - "A.15.1"
+  run-time:
+    - "A.4"
+  safety:
+    - "E.5"
+  same:
+    - "A.6.9"
+  same object of talk:
+    - "E.17.ID.CR"
+  same-described-entity:
+    - "A.6.3.CR"
+    - "A.6.3.RT"
+  same-described-entity representation change:
+    - "A.6.3.RT"
+  same-described-entity textual re-expression:
+    - "A.6.3.CR"
+  samedeclaredspaceas:
+    - "A.19.SURF-SPACE"
+  scale:
+    - "A.9"
+    - "A.18"
+    - "A.19.ULSAM"
+  scale-audit:
+    - "C.19.1"
+  scale-lawful fold:
+    - "A.19.ULSAM"
+  scale-probe:
+    - "A.0"
+  scalecomplianceprofile (scp:
+    - "A.19.USCM"
+    - "G.0"
+  scales:
+    - "G.3"
+  scaling:
+    - "C.18.1"
+  schedule:
+    - "A.15.2"
+  scientific method:
+    - "B.5"
+  scientific revolution:
+    - "B.2.3"
+  scope:
+    - "preface.purpose-scope-and-explicit-non-goals"
+    - "A.2.6"
+    - "A.6.6"
+    - "B.3"
+    - "E.1"
+  scope notes:
+    - "F.1"
+  scope+validity window:
+    - "A.2.8"
+  scoped:
+    - "A.6.6"
+  scopes:
+    - "A.2.6"
+  scopeslice(g:
+    - "C.22"
+  score profile:
+    - "A.19.USCM"
+  scoring:
+    - "A.19.USCM"
+  scoring method disclosure:
+    - "C.16"
+  scoringmethoddescription:
+    - "A.19.USCM"
+  scr:
+    - "F.15"
+  scr/rscr:
+    - "A.10"
+    - "G.6"
+  scr/rscr harness:
+    - "A.19.CN"
+  search:
+    - "C.18"
+  search-side space ref:
+    - "A.19.SURF-SPACE"
+  searchspaceref:
+    - "A.0"
+  selected set:
+    - "A.19.SelectorMechanism"
+  selected-set publication:
+    - "G.5"
+  selecteligibility:
+    - "A.19.SelectorMechanism"
+  selection:
+    - "A.19.SelectorMechanism"
+  selection kernel:
+    - "A.19.SelectorMechanism"
+  selector:
+    - "C.23"
+  selector-ready publication surface:
+    - "G.10"
+  selectormechanism:
+    - "A.19.SelectorMechanism"
+  selectoroutcomekind:
+    - "G.5"
+  self-modification:
+    - "A.12"
+  semantic:
+    - "preface.raising-semantic-precision-from-triggers-to-math-backed-ontics"
+    - "A.1.1"
+    - "A.6.3.CSC"
+  semantic boundary:
+    - "A.1.1"
+    - "F.0.1"
+  semantic shape:
+    - "C.2.4"
+  semantics:
+    - "E.5.2"
+  sense:
+    - "F.3"
+  sense anchor:
+    - "F.18"
+  sense clustering:
+    - "F.3"
+  sensecell:
+    - "F.3"
+  sensecell testing:
+    - "F.15"
+  sensecells:
+    - "A.6.9"
+  sensitive:
+    - "B.1.5"
+  sentinel:
+    - "A.20"
+  sentinels:
+    - "G.7"
+  sentinelset:
+    - "G.7"
+  separation of duties (sod:
+    - "A.2.7"
+  separation-of-duties:
+    - "F.14"
+  sequential:
+    - "B.1.5"
+  series:
+    - "G.12"
+  serv:
+    - "A.6.8"
+  service:
+    - "A.6.8"
+    - "E.10"
+    - "F.12"
+  service level agreement (sla:
+    - "F.12"
+  service level objective (slo:
+    - "F.12"
+  service polysemy:
+    - "A.6.8"
+  service situation:
+    - "A.6.8"
+  service/cell analogy:
+    - "A.6.8"
+  set:
+    - "A.6.7"
+    - "B.1.1"
+    - "C.13"
+    - "F.7"
+  set-return selection:
+    - "A.19.CHR"
+    - "E.18"
+    - "G.1"
+  set-returning selection:
+    - "A.19.SelectorMechanism"
+  set-surface outcome:
+    - "G.1"
+    - "G.5"
+  set-valued:
+    - "A.2.6"
+  set-valued comparison outcome:
+    - "A.19.CPM"
+  settledness:
+    - "C.2.5"
+  shape:
+    - "B.5.1"
+  shared-frame check:
+    - "C.16"
+  sheet:
+    - "F.17"
+  shipping:
+    - "G.10"
+  shipping/refresh boundaries:
+    - "G.1"
+  shortlist:
+    - "G.5"
+  shortlistid:
+    - "G.1"
+    - "G.5"
+  signature:
+    - "A.6"
+    - "A.6.0"
+    - "A.6.5"
+    - "A.6.S"
+    - "C.22.1"
+  signature engineering:
+    - "A.6.S"
+  signature stack:
+    - "A.6"
+  signatureengineeringpair:
+    - "A.6.S"
+  signatures:
+    - "A.6.RSIG"
+  simplicity:
+    - "A.11"
+  simulation:
+    - "A.3.3"
+  six-card kit (m1-m6:
+    - "G.1"
+  six-step:
+    - "F.6"
+  sketch-backoff:
+    - "A.16"
+  sketchbackoff:
+    - "A.16.2"
+  skill:
+    - "A.2.2"
+  sla:
+    - "A.2.3"
+  sla/guarantee routing:
+    - "A.6.C"
+  slice:
+    - "B.1.1"
+    - "C.13"
+  slices:
+    - "A.2.6"
+  sll:
+    - "C.18.1"
+  slo:
+    - "A.2.3"
+  slot:
+    - "A.6.5"
+    - "C.2.1"
+  slot owner:
+    - "A.15.3"
+  slot/base change lexicon:
+    - "A.6.S"
+  slotfillingsplanitem:
+    - "A.15.3"
+    - "A.19.CHR"
+  slotkind:
+    - "A.6.5"
+  slotkind lexicon discipline:
+    - "E.20"
+  sop:
+    - "A.3.2"
+  sos:
+    - "C.23"
+    - "G.8"
+  sos-log:
+    - "C.23"
+    - "G.8"
+  sota:
+    - "G.2"
+    - "G.10"
+    - "G.13"
+  sota harvest:
+    - "G.2"
+  sota synthesis pack@cg-frame:
+    - "G.2"
+  sota-pack(core:
+    - "G.10"
+  sota_setid:
+    - "G.1"
+  sotapalettedescription:
+    - "G.2"
+  source anchors:
+    - "E.17.EFP"
+  source surface:
+    - "A.19.SURF-SPACE"
+  source tether:
+    - "A.6.3.CR"
+    - "A.6.3.RT"
+  source-pinned:
+    - "E.17.EFP"
+  source-pinned material:
+    - "E.17.ID.CR"
+  sourcesurfaceid:
+    - "A.19.SURF-SPACE"
+  sourcetooutcomerelation:
+    - "A.19.SURF-SPACE"
+  space:
+    - "A.2.5"
+    - "A.19"
+  spacerefrelationkind:
+    - "A.19.SURF-SPACE"
+  sparsity:
+    - "C.2.7"
+  spec:
+    - "G.0"
+  specialisthandoff:
+    - "G.5"
+  specialization (≤:
+    - "A.2.7"
+  specialization anchor:
+    - "C.22"
+  specialization vs dependancy hierarhies:
+    - "A.5"
+  specific:
+    - "B.1.2"
+    - "B.1.3"
+  specification:
+    - "preface.what-this-specification-is-and-how-to-use-it"
+    - "A.3.2"
+    - "C.2.3"
+    - "E.6"
+    - "E.10.D2"
+  spectrum:
+    - "A.13"
+  speculative retelling:
+    - "E.17.EFP"
+  speech act:
+    - "A.2.9"
+  speechact:
+    - "A.2.9"
+  spent:
+    - "B.1.6"
+  split:
+    - "A.12"
+  splitting terms:
+    - "F.13"
+  square:
+    - "A.6.B"
+  squarelaw:
+    - "A.20"
+    - "E.18"
+  squarelaw-retargeting:
+    - "A.6.4"
+  stability:
+    - "B.2.5"
+    - "E.17.AUD.OOTD"
+  stabilization:
+    - "C.27"
+  stabilize:
+    - "B.4.1"
+  stable:
+    - "E.17.AUD"
+  stack:
+    - "preface.intellect-stack"
+    - "A.6"
+  stale data:
+    - "B.3.4"
+  stance:
+    - "preface.the-bitter-lesson-trajectory-compute-data-and-freedom-over-hand-tuned-rules-fpf-stance"
+    - "F.9.1"
+  stance overlay:
+    - "F.9.1"
+  standard:
+    - "A.2.1"
+    - "F.10"
+    - "G.0"
+  standardisation:
+    - "C.21"
+  standards:
+    - "C.20"
+  state:
+    - "A.2.5"
+    - "C.26.2"
+    - "C.27"
+  state evolution:
+    - "A.3.3"
+  state export:
+    - "F.9"
+  state machine:
+    - "A.2.5"
+    - "B.5.1"
+  state reading:
+    - "C.27"
+  state space:
+    - "A.3.3"
+  state trajectories:
+    - "A.19"
+  state-reading claims:
+    - "A.6"
+  state-representation shortcut:
+    - "A.6.3.CSC"
+    - "A.6.3.RT"
+  statements:
+    - "preface.boundary-statements-where-language-becomes-a-system-boundary"
+  static checks:
+    - "F.15"
+  status:
+    - "F.10"
+  status template:
+    - "F.4"
+  statuses:
+    - "F.14"
+  storylines:
+    - "preface.the-big-storylines-unique-to-fpf-load-bearing-commitments"
+  strict:
+    - "A.7"
+  stronger source:
+    - "A.6.3.CSC"
+  structural aggregators:
+    - "B.1.1"
+  structural overlays:
+    - "A.19"
+  structuralreinterpretation:
+    - "A.6.4"
+  structure:
+    - "C.21"
+    - "E.6"
+  structured:
+    - "C.25"
+  style:
+    - "E.8"
+  subholon:
+    - "B.2.5"
+  subject retargeting:
+    - "A.6.4"
+  subjectkind:
+    - "A.6.0"
+    - "A.6.1"
+  subkind:
+    - "C.3"
+    - "C.3.1"
+  subkind promotion:
+    - "C.3.4"
+  subkindof:
+    - "C.3.1"
+  subspace:
+    - "A.19"
+  substitution:
+    - "A.6.5"
+  substitution licence:
+    - "A.6.9"
+  substrate:
+    - "A.19.SURF-SPACE"
+  substrate-neutral autonomy:
+    - "A.13"
+  subtypes:
+    - "B.3.3"
+  suite boundary hygiene:
+    - "E.20"
+  suite obligations:
+    - "A.6.7"
+    - "A.19.CHR"
+  sum:
+    - "B.1.1"
+    - "C.13"
+  summary:
+    - "A.6.3.CR"
+  summary table:
+    - "F.17"
+  super-system:
+    - "B.2.2"
+  supersedes:
+    - "A.16.0"
+  supervisor:
+    - "B.2.5"
+  support:
+    - "A.2.4"
+    - "A.19.SUPPORT-VIEW"
+  support qualifiers:
+    - "A.19.SUPPORT-VIEW"
+  support view:
+    - "A.19.SUPPORT-VIEW"
+  support-only reading:
+    - "A.19.SUPPORT-VIEW"
+  support-view wording:
+    - "F.18"
+  supported use:
+    - "A.6.B"
+    - "C.25"
+    - "F.9"
+  surface terms:
+    - "F.2"
+  surprise:
+    - "C.17"
+  survey:
+    - "C.26.1"
+    - "F.1"
+  swbd:
+    - "A.6.6"
+  symbolicity:
+    - "C.2.7"
+  synergy:
+    - "B.2"
+  syntax:
+    - "E.5.2"
+  synthesis:
+    - "G.2"
+  sys:
+    - "B.1.2"
+  sys-cal:
+    - "B.1.2"
+  system:
+    - "preface.boundary-statements-where-language-becomes-a-system-boundary"
+    - "B.1.2"
+    - "E.1"
+  system aggregation:
+    - "B.1.2"
+  system boundary:
+    - "A.1"
+  system emergence:
+    - "B.2.2"
+  system of systems:
+    - "B.2"
+  system-in-role:
+    - "A.3"
+  ta/va/la lanes:
+    - "C.2.2"
+  table:
+    - "A.6.3.RT"
+    - "F.7"
+  talk:
+    - "E.17.AUD.OOTD"
+  targetsignature:
+    - "A.6.S"
+  task-family:
+    - "C.22.1"
+  task-family specialization:
+    - "C.19.1"
+  task-family specialization route:
+    - "B.4.1"
+  taskkind:
+    - "C.22"
+  tasksignature:
+    - "C.22"
+  taxonomy:
+    - "A.2"
+    - "D.5"
+    - "E.3"
+  telemetry:
+    - "G.11"
+    - "G.12"
+  telemetry pin:
+    - "G.13"
+  telemetry pins:
+    - "G.10"
+  telemetry-driven:
+    - "G.11"
+  tell-show-show:
+    - "E.7"
+  template:
+    - "F.16"
+  temporal:
+    - "A.4"
+    - "B.1.4"
+    - "C.27"
+  temporal aggregation:
+    - "B.1.4"
+  temporal claim:
+    - "C.27"
+  temporal claim adequacy:
+    - "C.27"
+  temporal trend:
+    - "C.27"
+  term:
+    - "A.6.Q"
+    - "F.2"
+    - "F.17"
+  term harvesting:
+    - "F.2"
+  terminology:
+    - "B.5.3"
+  testable:
+    - "E.10.D2"
+  tevb:
+    - "E.17.2"
+  textual:
+    - "A.6.3.CR"
+  tga:
+    - "E.18"
+  their:
+    - "C.2.1"
+  theory:
+    - "preface.transdisciplinarity-as-a-meta-theory-of-thinking"
+    - "C.11"
+  thin:
+    - "C.2.LS"
+  thin support:
+    - "A.19.SUPPORT-VIEW"
+  thinking:
+    - "preface.thinking-through-writing-the-fpf-discipline-of-conceptual-work"
+    - "preface.transdisciplinarity-as-a-meta-theory-of-thinking"
+  thinking-oriented:
+    - "preface.descriptive-ontologies-vs-a-thinking-oriented-architecture"
+  thought:
+    - "preface.fpf-as-an-evolutionary-architecture-for-thought"
+    - "preface.architectural-characteristic-of-thought"
+    - "preface.beyond-cognitive-biases-fpf-as-a-generative-architecture-for-thought"
+    - "preface.fpf-as-a-culinary-architecture-for-collective-thought-why-we-formalize-obvious-ideas"
+    - "E.1"
+  threshold crossing:
+    - "B.5.2.0"
+  threshold package:
+    - "C.2.LS"
+  thresholds:
+    - "C.2.2a"
+  through:
+    - "preface.thinking-through-writing-the-fpf-discipline-of-conceptual-work"
+  throughput:
+    - "C.27"
+  time:
+    - "B.1.4"
+    - "G.12"
+  time-series:
+    - "B.1.4"
+    - "G.12"
+  tool:
+    - "C.24"
+  tool-agnostic:
+    - "E.5.1"
+    - "E.5.2"
+  tooling:
+    - "E.4"
+    - "E.5.3"
+  tools:
+    - "C.24"
+  trace:
+    - "C.2.6"
+  traceability:
+    - "A.10"
+  tradition:
+    - "G.2"
+    - "G.7"
+  traditionatlasview:
+    - "A.19.SUPPORT-VIEW"
+    - "G.2"
+  trajectory:
+    - "preface.the-bitter-lesson-trajectory-compute-data-and-freedom-over-hand-tuned-rules-fpf-stance"
+  trajectory account:
+    - "A.16.0"
+  trajectory-account:
+    - "A.16.0"
+  trans-disciplinary:
+    - "E.5.4"
+  transdisciplinarity:
+    - "preface.transdisciplinarity-as-a-meta-theory-of-thinking"
+  transdisciplinary:
+    - "A.8"
+  transduction:
+    - "A.16"
+    - "E.18"
+  transduction graph:
+    - "E.18"
+  transductionflow:
+    - "A.20"
+  transformer:
+    - "A.3"
+    - "A.12"
+  transition:
+    - "A.6.3.RT"
+    - "B.2"
+    - "B.2.2"
+    - "B.2.3"
+    - "B.2.4"
+  translation:
+    - "A.6.3.CR"
+  transport:
+    - "A.6.1"
+  trends:
+    - "C.27"
+  tri-state admissibility:
+    - "G.4"
+  tri-state admissibility (pass:
+    - "A.19.UINDM"
+    - "A.19.USCM"
+    - "A.19.CPM"
+  tri-state guard (pass:
+    - "A.19.ULSAM"
+    - "A.19.SelectorMechanism"
+  tri-state guard decision:
+    - "A.19.CHR"
+  tri-state {pass:
+    - "G.8"
+  triad:
+    - "C.2.2"
+  triangle decomposition:
+    - "A.6.B"
+  triggeraliasmap:
+    - "G.6"
+  triggers:
+    - "preface.raising-semantic-precision-from-triggers-to-math-backed-ontics"
+  trust:
+    - "B.1.3"
+    - "B.3"
+    - "C.2"
+  truth:
+    - "preface.from-flat-documents-to-high-dimensional-truth-the-multi-view-architecture"
+  tuned:
+    - "preface.the-bitter-lesson-trajectory-compute-data-and-freedom-over-hand-tuned-rules-fpf-stance"
+  tutorial:
+    - "E.4"
+  twin registers:
+    - "F.5"
+  two-signature arrangement:
+    - "A.6.S"
+  type:
+    - "C.3"
+    - "F.8"
+  type explosion:
+    - "F.8"
+  type hierarchy:
+    - "C.3.1"
+  type-congruence:
+    - "C.3.3"
+  typed:
+    - "C.3"
+    - "C.3.A"
+  typed guard:
+    - "C.3.A"
+  typed measurement:
+    - "G.3"
+  typed portfolio publication:
+    - "A.0"
+  typed reasoning:
+    - "C.3"
+  typed rscr triggers:
+    - "E.20"
+  typedsetviews:
+    - "A.0"
+    - "A.19.SUPPORT-VIEW"
+    - "G.2"
+  types:
+    - "F.5"
+  typical:
+    - "E.17.2"
+  typing:
+    - "B.3.3"
+    - "C.22"
+  u.applieddiscipline:
+    - "C.20"
+  u.boundedcontext:
+    - "E.10.D1"
+    - "F.0.1"
+  u.dhcmethod(ref:
+    - "C.16"
+  u.dynamics.statespace:
+    - "A.19"
+  u.episteme:
+    - "A.1"
+    - "E.7"
+  u.evidencestub:
+    - "C.16"
+  u.measure:
+    - "C.16"
+  u.roleassignment:
+    - "A.2"
+  u.system:
+    - "A.1"
+    - "E.7"
+  u.transdiscipline:
+    - "C.20"
+  u.type naming:
+    - "F.5"
+  u.unit:
+    - "C.16"
+  u.view/u.epistemeview:
+    - "E.17"
+  u.workplan vs u.work:
+    - "A.15"
+  uindm:
+    - "A.19.UINDM"
+  ulsam:
+    - "A.19.ULSAM"
+  umbrella routing:
+    - "E.17.AUD"
+  uml:
+    - "E.5.2"
+  uncertainty:
+    - "preface.navigating-uncertainty-building-closed-worlds-within-an-open-world-non-normative"
+  under-specified relational language:
+    - "A.6.P"
+  unidirectional:
+    - "E.5.3"
+  unification:
+    - "F.15"
+    - "F.18"
+  unified:
+    - "A.2.6"
+    - "A.19.UNM"
+    - "A.19.UINDM"
+    - "A.19.USCM"
+    - "A.19.ULSAM"
+    - "A.19.CPM"
+    - "A.19.SelectorMechanism"
+    - "C.2.3"
+    - "E.10"
+    - "F.17"
+  unified term sheet:
+    - "F.17"
+  unique:
+    - "preface.the-big-storylines-unique-to-fpf-load-bearing-commitments"
+  unit:
+    - "E.17.AUD"
+    - "E.17.AUD.LHR"
+  units:
+    - "E.17.ID.CR"
+  universal:
+    - "A.6.0"
+    - "A.8"
+    - "B.1"
+  universality:
+    - "A.8"
+  unknown handling:
+    - "C.22"
+  unm:
+    - "A.19.UNM"
+  unm single-writer:
+    - "E.18"
+  unpacking:
+    - "A.6.C"
+    - "A.6.8"
+    - "A.6.H"
+  unsupported heavier use:
+    - "A.6.3.CSC"
+  unsupported use:
+    - "A.6.B"
+  usability:
+    - "E.12"
+  uscm:
+    - "A.19.USCM"
+  use:
+    - "preface.what-this-specification-is-and-how-to-use-it"
+    - "C.24"
+  use-value / valuegain:
+    - "C.17"
+  usm:
+    - "A.2.6"
+    - "C.3.A"
+  utility:
+    - "E.13"
+  uts:
+    - "E.17"
+    - "F.17"
+    - "G.7"
+  uts pathcard:
+    - "G.6"
+  uts publication:
+    - "G.10"
+  uts twins:
+    - "G.12"
+    - "G.13"
+  uts/name cards:
+    - "G.1"
+  validation:
+    - "B.3.3"
+    - "F.15"
+  validity window (no implicit “latest”:
+    - "A.19.UNM"
+  value:
+    - "A.6.5"
+    - "C.17"
+    - "E.13"
+  valuekind:
+    - "A.6.5"
+  valueofcomputation:
+    - "C.11"
+  valueofinformation:
+    - "C.11"
+  variance trail:
+    - "A.15.3"
+  variantpoolid:
+    - "G.1"
+  verifiable:
+    - "E.10.D2"
+  verification:
+    - "B.3.3"
+  versioning:
+    - "A.4"
+    - "F.1"
+  via:
+    - "A.6.9"
+    - "A.6.S"
+  viability envelope:
+    - "A.6.8"
+    - "C.25"
+  viability evidence:
+    - "A.10"
+  viability-envelope:
+    - "C.26.3"
+  view:
+    - "A.6.3"
+    - "A.19.SUPPORT-VIEW"
+    - "E.17.0"
+    - "E.17"
+  view vs viewpoint:
+    - "E.17.0"
+  view-only slices:
+    - "G.12"
+  view/viewpoint:
+    - "C.2.1"
+  viewpoint:
+    - "A.6.3"
+    - "E.17.0"
+    - "E.17.1"
+  viewpoint bundle:
+    - "E.17.1"
+  viewpointbundlelibrary:
+    - "E.17.1"
+  viewpoints:
+    - "E.17.0"
+    - "E.17.2"
+    - "E.17"
+  viewpointslot:
+    - "C.2.1"
+  views:
+    - "E.17.0"
+  vision:
+    - "E.1"
+  vocabulary:
+    - "A.6.0"
+    - "C.3"
+  vocabulary growth:
+    - "F.14"
+  waivers:
+    - "G.7"
+  walk-throughs:
+    - "I.2"
+  warrant:
+    - "C.2.2"
+  weak cue:
+    - "C.2.4"
+  weak state reading:
+    - "C.26.2"
+  weakened briefing:
+    - "A.15"
+  weaker rendering:
+    - "A.6.3.CSC"
+  weakest-link:
+    - "A.6.9"
+    - "C.2.2"
+  weakest-link scope:
+    - "F.9"
+  what:
+    - "preface.what-this-specification-is-and-how-to-use-it"
+  where:
+    - "preface.boundary-statements-where-language-becomes-a-system-boundary"
+  wholeness:
+    - "A.6.H"
+  wholes:
+    - "B.2"
+  why:
+    - "preface.fpf-as-a-culinary-architecture-for-collective-thought-why-we-formalize-obvious-ideas"
+  window:
+    - "C.26.2"
+  window/freshness:
+    - "A.2.9"
+  wiring:
+    - "G.4"
+  within:
+    - "preface.navigating-uncertainty-building-closed-worlds-within-an-open-world-non-normative"
+  without:
+    - "C.3.4"
+  witnessed:
+    - "A.6.6"
+  witnesses:
+    - "A.6.6"
+  wlnk:
+    - "B.1"
+  wlnk discipline:
+    - "A.19.CN"
+  work:
+    - "preface.thinking-through-writing-the-fpf-discipline-of-conceptual-work"
+    - "A.2.9"
+    - "A.3"
+    - "A.6.B"
+    - "A.15"
+    - "A.15.1"
+    - "B.1.5"
+    - "B.1.6"
+    - "F.11"
+    - "F.12"
+  work authority:
+    - "A.15"
+  work evidence:
+    - "A.2.3"
+  work scope:
+    - "A.2.2"
+  worked:
+    - "F.16"
+  workflow:
+    - "B.1.5"
+  working:
+    - "E.14"
+  working model:
+    - "B.3.5"
+    - "E.14"
+  working-model:
+    - "B.3.5"
+  workplan:
+    - "A.15.2"
+  workplanning:
+    - "A.15.3"
+  workscope:
+    - "A.2.6"
+  workshop as state-changing interaction:
+    - "C.26.1"
+  world:
+    - "preface.navigating-uncertainty-building-closed-worlds-within-an-open-world-non-normative"
+  worlds:
+    - "preface.navigating-uncertainty-building-closed-worlds-within-an-open-world-non-normative"
+  writing:
+    - "preface.thinking-through-writing-the-fpf-discipline-of-conceptual-work"
+  xctx:
+    - "A.6.9"
+  yaml:
+    - "E.5.1"
+  α/δ tolerances:
+    - "C.19.1"
+  γ-fold:
+    - "G.0"
+  γ-fold governance:
+    - "A.19.CN"
+  γ-fold hooks:
+    - "G.4"
+  γ-fold pinning:
+    - "G.6"
+  γ_disc:
+    - "C.20"
+  γ_nqd.generate:
+    - "B.5.2.1"
+    - "C.18"
+  γ_nqd.illuminate:
+    - "C.18"
+  γ_nqd.selectfront:
+    - "C.18"
+  γ_nqd.updatearchive:
+    - "C.18"
+  γ_time:
+    - "A.6.6"
+  γ_time selector:
+    - "A.15.3"
+  γfoldref:
+    - "A.19.ULSAM"
+  δdiversity_p:
+    - "B.5.2.1"
+  φ(cl:
+    - "G.0"
+  φ(cl)/ψ(cl^k)/φ_plane policy pins:
+    - "G.7"
+  φ/cl policy pins:
+    - "G.3"
+  φ/ψ/φ_plane policy pins:
+    - "G.4"
+  φ_plane:
+    - "G.0"

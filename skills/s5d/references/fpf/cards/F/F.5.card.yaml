@@ -1,0 +1,32 @@
+id: "F.5"
+title: "Naming Discipline for U.Types & Roles"
+kind: "pattern"
+part: "F"
+status: "Stable"
+token_estimate:
+  card: 256
+  full: 6190
+when_to_load:
+  - "naming"
+  - "discipline"
+  - "types"
+  - "roles"
+  - "naming conventions"
+  - "lexical rules"
+  - "morphology"
+  - "twin registers"
+  - "U.Type naming"
+provides:
+  - "What are the rules for naming roles in FPF?"
+  - "How to create clear and consistent names for concepts?"
+relations:
+  builds_on:
+    - "F.4"
+    - "E.10"
+source:
+  module: "modules/F/F.5.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 56416
+  end_line: 56723
+summary: "Status. Definitional pattern. Depends on. E.10.D1 Lexical Discipline for “Context” (D.CTX); E.10.D2 Intension–Description–Specification (I/D/S); F.1 Domain‑Family Landscape Survey; F.2 Term Harvesting & Normalisation; F.3 Intra‑Context Sense Clustering; F.4 Role Description Definition; A.7 Strict Distinction; A.11 Ontological Parsimony; F.0.1 context‑local Lexicon Principle (RLP). Coordinates with. F.7 Concept‑Set Table; F.8 Mint or Reuse?; F.9 Alignment & Bridge; F.13 Term Registry & Deprecation. Aliases (informative). Context‑true naming; Two‑register labels."

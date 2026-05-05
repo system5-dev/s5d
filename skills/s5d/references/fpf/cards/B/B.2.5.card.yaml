@@ -1,0 +1,32 @@
+id: "B.2.5"
+title: "Supervisor–Subholon Feedback Loop"
+kind: "pattern"
+part: "B"
+status: "Stable"
+token_estimate:
+  card: 264
+  full: 3382
+when_to_load:
+  - "supervisor"
+  - "subholon"
+  - "feedback"
+  - "loop"
+  - "control architecture"
+  - "feedback loop"
+  - "stability"
+  - "layered control"
+provides:
+  - "How does FPF model control systems?"
+  - "What is the supervisor-subholon pattern?"
+  - "How do you build a complex, multi-part holon that reliably works together to achieve a common goal, without falling into chaos?"
+relations:
+  builds_on:
+    - "B.2"
+    - "A.1"
+source:
+  module: "modules/B/B.2.5.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 29256
+  end_line: 29356
+summary: "Many of the most successful and resilient holons, both natural and engineered—from scientific paradigms and bacterial cells to the internet and human sensorimotor control—share a common architectural motif: a Layered Supervisory Architecture. In this architecture, the complex task of managing the holon is decomposed into a stack of functional layers. Each layer operates at a different spatiotemporal scale and level of abstraction, communicating with its neighbors through well-defined interfaces."

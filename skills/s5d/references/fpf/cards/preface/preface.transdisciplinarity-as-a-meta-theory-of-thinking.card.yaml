@@ -1,0 +1,24 @@
+id: "preface.transdisciplinarity-as-a-meta-theory-of-thinking"
+title: "Transdisciplinarity as a Meta‑Theory of Thinking"
+kind: "preface_article"
+part: "preface"
+status: null
+token_estimate:
+  card: 220
+  full: 867
+when_to_load:
+  - "transdisciplinarity"
+  - "meta"
+  - "theory"
+  - "thinking"
+provides:
+  []
+relations:
+
+source:
+  module: "modules/preface/preface.transdisciplinarity-as-a-meta-theory-of-thinking.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 746
+  end_line: 759
+summary: "Modern complexity lives at the junction of silos. A climate model borrows genetics to track pathogens; a venture‑capital pitch cites thermodynamic “runway.” Yet each field guards its own mathematics, and translation costs soar. FPF answers this tension by treating transdisciplinarity as a meta‑theory of thinking itself — a language for designing reasoning, not another specialist dialect."

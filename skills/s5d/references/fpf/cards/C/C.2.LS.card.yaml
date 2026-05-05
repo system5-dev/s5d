@@ -1,0 +1,53 @@
+id: "C.2.LS"
+title: "U.LanguageStateFacetProfile - Thin owner for language-state facets"
+kind: "pattern"
+part: "C"
+status: "Stable"
+token_estimate:
+  card: 260
+  full: 4549
+when_to_load:
+  - "languagestatefacetprofile"
+  - "thin"
+  - "owner"
+  - "language-state"
+  - "facets"
+  - "facet profile"
+  - "articulation"
+  - "closure"
+  - "anchoring"
+  - "representation factors"
+  - "threshold package"
+provides:
+  - "How are language-state facets named together in FPF?"
+  - "What is a LanguageStateFacetProfile?"
+relations:
+  builds_on:
+    - "C.2.2a"
+    - "C.2.4"
+    - "C.2.5"
+    - "C.2.6"
+    - "C.2.7"
+    - "A.18"
+    - "A.19"
+    - "C.2.3"
+  coordinates_with:
+    - "A.16"
+    - "C.2.4"
+    - "C.2.5"
+    - "C.2.6"
+    - "C.2.7"
+    - "A.16.0"
+    - "A.16.1"
+    - "A.16.2"
+    - "B.4.1"
+    - "B.5.2.0"
+    - "E.18"
+    - "F.9.1"
+source:
+  module: "modules/C/C.2.LS.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 33438
+  end_line: 33680
+summary: "> Type: Definitional (D) > Status: Draft > Normativity: Normative unless marked informative"

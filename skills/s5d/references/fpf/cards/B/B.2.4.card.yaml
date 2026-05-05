@@ -1,0 +1,34 @@
+id: "B.2.4"
+title: "Meta-Functional Transition (MFT)"
+kind: "pattern"
+part: "B"
+status: "Stable"
+token_estimate:
+  card: 276
+  full: 4125
+when_to_load:
+  - "meta-functional"
+  - "transition"
+  - "mft"
+  - "functional emergence"
+  - "capability emergence"
+  - "adaptive workflow"
+  - "new process"
+provides:
+  - "How do new capabilities or workflows emerge?"
+  - "What is a Meta-Functional Transition?"
+  - "Can I now ask the team to 'run the deployment process' as a single, black-box service, or do I still have to personally manage the hand-offs between coding, testing, and release?"
+  - "Is the team now optimizing for the success of the entire workflow, even if it means one individual step has to run 'sub-optimally' (e.g., slower) for the good of the whole?"
+  - "Have we reached the point where the time we spend in meetings coordinating the hand-offs is taking more time and energy than the actual work itself?"
+relations:
+  builds_on:
+    - "B.2"
+    - "B.2.1"
+    - "A.3.1"
+source:
+  module: "modules/B/B.2.4.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 29146
+  end_line: 29255
+summary: "The FPF framework provides distinct patterns for the emergence of new systems (MST for U.Systems) and the synthesis of new knowledge (MET for U.Epistemes). However, a third, equally critical form of emergence occurs in the operational domain: the evolution of capability. Holons, particularly Transformers executing AgentialRoles, do not just exist or represent knowledge; they act. These actions are guided by Methods, which represent their capabilities."

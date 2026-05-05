@@ -1,0 +1,40 @@
+id: "C.2.7"
+title: "U.LanguageStateRepresentationFactorBundle"
+kind: "pattern"
+part: "C"
+status: "Draft"
+token_estimate:
+  card: 260
+  full: 2525
+when_to_load:
+  - "languagestaterepresentationfactorbundle"
+  - "representation factors"
+  - "locality"
+  - "sparsity"
+  - "symbolicity"
+  - "factor bundle"
+  - "representation organization"
+provides:
+  - "How does FPF describe representation factors in language-state work?"
+  - "What is the representation-factor bundle?"
+relations:
+  builds_on:
+    - "C.2.2a"
+    - "A.18"
+    - "C.2.LS"
+  coordinates_with:
+    - "C.2.LS"
+    - "C.2.6"
+    - "A.16.0"
+    - "A.16"
+    - "A.16.1"
+    - "B.4.1"
+    - "B.5.2.0"
+    - "F.9.1"
+source:
+  module: "modules/C/C.2.7.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 34201
+  end_line: 34366
+summary: "> Type: Definitional (D) > Status: Draft > Normativity: Normative unless marked informative"

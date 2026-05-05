@@ -1,0 +1,50 @@
+id: "A.18"
+title: "Minimal CSLC in Kernel (Characteristic ⟷ Scale ⟷ Level ⟷ Coordinate) (A.CSLC‑KERNEL)"
+kind: "pattern"
+part: "A"
+status: "Stable"
+token_estimate:
+  card: 288
+  full: 8346
+when_to_load:
+  - "minimal"
+  - "cslc"
+  - "kernel"
+  - "characteristic"
+  - "scale"
+  - "level"
+  - "coordinate"
+  - "CSLC"
+  - "Characteristic"
+  - "Scale"
+  - "Level"
+  - "Coordinate"
+  - "polarity"
+  - "ordinal vs cardinal scale"
+  - "one-characteristic-one-scale rule"
+  - "lawful comparability"
+  - "no illegal averaging"
+  - "measurement interpretability"
+provides:
+  - "What must be declared before a value is interpretable?"
+  - "When can two measurements be compared?"
+  - "Why can ordinal labels not be averaged?"
+relations:
+  builds_on:
+    - "A.17"
+  coordinates_with:
+    - "C.16"
+    - "A.19"
+    - "A.19.CN"
+    - "G.0"
+    - "B.3"
+  uses:
+    - "A.17"
+    - "A.18"
+source:
+  module: "modules/A/A.18.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 21337
+  end_line: 21493
+summary: "Aliases (for narrative use only): _“Axis”_ (≈ Characteristic), _“Point”_ (≈ Coordinate). _(These colloquial aliases may be used in Plain language explanations, but never in formal identifiers or normative text.)_"

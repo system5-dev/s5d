@@ -1,0 +1,46 @@
+id: "A.6.2"
+title: "U.EffectFreeEpistemicMorphing — Effect‑free morphisms of epistemes"
+kind: "pattern"
+part: "A"
+status: "Stable"
+token_estimate:
+  card: 272
+  full: 9262
+when_to_load:
+  - "effectfreeepistemicmorphing"
+  - "effect"
+  - "free"
+  - "morphisms"
+  - "epistemes"
+  - "episteme"
+  - "effect-free"
+  - "morphism"
+  - "functoriality"
+  - "describedEntity"
+  - "lenses"
+  - "reproducibility"
+provides:
+  - "How to transform descriptions/specs without mechanisms?"
+  - "What are conservative episteme-to-episteme transforms in FPF?"
+  - "How do Describe_ID / Specify_DS fit into a general morphism class?"
+relations:
+  builds_on:
+    - "A.1"
+    - "A.7"
+    - "A.6.0"
+    - "A.6.5"
+    - "E.10.D2"
+    - "C.2.1"
+  used_by:
+    - "A.6.3"
+    - "A.6.4"
+    - "E.17.0"
+    - "E.17"
+    - "E.18"
+source:
+  module: "modules/A/A.6.2.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 9214
+  end_line: 9639
+summary: "One‑line summary. U.EffectFreeEpistemicMorphing (EFEM) is the universal class of effect‑free, law‑governed morphisms between epistemes. An EFEM morphism rewrites episteme components (ClaimGraph, describedEntityRef, optional groundingHolonRef, viewpointRef, referenceScheme, and—where C.2.1+ is in use—representationSchemeRef and related slots, plus meta) in a conservative, functorial, reproducible way, with an explicit mode for what happens to the DescribedEntitySlot (DescribedEntityChangeMode ∈ {preserve, retarget}) as defined by C.2.1 U.EpistemeSlotGraph."

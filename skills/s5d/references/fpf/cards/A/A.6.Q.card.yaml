@@ -1,0 +1,68 @@
+id: "A.6.Q"
+title: "U.QualityTermPrecisionRestoration — Quality Term Precision Restoration (Q-TERM)"
+kind: "pattern"
+part: "A"
+status: "Stable"
+token_estimate:
+  card: 268
+  full: 15038
+when_to_load:
+  - "qualitytermprecisionrestoration"
+  - "quality"
+  - "term"
+  - "precision"
+  - "restoration"
+  - "q-term"
+  - "quality-term precision restoration"
+  - "evaluative ascription"
+  - "quality senses"
+  - "endpoint routing"
+  - "bridge reading"
+  - "language-state seam"
+provides:
+  - "How do I repair overloaded quality language in FPF?"
+  - "When does quality talk become an evaluative ascription?"
+  - "How does A.6.Q hand off to C.25 or later owners?"
+relations:
+  builds_on:
+    - "A.6.P"
+    - "C.25"
+    - "C.2.2a"
+    - "A.16"
+    - "B.4.1"
+    - "F.9"
+    - "A.2.6"
+    - "A.17"
+    - "A.18"
+    - "C.16"
+  coordinates_with:
+    - "A.6.A"
+    - "B.5.2.0"
+    - "C.2.2a"
+    - "A.16"
+    - "A.16.1"
+    - "A.16.2"
+    - "B.4.1"
+    - "A.16.0"
+    - "C.2.LS"
+    - "C.2.4"
+    - "C.2.5"
+    - "C.2.6"
+    - "C.2.7"
+    - "C.17"
+    - "C.18"
+    - "C.19"
+    - "E.17.0"
+    - "E.17.2"
+    - "F.9"
+    - "F.9.1"
+    - "A.6.B"
+  specializes:
+    - "A.6.P"
+source:
+  module: "modules/A/A.6.Q.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 12337
+  end_line: 13086
+summary: "> Type: Architectural (A) > Status: Stable > Normativity: Normative (Core / Draft)"

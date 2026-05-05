@@ -1,0 +1,35 @@
+id: "E.4"
+title: "FPF Artefact Architecture"
+kind: "pattern"
+part: "E"
+status: "Stable"
+token_estimate:
+  card: 272
+  full: 1360
+when_to_load:
+  - "fpf"
+  - "artefact"
+  - "architecture"
+  - "artifact"
+  - "families"
+  - "conceptual core"
+  - "tooling"
+  - "pedagogy"
+  - "canon"
+  - "tutorial"
+  - "linter"
+provides:
+  - "How are FPF documents structured?"
+  - "What is the difference between the core spec and tooling?"
+relations:
+  builds_on:
+    - "E.1"
+  constrained_by:
+    - "E.5.3"
+source:
+  module: "modules/E/E.4.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 45364
+  end_line: 45433
+summary: "The FPF ecosystem produces a wide range of artifacts, from timeless, normative principles to rapidly evolving pedagogical materials and executable tools. If these different types of artifacts are mingled without a clear architectural separation, the ecosystem becomes difficult to navigate, govern, and maintain. Users cannot easily distinguish binding rules from helpful advice, and the entire framework's release cycle becomes coupled to its most volatile component."

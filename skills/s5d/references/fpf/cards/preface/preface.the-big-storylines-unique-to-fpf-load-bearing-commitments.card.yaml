@@ -1,0 +1,27 @@
+id: "preface.the-big-storylines-unique-to-fpf-load-bearing-commitments"
+title: "The “big storylines” unique to FPF (load‑bearing commitments)"
+kind: "preface_article"
+part: "preface"
+status: null
+token_estimate:
+  card: 220
+  full: 490
+when_to_load:
+  - "big"
+  - "storylines"
+  - "unique"
+  - "fpf"
+  - "load"
+  - "bearing"
+  - "commitments"
+provides:
+  []
+relations:
+
+source:
+  module: "modules/preface/preface.the-big-storylines-unique-to-fpf-load-bearing-commitments.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 732
+  end_line: 745
+summary: "What FPF is: a generative, testable architecture for open-ended evolutionary thinking that any domain can inhabit. What FPF is not: a repository of domain facts, a rule‑chaining engine, a methodology du jour, or a notation."

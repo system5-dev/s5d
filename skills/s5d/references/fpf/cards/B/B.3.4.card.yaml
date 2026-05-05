@@ -1,0 +1,34 @@
+id: "B.3.4"
+title: "Evidence Decay & Epistemic Debt"
+kind: "pattern"
+part: "B"
+status: "Stable"
+token_estimate:
+  card: 256
+  full: 3073
+when_to_load:
+  - "evidence"
+  - "decay"
+  - "epistemic"
+  - "debt"
+  - "evidence aging"
+  - "freshness"
+  - "epistemic debt"
+  - "stale data"
+provides:
+  - "How does FPF handle outdated evidence?"
+  - "What is epistemic debt?"
+relations:
+  builds_on:
+    - "B.3"
+    - "B.3.3"
+    - "A.10"
+  enables:
+    - "B.4"
+source:
+  module: "modules/B/B.3.4.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 29852
+  end_line: 29969
+summary: "The FPF assurance model (Pattern B.3.3) provides a robust framework for building trust in holons by anchoring claims to a rich body of evidence. However, it implicitly treats this evidence as timeless. A proof verified today is assumed to hold forever; a validation test run last year is given the same weight as one run yesterday. This assumption is dangerously flawed in any dynamic environment."

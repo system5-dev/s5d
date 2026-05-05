@@ -1,0 +1,32 @@
+id: "E.7"
+title: "Archetypal Grounding Principle"
+kind: "pattern"
+part: "E"
+status: "Stable"
+token_estimate:
+  card: 260
+  full: 1147
+when_to_load:
+  - "archetypal"
+  - "grounding"
+  - "principle"
+  - "examples"
+  - "archetypes"
+  - "U.System"
+  - "U.Episteme"
+  - "Tell-Show-Show"
+provides:
+  - "How are FPF patterns explained?"
+  - "What are the standard examples in FPF?"
+relations:
+  builds_on:
+    - "E.6"
+  constrains:
+    - "E.8"
+source:
+  module: "modules/E/E.7.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 45955
+  end_line: 46038
+summary: "1. Didactic failure – readers dismiss the pattern as “too meta,” violating Pillar P‑2 Didactic Primacy. 2. Unproven universality – without cross‑domain instantiation the rule remains an untested claim."

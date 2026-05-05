@@ -1,0 +1,40 @@
+id: "A.6.1"
+title: "U.Mechanism - Law‑governed application to a SubjectKind over a BaseType"
+kind: "pattern"
+part: "A"
+status: "Stable"
+token_estimate:
+  card: 268
+  full: 9613
+when_to_load:
+  - "mechanism"
+  - "law"
+  - "governed"
+  - "application"
+  - "subjectkind"
+  - "over"
+  - "basetype"
+  - "Mechanism"
+  - "OperationAlgebra"
+  - "LawSet"
+  - "AdmissibilityConditions"
+  - "Transport"
+  - "Bridge‑only"
+provides:
+  - "How to define a mechanism like USM/UNM?"
+  - "Where do operational guards live?"
+  - "How to handle cross‑context transport?"
+relations:
+  builds_on:
+    - "A.6.0"
+    - "E.10.D1"
+  instances:
+    - "A.2.6"
+    - "A.19"
+source:
+  module: "modules/A/A.6.1.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 8921
+  end_line: 9213
+summary: "One‑line summary. A U.Mechanism is a specialisation of U.Signature (A.6.0): its Vocabulary is an explicit OperationAlgebra whose operators publish SlotSpecs (A.6.5), its Laws are a LawSet, and it adds AdmissibilityConditions (operational guards) plus a named Transport clause for cross‑context use. Transport is Bridge‑only (per F.9) with penalties routed to the Reliability channel only (R, or R_eff when distinguished) (per B.3); F/G remain invariant; CL^plane follows C.2.1 CHR:ReferencePlane. Realizations MAY be published, but MUST be monotone w.r.t. the Mechanism’s LawSet (and any imported Signature laws) and MUST treat imported signatures as opaque (use imports/provides + ClaimIds)."

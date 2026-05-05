@@ -1,0 +1,49 @@
+id: "A.19"
+title: "CharacteristicSpace & Dynamics Hook (A.CHR‑SPACE)"
+kind: "pattern"
+part: "A"
+status: "Stable"
+token_estimate:
+  card: 284
+  full: 17208
+when_to_load:
+  - "characteristicspace"
+  - "dynamics"
+  - "hook"
+  - "chr"
+  - "space"
+  - "CharacteristicSpace"
+  - "U.Dynamics.stateSpace"
+  - "state trajectories"
+  - "declared Characteristics and Scales"
+  - "subspace"
+  - "embedding"
+  - "product"
+  - "structural overlays"
+  - "coordinatewise comparability"
+  - "role-specific space refs stay outside A.19"
+provides:
+  - "How do I declare the state space a dynamics model moves through?"
+  - "How do Characteristics become a multi-coordinate state space?"
+  - "What stays inside A.19 and what routes to cross-surface substrate or support patterns?"
+relations:
+  builds_on:
+    - "A.17"
+    - "A.18"
+    - "A.2.5"
+  coordinates_with:
+    - "C.16"
+    - "A.19.CN"
+    - "A.19.SURF-SPACE"
+    - "A.19.SUPPORT-VIEW"
+    - "A.19.CHR"
+    - "G.0"
+    - "E.18"
+    - "A.3.3"
+source:
+  module: "modules/A/A.19.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 21494
+  end_line: 21926
+summary: "> Status: Stable"

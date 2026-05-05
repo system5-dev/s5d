@@ -1,0 +1,32 @@
+id: "B.5.1"
+title: "Explore → Shape → Evidence → Operate"
+kind: "pattern"
+part: "B"
+status: "Stable"
+token_estimate:
+  card: 256
+  full: 1481
+when_to_load:
+  - "explore"
+  - "shape"
+  - "evidence"
+  - "operate"
+  - "development cycle"
+  - "lifecycle"
+  - "state machine"
+  - "Explore"
+  - "Shape"
+  - "Evidence"
+  - "Operate"
+provides:
+  - "What are the development stages of an artifact in FPF?"
+relations:
+  builds_on:
+    - "B.5"
+source:
+  module: "modules/B/B.5.1.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 30728
+  end_line: 30787
+summary: "Every successful innovation, from a new piece of software to a scientific theory, follows a predictable evolution (state transitions). It begins as a fuzzy idea, is gradually given a clear structure, is tested against reality, and finally, is put into operational use. Without a shared map of this lifecycle, teams often get stuck: developers might endlessly refine a structure without testing it, while analysts might gather evidence for an idea that has not yet been clearly defined."

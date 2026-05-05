@@ -1,0 +1,50 @@
+id: "F.17"
+title: "Unified Term Sheet (UTS)"
+kind: "pattern"
+part: "F"
+status: "Stable"
+token_estimate:
+  card: 260
+  full: 4758
+when_to_load:
+  - "unified"
+  - "term"
+  - "sheet"
+  - "uts"
+  - "Unified Term Sheet"
+  - "UTS"
+  - "summary table"
+  - "glossary"
+  - "publication"
+  - "human-readable output"
+provides:
+  - "What is the final output of the FPF unification process?"
+  - "Where can I find a summary of all unified terms?"
+relations:
+  builds_on:
+    - "F.1"
+    - "F.2"
+    - "F.3"
+    - "F.4"
+    - "F.5"
+    - "F.6"
+    - "F.7"
+    - "F.8"
+    - "F.9"
+    - "F.10"
+    - "F.11"
+    - "F.12"
+    - "F.15"
+  coordinates_with:
+    - "A.1.1"
+    - "A.7"
+    - "A.8"
+    - "A.11"
+    - "A.15"
+source:
+  module: "modules/F/F.17.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 60765
+  end_line: 60987
+summary: "“One table that a careful mind can hold.” Status. Architectural pattern. Builds on: F.1–F.3 (Contexts → seeds → local senses), F.4 (Role Characterisation), F.5 (Naming), F.7 (Concept‑Set table), F.8 (Mint/Reuse decision), F.9 (Bridges), F.10–F.12 (Status & method/service bindings), F.15 (SCR/RSCR). Coordinates with: A.1.1 U.BoundedContext, A.7 Strict Distinction, A.8 Heterogeneity, A.11 Ontological Parsimony, A.15 Role–Method–Work Alignment. Non‑goals. No registries, workflows, editors, or storage formats. No by‑name Cross‑context equivalence. No “data pipeline.” This pattern prescribes what a UTS is and how to judge it, not how to generate files."

@@ -1,0 +1,60 @@
+id: "C.17"
+title: "Characterising Generative Novelty & Value (Creativity‑CHR)"
+kind: "pattern"
+part: "C"
+status: "Stable"
+token_estimate:
+  card: 292
+  full: 15269
+when_to_load:
+  - "characterising"
+  - "generative"
+  - "novelty"
+  - "value"
+  - "creativity"
+  - "chr"
+  - "Creativity-CHR"
+  - "Novelty@context"
+  - "Use-Value / ValueGain"
+  - "Surprise"
+  - "ConstraintFit"
+  - "Diversity_P"
+  - "Originality"
+  - "ResourceEfficiency"
+  - "MM-CHR measurement templates"
+  - "ReferenceBase"
+  - "evidence"
+  - "portfolio composition"
+provides:
+  - "How do I make a creativity claim measurable and evidence-bound?"
+  - "Which characteristics distinguish novelty, value, surprise, constraint fit, diversity, originality, and resource efficiency?"
+  - "How do creative outputs compose from individuals to portfolios?"
+relations:
+  builds_on:
+    - "C.16"
+    - "A.17"
+    - "A.18"
+    - "A.19"
+    - "B.1"
+    - "B.3"
+    - "A.2.6"
+    - "A.10"
+  coordinates_with:
+    - "B.5.2.1"
+    - "C.18"
+    - "C.19"
+    - "C.9"
+    - "B.3"
+    - "B.4"
+    - "F.5"
+    - "F.18"
+    - "A.2"
+    - "A.15"
+    - "C.16"
+source:
+  module: "modules/C/C.17.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 38328
+  end_line: 39067
+summary: "Status. Mechanism specification (CHR) — normative where stated. Depends on. A‑kernel (A.1–A.15), CHR‑CAL (C.7), MM‑CHR measurement infrastructure (C.16), KD‑CAL and Sys‑CAL for carriers and holons, Decsn‑CAL (utility), Norm‑CAL (constraints/ethics). Coordinates with. B.5.2.1 NQD (abductive generator) for search instrumentation, Agency-CHR (C.9) for agential capacity, B-cluster trust/assurance (B.3), Canonical Evolution Loop (B.4), Role Assignment & Enactment Cycle (Six-Step) (F.6) and Naming Discipline for U.Types & Role Names (F.5). Guard‑rails. Obeys E‑cluster authoring rules (Notational Independence; DevOps Lexical Firewall; Unidirectional Dependency)."

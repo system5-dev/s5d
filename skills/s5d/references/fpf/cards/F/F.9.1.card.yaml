@@ -1,0 +1,45 @@
+id: "F.9.1"
+title: "Bridge Stance Overlay"
+kind: "pattern"
+part: "F"
+status: "Stable"
+token_estimate:
+  card: 272
+  full: 5166
+when_to_load:
+  - "bridge"
+  - "stance"
+  - "overlay"
+  - "bridge stance"
+  - "stance overlay"
+  - "interpretive gloss"
+  - "projection note"
+  - "rename note"
+  - "language-state comparisons"
+  - "overlay annotation"
+provides:
+  - "How do I add a stance gloss to a bridge card without changing bridge semantics?"
+  - "What is the Bridge Stance Overlay?"
+  - "When does a stance label still depend on the underlying F.9 bridge card?"
+relations:
+  builds_on:
+    - "F.9"
+    - "C.2.2a"
+    - "A.16.0"
+  coordinates_with:
+    - "A.6.3.CSC"
+    - "E.17.ID.CR"
+    - "E.17.1"
+    - "A.6.Q"
+    - "A.6.A"
+    - "A.16.0"
+    - "A.6.P"
+    - "C.25"
+    - "B.4.1"
+source:
+  module: "modules/F/F.9.1.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 58217
+  end_line: 58410
+summary: "> Type: Architectural (A) > Status: Stable > Normativity: Normative unless marked informative"

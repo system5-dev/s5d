@@ -1,0 +1,25 @@
+id: "preface.purpose-scope-and-explicit-non-goals"
+title: "Purpose, Scope, and Explicit Non‑Goals"
+kind: "preface_article"
+part: "preface"
+status: null
+token_estimate:
+  card: 220
+  full: 790
+when_to_load:
+  - "purpose"
+  - "scope"
+  - "explicit"
+  - "non"
+  - "goals"
+provides:
+  []
+relations:
+
+source:
+  module: "modules/preface/preface.purpose-scope-and-explicit-non-goals.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 824
+  end_line: 856
+summary: "A framework that aims at everything excels at nothing. To keep Cognitive Elegance (P‑1) and Pragmatic Utility (P‑7) intact, FPF draws a deliberate line around what it serves—and what it refuses to be."

@@ -1,0 +1,27 @@
+id: "A.11"
+title: "Ontological Parsimony (C‑5)"
+kind: "pattern"
+part: "A"
+status: "Stable"
+token_estimate:
+  card: 244
+  full: 2655
+when_to_load:
+  - "ontological"
+  - "parsimony"
+  - "minimalism"
+  - "simplicity"
+  - "Occam's razor"
+  - "essential concepts"
+provides:
+  - "How does FPF avoid becoming too complex?"
+relations:
+  builds_on:
+    - "P-1"
+source:
+  module: "modules/A/A.11.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 18180
+  end_line: 18286
+summary: "“Add only what you cannot subtract.”"

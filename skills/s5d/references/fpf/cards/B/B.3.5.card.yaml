@@ -1,0 +1,33 @@
+id: "B.3.5"
+title: "Working-Model Relations & Grounding (CT2R-LOG)"
+kind: "pattern"
+part: "B"
+status: "Stable"
+token_estimate:
+  card: 260
+  full: 8127
+when_to_load:
+  - "working-model"
+  - "relations"
+  - "grounding"
+  - "ct2r-log"
+  - "constructive trace"
+  - "working model"
+  - "assurance layer"
+  - "CT2R"
+  - "Compose-CAL"
+provides:
+  - "How are FPF models grounded in evidence?"
+  - "What is the CT2R-LOG?"
+relations:
+  builds_on:
+    - "B.3"
+    - "E.14"
+    - "C.13"
+source:
+  module: "modules/B/B.3.5.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 29970
+  end_line: 30275
+summary: "> One‑line summary. > CT2R‑LOG treats the everyday Working‑Model relations— ut:ComponentOf, ut:MemberOf, ut:PortionOf, ut:AspectOf —as the publication surface for structure, while binding each published edge to a grounding trace and a declared tv:validationMode. Authors keep using a short list of relations; reviewers get reconstructible provenance."

@@ -1,0 +1,60 @@
+id: "G.6"
+title: "Evidence Graph & Provenance Ledger"
+kind: "pattern"
+part: "G"
+status: "Stable"
+token_estimate:
+  card: 288
+  full: 9639
+when_to_load:
+  - "evidence"
+  - "graph"
+  - "provenance"
+  - "ledger"
+  - "EvidenceGraph"
+  - "PathId"
+  - "PathSliceId"
+  - "lane tags (TA/VA/LA"
+  - "SCR/RSCR"
+  - "GateCrossing"
+  - "CrossingBundle"
+  - "UTS PathCard"
+  - "TriggerAliasMap"
+  - "Γ-fold pinning"
+provides:
+  - "How does FPF trace claims to evidence?"
+  - "What is an EvidenceGraph?"
+  - "How do PathId/PathSliceId support audit and refresh?"
+relations:
+  builds_on:
+    - "A.10"
+    - "B.3"
+    - "G.4"
+    - "F.9"
+    - "F.15"
+    - "F.17"
+    - "E.18"
+    - "A.21"
+    - "E.10"
+    - "E.5.2"
+    - "E.5"
+  used_by:
+    - "G.5"
+    - "G.8"
+    - "G.9"
+    - "G.10"
+    - "G.11"
+  uses:
+    - "C.23"
+    - "C.19"
+    - "G.5"
+    - "G.11"
+    - "G.7"
+    - "C.18"
+source:
+  module: "modules/G/G.6.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 65107
+  end_line: 65483
+summary: "Tag. Architectural pattern Stage. design‑time (assembly) + run‑time (telemetry ingestion) Primary output. A notation‑independent EvidenceGraph + a stable PathId / PathSliceId citation surface + an SCR projection (“Assurance SCR”) suitable for audit, selection explainability, and refresh/RSCR wiring. Primary hooks. A.10 (evidence anchors/carriers; SCR/RSCR anchoring), B.3 (assurance lanes and F/G/R skeleton), F.9 (BridgeCard/CL), G.4 (CAL EvidenceProfiles + ProofLedger linkage), G.Core (Part‑G invariants, RSCR trigger catalogue, default‑ownership index), E.18/A.21 (GateCrossing + CrossingBundle checks), F.17 (UTS publication), F.15 (RSCR), E.10 (LEX), E.5. (notation‑independence discipline). Non‑duplication note. Universal Part‑G invariants (no shadow specs; Bridge‑only crossings; tri‑state"

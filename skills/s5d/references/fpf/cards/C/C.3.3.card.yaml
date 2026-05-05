@@ -1,0 +1,35 @@
+id: "C.3.3"
+title: "KindBridge & CL^k — Cross‑context Mapping of Kinds"
+kind: "pattern"
+part: "C"
+status: "Stable"
+token_estimate:
+  card: 256
+  full: 4713
+when_to_load:
+  - "kindbridge"
+  - "cross"
+  - "context"
+  - "mapping"
+  - "kinds"
+  - "KindBridge"
+  - "type-congruence"
+  - "CL^k"
+  - "cross-context mapping"
+  - "R penalty"
+provides:
+  - "How to map types between domains?"
+  - "What is a KindBridge?"
+relations:
+  builds_on:
+    - "C.3.1"
+    - "C.3.2"
+    - "A.2.6"
+    - "C.2.2"
+source:
+  module: "modules/C/C.3.3.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 35622
+  end_line: 35868
+summary: "> One‑line summary. Defines KindBridge as the normative mechanism for moving kinds (their intent and selected subkind‑of links) between bounded contexts (“Contexts”). A bridge declares how a source kind maps to a target kind, which parts of the ⊑ order are preserved or collapsed, and publishes a type‑congruence level CL^k with loss notes and a definedness area. CL^k penalties apply only to Reliability (R) when a claim depends on Cross‑context classification; F (formality) and G (Claim scope) remain unchanged. Scope translation continues to use the USM Bridge + CL channel; KindBridge is a separate, parallel channel for describedEntity."

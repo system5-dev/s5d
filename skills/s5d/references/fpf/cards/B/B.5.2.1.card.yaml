@@ -1,0 +1,51 @@
+id: "B.5.2.1"
+title: "Creative Abduction with NQD"
+kind: "pattern"
+part: "B"
+status: "Stable"
+token_estimate:
+  card: 288
+  full: 5573
+when_to_load:
+  - "creative"
+  - "abduction"
+  - "nqd"
+  - "creative abduction"
+  - "NQD binding"
+  - "Γ_nqd.generate"
+  - "Creativity-CHR"
+  - "Q-front"
+  - "declared Q components"
+  - "retained exploration/archive evidence"
+  - "Novelty@context"
+  - "ΔDiversity_P"
+  - "E/E-LOG"
+  - "DecisionSubject note"
+provides:
+  - "How do I make abductive idea generation instrumented instead of ad-hoc?"
+  - "How does B.5.2 delegate generation to C.18 and pool policy to C.19?"
+  - "Why does creative abduction return a front/evidence set rather than one bundled winner?"
+relations:
+  builds_on:
+    - "B.5.2"
+    - "A.17"
+    - "A.18"
+    - "C.17"
+    - "C.18"
+    - "C.19"
+  coordinates_with:
+    - "B.4"
+    - "C.11"
+    - "G.5"
+  uses:
+    - "A.17"
+    - "A.18"
+    - "B.5"
+    - "C.17"
+source:
+  module: "modules/B/B.5.2.1.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 31270
+  end_line: 31443
+summary: "Status. Normative binding to B.5.2 Abductive Loop that delegates candidate generation to Γ_nqd.generate (C.18 NQD-CAL) and exploration/exploitation policy to E/E-LOG (C.19); the kernel remains unchanged."

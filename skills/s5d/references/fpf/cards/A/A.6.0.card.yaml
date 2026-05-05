@@ -1,0 +1,33 @@
+id: "A.6.0"
+title: "U.Signature - Universal, law‑governed declaration for a SubjectKind on a BaseType"
+kind: "pattern"
+part: "A"
+status: "Stable"
+token_estimate:
+  card: 256
+  full: 8473
+when_to_load:
+  - "signature"
+  - "universal"
+  - "law"
+  - "governed"
+  - "declaration"
+  - "subjectkind"
+  - "basetype"
+  - "vocabulary"
+  - "laws"
+  - "applicability"
+  - "bounded context"
+provides:
+  - "What is the universal signature block?"
+  - "Where do laws vs. implementations live?"
+relations:
+  constrained_by:
+    - "E.10"
+source:
+  module: "modules/A/A.6.0.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 8642
+  end_line: 8920
+summary: "Status. Architectural pattern, kernel‑level and universal. Placement. Part A (Kernel), before A.6.1 (“U.Mechanism”). Builds on. A.2.6 (USM: context slices & scopes), E.8 (authoring order), E.10 LEX-BUNDLE (registers, naming, stratification), E.10.D1 D.CTX (Context discipline). Coordinates with. A.6.1 (U.Mechanism), A.6.5 (U.RelationSlotDiscipline for n‑ary arguments), E.5.3 (Unidirectional Dependency), E.10 (LEX-BUNDLE), and Part F (harnesses & cross-context transport; naming). Conformance keywords: RFC 2119."

@@ -1,0 +1,50 @@
+id: "A.2.3"
+title: "U.PromiseContent (Promise Content)"
+kind: "pattern"
+part: "A"
+status: "Stable"
+token_estimate:
+  card: 276
+  full: 9475
+when_to_load:
+  - "promisecontent"
+  - "promise"
+  - "content"
+  - "promise content"
+  - "accessSpec"
+  - "acceptanceSpec"
+  - "SLO"
+  - "SLA"
+  - "claim scope (G"
+  - "Work evidence"
+  - "provider/consumer roles"
+provides:
+  - "What is a promise content in FPF?"
+  - "How do access and acceptance differ?"
+  - "How is SLO/SLA adjudicated from Work evidence?"
+relations:
+  builds_on:
+    - "A.2.2"
+    - "A.1.1"
+    - "A.2"
+    - "A.2.1"
+    - "A.2.6"
+  prerequisite_for:
+    - "F.12"
+  used_by:
+    - "A.2.8"
+    - "A.6.C"
+    - "A.6.8"
+  coordinates_with:
+    - "A.3.1"
+    - "A.3.2"
+    - "A.15.1"
+    - "A.15.2"
+    - "A.6.8"
+source:
+  module: "modules/A/A.2.3.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 2535
+  end_line: 2965
+summary: "Across domains the word service is used for many different things: a server or provider, an API, a procedure, a run, a department, even a product bundle. Such polysemy is productive in everyday speech but toxic in a normative model."

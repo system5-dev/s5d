@@ -1,0 +1,42 @@
+id: "C.19.1"
+title: "Bitter‑Lesson Preference (BLP)"
+kind: "pattern"
+part: "C"
+status: "Stable"
+token_estimate:
+  card: 256
+  full: 2285
+when_to_load:
+  - "bitter"
+  - "lesson"
+  - "preference"
+  - "blp"
+  - "Bitter Lesson"
+  - "scale-audit"
+  - "BLP-waiver"
+  - "α/δ tolerances"
+  - "task-family specialization"
+provides:
+  - "When may a narrower method beat a scalable one in FPF?"
+  - "How does BLP stay compatible with bounded task-family specialization?"
+relations:
+  builds_on:
+    - "C.19"
+    - "C.24"
+    - "B.3"
+  coordinates_with:
+    - "G.5"
+    - "G.8"
+    - "G.9"
+    - "G.11"
+    - "A.0"
+  constrained_by:
+    - "E.5"
+    - "E.3"
+source:
+  module: "modules/C/C.19.1.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 39601
+  end_line: 39694
+summary: "One‑screen purpose (manager‑first). Establish, at governing policy level, the empirical Bitter Lesson: prefer general, scale‑amenable methods—those that improve with more data/compute/capacity and greater freedom‑of‑action—over narrow hand‑crafted heuristics when safety and legality are equal. Exceptions require a transparent Scale‑Audit under the parity harness."

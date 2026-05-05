@@ -1,0 +1,22 @@
+id: "I.2"
+title: "Detailed Walk-throughs"
+kind: "pattern"
+part: "I"
+status: "Stable"
+token_estimate:
+  card: 228
+  full: 2960
+when_to_load:
+  - "detailed"
+  - "walk-throughs"
+provides:
+  - "what description is this?"
+relations:
+
+source:
+  module: "modules/I/I.2.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 68288
+  end_line: 68480
+summary: "I.2 is the canonical worked entry-reading support role in this architecture. An I.2 item can serve as one entry-reading vignette, one didactic learning walkthrough, or both. When it serves as entry reading, its E.11 force is limited to disambiguation, wrong-pattern rejection, burden reclassification, and lawful entry stop."

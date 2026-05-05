@@ -1,0 +1,53 @@
+id: "A.19.SURF-SPACE"
+title: "Cross-Surface / Cross-Space Substrate"
+kind: "pattern"
+part: "A"
+status: "Stable"
+token_estimate:
+  card: 340
+  full: 11075
+when_to_load:
+  - "cross-surface"
+  - "cross-space"
+  - "substrate"
+  - "source surface"
+  - "search-side space ref"
+  - "outcome-side space ref"
+  - "cross-surface substrate"
+  - "SpaceRefRelationKind"
+  - "SourceToOutcomeRelation"
+  - "DistortionPosture"
+  - "SourceSurfaceId"
+  - "sameDeclaredSpaceAs"
+  - "distinctDeclaredSpaceFrom"
+provides:
+  - "How do I declare one source surface plus search-side and outcome-side refs?"
+  - "How do I keep source-to-outcome relation and distortion posture explicit?"
+  - "When do search and outcome refs resolve to the same declared CharacteristicSpace?"
+  - "what space exists?"
+  - "what shortlist or shipped surface do we publish?"
+  - "Which space are we searching in and which space are we judging in?"
+  - "How should I help the reader inspect that already-declared line?"
+  - "What do we publish, ship, keep live, or plan next?"
+relations:
+  builds_on:
+    - "A.19"
+    - "A.17"
+    - "A.18"
+  coordinates_with:
+    - "C.18"
+    - "C.19"
+    - "G.5"
+    - "G.10"
+    - "A.19.SUPPORT-VIEW"
+    - "A.6.P"
+    - "A.0"
+  specialized_by:
+    - "A.19.SUPPORT-VIEW"
+source:
+  module: "modules/A/A.19.SURF-SPACE.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 21927
+  end_line: 22467
+summary: "> Type: Architectural (A) > Status: Stable > Normativity: Normative"

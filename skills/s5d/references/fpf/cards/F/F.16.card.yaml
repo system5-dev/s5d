@@ -1,0 +1,43 @@
+id: "F.16"
+title: "Worked‑Example Template (Cross‑Domain)"
+kind: "pattern"
+part: "F"
+status: "Stable"
+token_estimate:
+  card: 252
+  full: 5956
+when_to_load:
+  - "worked"
+  - "example"
+  - "template"
+  - "cross"
+  - "domain"
+  - "didactic template"
+  - "pedagogy"
+  - "cross-domain illustration"
+provides:
+  - "What is the standard format for a worked example in FPF?"
+  - "How to show a concept applied across different fields?"
+relations:
+  builds_on:
+    - "F.1"
+    - "F.2"
+    - "F.3"
+    - "F.4"
+    - "F.5"
+    - "F.6"
+    - "F.7"
+    - "F.8"
+    - "F.9"
+    - "F.10"
+    - "F.11"
+    - "F.12"
+    - "E.10.D1"
+    - "F.15"
+source:
+  module: "modules/F/F.16.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 60460
+  end_line: 60764
+summary: "“Show the thought, not the tooling.” Status. Architectural pattern. Builds on: E.10.D1 Lexical Discipline for “Context” (D.CTX); F.1–F.15. Coordinates with. B.3 Trust & Assurance Calculus (CL on Bridges); Part C patterns (Sys‑CAL, KD‑CAL, Kind-CAL, Method‑CAL)."

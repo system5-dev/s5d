@@ -1,0 +1,37 @@
+id: "F.0.1"
+title: "Contextual Lexicon Principles"
+kind: "pattern"
+part: "F"
+status: "Stable"
+token_estimate:
+  card: 272
+  full: 5593
+when_to_load:
+  - "contextual"
+  - "lexicon"
+  - "principles"
+  - "local meaning"
+  - "context"
+  - "semantic boundary"
+  - "bridge"
+  - "congruence"
+  - "U.BoundedContext"
+provides:
+  - "How does FPF handle ambiguity?"
+  - "What is the principle of local meaning?"
+  - "How do different contexts communicate?"
+relations:
+  builds_on:
+    - "A.1.1"
+    - "A.7"
+    - "A.8"
+    - "A.11"
+    - "A.4"
+    - "E.10.D1"
+source:
+  module: "modules/F/F.0.1.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 54743
+  end_line: 55077
+summary: "> One‑sentence summary. All meanings in FPF are local to a U.BoundedContext (“Context of meaning”); terms are spoken with their Context, and any relation across Contexts exists only as an explicit Alignment Bridge with stated loss/fit."

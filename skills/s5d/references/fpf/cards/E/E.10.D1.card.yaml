@@ -1,0 +1,36 @@
+id: "E.10.D1"
+title: "Lexical Discipline for “Context” (D.CTX)"
+kind: "pattern"
+part: "E"
+status: "Stable"
+token_estimate:
+  card: 248
+  full: 3309
+when_to_load:
+  - "lexical"
+  - "discipline"
+  - "context"
+  - "ctx"
+  - "U.BoundedContext"
+  - "anchor"
+  - "domain"
+  - "frame"
+provides:
+  - "What is the formal meaning of 'Context' in FPF?"
+relations:
+  builds_on:
+    - "A.7"
+    - "A.4"
+  coordinates_with:
+    - "F.1"
+    - "F.2"
+    - "F.3"
+    - "F.7"
+    - "F.9"
+source:
+  module: "modules/E/E.10.D1.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 47610
+  end_line: 47801
+summary: "> One‑sentence summary. Make the word Context unambiguous: in FPF it only denotes the formal primitive U.BoundedContext; remove the term anchor; reserve Problem Frame for situational narrative; treat Domain as an informative family label, not a type."

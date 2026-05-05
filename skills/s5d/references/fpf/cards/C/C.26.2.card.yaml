@@ -1,0 +1,46 @@
+id: "C.26.2"
+title: "Enacted Distributed State Evidence"
+kind: "pattern"
+part: "C"
+status: "Stable"
+token_estimate:
+  card: 280
+  full: 7443
+when_to_load:
+  - "enacted"
+  - "distributed"
+  - "state"
+  - "evidence"
+  - "distributed-state evidence"
+  - "coordinated work"
+  - "enacted state"
+  - "weak state reading"
+  - "evidence carrier"
+  - "window"
+  - "rival explanation"
+  - "no group mind"
+  - "report/export loss"
+provides:
+  - "When does coordinated work evidence a state no participant report carries?"
+  - "How do I bound a distributed-state reading?"
+  - "When is a survey or dashboard thinner than the enacted state?"
+relations:
+  builds_on:
+    - "C.26"
+    - "A.15"
+    - "A.10"
+    - "B.3"
+    - "F.9"
+    - "C.16"
+    - "E.17.EFP"
+    - "C.11"
+  coordinates_with:
+    - "C.26.1"
+    - "C.26.3"
+source:
+  module: "modules/C/C.26.2.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 42165
+  end_line: 42510
+summary: "> Type: Architectural pattern > Status: Stable > Normativity: Normative unless explicitly marked informative"

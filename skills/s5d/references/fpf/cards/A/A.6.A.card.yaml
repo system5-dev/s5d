@@ -1,0 +1,60 @@
+id: "A.6.A"
+title: "U.ActionInvitationPrecisionRestoration - Affordance / Action-Invitation Precision Restoration (ACT-INV)"
+kind: "pattern"
+part: "A"
+status: "Stable"
+token_estimate:
+  card: 268
+  full: 12415
+when_to_load:
+  - "actioninvitationprecisionrestoration"
+  - "affordance"
+  - "action-invitation"
+  - "precision"
+  - "restoration"
+  - "act-inv"
+  - "action invitation"
+  - "action-first language"
+  - "post-threshold routing"
+  - "A.15 docking"
+  - "language-state seam"
+provides:
+  - "How do I repair overloaded affordance language in FPF?"
+  - "When does action-guiding language become an action invitation?"
+  - "How does A.6.A differ from early cue routing?"
+relations:
+  builds_on:
+    - "A.6.P"
+    - "A.15"
+    - "C.2.2a"
+    - "A.16"
+    - "B.4.1"
+    - "F.9"
+    - "A.3"
+    - "A.7"
+    - "A.6.B"
+    - "E.17"
+    - "E.18"
+  coordinates_with:
+    - "A.6.Q"
+    - "B.5.2.0"
+    - "C.2.2a"
+    - "A.16"
+    - "A.16.1"
+    - "A.16.2"
+    - "B.4.1"
+    - "A.16.0"
+    - "C.2.LS"
+    - "C.2.4"
+    - "C.2.5"
+    - "C.2.6"
+    - "C.2.7"
+  specializes:
+    - "A.6.P"
+source:
+  module: "modules/A/A.6.A.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 13087
+  end_line: 13807
+summary: "> Type: Architectural (A) > Status: Draft > Normativity: Normative (Core / Draft)"

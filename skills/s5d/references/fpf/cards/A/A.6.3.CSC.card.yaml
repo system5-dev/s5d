@@ -1,0 +1,59 @@
+id: "A.6.3.CSC"
+title: "Controlled Semantic Coarsening"
+kind: "pattern"
+part: "A"
+status: "Stable"
+token_estimate:
+  card: 284
+  full: 8252
+when_to_load:
+  - "controlled"
+  - "semantic"
+  - "coarsening"
+  - "controlled semantic coarsening"
+  - "stronger source"
+  - "weaker rendering"
+  - "narrower supported use"
+  - "unsupported heavier use"
+  - "reopen trigger"
+  - "redaction"
+  - "dashboard tile"
+  - "lookup handle"
+  - "state-representation shortcut"
+provides:
+  - "When may a summary or redaction stand in only for narrow use?"
+  - "What is Controlled Semantic Coarsening in FPF?"
+  - "When must a weakened rendering reopen the stronger source?"
+relations:
+  builds_on:
+    - "A.6.3"
+    - "A.6.3.CR"
+    - "A.6.3.RT"
+    - "E.17.EFP"
+    - "A.6.P"
+    - "E.8"
+    - "E.10"
+    - "E.19"
+    - "F.18"
+  coordinates_with:
+    - "C.26"
+    - "C.26.1"
+    - "E.17.ID.CR"
+    - "F.9"
+    - "F.9.1"
+    - "A.15"
+    - "A.6.4"
+    - "A.20"
+    - "A.21"
+    - "A.6.3.CR"
+    - "A.6.3.RT"
+    - "E.17.EFP"
+  specializes:
+    - "A.6.3"
+source:
+  module: "modules/A/A.6.3.CSC.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 10101
+  end_line: 10414
+summary: "> Type: Architectural (A) > Status: Stable > Normativity: Normative unless marked informative"

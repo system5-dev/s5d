@@ -1,0 +1,36 @@
+id: "A.2.5"
+title: "U.RoleStateGraph: The Named State Space of a Role"
+kind: "pattern"
+part: "A"
+status: "Stable"
+token_estimate:
+  card: 256
+  full: 9891
+when_to_load:
+  - "rolestategraph"
+  - "named"
+  - "state"
+  - "space"
+  - "role"
+  - "state machine"
+  - "RSG"
+  - "role state"
+  - "enactability"
+  - "lifecycle"
+provides:
+  - "How to model the state of a role?"
+  - "What is a Role State Graph?"
+relations:
+  builds_on:
+    - "A.2.1"
+    - "A.2.3"
+    - "E.10.D1"
+  prerequisite_for:
+    - "A.15"
+source:
+  module: "modules/A/A.2.5.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 3372
+  end_line: 3983
+summary: "A role is not only a name; it is a trajectory of admissible states that governs when, and under which conditions, a holder of that role may enact steps of a U.MethodDescription. FPF therefore introduces a first‑class intensional object:"

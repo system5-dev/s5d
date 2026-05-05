@@ -1,0 +1,40 @@
+id: "F.12"
+title: "Service Acceptance–Work Evidence Link"
+kind: "pattern"
+part: "F"
+status: "Stable"
+token_estimate:
+  card: 256
+  full: 6457
+when_to_load:
+  - "service"
+  - "acceptance"
+  - "work"
+  - "evidence"
+  - "link"
+  - "Service Level Objective (SLO"
+  - "Service Level Agreement (SLA"
+  - "acceptance criteria"
+  - "binding"
+  - "observation"
+provides:
+  - "How to bind an SLO to actual work?"
+  - "How is service acceptance modeled in FPF?"
+relations:
+  builds_on:
+    - "F.9"
+    - "A.2.3"
+    - "F.1"
+    - "F.2"
+    - "F.3"
+    - "F.5"
+    - "F.7"
+    - "F.10"
+    - "F.11"
+source:
+  module: "modules/F/F.12.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 59123
+  end_line: 59459
+summary: "“Judge promises on what happened, not on what was planned.” Status. Architectural pattern. Builds on: F.1 context of meaning (U.BoundedContext); F.2 Term Harvesting; F.3 Intra‑Context Sense Clustering; F.5 Naming Discipline; F.7/F.9 Bridges & CL; F.10 Status Families & Windows; F.11 Method Quartet Harmonisation; A.2.3 U.PromiseContent. Coordinates with. KD‑CAL (Observation/Characteristic/Scale); Sys‑CAL (Work/Actuation contexts). Non‑goals. No team workflows, no tooling, no editorial procedures. This pattern specifies how to think about acceptance, not how to store or operate systems."

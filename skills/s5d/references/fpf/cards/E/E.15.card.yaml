@@ -1,0 +1,39 @@
+id: "E.15"
+title: "Lexical Authoring & Evolution Protocol  (LEX‑AUTH)"
+kind: "pattern"
+part: "E"
+status: "stable"
+token_estimate:
+  card: 252
+  full: 3520
+when_to_load:
+  - "lexical"
+  - "authoring"
+  - "evolution"
+  - "protocol"
+  - "lex"
+  - "auth"
+  - "lexical authoring"
+  - "evolution protocol"
+  - "LAT"
+  - "delta-classes"
+provides:
+  - "How are FPF patterns authored and evolved?"
+  - "What is a Lexical Authoring Trace (LAT)?"
+relations:
+  builds_on:
+    - "E.9"
+    - "E.10"
+    - "B.4"
+    - "C.18"
+    - "C.19"
+    - "A.10"
+    - "B.3"
+    - "F.15"
+source:
+  module: "modules/E/E.15.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 49344
+  end_line: 49530
+summary: "> Author patterns as evidence‑bearing epistemes, evolve them via governed open‑ended search, and publish an auditable trace that improves quality—not just compliance."

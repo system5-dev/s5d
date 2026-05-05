@@ -1,0 +1,45 @@
+id: "E.17.0"
+title: "U.MultiViewDescribing — Viewpoints, Views & Correspondences"
+kind: "pattern"
+part: "E"
+status: "New"
+token_estimate:
+  card: 256
+  full: 6808
+when_to_load:
+  - "multiviewdescribing"
+  - "viewpoints"
+  - "views"
+  - "correspondences"
+  - "multi-view describing"
+  - "viewpoint"
+  - "view"
+  - "entity-of-interest"
+  - "description families"
+  - "correspondence model"
+  - "ISO 42010 alignment"
+  - "view vs viewpoint"
+  - "engineering vs publication viewpoints"
+provides:
+  []
+relations:
+  builds_on:
+    - "C.2.1"
+    - "A.6.2"
+    - "A.6.3"
+    - "A.6.4"
+    - "A.7"
+    - "E.10.D1"
+    - "E.10.D2"
+  used_by:
+    - "E.17"
+    - "E.17.1"
+    - "E.17.2"
+    - "E.18:5.12"
+source:
+  module: "modules/E/E.17.0.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 49738
+  end_line: 50117
+summary: "> Tech‑name: U.MultiViewDescribing > Plain‑name: multi‑view describing (viewpoints, views, correspondence for families of descriptions/specifications)"

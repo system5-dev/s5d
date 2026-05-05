@@ -1,0 +1,27 @@
+id: "preface.thinking-through-writing-the-fpf-discipline-of-conceptual-work"
+title: "Thinking Through Writing: The FPF Discipline of Conceptual Work"
+kind: "preface_article"
+part: "preface"
+status: null
+token_estimate:
+  card: 220
+  full: 1233
+when_to_load:
+  - "thinking"
+  - "through"
+  - "writing"
+  - "fpf"
+  - "discipline"
+  - "conceptual"
+  - "work"
+provides:
+  []
+relations:
+
+source:
+  module: "modules/preface/preface.thinking-through-writing-the-fpf-discipline-of-conceptual-work.md"
+  path: "source/FPF-Spec.md"
+  sha256: "cb4666c3c2f5482e59d6d79f39e48e2a6706d40e243c6617a348ba4a0823c371"
+  start_line: 605
+  end_line: 624
+summary: "A core challenge of any rigorous intellectual effort is that thought itself is intangible. While many frameworks focus on managing data, process, or team activities, FPF uniquely focuses on architecting the act of reasoning itself. It achieves this by providing a discipline of \"thinking through writing\"—a method for giving thought a concrete, shareable, and auditable form. The diverse formats found within the framework—the Cards, Tables, Records, and Specifications—are the instruments for this discipline."
