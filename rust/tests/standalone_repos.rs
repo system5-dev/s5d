@@ -706,7 +706,47 @@ fn public_help_hides_internal_commands() {
     let repo = StandaloneRepo::new();
 
     let help = run_ok(repo.path(), ["--help"]);
-    for hidden in ["index", "gate", "bootstrap", "cg", "mcp"] {
+    for public in [
+        "init", "new", "decision", "verify", "apply", "status", "show", "trace", "phase",
+        "codebase", "discover", "admin",
+    ] {
+        assert!(
+            help.stdout
+                .lines()
+                .any(|line| line.trim_start().starts_with(&format!("{public} "))),
+            "top-level help should keep public command `{public}`:\n{}",
+            help.stdout
+        );
+    }
+    for hidden in [
+        "note",
+        "add-hypothesis",
+        "add-evidence",
+        "decide",
+        "validate",
+        "graph-check",
+        "check",
+        "preview",
+        "approve",
+        "run-gates",
+        "import",
+        "search",
+        "drift-check",
+        "execute",
+        "harness",
+        "reconcile",
+        "rollback",
+        "reflect",
+        "route",
+        "hook",
+        "update",
+        "install",
+        "index",
+        "gate",
+        "bootstrap",
+        "cg",
+        "mcp",
+    ] {
         assert!(
             !help
                 .stdout
@@ -716,13 +756,76 @@ fn public_help_hides_internal_commands() {
             help.stdout
         );
     }
-    for public in ["codebase", "hook", "update", "install"] {
+    let visible_public_count = [
+        "init", "new", "decision", "verify", "apply", "status", "show", "trace", "phase",
+        "codebase", "discover", "admin",
+    ]
+    .iter()
+    .filter(|command| {
+        help.stdout
+            .lines()
+            .any(|line| line.trim_start().starts_with(&format!("{command} ")))
+    })
+    .count();
+    assert_eq!(
+        visible_public_count, 12,
+        "top-level public surface should be exactly 12 commands:\n{}",
+        help.stdout
+    );
+
+    let decision_help = run_ok(repo.path(), ["decision", "--help"]);
+    for public in ["add-hypothesis", "add-evidence", "decide"] {
         assert!(
-            help.stdout
+            decision_help
+                .stdout
                 .lines()
                 .any(|line| line.trim_start().starts_with(&format!("{public} "))),
-            "top-level help should keep public command `{public}`:\n{}",
-            help.stdout
+            "decision help should expose `{public}`:\n{}",
+            decision_help.stdout
+        );
+    }
+
+    let verify_help = run_ok(repo.path(), ["verify", "--help"]);
+    for public in ["validate", "graph-check", "check", "run-gates"] {
+        assert!(
+            verify_help
+                .stdout
+                .lines()
+                .any(|line| line.trim_start().starts_with(&format!("{public} "))),
+            "verify help should expose `{public}`:\n{}",
+            verify_help.stdout
+        );
+    }
+
+    let apply_help = run_ok(repo.path(), ["apply", "--help"]);
+    for public in [
+        "preview",
+        "approve",
+        "import",
+        "drift-check",
+        "reconcile",
+        "rollback",
+        "reflect",
+    ] {
+        assert!(
+            apply_help
+                .stdout
+                .lines()
+                .any(|line| line.trim_start().starts_with(&format!("{public} "))),
+            "apply help should expose `{public}`:\n{}",
+            apply_help.stdout
+        );
+    }
+
+    let admin_help = run_ok(repo.path(), ["admin", "--help"]);
+    for public in ["install", "update"] {
+        assert!(
+            admin_help
+                .stdout
+                .lines()
+                .any(|line| line.trim_start().starts_with(&format!("{public} "))),
+            "admin help should expose `{public}`:\n{}",
+            admin_help.stdout
         );
     }
 
@@ -750,6 +853,158 @@ fn public_help_hides_internal_commands() {
             hook_help.stdout
         );
     }
+}
+
+#[test]
+fn decision_group_and_legacy_alias_mutate_same_spec() {
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+    run_ok(
+        repo.path(),
+        [
+            "new",
+            "decision.cli-group",
+            "--tier",
+            "decision",
+            "--question",
+            "How should grouped commands be exposed?",
+            "--product",
+            "s5d",
+        ],
+    );
+    let spec_path = only_spec_path(&repo);
+    let spec_str = spec_path.to_str().unwrap();
+
+    run_ok(
+        repo.path(),
+        [
+            "decision",
+            "add-hypothesis",
+            spec_str,
+            "--title",
+            "Grouped commands",
+            "--content",
+            "Expose decision/verify/apply as command groups",
+            "--scope",
+            "CLI",
+            "--kind",
+            "system",
+        ],
+    );
+    run_ok(
+        repo.path(),
+        [
+            "add-hypothesis",
+            spec_str,
+            "--title",
+            "Legacy aliases",
+            "--content",
+            "Keep old top-level command names callable",
+            "--scope",
+            "CLI compatibility",
+            "--kind",
+            "system",
+        ],
+    );
+    run_ok(
+        repo.path(),
+        [
+            "decision",
+            "add-evidence",
+            spec_str,
+            "--hypothesis-id",
+            "grouped-commands",
+            "--evidence-type",
+            "synthetic:test",
+            "--content",
+            "Grouped and legacy command paths write through the same implementation",
+            "--verdict",
+            "pass",
+            "--formality",
+            "4",
+            "--claim-scope",
+            "cli",
+            "--reliability",
+            "0.9",
+        ],
+    );
+
+    let spec: s5d::Spec = load_yaml(&spec_path);
+    assert_eq!(spec.hypotheses.len(), 2);
+    assert_eq!(spec.hypotheses[0].evidence.len(), 1);
+}
+
+#[test]
+fn verify_and_apply_groups_preserve_legacy_aliases() {
+    let repo = StandaloneRepo::new();
+    seed_searchable_rust_repo(&repo);
+    run_ok(repo.path(), ["init"]);
+    configure_gate_command(
+        &repo,
+        "schema",
+        vec![
+            s5d_bin().to_string(),
+            "verify".to_string(),
+            "validate".to_string(),
+            "{package}".to_string(),
+        ],
+    );
+
+    run_ok(
+        repo.path(),
+        [
+            "new",
+            "feat.cli.grouped-apply",
+            "--tier",
+            "lightweight",
+            "--product",
+            "s5d",
+        ],
+    );
+    let spec_path = only_spec_path(&repo);
+    let spec_str = spec_path.to_str().unwrap();
+    {
+        let mut spec: s5d::Spec = load_yaml(&spec_path);
+        if let Some(ref mut artifacts) = spec.artifacts {
+            artifacts.capabilities.push(s5d::Capability {
+                id: "cap.GroupedApplyFlow".into(),
+                domain: "cli".into(),
+                name: "GroupedApplyFlow".into(),
+                description: Some("Exercise grouped verify/apply CLI".into()),
+                since: None,
+            });
+        }
+        fs::write(&spec_path, serde_yaml::to_string(&spec).unwrap()).unwrap();
+    }
+
+    run_ok(repo.path(), ["validate", spec_str]);
+    run_ok(repo.path(), ["verify", "validate", spec_str]);
+    run_ok(repo.path(), ["verify", "graph-check", spec_str]);
+    run_ok(repo.path(), ["preview", spec_str]);
+    run_ok(repo.path(), ["apply", "preview", spec_str]);
+    run_ok(
+        repo.path(),
+        ["apply", "approve", spec_str, "--reviewer", "Roman"],
+    );
+    let gates = run_ok(repo.path(), ["verify", "run-gates", spec_str]);
+    assert!(gates.stdout.contains("gate:schema"), "{}", gates.summary());
+
+    let legacy_import_without_verifier = run_fail(repo.path(), ["import", spec_str]);
+    assert!(
+        legacy_import_without_verifier
+            .stderr
+            .contains("--verified-by"),
+        "{}",
+        legacy_import_without_verifier.summary()
+    );
+    let import = run_ok(
+        repo.path(),
+        ["apply", "import", spec_str, "--verified-by", "Diana"],
+    );
+    assert!(import.stdout.contains("Imported"), "{}", import.summary());
+
+    let drift = run_ok(repo.path(), ["apply", "drift-check", spec_str]);
+    assert!(drift.stdout.contains("synced"), "{}", drift.summary());
 }
 
 #[test]
@@ -928,7 +1183,7 @@ fn workflow_phase_lifecycle_emits_ralph_task_package_and_records_outcome() {
     let execute = run_ok(
         repo.path(),
         [
-            "execute",
+            "phase",
             "loop",
             spec_str,
             "--phase",
@@ -1362,9 +1617,7 @@ fn import_stays_blocked_when_declared_gate_only_skips() {
 
     let import = run_fail(repo.path(), ["import", spec_str, "--verified-by", "Diana"]);
     assert!(
-        import
-            .stderr
-            .contains("all declared gates must pass before import"),
+        import.stderr.contains("all effective gates must pass"),
         "{}",
         import.summary()
     );
@@ -1436,9 +1689,7 @@ fn timeout_gate_is_recorded_and_blocks_import() {
 
     let import = run_fail(repo.path(), ["import", spec_str, "--verified-by", "Diana"]);
     assert!(
-        import
-            .stderr
-            .contains("all declared gates must pass before import"),
+        import.stderr.contains("all effective gates must pass"),
         "{}",
         import.summary()
     );
@@ -2006,7 +2257,10 @@ fn update_check_reports_remote_head_drift_without_network() {
     init_git_repo(&remote);
     remote.write("install.sh", "#!/bin/sh\n");
     remote.write("skills/s5d/SKILL.md", "name: s5d\n");
-    remote.write("skills/fpf/SKILL.md", "name: fpf\n");
+    remote.write(
+        "skills/s5d/references/fpf/agent/load-policy.md",
+        "load policy\n",
+    );
     remote.write(
         "rust/Cargo.toml",
         "[package]\nname = \"s5d\"\nversion = \"0.1.0\"\nedition = \"2021\"\n",

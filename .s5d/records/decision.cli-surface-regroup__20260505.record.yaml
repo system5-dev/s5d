@@ -1,0 +1,45 @@
+spec_ref: decision.cli-surface-regroup__20260505.s5d.yaml
+spec_sha256: sha256:c3c3dff2add20201bf58697003c8fd74a2234b0175fdf44ed8f9a2c9c9af2d9b
+status: proposed
+sync_status: unknown
+status_history:
+- status: proposed
+  timestamp: 2026-05-05T04:18:56.249041+00:00
+active_phase: null
+phase_history: []
+phase_runs: []
+approvals: []
+preview: null
+reflection: null
+gate_results: []
+decision:
+  title: Regroup CLI into 8-12 verb groups with hidden aliases
+  winner_id: full-regroup-with-hidden-aliases
+  rejected_ids:
+  - partial-regroup-only-decision-verify-apply
+  - status-quo-better-help
+  context: 31 top-level CLI commands violate one-obvious-way; first-screen overload makes the entry point feel arbitrary.
+  decision: Group commands into 12 visible verbs (decision/verify/apply/phase/discover/codebase/admin + standalone init/new/status/show/trace). Old top-level commands kept as hidden clap aliases. Default --help shows only the new groups.
+  rationale: 'Pareto winner: full ergonomics improvement with full backward-compat via hidden aliases. Partial leaves first-screen still cluttered; status-quo doesn''t address framing.'
+  consequences: CLI surface restructured; 31 commands → 12 visible groups + hidden aliases. SKILL.md/README updated. Tests check both new groups and aliases pass.
+  decided_at: 2026-05-05T04:20:01.804419+00:00
+  confirmed_by: Roman
+  expires_at: 2026-08-03
+  do_list: []
+  dont_list: []
+  challenge:
+    mode: standard
+    passed: true
+    summary: '5 probes: (1) clap aliases break shell completion — verified clap supports both visible commands and hide-from-help with full functionality; (2) MCP names diverge from CLI — they''re already independent (s5d_add_hypothesis ↔ add-hypothesis), so groups don''t break MCP; (3) docs churn — one-pass migration in SKILL.md/README; (4) test fixtures break — sed-able, single batch update; (5) external scripts break — hidden aliases preserve old paths verbatim. No fatal flaw.'
+    checks: []
+  decision_subject: S5D CLI public command surface
+  decision_subject_granularity: system
+  evaluative_surface: axes={ergonomics, backward_compat, audit, effort, reversibility}; policy=lex-order(compat>=5 hard; then maximize ergo)
+  belief_state: Clap supports hidden aliases without behavioral divergence; MCP tools already decoupled from CLI command names
+  outcome_model: 'After ship: --help shows 12 visible groups; old commands work but don''t appear in default help; tests cover both paths'
+  pareto_set:
+  - full-regroup-with-hidden-aliases
+  - status-quo-better-help
+  choice_rule: 'lex-order: compat-floor>=5 ⇒ {full, status-quo}; ergonomics tiebreak ⇒ full'
+verified_by: null
+drift_tolerance: null

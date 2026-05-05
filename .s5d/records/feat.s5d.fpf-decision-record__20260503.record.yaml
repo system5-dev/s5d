@@ -1,0 +1,72 @@
+spec_ref: feat.s5d.fpf-decision-record__20260503.s5d.yaml
+spec_sha256: sha256:466e5031f60ffec9a076230ad060734bea21755af1fa13a30b10a29e15dbeea3
+status: operated
+sync_status: synced
+status_history:
+- status: proposed
+  timestamp: 2026-05-03T15:09:10.753879+00:00
+- status: previewed
+  timestamp: 2026-05-03T15:12:04.868145+00:00
+- status: approved
+  timestamp: 2026-05-03T15:12:26.887796+00:00
+- status: applied
+  timestamp: 2026-05-03T15:25:42.741792+00:00
+- status: operated
+  timestamp: 2026-05-03T15:26:34.777348+00:00
+- status: operated
+  timestamp: 2026-05-03T16:50:08.423053+00:00
+active_phase: null
+phase_history: []
+phase_runs: []
+approvals:
+- reviewer: Roman
+  date: 2026-05-03T15:12:26.887793+00:00
+  spec_sha256: sha256:a3d93eb741b530ea4b9e98daf2ea8b4eb2c26a33cc5dfbfd65b6a5476ac407cb
+  diff_sha256: sha256:627471da4a5ca10c823bf81ff96423218b0ba02d893b60e5ab4361b0911e7661
+preview:
+  diff_sha256: sha256:627471da4a5ca10c823bf81ff96423218b0ba02d893b60e5ab4361b0911e7661
+  previewed_spec_sha256: sha256:a3d93eb741b530ea4b9e98daf2ea8b4eb2c26a33cc5dfbfd65b6a5476ac407cb
+  actions:
+    create: 7
+    link: 9
+    update: 3
+    delete: 0
+  log: null
+reflection:
+  verdict: confirmed
+  measurement_window: null
+  telemetry_refs: []
+  summary: 'Round-2 (this turn) added CLI flags --decision-subject/--decision-subject-granularity/--evaluative-surface/--belief-state/--outcome-model/--pareto-set/--choice-rule to s5d decide; values persist into record.decision (verified GWT-A,C). Validator forbids scalarization markers in evaluative_surface (verified GWT-B): "0.5*X + 0.5*Y" rejected unless --force per FPF C.18 (NQD-CAL forbids weighted sums across mixed scales).'
+  worked: []
+  issues: []
+  structured_issues: []
+  follow_ups: []
+  evidence: []
+  heuristics:
+  - When a normative FPF principle (here C.18 NQD ban on scalarization) translates to negative validation, implement as a soft warn + hard error pattern with --force escape — keeps adoption gradual but the wall is concrete.
+gate_results:
+- kind: schema
+  status: passed
+  attempt: 1
+  timestamp: 2026-05-03T15:25:36.956229+00:00
+  log: schema validation passed (built-in)
+  exit_code: null
+  evidence_path: evidence/feat.s5d.fpf-decision-record/schema_1.log
+  command: null
+  duration_ms: 1
+  waiver_expires_at: null
+  kind_class: null
+- kind: graph
+  status: passed
+  attempt: 1
+  timestamp: 2026-05-03T15:25:36.956982+00:00
+  log: graph check passed (built-in)
+  exit_code: null
+  evidence_path: evidence/feat.s5d.fpf-decision-record/graph_1.log
+  command: null
+  duration_ms: 0
+  waiver_expires_at: null
+  kind_class: null
+decision: null
+verified_by: Diana
+drift_tolerance: null

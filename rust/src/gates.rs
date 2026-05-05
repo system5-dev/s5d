@@ -37,7 +37,44 @@ pub fn run_gates(
     // Evidence directory: .s5d/evidence/{spec_id}/
     let evidence_dir = s5d_dir.join("evidence").join(&spec.id);
 
-    for gate in &spec.gates {
+    let effective_gates = effective_gates_for_spec(spec);
+
+    // FPF C.22:5.4 — eligibility/acceptance order. Eligibility kinds run first; on fail, fast-exit.
+    // Defaults when gate.kind_class unset: schema/graph/architecture → eligibility, others → acceptance.
+    let mut sorted_gates: Vec<&Gate> = effective_gates.iter().collect();
+    sorted_gates.sort_by_key(|g| {
+        let elig = matches!(g.kind.as_str(), "schema" | "graph" | "architecture");
+        if elig {
+            0
+        } else {
+            1
+        }
+    });
+
+    let mut eligibility_failed = false;
+
+    for gate in sorted_gates {
+        if eligibility_failed {
+            // FPF C.22 fast-fail: skip remaining acceptance gates after eligibility failure
+            results.push(GateResult {
+                kind: gate.kind.clone(),
+                status: "skipped".into(),
+                attempt: count_attempts(&results, &gate.kind) + 1,
+                timestamp: Utc::now().to_rfc3339(),
+                log: Some(
+                    "skipped: prior eligibility gate failed (FPF C.22:5.4 fast-fail). \
+                    Acceptance gates run only after eligibility passes."
+                        .to_string(),
+                ),
+                exit_code: None,
+                evidence_path: None,
+                command: None,
+                duration_ms: None,
+                waiver_expires_at: None,
+                kind_class: Some("acceptance".into()),
+            });
+            continue;
+        }
         let cmd_template = match config.gate_commands.get(&gate.kind) {
             Some(cmd) => cmd.clone(),
             None => {
@@ -72,6 +109,8 @@ pub fn run_gates(
                             evidence_path: ev_path,
                             command: None,
                             duration_ms: Some(start.elapsed().as_millis() as u64),
+                            waiver_expires_at: None,
+                            kind_class: None,
                         })
                     }
                     "graph" => {
@@ -97,6 +136,62 @@ pub fn run_gates(
                             evidence_path: ev_path,
                             command: None,
                             duration_ms: Some(start.elapsed().as_millis() as u64),
+                            waiver_expires_at: None,
+                            kind_class: None,
+                        })
+                    }
+                    "review" => {
+                        let attempt = count_attempts(&results, &gate.kind) + 1;
+                        let start = Instant::now();
+                        let mut review_count: usize = 0;
+                        let mut findings: Vec<String> = Vec::new();
+                        for hyp in &spec.hypotheses {
+                            for ev in &hyp.evidence {
+                                let is_review = ev.evidence_type == "gate:review"
+                                    || ev.evidence_type.starts_with("gate:review:");
+                                if is_review && ev.verdict == "pass" {
+                                    review_count += 1;
+                                    findings.push(format!(
+                                        "  - hypothesis={} evidence_id={} formality={}",
+                                        hyp.id,
+                                        ev.id,
+                                        ev.formality.map_or("?".into(), |f| f.to_string())
+                                    ));
+                                }
+                            }
+                        }
+                        let (status, log) = if review_count >= 1 {
+                            (
+                                "passed".into(),
+                                format!(
+                                    "review gate passed (built-in): {} review-evidence with verdict=pass\n{}",
+                                    review_count,
+                                    findings.join("\n")
+                                ),
+                            )
+                        } else {
+                            (
+                                "failed".into(),
+                                "review gate failed (built-in): no evidence with type=gate:review and verdict=pass found. \
+                                Decision/high-tier specs require >=1 code review recorded as evidence. \
+                                Use: s5d add-evidence <spec> --hypothesis-id <id> --evidence-type gate:review \
+                                --content '<reviewer findings>' --verdict pass --formality <1-5> \
+                                --claim-scope <scope> --reliability <0..1>".into(),
+                            )
+                        };
+                        let ev_path = save_evidence(&evidence_dir, &gate.kind, attempt, &log);
+                        Some(GateResult {
+                            kind: gate.kind.clone(),
+                            status,
+                            attempt,
+                            timestamp: Utc::now().to_rfc3339(),
+                            log: Some(log),
+                            exit_code: None,
+                            evidence_path: ev_path,
+                            command: None,
+                            duration_ms: Some(start.elapsed().as_millis() as u64),
+                            waiver_expires_at: None,
+                            kind_class: None,
                         })
                     }
                     "architecture" => {
@@ -135,12 +230,18 @@ pub fn run_gates(
                             evidence_path: ev_path,
                             command: None,
                             duration_ms: Some(start.elapsed().as_millis() as u64),
+                            waiver_expires_at: None,
+                            kind_class: None,
                         })
                     }
                     _ => None,
                 };
 
                 if let Some(result) = builtin_result {
+                    let elig = matches!(result.kind.as_str(), "schema" | "graph" | "architecture");
+                    if elig && result.status == "failed" {
+                        eligibility_failed = true;
+                    }
                     results.push(result);
                 } else {
                     results.push(GateResult {
@@ -153,6 +254,8 @@ pub fn run_gates(
                         evidence_path: None,
                         command: None,
                         duration_ms: None,
+                        waiver_expires_at: None,
+                        kind_class: None,
                     });
                 }
                 continue;
@@ -220,6 +323,8 @@ pub fn run_gates(
                                 evidence_path: ev_path,
                                 command: Some(cmd_args.clone()),
                                 duration_ms: Some(duration_ms),
+                                waiver_expires_at: None,
+                                kind_class: None,
                             };
                         }
                         Ok(None) => {
@@ -245,6 +350,8 @@ pub fn run_gates(
                                     evidence_path: ev_path,
                                     command: Some(cmd_args.clone()),
                                     duration_ms: Some(duration_ms),
+                                    waiver_expires_at: None,
+                                    kind_class: None,
                                 };
                             }
                             std::thread::sleep(Duration::from_millis(100));
@@ -271,6 +378,8 @@ pub fn run_gates(
                                 evidence_path: ev_path,
                                 command: Some(cmd_args.clone()),
                                 duration_ms: Some(duration_ms),
+                                waiver_expires_at: None,
+                                kind_class: None,
                             };
                         }
                     }
@@ -290,6 +399,8 @@ pub fn run_gates(
                     evidence_path: ev_path,
                     command: Some(cmd_args.clone()),
                     duration_ms: Some(duration_ms),
+                    waiver_expires_at: None,
+                    kind_class: None,
                 }
             }
         };
@@ -298,6 +409,14 @@ pub fn run_gates(
     }
 
     Ok(results)
+}
+
+pub fn effective_gates_for_spec(spec: &crate::models::Spec) -> Vec<crate::models::Gate> {
+    if spec.gates.is_empty() {
+        default_gates_for_tier(&spec.tier)
+    } else {
+        spec.gates.clone()
+    }
 }
 
 fn spawn_pipe_reader<R>(mut reader: R) -> JoinHandle<String>
@@ -320,11 +439,14 @@ fn join_pipe_reader(handle: Option<JoinHandle<String>>) -> String {
 pub fn default_gates_for_tier(tier: &crate::models::Tier) -> Vec<crate::models::Gate> {
     use crate::models::{Gate, Tier};
     match tier {
-        Tier::Note | Tier::Decision => vec![],
+        Tier::Note => vec![],
+        Tier::Decision => vec![Gate {
+            kind: "review".to_string(),
+        }],
         Tier::Lightweight => vec![Gate {
             kind: "schema".to_string(),
         }],
-        // Default gates only include kinds with built-in handlers (schema, graph).
+        // Default gates only include kinds with built-in handlers (schema, graph, review, architecture).
         // lint, test, contract require user-configured commands in config.yaml —
         // add them to spec.gates manually when commands are set up.
         Tier::Standard => vec![
@@ -341,6 +463,9 @@ pub fn default_gates_for_tier(tier: &crate::models::Tier) -> Vec<crate::models::
             },
             Gate {
                 kind: "graph".to_string(),
+            },
+            Gate {
+                kind: "review".to_string(),
             },
         ],
     }

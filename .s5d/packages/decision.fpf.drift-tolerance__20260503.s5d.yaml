@@ -1,0 +1,120 @@
+s5d: '1.0'
+id: decision.fpf.drift-tolerance
+version: 1.0.0
+product: s5d
+tier: decision
+allow_update: true
+meta:
+  title: drift-tolerance
+  authors: []
+  date: 2026-05-03
+  tickets: []
+  adrs: []
+  renames: []
+context: null
+workflow: null
+artifacts: null
+links: null
+contracts: []
+gates:
+- kind: review
+roc: null
+problem:
+  signal: How to introduce tolerance policy in drift-check per FPF A.3.3:9.3?
+  constraints:
+  - Backward-compatible with existing specs
+  - Graduated enforcement (high-tier required, lower tiers optional)
+  - No new CLI surface unless feature requires it
+  targets:
+  - FPF compliance for the cited section
+  - Auditability of the artifact
+  - Thinness — keep S5D as a recording layer
+  indicators:
+  - Adoption per spec (count of new fields populated)
+  - Schema migration errors (observation, not optimization)
+  acceptance: 'Decision adopts the FPF-aligned hypothesis (variant A) iff: (i) winner
+    is the full FPF adoption variant; (ii) >=1 normative FPF citation backs the winner;
+    (iii) backward-compat preserved (existing specs unaffected); (iv) graduated enforcement
+    (tier-aware required fields).'
+  blast_radius: metamodel + validator + docs
+  reversibility: high — additive fields, removable without data loss
+  status: framed
+hypotheses:
+- id: tolerance-policy-with-partial-verdict
+  title: Tolerance policy with partial verdict
+  content: 'Extend record with drift_tolerance: per-artifact rules (schema.drift=allow,
+    code.drift=block, doc.drift=warn). drift-check returns {passed|failed|partial}
+    per FPF A.3.3:9.3 fits(D,trace,tol). Partial does not block import but logs delta.'
+  scope: drift-check
+  kind: system
+  layer: L1
+  r_eff: null
+  evidence:
+  - id: 20260503-internal-tolerance-policy-with-partial-verdict
+    type: internal
+    content: 'FPF A.3.3:9.3 normative: fits(D,trace,tol)→{pass|fail|partial} under
+      tolerance policy. Binary check is FPF non-conformance. NQD: thin=4, audit=4,
+      ergo=4, schema=4, couple=5, rev=5.'
+    verdict: pass
+    valid_until: 2026-08-01 15:07:33.563119+00:00
+    carrier_ref: null
+    formality: 4
+    claim_scope:
+    - fpf-citation
+    - nqd
+    congruence_level: null
+    reliability: 0.85
+  depends_on: []
+  rationale: null
+  spec_ref: feat.s5d.fpf-drift-tolerance__20260503.s5d.yaml
+- id: binary-drift-check-per-spec-opt-in-tolerance
+  title: Binary drift-check + per-spec opt-in tolerance
+  content: Default drift-check stays binary. Specs may declare drift_tolerance block
+    to opt into tri-state behavior. Less invasive.
+  scope: drift-check
+  kind: system
+  layer: L0
+  r_eff: null
+  evidence:
+  - id: 20260503-internal-binary-drift-check-per-spec-opt-in-tolerance
+    type: internal
+    content: Opt-in shifts compliance to spec authors — most won't bother. Equivalent
+      to 'available but unused' = effectively docs-only.
+    verdict: refine
+    valid_until: 2026-08-01 15:07:33.566746+00:00
+    carrier_ref: null
+    formality: 3
+    claim_scope:
+    - adoption
+    congruence_level: null
+    reliability: 0.75
+  depends_on: []
+  rationale: null
+  spec_ref: null
+- id: status-quo-better-error-messages
+  title: Status quo + better error messages
+  content: Keep binary drift-check. Improve drift-check output to classify drifts
+    by severity in message text. No tolerance policy.
+  scope: drift-check messages
+  kind: system
+  layer: invalid
+  r_eff: null
+  evidence:
+  - id: 20260503-internal-status-quo-better-error-messages
+    type: internal
+    content: Cosmetic, no FPF compliance change. Fails A.3.3:9.3.
+    verdict: fail
+    valid_until: 2026-08-01 15:07:33.570268+00:00
+    carrier_ref: null
+    formality: 3
+    claim_scope:
+    - fpf
+    congruence_level: null
+    reliability: 0.85
+  depends_on: []
+  rationale: null
+  spec_ref: null
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false

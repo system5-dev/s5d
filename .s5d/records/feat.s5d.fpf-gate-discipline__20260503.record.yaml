@@ -1,0 +1,80 @@
+spec_ref: feat.s5d.fpf-gate-discipline__20260503.s5d.yaml
+spec_sha256: sha256:35b25d2c56c748ca0bd2f1a7e6d6059c84cef421f5e145c6af21050422348c52
+status: operated
+sync_status: synced
+status_history:
+- status: proposed
+  timestamp: 2026-05-03T15:09:10.770647+00:00
+- status: previewed
+  timestamp: 2026-05-03T15:12:04.904841+00:00
+- status: approved
+  timestamp: 2026-05-03T15:12:26.920493+00:00
+- status: previewed
+  timestamp: 2026-05-03T15:25:52.506716+00:00
+- status: approved
+  timestamp: 2026-05-03T15:25:52.521350+00:00
+- status: applied
+  timestamp: 2026-05-03T15:25:52.570616+00:00
+- status: operated
+  timestamp: 2026-05-03T15:26:34.790952+00:00
+- status: operated
+  timestamp: 2026-05-03T16:50:08.439611+00:00
+active_phase: null
+phase_history: []
+phase_runs: []
+approvals:
+- reviewer: Roman
+  date: 2026-05-03T15:12:26.920491+00:00
+  spec_sha256: sha256:9805f94f7dbef335ed6b3cae136e0b3c8bb0225f9b0344651b20472b31c9b00f
+  diff_sha256: sha256:94382cdaaf6bde04b54cc980e1e7b717ab3e089021a024334e3b0d6693de2113
+- reviewer: Roman
+  date: 2026-05-03T15:25:52.521348+00:00
+  spec_sha256: sha256:9805f94f7dbef335ed6b3cae136e0b3c8bb0225f9b0344651b20472b31c9b00f
+  diff_sha256: sha256:7927d3d8cdde3f6684b65e1a761121aa24ac3f243f5584b2141c59efba3ebb36
+preview:
+  diff_sha256: sha256:7927d3d8cdde3f6684b65e1a761121aa24ac3f243f5584b2141c59efba3ebb36
+  previewed_spec_sha256: sha256:9805f94f7dbef335ed6b3cae136e0b3c8bb0225f9b0344651b20472b31c9b00f
+  actions:
+    create: 6
+    link: 9
+    update: 4
+    delete: 0
+  log: null
+reflection:
+  verdict: confirmed
+  measurement_window: null
+  telemetry_refs: []
+  summary: 'Round-2 added runtime enforcement: (1) eligibility-fail-fast — schema/graph/architecture run first; on failure remaining acceptance gates auto-skip with FPF C.22:5.4 reference (verified live: schema fail → graph skip). (2) Waiver auto-revoke at import: gate_result.waiver_expires_at parsed; expired waivers rejected with FPF B.3.4:5 CC-ED.5 reference. s5d_waiver MCP defaults expires_at to now+90d.'
+  worked: []
+  issues: []
+  structured_issues: []
+  follow_ups: []
+  evidence: []
+  heuristics:
+  - Runtime enforcement of a record-level field requires both a writer (waiver creator default-90d) and a reader (import-time check); add both in same change to avoid orphan fields that look enforced but aren't.
+gate_results:
+- kind: schema
+  status: passed
+  attempt: 1
+  timestamp: 2026-05-03T15:25:37.021973+00:00
+  log: schema validation passed (built-in)
+  exit_code: null
+  evidence_path: evidence/feat.s5d.fpf-gate-discipline/schema_1.log
+  command: null
+  duration_ms: 0
+  waiver_expires_at: null
+  kind_class: null
+- kind: graph
+  status: passed
+  attempt: 1
+  timestamp: 2026-05-03T15:25:37.022092+00:00
+  log: graph check passed (built-in)
+  exit_code: null
+  evidence_path: evidence/feat.s5d.fpf-gate-discipline/graph_1.log
+  command: null
+  duration_ms: 0
+  waiver_expires_at: null
+  kind_class: null
+decision: null
+verified_by: Diana
+drift_tolerance: null

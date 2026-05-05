@@ -1,0 +1,78 @@
+spec_ref: feat.s5d.cli-surface-regroup__20260505.s5d.yaml
+spec_sha256: sha256:6868c6266cf5c0160ccdb51c38973b882cea9fd8361626486705ee4fd3220cfa
+status: applied
+sync_status: synced
+status_history:
+- status: proposed
+  timestamp: 2026-05-05T04:20:01.782231+00:00
+- status: previewed
+  timestamp: 2026-05-05T04:20:57.337381+00:00
+- status: approved
+  timestamp: 2026-05-05T04:20:57.352787+00:00
+- status: operated
+  timestamp: 2026-05-05T04:36:56.236055+00:00
+- status: previewed
+  timestamp: 2026-05-05T04:37:05.119597+00:00
+- status: approved
+  timestamp: 2026-05-05T04:37:05.143979+00:00
+- status: applied
+  timestamp: 2026-05-05T04:37:05.199104+00:00
+active_phase: null
+phase_history: []
+phase_runs: []
+approvals:
+- reviewer: Roman
+  date: 2026-05-05T04:20:57.352784+00:00
+  spec_sha256: sha256:18d52513be267ed770a42065926bf8e1e5cf1c3692de1a17bff194b7f15fbbb2
+  diff_sha256: sha256:cdbcf0b865d8387f58d6daeaee1f518e80c2d372079a1f128886357ebc97106a
+- reviewer: Roman
+  date: 2026-05-05T04:37:05.143976+00:00
+  spec_sha256: sha256:d843da0318b5c51e01dc4eceeef6dc6497879b1335b8c2e6ff0d52dbd84b7fae
+  diff_sha256: sha256:cdbcf0b865d8387f58d6daeaee1f518e80c2d372079a1f128886357ebc97106a
+preview:
+  diff_sha256: sha256:cdbcf0b865d8387f58d6daeaee1f518e80c2d372079a1f128886357ebc97106a
+  previewed_spec_sha256: sha256:d843da0318b5c51e01dc4eceeef6dc6497879b1335b8c2e6ff0d52dbd84b7fae
+  actions:
+    create: 4
+    link: 3
+    update: 3
+    delete: 0
+  log: null
+reflection:
+  verdict: confirmed
+  measurement_window: null
+  telemetry_refs: []
+  summary: 'Full regroup shipped: decision/verify/apply/phase/admin groups added; legacy cluster commands (Note, AddHypothesis, AddEvidence, Decide, Validate, GraphCheck, Check, Preview, Approve, RunGates, Import, Search, DriftCheck, Execute, Harness, Reconcile, Rollback, Reflect, Route, Hook, Update, Install, Index, Gate, Bootstrap, Cg, Mcp) are hidden aliases. Top-level visible: 31→12 (init/new/decision/verify/apply/status/show/trace/phase/codebase/discover/admin). Backward compat: old commands still work by exact name. cargo test: 86+12+8+45 green; clippy -D warnings green.'
+  worked: []
+  issues: []
+  structured_issues: []
+  follow_ups: []
+  evidence: []
+  heuristics:
+  - When regrouping a clap CLI, scope the hide=true edit to one specific enum (S5dCommand) by walking the enum body — naive top-level regex on file matches subcommand variants in nested enums and breaks tuple-variant compile (E0769).
+gate_results:
+- kind: schema
+  status: passed
+  attempt: 1
+  timestamp: 2026-05-05T04:36:56.211687+00:00
+  log: schema validation passed (built-in)
+  exit_code: null
+  evidence_path: evidence/feat.s5d.cli-surface-regroup/schema_1.log
+  command: null
+  duration_ms: 0
+  waiver_expires_at: null
+  kind_class: null
+- kind: graph
+  status: passed
+  attempt: 1
+  timestamp: 2026-05-05T04:36:56.211875+00:00
+  log: graph check passed (built-in)
+  exit_code: null
+  evidence_path: evidence/feat.s5d.cli-surface-regroup/graph_1.log
+  command: null
+  duration_ms: 0
+  waiver_expires_at: null
+  kind_class: null
+decision: null
+verified_by: Diana
+drift_tolerance: null

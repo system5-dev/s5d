@@ -1,4 +1,4 @@
-use clap::{Parser, Subcommand};
+use clap::{Args, Parser, Subcommand};
 use colored::Colorize;
 
 #[derive(Parser)]
@@ -57,6 +57,7 @@ enum S5dCommand {
         hypothesis_id: Option<String>,
     },
     /// Quick note — one-shot shorthand for `s5d new note.<slug> --tier note`
+    #[command(hide = true)]
     Note {
         /// Note text (used as title and rationale)
         text: Vec<String>,
@@ -64,146 +65,51 @@ enum S5dCommand {
         #[arg(long)]
         product: Option<String>,
     },
+    /// Decision authoring: hypotheses, evidence, and confirmed choices
+    Decision {
+        #[command(subcommand)]
+        command: DecisionCommand,
+    },
+    /// Verification gates: schema, graph, architecture, and configured checks
+    Verify {
+        #[command(subcommand)]
+        command: VerifyCommand,
+    },
+    /// Apply lifecycle: preview, approval, import, drift, rollback, and reflection
+    Apply {
+        #[command(subcommand)]
+        command: ApplyCommand,
+    },
     /// Add a hypothesis to a decision spec
-    AddHypothesis {
-        /// Path to .s5d.yaml file
-        spec: String,
-        /// Custom hypothesis ID (auto-generated from title if omitted)
-        #[arg(long)]
-        id: Option<String>,
-        /// Hypothesis title
-        #[arg(long)]
-        title: String,
-        /// Hypothesis content/description
-        #[arg(long)]
-        content: String,
-        /// Scope — where this applies
-        #[arg(long)]
-        scope: String,
-        /// Kind: system (default) or episteme (knowledge/methodology)
-        #[arg(long, default_value = "system")]
-        kind: String,
-        /// Rationale JSON (anomaly, approach, alternatives)
-        #[arg(long)]
-        rationale: Option<String>,
-    },
+    #[command(hide = true)]
+    AddHypothesis(AddHypothesisArgs),
     /// Add evidence to a hypothesis in a decision spec
-    AddEvidence {
-        /// Path to .s5d.yaml file
-        spec: String,
-        /// Hypothesis ID to attach evidence to
-        #[arg(long)]
-        hypothesis_id: String,
-        /// Evidence type: internal, external, gate:test, etc.
-        #[arg(long)]
-        evidence_type: String,
-        /// Evidence content (test output, research findings)
-        #[arg(long)]
-        content: String,
-        /// Verdict: pass, fail, refine
-        #[arg(long)]
-        verdict: String,
-        /// Carrier reference (test file path, URL, etc.)
-        #[arg(long)]
-        carrier_ref: Option<String>,
-        #[arg(long, help = "Rigor of evidence method (1-5)")]
-        formality: Option<u8>,
-        #[arg(long, help = "What the claim covers (comma-separated)")]
-        claim_scope: Option<String>,
-        #[arg(long, help = "Confidence that the claim is true (0.0-1.0)")]
-        reliability: Option<f64>,
-    },
+    #[command(hide = true)]
+    AddEvidence(AddEvidenceArgs),
     /// Record a decision in a decision spec
-    Decide {
-        /// Path to .s5d.yaml file
-        spec: String,
-        /// Decision title
-        #[arg(long)]
-        title: String,
-        /// Winner hypothesis ID
-        #[arg(long)]
-        winner: String,
-        /// Rejected hypothesis IDs (comma-separated)
-        #[arg(long)]
-        rejected: Option<String>,
-        /// Decision context
-        #[arg(long)]
-        context: String,
-        /// What was decided
-        #[arg(long)]
-        decision: String,
-        /// Why this was chosen
-        #[arg(long)]
-        rationale: String,
-        /// Expected consequences
-        #[arg(long)]
-        consequences: String,
-        /// Skip spec_ref enforcement for winner hypothesis
-        #[arg(long)]
-        force: bool,
-        /// Human who confirms the decision (required — non-waivable)
-        #[arg(long)]
-        confirmed_by: Option<String>,
-        /// Adversarial challenge summary (required unless --no-challenge)
-        #[arg(long)]
-        challenge_summary: Option<String>,
-        /// Challenge mode: tactical (1 probe) or standard (5 probes). Default: auto-detect from tier.
-        #[arg(long)]
-        challenge_mode: Option<String>,
-        /// Skip adversarial challenge gate (not recommended)
-        #[arg(long)]
-        no_challenge: bool,
-    },
+    #[command(hide = true)]
+    Decide(DecideArgs),
     /// Validate a spec file
-    Validate {
-        /// Path to .s5d.yaml file
-        spec: String,
-    },
+    #[command(hide = true)]
+    Validate(SpecArg),
     /// Graph/relation validation — DFS cycle detection
-    GraphCheck {
-        /// Path to .s5d.yaml file
-        spec: String,
-    },
+    #[command(hide = true)]
+    GraphCheck(SpecArg),
     /// Architecture linter — spec shape, graph rules, component paths, and source dependencies
-    Check {
-        /// Path to .s5d.yaml file
-        spec: String,
-        /// Output format: text or json
-        #[arg(long, default_value = "text")]
-        format: String,
-    },
+    #[command(hide = true)]
+    Check(CheckArgs),
     /// Dry-run import diff
-    Preview {
-        /// Path to .s5d.yaml file
-        spec: String,
-    },
+    #[command(hide = true)]
+    Preview(SpecArg),
     /// Record approval binding spec_sha256 + diff_sha256
-    Approve {
-        /// Path to .s5d.yaml file
-        spec: String,
-        /// Reviewer name
-        #[arg(long)]
-        reviewer: String,
-        /// Block approval if reviewer is not a domain owner
-        #[arg(long)]
-        require_owner: bool,
-    },
+    #[command(hide = true)]
+    Approve(ApproveArgs),
     /// Execute configured gate commands
-    RunGates {
-        /// Path to .s5d.yaml file
-        spec: String,
-    },
+    #[command(hide = true)]
+    RunGates(SpecArg),
     /// Transactional import (apply spec to alias table + ledger)
-    Import {
-        /// Path to .s5d.yaml file
-        spec: String,
-        /// Who independently verified gates passed (trust separation)
-        #[arg(long)]
-        verified_by: String,
-        /// Override methodological checks
-        #[arg(long)]
-        force: bool,
-    },
+    #[command(hide = true)]
+    Import(ImportArgs),
     /// Show status of all specs
     Status,
     /// Show spec details — decision trace, hypothesis tree, or feature summary
@@ -211,77 +117,48 @@ enum S5dCommand {
         /// Path to .s5d.yaml file
         spec: String,
     },
+    /// Trace a source path to S5D specs, components, capabilities, and decisions
+    Trace {
+        /// Source path inside the project
+        path: String,
+    },
     /// Search specs and decisions by keyword
+    #[command(hide = true)]
     Search {
         /// Search query
         query: String,
     },
     /// Compare live state vs last applied fingerprint
-    DriftCheck {
-        /// Path to .s5d.yaml file (optional: check all if omitted)
-        spec: Option<String>,
-    },
+    #[command(hide = true)]
+    DriftCheck(OptionalSpecArg),
     /// Phase lifecycle for workflow-driven execution
     Phase {
         #[command(subcommand)]
         command: PhaseCommand,
     },
     /// Execute a bounded loop inside an approved phase
+    #[command(hide = true)]
     Execute {
         #[command(subcommand)]
         command: ExecuteCommand,
     },
     /// Operational harness around isolated worktrees and S5D workflow commands
+    #[command(hide = true)]
     Harness {
         #[command(subcommand)]
         command: HarnessCommand,
     },
     /// Re-import to fix drift (desired-state restore, bypasses diff_sha256)
-    Reconcile {
-        /// Path to .s5d.yaml file (optional: reconcile all drifted if omitted)
-        spec: Option<String>,
-    },
+    #[command(hide = true)]
+    Reconcile(OptionalSpecArg),
     /// Reverse last import for a spec
-    Rollback {
-        /// Path to .s5d.yaml file
-        spec: String,
-    },
+    #[command(hide = true)]
+    Rollback(SpecArg),
     /// Record reflection for a spec (OPERATE stage) — closes lifecycle with production evidence
-    Reflect {
-        /// Path to .s5d.yaml file
-        spec: String,
-        /// Outcome verdict: confirmed, refuted, inconclusive, iterate, kill
-        #[arg(long)]
-        verdict: Option<String>,
-        /// Measurement window used for the verdict
-        #[arg(long)]
-        measurement_window: Option<String>,
-        /// Summary of what happened in production
-        #[arg(long)]
-        summary: String,
-        /// What worked well (comma-separated)
-        #[arg(long, default_value = "")]
-        worked: String,
-        /// Issues encountered (comma-separated)
-        #[arg(long, default_value = "")]
-        issues: String,
-        /// Follow-up tasks (comma-separated)
-        #[arg(long, default_value = "")]
-        follow_ups: String,
-        /// Production evidence: paths, URLs, or metric descriptions (repeatable)
-        #[arg(long = "evidence")]
-        evidence: Vec<String>,
-        /// Telemetry references backing the verdict (repeatable)
-        #[arg(long = "telemetry")]
-        telemetry_refs: Vec<String>,
-        /// Reusable rules learned from this spec (repeatable)
-        #[arg(long = "heuristic")]
-        heuristics: Vec<String>,
-        /// Structured issue: "description|root_cause|fix|severity" (repeatable)
-        #[arg(long = "issue")]
-        structured_issues: Vec<String>,
-    },
+    #[command(hide = true)]
+    Reflect(ReflectArgs),
     /// Classify a request into tier, mode, and entry point
+    #[command(hide = true)]
     Route {
         /// Request description to classify
         description: Vec<String>,
@@ -306,6 +183,7 @@ enum S5dCommand {
         command: DiscoverCommand,
     },
     /// Git hook entrypoints implemented in Rust
+    #[command(hide = true)]
     Hook {
         #[command(subcommand)]
         command: HookCommand,
@@ -317,9 +195,15 @@ enum S5dCommand {
         command: GateCommand,
     },
     /// Check for and apply S5D binary/skill updates
+    #[command(hide = true)]
     Update {
         #[command(subcommand)]
         command: UpdateCommand,
+    },
+    /// Administrative setup and maintenance commands
+    Admin {
+        #[command(subcommand)]
+        command: AdminCommand,
     },
     /// Seed alias table from bootstrap manifest
     #[command(hide = true)]
@@ -336,35 +220,294 @@ enum S5dCommand {
     /// Register s5d MCP server for supported assistants.
     /// Default: project-level for Claude (.mcp.json). Use flags to target
     /// other assistants or --global to install at user level.
-    Install {
-        /// Explicit path to s5d binary (default: current executable)
-        #[arg(long)]
-        s5d_path: Option<String>,
-        /// Print what would change, don't write
-        #[arg(long)]
-        dry_run: bool,
-        /// Remove the s5d MCP entry
-        #[arg(long)]
-        uninstall: bool,
-        /// Register for Claude Code
-        #[arg(long)]
-        claude: bool,
-        /// Register for Cursor
-        #[arg(long)]
-        cursor: bool,
-        /// Register for Codex CLI
-        #[arg(long)]
-        codex: bool,
-        /// Register for Gemini CLI
-        #[arg(long)]
-        gemini: bool,
-        /// Register for all supported assistants
-        #[arg(long)]
-        all: bool,
-        /// Install at user/global level (~/.claude, ~/.codex, ~/.gemini) instead of project
-        #[arg(long)]
-        global: bool,
+    #[command(hide = true)]
+    Install(InstallArgs),
+}
+
+#[derive(Subcommand)]
+enum DecisionCommand {
+    /// Add a hypothesis to a decision spec
+    AddHypothesis(AddHypothesisArgs),
+    /// Add evidence to a hypothesis in a decision spec
+    AddEvidence(AddEvidenceArgs),
+    /// Record a decision in a decision spec
+    Decide(Box<DecideArgs>),
+}
+
+#[derive(Subcommand)]
+enum VerifyCommand {
+    /// Validate a spec file
+    Validate(SpecArg),
+    /// Graph/relation validation — DFS cycle detection
+    GraphCheck(SpecArg),
+    /// Architecture linter — spec shape, graph rules, component paths, and source dependencies
+    Check(CheckArgs),
+    /// Execute configured gate commands
+    RunGates(SpecArg),
+}
+
+#[derive(Subcommand)]
+enum ApplyCommand {
+    /// Dry-run import diff
+    Preview(SpecArg),
+    /// Record approval binding spec_sha256 + diff_sha256
+    Approve(ApproveArgs),
+    /// Transactional import (apply spec to alias table + ledger)
+    Import(ImportArgs),
+    /// Compare live state vs last applied fingerprint
+    DriftCheck(OptionalSpecArg),
+    /// Re-import to fix drift (desired-state restore, bypasses diff_sha256)
+    Reconcile(OptionalSpecArg),
+    /// Reverse last import for a spec
+    Rollback(SpecArg),
+    /// Record reflection for a spec (OPERATE stage) — closes lifecycle with production evidence
+    Reflect(Box<ReflectArgs>),
+}
+
+#[derive(Subcommand)]
+enum AdminCommand {
+    /// Register s5d MCP server for supported assistants
+    Install(InstallArgs),
+    /// Check for and apply S5D binary/skill updates
+    Update {
+        #[command(subcommand)]
+        command: UpdateCommand,
     },
+}
+
+#[derive(Args)]
+struct SpecArg {
+    /// Path to .s5d.yaml file
+    spec: String,
+}
+
+#[derive(Args)]
+struct OptionalSpecArg {
+    /// Path to .s5d.yaml file (optional: operate on all if omitted)
+    spec: Option<String>,
+}
+
+#[derive(Args)]
+struct CheckArgs {
+    /// Path to .s5d.yaml file
+    spec: String,
+    /// Output format: text or json
+    #[arg(long, default_value = "text")]
+    format: String,
+}
+
+#[derive(Args)]
+struct ApproveArgs {
+    /// Path to .s5d.yaml file
+    spec: String,
+    /// Reviewer name
+    #[arg(long)]
+    reviewer: String,
+    /// Block approval if reviewer is not a domain owner
+    #[arg(long)]
+    require_owner: bool,
+}
+
+#[derive(Args)]
+struct ImportArgs {
+    /// Path to .s5d.yaml file
+    spec: String,
+    /// Who independently verified gates passed (trust separation)
+    #[arg(long)]
+    verified_by: String,
+    /// Override methodological checks
+    #[arg(long)]
+    force: bool,
+}
+
+#[derive(Args)]
+struct AddHypothesisArgs {
+    /// Path to .s5d.yaml file
+    spec: String,
+    /// Custom hypothesis ID (auto-generated from title if omitted)
+    #[arg(long)]
+    id: Option<String>,
+    /// Hypothesis title
+    #[arg(long)]
+    title: String,
+    /// Hypothesis content/description
+    #[arg(long)]
+    content: String,
+    /// Scope — where this applies
+    #[arg(long)]
+    scope: String,
+    /// Kind: system (default) or episteme (knowledge/methodology)
+    #[arg(long, default_value = "system")]
+    kind: String,
+    /// Rationale JSON (anomaly, approach, alternatives)
+    #[arg(long)]
+    rationale: Option<String>,
+    /// FPF B.5.2:13.3 prompt — explicit question this hypothesis answers (cite of problem.signal)
+    #[arg(long)]
+    prompt: Option<String>,
+    /// FPF B.5.2:13.3 next downstream move (deduction|probe|build|defer)
+    #[arg(long)]
+    next_move: Option<String>,
+}
+
+#[derive(Args)]
+struct AddEvidenceArgs {
+    /// Path to .s5d.yaml file
+    spec: String,
+    /// Hypothesis ID to attach evidence to
+    #[arg(long)]
+    hypothesis_id: String,
+    /// Evidence type: internal, external, gate:test, etc.
+    #[arg(long)]
+    evidence_type: String,
+    /// Evidence content (test output, research findings)
+    #[arg(long)]
+    content: String,
+    /// Verdict: pass, fail, refine
+    #[arg(long)]
+    verdict: String,
+    /// Carrier reference (test file path, URL, etc.)
+    #[arg(long)]
+    carrier_ref: Option<String>,
+    #[arg(long, help = "Rigor of evidence method (1-5)")]
+    formality: Option<u8>,
+    #[arg(long, help = "What the claim covers (comma-separated)")]
+    claim_scope: Option<String>,
+    #[arg(long, help = "Confidence that the claim is true (0.0-1.0)")]
+    reliability: Option<f64>,
+    /// FPF C.2:4.2 Δ-move kind (formalise|generalise|specialise|calibrate|validate|congrue). Required when verdict=refine.
+    #[arg(long)]
+    refine_kind: Option<String>,
+}
+
+#[derive(Args)]
+struct DecideArgs {
+    /// Path to .s5d.yaml file
+    spec: String,
+    /// Decision title
+    #[arg(long)]
+    title: String,
+    /// Winner hypothesis ID
+    #[arg(long)]
+    winner: String,
+    /// Rejected hypothesis IDs (comma-separated)
+    #[arg(long)]
+    rejected: Option<String>,
+    /// Decision context
+    #[arg(long)]
+    context: String,
+    /// What was decided
+    #[arg(long)]
+    decision: String,
+    /// Why this was chosen
+    #[arg(long)]
+    rationale: String,
+    /// Expected consequences
+    #[arg(long)]
+    consequences: String,
+    /// Skip spec_ref enforcement for winner hypothesis
+    #[arg(long)]
+    force: bool,
+    /// Human who confirms the decision (required — non-waivable)
+    #[arg(long)]
+    confirmed_by: Option<String>,
+    /// Adversarial challenge summary (required unless --no-challenge)
+    #[arg(long)]
+    challenge_summary: Option<String>,
+    /// Challenge mode: tactical (1 probe) or standard (5 probes). Default: auto-detect from tier.
+    #[arg(long)]
+    challenge_mode: Option<String>,
+    /// Skip adversarial challenge gate (not recommended)
+    #[arg(long)]
+    no_challenge: bool,
+    /// FPF C.11 Decsn-CAL — DecisionSubject (who/what is the decision about)
+    #[arg(long)]
+    decision_subject: Option<String>,
+    /// FPF C.11 — DecisionSubjectGranularity (system|component|module|line|...)
+    #[arg(long)]
+    decision_subject_granularity: Option<String>,
+    /// FPF C.11 — evaluative surface (named axes + policy used to compare options)
+    #[arg(long)]
+    evaluative_surface: Option<String>,
+    /// FPF C.11 — belief_state at decision time (what was assumed true)
+    #[arg(long)]
+    belief_state: Option<String>,
+    /// FPF C.11 — outcome_model (what the decision predicts will happen)
+    #[arg(long)]
+    outcome_model: Option<String>,
+    /// FPF C.18 NQD-CAL — Pareto-non-dominated alternatives (comma-separated hypothesis IDs)
+    #[arg(long)]
+    pareto_set: Option<String>,
+    /// FPF C.11 — explicit choice rule (e.g. "lex-order(thinness>auditability)", "policy:minimize-coupling")
+    #[arg(long)]
+    choice_rule: Option<String>,
+}
+
+#[derive(Args)]
+struct ReflectArgs {
+    /// Path to .s5d.yaml file
+    spec: String,
+    /// Outcome verdict: confirmed, refuted, inconclusive, iterate, kill
+    #[arg(long)]
+    verdict: Option<String>,
+    /// Measurement window used for the verdict
+    #[arg(long)]
+    measurement_window: Option<String>,
+    /// Summary of what happened in production
+    #[arg(long)]
+    summary: String,
+    /// What worked well (comma-separated)
+    #[arg(long, default_value = "")]
+    worked: String,
+    /// Issues encountered (comma-separated)
+    #[arg(long, default_value = "")]
+    issues: String,
+    /// Follow-up tasks (comma-separated)
+    #[arg(long, default_value = "")]
+    follow_ups: String,
+    /// Production evidence: paths, URLs, or metric descriptions (repeatable)
+    #[arg(long = "evidence")]
+    evidence: Vec<String>,
+    /// Telemetry references backing the verdict (repeatable)
+    #[arg(long = "telemetry")]
+    telemetry_refs: Vec<String>,
+    /// Reusable rules learned from this spec (repeatable)
+    #[arg(long = "heuristic")]
+    heuristics: Vec<String>,
+    /// Structured issue: "description|root_cause|fix|severity" (repeatable)
+    #[arg(long = "issue")]
+    structured_issues: Vec<String>,
+}
+
+#[derive(Args)]
+struct InstallArgs {
+    /// Explicit path to s5d binary (default: current executable)
+    #[arg(long)]
+    s5d_path: Option<String>,
+    /// Print what would change, don't write
+    #[arg(long)]
+    dry_run: bool,
+    /// Remove the s5d MCP entry
+    #[arg(long)]
+    uninstall: bool,
+    /// Register for Claude Code
+    #[arg(long)]
+    claude: bool,
+    /// Register for Cursor
+    #[arg(long)]
+    cursor: bool,
+    /// Register for Codex CLI
+    #[arg(long)]
+    codex: bool,
+    /// Register for Gemini CLI
+    #[arg(long)]
+    gemini: bool,
+    /// Register for all supported assistants
+    #[arg(long)]
+    all: bool,
+    /// Install at user/global level (~/.claude, ~/.codex, ~/.gemini) instead of project
+    #[arg(long)]
+    global: bool,
 }
 
 #[derive(Subcommand)]
@@ -520,24 +663,35 @@ enum PhaseCommand {
         #[arg(long)]
         engine: String,
     },
+    /// Emit a bounded task package for a workflow phase
+    #[command(alias = "execute")]
+    Loop(ExecuteLoopArgs),
+    /// Operational harness around isolated worktrees and S5D workflow commands
+    Harness {
+        #[command(subcommand)]
+        command: HarnessCommand,
+    },
 }
 
 #[derive(Subcommand)]
 enum ExecuteCommand {
     /// Emit a bounded task package for a workflow phase
-    Loop {
-        /// Path to .s5d.yaml file
-        spec: String,
-        /// Workflow phase ID
-        #[arg(long)]
-        phase: String,
-        /// Execution engine name
-        #[arg(long, default_value = "ralph")]
-        engine: String,
-        /// Optional Ralph run mode (default inferred from phase)
-        #[arg(long)]
-        mode: Option<String>,
-    },
+    Loop(ExecuteLoopArgs),
+}
+
+#[derive(Args)]
+struct ExecuteLoopArgs {
+    /// Path to .s5d.yaml file
+    spec: String,
+    /// Workflow phase ID
+    #[arg(long)]
+    phase: String,
+    /// Execution engine name
+    #[arg(long, default_value = "ralph")]
+    engine: String,
+    /// Optional Ralph run mode (default inferred from phase)
+    #[arg(long)]
+    mode: Option<String>,
 }
 
 #[derive(Subcommand)]
@@ -613,22 +767,17 @@ fn main() -> anyhow::Result<()> {
             hypothesis_id.as_deref(),
         ),
         S5dCommand::Note { text, product } => run_note(&text.join(" "), product.as_deref()),
-        S5dCommand::Validate { spec } => run_validate(&spec),
+        S5dCommand::Decision { command } => run_decision_command(command),
+        S5dCommand::Verify { command } => run_verify_command(command),
+        S5dCommand::Apply { command } => run_apply_command(command),
+        S5dCommand::Validate(args) => run_validate(&args.spec),
         S5dCommand::Status => run_status(),
         S5dCommand::Cg => run_cg(),
-        S5dCommand::Preview { spec } => run_preview(&spec),
-        S5dCommand::Approve {
-            spec,
-            reviewer,
-            require_owner,
-        } => run_approve(&spec, &reviewer, require_owner),
-        S5dCommand::RunGates { spec } => run_gates(&spec),
-        S5dCommand::Import {
-            spec,
-            verified_by,
-            force,
-        } => run_import(&spec, &verified_by, force),
-        S5dCommand::Rollback { spec } => run_rollback(&spec),
+        S5dCommand::Preview(args) => run_preview(&args.spec),
+        S5dCommand::Approve(args) => run_approve(&args.spec, &args.reviewer, args.require_owner),
+        S5dCommand::RunGates(args) => run_gates(&args.spec),
+        S5dCommand::Import(args) => run_import(&args.spec, &args.verified_by, args.force),
+        S5dCommand::Rollback(args) => run_rollback(&args.spec),
         S5dCommand::Index { command } => match command {
             IndexCommand::Check => run_index_check(),
             IndexCommand::Sync => run_index_sync(),
@@ -656,173 +805,199 @@ fn main() -> anyhow::Result<()> {
             UpdateCommand::Check { hook, json } => run_update_check(hook, json),
             UpdateCommand::Apply { dry_run } => run_update_apply(dry_run),
         },
+        S5dCommand::Admin { command } => run_admin_command(command),
         S5dCommand::Bootstrap { manifest } => run_bootstrap(&manifest),
-        S5dCommand::GraphCheck { spec } => run_graph_check(&spec),
-        S5dCommand::Check { spec, format } => run_check(&spec, &format),
-        S5dCommand::DriftCheck { spec } => run_drift_check(spec.as_deref()),
+        S5dCommand::GraphCheck(args) => run_graph_check(&args.spec),
+        S5dCommand::Check(args) => run_check(&args.spec, &args.format),
+        S5dCommand::DriftCheck(args) => run_drift_check(args.spec.as_deref()),
         S5dCommand::Phase { command } => match command {
             PhaseCommand::List { spec } => run_phase_list(&spec),
             PhaseCommand::Start { spec, id } => run_phase_start(&spec, &id),
             PhaseCommand::Accept { spec, id, reviewer } => run_phase_accept(&spec, &id, &reviewer),
             PhaseCommand::Run { spec, id, engine } => run_phase_run(&spec, &id, &engine),
+            PhaseCommand::Loop(args) => {
+                run_execute_loop(&args.spec, &args.phase, &args.engine, args.mode.as_deref())
+            }
+            PhaseCommand::Harness { command } => run_harness_command(command),
         },
         S5dCommand::Execute { command } => match command {
-            ExecuteCommand::Loop {
-                spec,
-                phase,
-                engine,
-                mode,
-            } => run_execute_loop(&spec, &phase, &engine, mode.as_deref()),
+            ExecuteCommand::Loop(args) => {
+                run_execute_loop(&args.spec, &args.phase, &args.engine, args.mode.as_deref())
+            }
         },
-        S5dCommand::Harness { command } => match command {
-            HarnessCommand::Start {
-                spec,
-                phase,
-                name,
-                branch,
-                worktree,
-                force,
-            } => run_harness_start(
-                &spec,
-                &phase,
-                &name,
-                branch.as_deref(),
-                worktree.as_deref(),
-                force,
-            ),
-            HarnessCommand::Status {
-                name,
-                stale_after_s,
-            } => run_harness_status(&name, stale_after_s),
-            HarnessCommand::Exec {
-                name,
-                timeout_s,
-                command,
-            } => run_harness_exec(&name, timeout_s, &command),
-        },
-        S5dCommand::Reconcile { spec } => run_reconcile(spec.as_deref()),
-        S5dCommand::AddHypothesis {
-            spec,
-            id,
-            title,
-            content,
-            scope,
-            kind,
-            rationale,
-        } => run_add_hypothesis(
-            &spec,
-            id.as_deref(),
-            &title,
-            &content,
-            &scope,
-            &kind,
-            rationale.as_deref(),
-        ),
-        S5dCommand::AddEvidence {
-            spec,
-            hypothesis_id,
-            evidence_type,
-            content,
-            verdict,
-            carrier_ref,
-            formality,
-            claim_scope,
-            reliability,
-        } => run_add_evidence(
-            &spec,
-            &hypothesis_id,
-            &evidence_type,
-            &content,
-            &verdict,
-            carrier_ref.as_deref(),
-            formality,
-            claim_scope,
-            reliability,
-        ),
-        S5dCommand::Decide {
-            spec,
-            title,
-            winner,
-            rejected,
-            context,
-            decision,
-            rationale,
-            consequences,
-            force,
-            confirmed_by,
-            challenge_summary,
-            challenge_mode,
-            no_challenge,
-        } => run_decide(
-            &spec,
-            &title,
-            &winner,
-            rejected.as_deref(),
-            &context,
-            &decision,
-            &rationale,
-            &consequences,
-            force,
-            confirmed_by.as_deref(),
-            challenge_summary.as_deref(),
-            challenge_mode.as_deref(),
-            no_challenge,
-        ),
+        S5dCommand::Harness { command } => run_harness_command(command),
+        S5dCommand::Reconcile(args) => run_reconcile(args.spec.as_deref()),
+        S5dCommand::AddHypothesis(args) => run_add_hypothesis_command(args),
+        S5dCommand::AddEvidence(args) => run_add_evidence_command(args),
+        S5dCommand::Decide(args) => run_decide_command(args),
         S5dCommand::Show { spec } => run_show(&spec),
+        S5dCommand::Trace { path } => run_trace(&path),
         S5dCommand::Route {
             description,
             format,
         } => run_route(&description.join(" "), &format),
         S5dCommand::Search { query } => run_search(&query),
-        S5dCommand::Reflect {
-            spec,
-            verdict,
-            measurement_window,
-            summary,
-            worked,
-            issues,
-            follow_ups,
-            evidence,
-            telemetry_refs,
-            heuristics,
-            structured_issues,
-        } => run_reflect(
-            &spec,
-            verdict.as_deref(),
-            measurement_window.as_deref(),
-            &summary,
-            &worked,
-            &issues,
-            &follow_ups,
-            &evidence,
-            &telemetry_refs,
-            &heuristics,
-            &structured_issues,
-        ),
+        S5dCommand::Reflect(args) => run_reflect_command(args),
         S5dCommand::Mcp => s5d::mcp::run_mcp_server(),
-        S5dCommand::Install {
-            s5d_path,
-            dry_run,
-            uninstall,
-            claude,
-            cursor,
-            codex,
-            gemini,
-            all,
-            global,
-        } => run_install(
-            s5d_path.as_deref(),
-            dry_run,
-            uninstall,
-            claude,
-            cursor,
-            codex,
-            gemini,
-            all,
-            global,
-        ),
+        S5dCommand::Install(args) => run_install_command(args),
         S5dCommand::Gate { command } => run_gate(command),
     }
+}
+
+fn run_decision_command(command: DecisionCommand) -> anyhow::Result<()> {
+    match command {
+        DecisionCommand::AddHypothesis(args) => run_add_hypothesis_command(args),
+        DecisionCommand::AddEvidence(args) => run_add_evidence_command(args),
+        DecisionCommand::Decide(args) => run_decide_command(*args),
+    }
+}
+
+fn run_verify_command(command: VerifyCommand) -> anyhow::Result<()> {
+    match command {
+        VerifyCommand::Validate(args) => run_validate(&args.spec),
+        VerifyCommand::GraphCheck(args) => run_graph_check(&args.spec),
+        VerifyCommand::Check(args) => run_check(&args.spec, &args.format),
+        VerifyCommand::RunGates(args) => run_gates(&args.spec),
+    }
+}
+
+fn run_apply_command(command: ApplyCommand) -> anyhow::Result<()> {
+    match command {
+        ApplyCommand::Preview(args) => run_preview(&args.spec),
+        ApplyCommand::Approve(args) => run_approve(&args.spec, &args.reviewer, args.require_owner),
+        ApplyCommand::Import(args) => run_import(&args.spec, &args.verified_by, args.force),
+        ApplyCommand::DriftCheck(args) => run_drift_check(args.spec.as_deref()),
+        ApplyCommand::Reconcile(args) => run_reconcile(args.spec.as_deref()),
+        ApplyCommand::Rollback(args) => run_rollback(&args.spec),
+        ApplyCommand::Reflect(args) => run_reflect_command(*args),
+    }
+}
+
+fn run_admin_command(command: AdminCommand) -> anyhow::Result<()> {
+    match command {
+        AdminCommand::Install(args) => run_install_command(args),
+        AdminCommand::Update { command } => run_update_command(command),
+    }
+}
+
+fn run_update_command(command: UpdateCommand) -> anyhow::Result<()> {
+    match command {
+        UpdateCommand::Check { hook, json } => run_update_check(hook, json),
+        UpdateCommand::Apply { dry_run } => run_update_apply(dry_run),
+    }
+}
+
+fn run_harness_command(command: HarnessCommand) -> anyhow::Result<()> {
+    match command {
+        HarnessCommand::Start {
+            spec,
+            phase,
+            name,
+            branch,
+            worktree,
+            force,
+        } => run_harness_start(
+            &spec,
+            &phase,
+            &name,
+            branch.as_deref(),
+            worktree.as_deref(),
+            force,
+        ),
+        HarnessCommand::Status {
+            name,
+            stale_after_s,
+        } => run_harness_status(&name, stale_after_s),
+        HarnessCommand::Exec {
+            name,
+            timeout_s,
+            command,
+        } => run_harness_exec(&name, timeout_s, &command),
+    }
+}
+
+fn run_add_hypothesis_command(args: AddHypothesisArgs) -> anyhow::Result<()> {
+    run_add_hypothesis(
+        &args.spec,
+        args.id.as_deref(),
+        &args.title,
+        &args.content,
+        &args.scope,
+        &args.kind,
+        args.rationale.as_deref(),
+        args.prompt.as_deref(),
+        args.next_move.as_deref(),
+    )
+}
+
+fn run_add_evidence_command(args: AddEvidenceArgs) -> anyhow::Result<()> {
+    run_add_evidence(
+        &args.spec,
+        &args.hypothesis_id,
+        &args.evidence_type,
+        &args.content,
+        &args.verdict,
+        args.carrier_ref.as_deref(),
+        args.formality,
+        args.claim_scope,
+        args.reliability,
+        args.refine_kind.as_deref(),
+    )
+}
+
+fn run_decide_command(args: DecideArgs) -> anyhow::Result<()> {
+    run_decide(
+        &args.spec,
+        &args.title,
+        &args.winner,
+        args.rejected.as_deref(),
+        &args.context,
+        &args.decision,
+        &args.rationale,
+        &args.consequences,
+        args.force,
+        args.confirmed_by.as_deref(),
+        args.challenge_summary.as_deref(),
+        args.challenge_mode.as_deref(),
+        args.no_challenge,
+        args.decision_subject.as_deref(),
+        args.decision_subject_granularity.as_deref(),
+        args.evaluative_surface.as_deref(),
+        args.belief_state.as_deref(),
+        args.outcome_model.as_deref(),
+        args.pareto_set.as_deref(),
+        args.choice_rule.as_deref(),
+    )
+}
+
+fn run_reflect_command(args: ReflectArgs) -> anyhow::Result<()> {
+    run_reflect(
+        &args.spec,
+        args.verdict.as_deref(),
+        args.measurement_window.as_deref(),
+        &args.summary,
+        &args.worked,
+        &args.issues,
+        &args.follow_ups,
+        &args.evidence,
+        &args.telemetry_refs,
+        &args.heuristics,
+        &args.structured_issues,
+    )
+}
+
+fn run_install_command(args: InstallArgs) -> anyhow::Result<()> {
+    run_install(
+        args.s5d_path.as_deref(),
+        args.dry_run,
+        args.uninstall,
+        args.claude,
+        args.cursor,
+        args.codex,
+        args.gemini,
+        args.all,
+        args.global,
+    )
 }
 
 // ── Gate (S5D-Spec: feat.s5d.pretool-enforcement) ────────────────────────────
@@ -4039,19 +4214,51 @@ fn run_import(spec_arg: &str, verified_by: &str, force: bool) -> anyhow::Result<
     let import_checks = s5d::check_import(&Some(record.clone()), verified_by);
     s5d::enforce_checks(&import_checks, force)?;
 
-    if !spec.gates.is_empty() {
+    let effective_gates = s5d::effective_gates_for_spec(&spec);
+    if !effective_gates.is_empty() {
         // Check that the LATEST result for each declared gate kind is "passed".
-        let all_latest_passed = spec.gates.iter().all(|g| {
-            record
+        // FPF B.3.4:5 (CC-ED.5) — waivers expire; expired waivers are auto-revoked here.
+        let now_rfc = chrono::Utc::now().to_rfc3339();
+        let all_latest_passed = effective_gates.iter().all(|g| {
+            let latest = record
                 .gate_results
                 .iter()
                 .rev()
-                .find(|r| r.kind == g.kind)
-                .is_some_and(|r| r.status == "passed" || r.status == "waived")
+                .find(|r| r.kind == g.kind);
+            match latest {
+                Some(r) if r.status == "passed" => true,
+                Some(r) if r.status == "waived" => {
+                    // Check waiver expiry per FPF B.3.4:5
+                    match r.waiver_expires_at.as_ref() {
+                        None => {
+                            eprintln!(
+                                "  {} waiver for gate '{}' has no expiry (FPF B.3.4:5 violation) — re-issue with --expires-at",
+                                "error:".red(),
+                                g.kind
+                            );
+                            false
+                        }
+                        Some(exp) => {
+                            if exp.as_str() < now_rfc.as_str() {
+                                eprintln!(
+                                    "  {} waiver for gate '{}' expired at {} — auto-revoked. Re-run-gates or re-issue waiver.",
+                                    "error:".red(),
+                                    g.kind,
+                                    exp
+                                );
+                                false
+                            } else {
+                                true
+                            }
+                        }
+                    }
+                }
+                _ => false,
+            }
         });
         if !all_latest_passed {
             eprintln!(
-                "  {} all declared gates must pass before import — run `s5d run-gates` first",
+                "  {} all effective gates must pass (or have non-expired waivers) before import — run `s5d run-gates` first",
                 "error:".red()
             );
             std::process::exit(7);
@@ -4629,6 +4836,20 @@ fn print_drift_result(
             }
             Ok(true)
         }
+        s5d::DriftResult::Partial { policy, note } => {
+            println!(
+                "  {} {} — partial drift (tolerated by policy: {})\n    {}",
+                "warn:".yellow(),
+                spec_id,
+                policy,
+                note
+            );
+            if let Ok(Some(mut record)) = project.load_record(spec_filename) {
+                record.sync_status = s5d::SyncStatus::Synced;
+                let _ = project.save_record(spec_filename, &record);
+            }
+            Ok(false)
+        }
     }
 }
 
@@ -4885,8 +5106,19 @@ fn show_feature(spec: &s5d::Spec, record: Option<&s5d::Record>) {
         }
     }
 
-    if !spec.gates.is_empty() {
-        println!("  {}: {}", "Gates".dimmed(), spec.gates.len());
+    let effective_gates = s5d::effective_gates_for_spec(spec);
+    if !effective_gates.is_empty() {
+        let source = if spec.gates.is_empty() {
+            "effective, tier defaults"
+        } else {
+            "declared"
+        };
+        println!(
+            "  {}: {} ({})",
+            "Gates".dimmed(),
+            effective_gates.len(),
+            source
+        );
     }
 
     if let Some(reflection) = record.and_then(|r| r.reflection.as_ref()) {
@@ -4919,6 +5151,7 @@ fn slugify(title: &str) -> String {
     slug.trim_matches('-').to_string()
 }
 
+#[allow(clippy::too_many_arguments)]
 fn run_add_hypothesis(
     spec_path: &str,
     custom_id: Option<&str>,
@@ -4927,7 +5160,16 @@ fn run_add_hypothesis(
     scope: &str,
     kind: &str,
     rationale: Option<&str>,
+    prompt: Option<&str>,
+    next_move: Option<&str>,
 ) -> anyhow::Result<()> {
+    if let Some(nm) = next_move {
+        let allowed = ["deduction", "probe", "build", "defer"];
+        if !allowed.contains(&nm) {
+            eprintln!("error: --next-move must be one of: {}", allowed.join(", "));
+            std::process::exit(1);
+        }
+    }
     let (path, mut spec) = load_spec_yaml(spec_path)?;
 
     if !matches!(spec.tier, s5d::Tier::Decision) {
@@ -4961,6 +5203,8 @@ fn run_add_hypothesis(
         depends_on: vec![],
         rationale: rationale.map(|s| s.into()),
         spec_ref: None,
+        prompt: prompt.map(|s| s.into()),
+        next_move: next_move.map(|s| s.into()),
     };
 
     spec.hypotheses.push(hyp);
@@ -4983,6 +5227,7 @@ fn run_add_evidence(
     formality: Option<u8>,
     claim_scope: Option<String>,
     reliability: Option<f64>,
+    refine_kind: Option<&str>,
 ) -> anyhow::Result<()> {
     if let Some(f) = formality {
         if !(1..=5).contains(&f) {
@@ -4993,6 +5238,30 @@ fn run_add_evidence(
     if let Some(r) = reliability {
         if !(0.0..=1.0).contains(&r) {
             eprintln!("error: --reliability must be between 0.0 and 1.0");
+            std::process::exit(1);
+        }
+    }
+    if verdict == "refine" && refine_kind.is_none() {
+        eprintln!(
+            "error: --refine-kind is required when verdict=refine (FPF C.2:4.2 Δ-move). \
+            Allowed: formalise, generalise, specialise, calibrate, validate, congrue."
+        );
+        std::process::exit(1);
+    }
+    if let Some(rk) = refine_kind {
+        let allowed = [
+            "formalise",
+            "generalise",
+            "specialise",
+            "calibrate",
+            "validate",
+            "congrue",
+        ];
+        if !allowed.contains(&rk) {
+            eprintln!(
+                "error: --refine-kind must be one of: {}",
+                allowed.join(", ")
+            );
             std::process::exit(1);
         }
     }
@@ -5034,6 +5303,7 @@ fn run_add_evidence(
             .unwrap_or_default(),
         congruence_level: None,
         reliability,
+        refine_kind: refine_kind.map(|s| s.into()),
     };
     hyp.evidence.push(ev);
 
@@ -5083,7 +5353,39 @@ fn run_decide(
     challenge_summary: Option<&str>,
     challenge_mode: Option<&str>,
     no_challenge: bool,
+    decision_subject: Option<&str>,
+    decision_subject_granularity: Option<&str>,
+    evaluative_surface: Option<&str>,
+    belief_state: Option<&str>,
+    outcome_model: Option<&str>,
+    pareto_set: Option<&str>,
+    choice_rule: Option<&str>,
 ) -> anyhow::Result<()> {
+    // FPF C.18 — forbid weighted scalarization in evaluative_surface (NQD requires partial order, no scalar fold).
+    if let Some(es) = evaluative_surface {
+        let lower = es.to_lowercase();
+        let scalar_markers = [
+            "weighted sum",
+            "weighted-sum",
+            "weighted_sum",
+            "scalar fold",
+            "scalar-fold",
+            "0.5*",
+            "0.3*",
+        ];
+        if scalar_markers.iter().any(|m| lower.contains(m)) {
+            eprintln!(
+                "  {} evaluative_surface contains scalarization marker. FPF C.18 (NQD-CAL) forbids weighted sums across mixed scales — return Pareto set with tie notes instead.",
+                "warn:".yellow()
+            );
+            if !force {
+                anyhow::bail!(
+                    "scalarization detected in evaluative_surface (FPF C.18 violation). Use --force to override."
+                );
+            }
+        }
+    }
+
     let (path, spec) = load_spec_yaml(spec_path)?;
 
     // Resolve project and load record from correct path (.s5d/records/, not packages/)
@@ -5193,6 +5495,14 @@ fn run_decide(
         None => vec![],
     };
 
+    let pareto_ids: Vec<String> = match pareto_set {
+        Some(s) => s
+            .split(',')
+            .map(|v| v.trim().to_string())
+            .filter(|v| !v.is_empty())
+            .collect(),
+        None => vec![],
+    };
     let now = chrono::Utc::now();
     let expires = now + chrono::Duration::days(90);
     let decision_record = s5d::DecisionRecord {
@@ -5209,6 +5519,13 @@ fn run_decide(
         do_list: vec![],
         dont_list: vec![],
         challenge,
+        decision_subject: decision_subject.map(|s| s.to_string()),
+        decision_subject_granularity: decision_subject_granularity.map(|s| s.to_string()),
+        evaluative_surface: evaluative_surface.map(|s| s.to_string()),
+        belief_state: belief_state.map(|s| s.to_string()),
+        outcome_model: outcome_model.map(|s| s.to_string()),
+        pareto_set: pareto_ids,
+        choice_rule: choice_rule.map(|s| s.to_string()),
     };
 
     // Two-File Model: spec is immutable after approve; write decision to record
@@ -5358,6 +5675,17 @@ fn colorize_outcome_verdict(verdict: &str) -> colored::ColoredString {
         "kill" => "KILL".red().bold(),
         other => other.normal(),
     }
+}
+
+// ── Trace ─────────────────────────────────────────────────────────────────────
+
+fn run_trace(path: &str) -> anyhow::Result<()> {
+    let cwd = std::env::current_dir()?;
+    let project = s5d::S5dProject::find(&cwd)
+        .ok_or_else(|| anyhow::anyhow!("no .s5d/ found (run `s5d init` first)"))?;
+    let trace = s5d::trace_code_path(&project, path)?;
+    println!("{}", s5d::format_code_trace(&trace));
+    Ok(())
 }
 
 // ── Route ────────────────────────────────────────────────────────────────────
@@ -5521,7 +5849,48 @@ fn load_spec_context(
 #[cfg(test)]
 mod agents_md_tests {
     use super::*;
+    use clap::CommandFactory;
     use tempfile::tempdir;
+
+    #[test]
+    fn cli_public_help_keeps_grouped_surface_small() {
+        let mut command = Cli::command();
+        let mut buf = Vec::new();
+        command.write_long_help(&mut buf).unwrap();
+        let help = String::from_utf8(buf).unwrap();
+
+        for public in [
+            "init", "new", "decision", "verify", "apply", "status", "show", "trace", "phase",
+            "codebase", "discover", "admin",
+        ] {
+            assert!(
+                help.lines()
+                    .any(|line| line.trim_start().starts_with(&format!("{public} "))),
+                "top-level help should expose `{public}`:\n{}",
+                help
+            );
+        }
+
+        for hidden in [
+            "add-hypothesis",
+            "validate",
+            "preview",
+            "run-gates",
+            "execute",
+            "harness",
+            "hook",
+            "install",
+            "update",
+        ] {
+            assert!(
+                !help
+                    .lines()
+                    .any(|line| line.trim_start().starts_with(&format!("{hidden} "))),
+                "top-level help should hide `{hidden}`:\n{}",
+                help
+            );
+        }
+    }
 
     #[test]
     fn creates_file_when_absent() {

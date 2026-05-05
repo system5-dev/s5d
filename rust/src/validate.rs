@@ -176,13 +176,10 @@ pub fn validate_spec(spec: &Spec) -> Vec<String> {
                     );
                 }
             }
-            Tier::Lightweight => {
-                if artifacts.capabilities.is_empty() {
-                    errors.push(
-                        "metamodel: spec has no capabilities — required for lightweight tier"
-                            .into(),
-                    );
-                }
+            Tier::Lightweight if artifacts.capabilities.is_empty() => {
+                errors.push(
+                    "metamodel: spec has no capabilities — required for lightweight tier".into(),
+                );
             }
             _ => {}
         }
@@ -629,6 +626,7 @@ pub fn validate_spec(spec: &Spec) -> Vec<String> {
         "typecheck",
         "policy",
         "architecture",
+        "review",
     ];
     for gate in &spec.gates {
         if !valid_gates.contains(&gate.kind.as_str()) {
@@ -643,6 +641,52 @@ pub fn validate_spec(spec: &Spec) -> Vec<String> {
             .is_none_or(|c| !c.to_lowercase().contains("privacy"))
         {
             errors.push("high tier requires privacy note in context".into());
+        }
+    }
+
+    // FPF B.5.2:13.3 — high-tier hypotheses require prompt + next_move (Decision tier only).
+    if matches!(spec.tier, Tier::Decision) {
+        for hyp in &spec.hypotheses {
+            // Validate next_move enum if set.
+            if let Some(ref nm) = hyp.next_move {
+                let allowed = ["deduction", "probe", "build", "defer"];
+                if !allowed.contains(&nm.as_str()) {
+                    errors.push(format!(
+                        "hypothesis '{}' has invalid next_move '{}' (allowed: {})",
+                        hyp.id,
+                        nm,
+                        allowed.join(", ")
+                    ));
+                }
+            }
+            // FPF C.2:4.2 — Δ-move kind required when verdict=refine.
+            for ev in &hyp.evidence {
+                if ev.verdict == "refine" && ev.refine_kind.is_none() {
+                    errors.push(format!(
+                        "hypothesis '{}' evidence '{}' has verdict=refine but no refine_kind (FPF C.2:4.2)",
+                        hyp.id, ev.id
+                    ));
+                }
+                if let Some(ref rk) = ev.refine_kind {
+                    let allowed = [
+                        "formalise",
+                        "generalise",
+                        "specialise",
+                        "calibrate",
+                        "validate",
+                        "congrue",
+                    ];
+                    if !allowed.contains(&rk.as_str()) {
+                        errors.push(format!(
+                            "hypothesis '{}' evidence '{}' has invalid refine_kind '{}' (allowed: {})",
+                            hyp.id,
+                            ev.id,
+                            rk,
+                            allowed.join(", ")
+                        ));
+                    }
+                }
+            }
         }
     }
 

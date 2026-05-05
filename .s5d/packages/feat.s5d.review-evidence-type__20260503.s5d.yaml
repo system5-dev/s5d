@@ -1,0 +1,223 @@
+s5d: '1.0'
+id: feat.s5d.review-evidence-type
+version: 1.0.0
+product: s5d
+tier: standard
+allow_update: true
+meta:
+  title: Code review as evidence type (gate:review)
+  authors:
+  - Roman
+  - Diana
+  date: 2026-05-03
+  tickets: []
+  adrs: []
+  renames: []
+context: |
+  ## Problem
+  Code review currently has no first-class home in S5D. `s5d approve --reviewer` records a name and timestamp,
+  not a verdict, scope, or findings. Decision/high-tier specs cannot demonstrate that review actually happened.
+
+  ## Goal
+  Make code review a recorded artifact in the validation chain by adding evidence_type `gate:review`
+  and a tier-aware import gate that requires ≥1 review-evidence (verdict=pass) for decision/high specs.
+  External reviewers (tribunal, reviewer agent, human) attach output through existing s5d_add_evidence —
+  no new CLI surface, no coupling to specific reviewer skills.
+
+  ## Acceptance Scenarios (GWT)
+  GWT-1 (review required for decision):
+  - Given a decision-tier spec with hypotheses but no evidence_type=gate:review verdict=pass
+  - When running s5d run-gates or s5d import
+  - Then the review gate fails; import is blocked with an actionable message naming the missing evidence
+
+  GWT-2 (review satisfies decision):
+  - Given a decision-tier spec with ≥1 hypothesis carrying evidence_type=gate:review verdict=pass and a non-empty reviewer
+  - When running s5d run-gates
+  - Then the review gate passes and import becomes possible
+
+  GWT-3 (review not required for lightweight):
+  - Given a lightweight-tier spec without any review evidence
+  - When running s5d run-gates
+  - Then no review gate is checked (only schema gate); import proceeds when other gates pass
+
+  GWT-4 (grandfathered specs):
+  - Given a decision-tier spec already imported before this change, with no review evidence
+  - When running s5d status or s5d show
+  - Then the spec remains in applied state; the new gate applies only to fresh import attempts
+
+  ## Privacy
+  Classification: Internal
+workflow:
+  mode: plan
+  target_architecture:
+    summary: |
+      Evidence schema is the single recording surface for review. Tier-aware import gate enforces
+      review presence for decision/high specs. Built-in `review` gate handler scans spec hypotheses
+      for evidence_type=gate:review with verdict=pass — no external command needed.
+    invariants:
+    - Adding evidence_type=gate:review requires zero CLI changes (s5d_add_evidence already accepts arbitrary types).
+    - Decision and high tier specs cannot pass s5d_import without ≥1 evidence_type=gate:review verdict=pass.
+    - Lightweight and standard tiers do not require review-evidence (gate not added by default).
+    - Reviewer kind (human/agent/tribunal) is not enforced — recorded in `reviewer` field for audit.
+    - Existing imported specs are grandfathered (gate applies only to specs imported after the change).
+    - Removing the gate is reversible — drops the rule without data loss.
+  delivery_strategy:
+    summary: |
+      Vertical slice: (1) extend default_gates_for_tier with kind=review for decision/high;
+      (2) implement built-in review-gate handler in gates.rs that scans hypotheses for matching evidence;
+      (3) update mcp.rs evidence_type description; (4) update SKILL.md, session-protocol.md, metamodel.md.
+    rationale: Smallest cut that exercises the full chain — schema, gate, import, doc.
+  resources: null
+  role_map:
+    implementer: coder
+    verifier: reviewer
+    owner: human
+    reviewer: reviewer
+  review_policy:
+    cross_model_required: false
+    required_on: []
+  structure_outline: null
+  execution_mode:
+    engine: manual
+    max_iterations: null
+    stop_conditions:
+    - Phase acceptance reached
+    - Approved scope exhausted
+    - New decision required
+  phases:
+  - id: prototype
+    title: Prototype
+    scope: Reduce unknowns before committed implementation
+    roles:
+    - owner
+    - implementer
+    acceptance:
+    - Critical feasibility questions answered
+    - Telemetry approach identified
+    rollback:
+    - Discard spike output if assumptions fail
+  - id: build
+    title: Build
+    scope: Implement approved scope and pass local gates
+    roles:
+    - implementer
+    - reviewer
+    acceptance:
+    - Declared gates pass
+    - Change matches approved scope
+    rollback:
+    - Revert or reconcile if gates or review fail
+  - id: measure
+    title: Measure
+    scope: Collect telemetry and close the loop with an explicit verdict
+    roles:
+    - owner
+    - verifier
+    acceptance:
+    - Telemetry collected against success criteria
+    - Outcome verdict recorded
+    rollback:
+    - Iterate or kill if evidence stays weak
+artifacts:
+  products:
+  - id: s5d
+    name: s5d
+    organization: null
+  domains:
+  - id: dom.s5d.validation
+    product: s5d
+    name: Validation
+    classification: core
+    description: Decision recording and verification chain — gates, evidence, import.
+    team: null
+    maturity_level: product
+  capabilities:
+  - id: cap.s5d.review-evidence
+    domain: dom.s5d.validation
+    name: Code review evidence
+    description: Record code review as evidence_type gate:review with reviewer/scope/verdict/findings; enforce presence as import gate for decision/high tiers.
+    since: null
+  entities: []
+  features:
+  - id: feat.s5d.review-evidence-type
+    product: s5d
+    name: review-evidence-type
+    description: gate:review evidence type + tier-aware review gate.
+  use_cases: []
+  systems:
+  - id: sys.s5d.cli
+    product: s5d
+    name: S5D CLI
+  containers:
+  - id: ctr.s5d.rust-cli
+    system: sys.s5d.cli
+    name: Rust CLI
+    technology: Rust
+  components:
+  - id: cmp.s5d.gate-review-handler
+    feature: feat.s5d.review-evidence-type
+    domain: dom.s5d.validation
+    container: ctr.s5d.rust-cli
+    name: Review gate handler
+    paths:
+    - rust/src/gates.rs
+  - id: cmp.s5d.gate-review-mcp-doc
+    feature: feat.s5d.review-evidence-type
+    domain: dom.s5d.validation
+    container: ctr.s5d.rust-cli
+    name: MCP evidence_type description
+    paths:
+    - rust/src/mcp.rs
+  - id: cmp.s5d.gate-review-docs
+    feature: feat.s5d.review-evidence-type
+    domain: dom.s5d.validation
+    container: ctr.s5d.rust-cli
+    name: Skill docs for gate:review
+    paths:
+    - skills/s5d/SKILL.md
+    - skills/s5d/session-protocol.md
+    - skills/s5d/metamodel.md
+  roles: []
+  concerns: []
+  metrics: []
+  supersystems: []
+  transports: []
+links:
+  feature_to_domain:
+  - feature: feat.s5d.review-evidence-type
+    domain: dom.s5d.validation
+  use_case_to_capability: []
+  use_case_to_entity: []
+  component_to_capability:
+  - component: cmp.s5d.gate-review-handler
+    capability: cap.s5d.review-evidence
+  - component: cmp.s5d.gate-review-mcp-doc
+    capability: cap.s5d.review-evidence
+  - component: cmp.s5d.gate-review-docs
+    capability: cap.s5d.review-evidence
+  component_to_entity: []
+  container_to_capability: []
+  concern_to_metric: []
+  component_to_container:
+  - component: cmp.s5d.gate-review-handler
+    container: ctr.s5d.rust-cli
+  - component: cmp.s5d.gate-review-mcp-doc
+    container: ctr.s5d.rust-cli
+  - component: cmp.s5d.gate-review-docs
+    container: ctr.s5d.rust-cli
+  edges: []
+  depends_on: []
+  entity_relations: []
+  capability_to_entity: []
+  capability_to_concern: []
+contracts: []
+gates:
+- kind: schema
+- kind: graph
+roc: null
+problem: null
+hypotheses: []
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false

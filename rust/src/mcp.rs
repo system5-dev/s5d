@@ -221,7 +221,9 @@ fn core_tools() -> Vec<Value> {
                     "title": {"type": "string", "description": "Hypothesis title"},
                     "content": {"type": "string", "description": "Hypothesis content/description"},
                     "scope": {"type": "string", "description": "Scope — where this applies"},
-                    "kind": {"type": "string", "description": "Kind: system (default) or episteme (knowledge/methodology)"}
+                    "kind": {"type": "string", "description": "Kind: system (default) or episteme (knowledge/methodology)"},
+                    "prompt": {"type": "string", "description": "FPF B.5.2:13.3 prompt — explicit question this hypothesis answers."},
+                    "next_move": {"type": "string", "description": "FPF B.5.2:13.3 next downstream move.", "enum": ["deduction", "probe", "build", "defer"]}
                 }
             }
         }),
@@ -234,12 +236,13 @@ fn core_tools() -> Vec<Value> {
                 "properties": {
                     "spec": {"type": "string", "description": "Path to .s5d.yaml file"},
                     "hypothesis_id": {"type": "string", "description": "Hypothesis ID to attach evidence to"},
-                    "evidence_type": {"type": "string", "description": "Evidence type: internal, external, gate:test, etc."},
+                    "evidence_type": {"type": "string", "description": "Evidence type: internal, external, gate:test, gate:review, etc. Decision/high tiers require >=1 gate:review verdict=pass before import."},
                     "content": {"type": "string", "description": "Evidence content"},
                     "verdict": {"type": "string", "description": "Verdict: pass, fail, refine"},
                     "formality": {"type": "integer", "description": "Rigor of evidence method (1-5)"},
                     "claim_scope": {"type": "string", "description": "What the claim covers (comma-separated)"},
-                    "reliability": {"type": "number", "description": "Confidence that the claim is true (0.0-1.0)"}
+                    "reliability": {"type": "number", "description": "Confidence that the claim is true (0.0-1.0)"},
+                    "refine_kind": {"type": "string", "description": "FPF C.2:4.2 Δ-move kind. Required when verdict=refine.", "enum": ["formalise", "generalise", "specialise", "calibrate", "validate", "congrue"]}
                 }
             }
         }),
@@ -259,6 +262,17 @@ fn core_tools() -> Vec<Value> {
                 "required": ["spec"],
                 "properties": {
                     "spec": {"type": "string", "description": "Path to .s5d.yaml file"}
+                }
+            }
+        }),
+        json!({
+            "name": "s5d_trace",
+            "description": "Trace a source path to S5D specs, components, capabilities, and decisions",
+            "inputSchema": {
+                "type": "object",
+                "required": ["path"],
+                "properties": {
+                    "path": {"type": "string", "description": "Source path inside the project"}
                 }
             }
         }),
@@ -375,7 +389,8 @@ fn core_tools() -> Vec<Value> {
                     "gate": {"type": "string", "description": "Gate or link ID to waive"},
                     "reason": {"type": "string", "description": "Reason for waiver"},
                     "condition": {"type": "string", "description": "Condition under which waiver applies"},
-                    "approved_by": {"type": "string", "description": "Who approved the waiver"}
+                    "approved_by": {"type": "string", "description": "Who approved the waiver"},
+                    "expires_at": {"type": "string", "description": "FPF B.3.4:5 — RFC3339 expiry. Auto-revoked at run-gates after this date. Defaults to now+90d if omitted."}
                 }
             }
         }),
@@ -405,6 +420,7 @@ fn handle_tools_call(params: &Value) -> anyhow::Result<Value> {
         "s5d_execute_loop" => tool_s5d_execute_loop(args)?,
         "s5d_status" => tool_s5d_status(args)?,
         "s5d_show" => tool_s5d_show(args)?,
+        "s5d_trace" => tool_s5d_trace(args)?,
         "s5d_route" => tool_s5d_route(args)?,
         "s5d_waiver" => tool_s5d_waiver(args)?,
         "s5d_rollback" => tool_s5d_rollback(args)?,
@@ -943,17 +959,22 @@ fn tool_s5d_import(args: &Value) -> anyhow::Result<String> {
     let import_checks = crate::check_import(&Some(record.clone()), verified_by);
     crate::enforce_checks(&import_checks, force)?;
 
-    if !spec.gates.is_empty() {
-        let all_latest_passed = spec.gates.iter().all(|g| {
-            record
-                .gate_results
-                .iter()
-                .rev()
-                .find(|r| r.kind == g.kind)
-                .is_some_and(|r| r.status == "passed" || r.status == "waived")
+    let effective_gates = crate::effective_gates_for_spec(&spec);
+    if !effective_gates.is_empty() {
+        let now_rfc = chrono::Utc::now().to_rfc3339();
+        let all_latest_passed = effective_gates.iter().all(|g| {
+            let latest = record.gate_results.iter().rev().find(|r| r.kind == g.kind);
+            match latest {
+                Some(r) if r.status == "passed" => true,
+                Some(r) if r.status == "waived" => r
+                    .waiver_expires_at
+                    .as_ref()
+                    .is_some_and(|expires_at| expires_at.as_str() >= now_rfc.as_str()),
+                _ => false,
+            }
         });
         if !all_latest_passed {
-            anyhow::bail!("all declared gates must pass or be waived before import — run s5d_run_gates or s5d_waiver first");
+            anyhow::bail!("all effective gates must pass or be waived before import — run s5d_run_gates or s5d_waiver first");
         }
     }
 
@@ -1113,6 +1134,13 @@ fn tool_s5d_decide(args: &Value) -> anyhow::Result<String> {
         do_list: vec![],
         dont_list: vec![],
         challenge,
+        decision_subject: None,
+        decision_subject_granularity: None,
+        evaluative_surface: None,
+        belief_state: None,
+        outcome_model: None,
+        pareto_set: vec![],
+        choice_rule: None,
     };
 
     let spec_sha = crate::S5dProject::file_sha256(&abs_path)?;
@@ -1139,6 +1167,14 @@ fn tool_s5d_add_hypothesis(args: &Value) -> anyhow::Result<String> {
         .as_str()
         .ok_or_else(|| anyhow::anyhow!("missing required argument: scope"))?;
     let kind = args["kind"].as_str().unwrap_or("system");
+    let prompt = args["prompt"].as_str();
+    let next_move = args["next_move"].as_str();
+    if let Some(nm) = next_move {
+        let allowed = ["deduction", "probe", "build", "defer"];
+        if !allowed.contains(&nm) {
+            anyhow::bail!("next_move must be one of: {}", allowed.join(", "));
+        }
+    }
 
     let (path, mut spec) = load_spec_yaml_mcp(spec_path)?;
 
@@ -1167,6 +1203,8 @@ fn tool_s5d_add_hypothesis(args: &Value) -> anyhow::Result<String> {
         depends_on: vec![],
         rationale: None,
         spec_ref: None,
+        prompt: prompt.map(|s| s.into()),
+        next_move: next_move.map(|s| s.into()),
     };
 
     spec.hypotheses.push(hyp);
@@ -1196,6 +1234,7 @@ fn tool_s5d_add_evidence(args: &Value) -> anyhow::Result<String> {
     let formality = args["formality"].as_u64().map(|v| v as u8);
     let claim_scope = args["claim_scope"].as_str().map(|s| s.to_string());
     let reliability = args["reliability"].as_f64();
+    let refine_kind = args["refine_kind"].as_str();
 
     if let Some(f) = formality {
         if !(1..=5).contains(&f) {
@@ -1205,6 +1244,24 @@ fn tool_s5d_add_evidence(args: &Value) -> anyhow::Result<String> {
     if let Some(r) = reliability {
         if !(0.0..=1.0).contains(&r) {
             anyhow::bail!("reliability must be between 0.0 and 1.0");
+        }
+    }
+    if verdict == "refine" && refine_kind.is_none() {
+        anyhow::bail!(
+            "refine_kind is required when verdict=refine (FPF C.2:4.2). Allowed: formalise, generalise, specialise, calibrate, validate, congrue."
+        );
+    }
+    if let Some(rk) = refine_kind {
+        let allowed = [
+            "formalise",
+            "generalise",
+            "specialise",
+            "calibrate",
+            "validate",
+            "congrue",
+        ];
+        if !allowed.contains(&rk) {
+            anyhow::bail!("refine_kind must be one of: {}", allowed.join(", "));
         }
     }
     crate::sanitize_id(evidence_type)?;
@@ -1246,6 +1303,7 @@ fn tool_s5d_add_evidence(args: &Value) -> anyhow::Result<String> {
             .unwrap_or_default(),
         congruence_level: None,
         reliability,
+        refine_kind: refine_kind.map(|s| s.into()),
     };
 
     hyp.evidence.push(ev);
@@ -1727,12 +1785,35 @@ fn tool_s5d_show(args: &Value) -> anyhow::Result<String> {
                 artifacts.components.len()
             ));
         }
-        if !spec.gates.is_empty() {
-            out.push_str(&format!("  Gates: {}\n", spec.gates.len()));
+        let effective_gates = crate::effective_gates_for_spec(&spec);
+        if !effective_gates.is_empty() {
+            let source = if spec.gates.is_empty() {
+                "effective, tier defaults"
+            } else {
+                "declared"
+            };
+            out.push_str(&format!(
+                "  Gates: {} ({})\n",
+                effective_gates.len(),
+                source
+            ));
         }
     }
 
     Ok(out.trim_end().to_string())
+}
+
+// ── s5d_trace ─────────────────────────────────────────────────────────────────
+
+fn tool_s5d_trace(args: &Value) -> anyhow::Result<String> {
+    let path = args["path"]
+        .as_str()
+        .ok_or_else(|| anyhow::anyhow!("missing required argument: path"))?;
+    let cwd = std::env::current_dir()?;
+    let project = crate::S5dProject::find(&cwd)
+        .ok_or_else(|| anyhow::anyhow!("no .s5d/ found (run s5d_init first)"))?;
+    let trace = crate::trace_code_path(&project, path)?;
+    Ok(crate::format_code_trace(&trace))
 }
 
 // ── s5d_route ─────────────────────────────────────────────────────────────────
@@ -1764,16 +1845,22 @@ fn tool_s5d_waiver(args: &Value) -> anyhow::Result<String> {
     let approved_by = args["approved_by"]
         .as_str()
         .ok_or_else(|| anyhow::anyhow!("missing required argument: approved_by"))?;
+    // FPF B.3.4:5 (CC-ED.5) — waivers MUST have a short-term expiry. Default 90 days.
+    let expires_at = args["expires_at"]
+        .as_str()
+        .map(|s| s.to_string())
+        .unwrap_or_else(|| (chrono::Utc::now() + chrono::Duration::days(90)).to_rfc3339());
 
     let (project, _spec_path, spec, spec_filename) = load_spec_context_mcp(spec_arg)?;
 
-    // Check that the gate kind exists in the spec
-    let gate_exists = spec.gates.iter().any(|g| g.kind == gate);
+    // Check that the gate kind exists in the effective spec contract.
+    let effective_gates = crate::effective_gates_for_spec(&spec);
+    let gate_exists = effective_gates.iter().any(|g| g.kind == gate);
     if !gate_exists {
         anyhow::bail!(
-            "No gate kind '{}' declared in spec. Declared gates: {}",
+            "No gate kind '{}' exists in the effective spec contract. Effective gates: {}",
             gate,
-            spec.gates
+            effective_gates
                 .iter()
                 .map(|g| g.kind.as_str())
                 .collect::<Vec<_>>()
@@ -1797,20 +1884,22 @@ fn tool_s5d_waiver(args: &Value) -> anyhow::Result<String> {
             + 1,
         timestamp: chrono::Utc::now().to_rfc3339(),
         log: Some(format!(
-            "WAIVER — reason: {}. Condition to lift: {}. Approved by: {}.",
-            reason, condition, approved_by
+            "WAIVER — reason: {}. Condition to lift: {}. Approved by: {}. Expires: {}.",
+            reason, condition, approved_by, expires_at
         )),
         exit_code: None,
         evidence_path: None,
         command: None,
         duration_ms: None,
+        waiver_expires_at: Some(expires_at.clone()),
+        kind_class: None,
     });
 
     project.save_record(&spec_filename, &record)?;
 
     Ok(format!(
-        "Gate '{}' waived — approved by: {}, reason: {}, condition to lift: {}",
-        gate, approved_by, reason, condition
+        "Gate '{}' waived — approved by: {}, expires: {}, reason: {}, condition to lift: {}",
+        gate, approved_by, expires_at, reason, condition
     ))
 }
 
@@ -1914,6 +2003,12 @@ fn tool_s5d_drift_check(args: &Value) -> anyhow::Result<String> {
             crate::DriftResult::Degraded { reason } => {
                 out.push_str(&format!("{} — degraded: {}\n", spec.id, reason));
             }
+            crate::DriftResult::Partial { policy, note } => {
+                out.push_str(&format!(
+                    "{} — partial drift (tolerated by policy: {})\n  {}\n",
+                    spec.id, policy, note
+                ));
+            }
         }
     } else {
         let cwd = std::env::current_dir()?;
@@ -1943,6 +2038,12 @@ fn tool_s5d_drift_check(args: &Value) -> anyhow::Result<String> {
                 }
                 crate::DriftResult::Degraded { reason } => {
                     out.push_str(&format!("{} — degraded: {}\n", spec.id, reason));
+                }
+                crate::DriftResult::Partial { policy, note } => {
+                    out.push_str(&format!(
+                        "{} — partial drift (tolerated by policy: {})\n  {}\n",
+                        spec.id, policy, note
+                    ));
                 }
             }
         }

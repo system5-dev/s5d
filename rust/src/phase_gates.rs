@@ -257,6 +257,8 @@ mod tests {
             depends_on: vec![],
             rationale: None,
             spec_ref: None,
+            prompt: None,
+            next_move: None,
         }
     }
 
@@ -273,6 +275,7 @@ mod tests {
             claim_scope: vec![],
             congruence_level: None,
             reliability: None,
+            refine_kind: None,
         }];
         h
     }
@@ -305,6 +308,7 @@ mod tests {
             gate_results: vec![],
             decision: None,
             verified_by: None,
+            drift_tolerance: None,
         };
         record.decision = Some(DecisionRecord {
             title: "Decision".into(),
@@ -320,6 +324,13 @@ mod tests {
             do_list: vec![],
             dont_list: vec![],
             challenge: None,
+            decision_subject: None,
+            decision_subject_granularity: None,
+            evaluative_surface: None,
+            belief_state: None,
+            outcome_model: None,
+            pareto_set: vec![],
+            choice_rule: None,
         });
 
         let checks = check_decide(&spec, &Some(record), &Some("roman".into()));
@@ -360,6 +371,7 @@ mod tests {
             blast_radius: None,
             reversibility: None,
             status: None,
+            goodhart_guard: None,
         }));
 
         let checks = check_decide(&spec, &None, &Some("roman".into()));

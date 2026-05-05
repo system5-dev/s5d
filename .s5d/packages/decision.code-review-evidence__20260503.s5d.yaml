@@ -1,0 +1,187 @@
+s5d: '1.0'
+id: decision.code-review-evidence
+version: 1.0.0
+product: s5d
+tier: decision
+allow_update: true
+meta:
+  title: code-review-evidence
+  authors: []
+  date: 2026-05-03
+  tickets: []
+  adrs: []
+  renames: []
+context: null
+workflow: null
+artifacts: null
+links: null
+contracts: []
+gates: []
+roc: null
+problem:
+  signal: |
+    Code review is structurally absent from the S5D evidence chain. `s5d approve --reviewer` records a name and timestamp,
+    not a verdict, scope, or findings. For decision/high-tier specs, an auditor cannot distinguish "reviewer read the diff carefully"
+    from "reviewer rubber-stamped". External reviewers (tribunal, reviewer agent, human) currently have no first-class home for their output.
+  constraints:
+  - Schema change must be additive (one new enum value), no breaking change to existing specs.
+  - No new CLI surface — must reuse `s5d_add_evidence`.
+  - No coupling to specific external reviewer skills (tribunal/reviewer/human all interchangeable).
+  - Gate rule must be tier-aware (decision/high require review; lightweight does not).
+  targets:
+  - Auditability — review verdict + scope + reviewer captured structurally.
+  - Thinness — S5D remains a recording layer, not an orchestrator.
+  indicators:
+  - Adoption per spec (count of review-evidence per decision-tier spec).
+  - Verdict distribution (pass vs fail vs refine) — observed, not optimized (Anti-Goodhart).
+  - Reviewer kind distribution (human vs agent) — observed.
+  acceptance: |
+    A decision-tier spec cannot pass `s5d_import` unless ≥1 evidence record of type `gate:review` with verdict=pass exists,
+    referencing a named reviewer. The evidence schema reuses formality (1–5), claim_scope (set), reliability (0..1).
+    `s5d_add_evidence` accepts the new type without a new flag. Existing approved specs remain importable (grandfathered or migrated explicitly).
+  blast_radius: metamodel + run-gates rule + docs (session-protocol.md, SKILL.md command table). No CLI surface change.
+  reversibility: high — evidence type is additive; gate rule can be reverted without data loss.
+  status: framed
+hypotheses:
+- id: review-as-evidence-type
+  title: Review as evidence type
+  content: New evidence_type 'gate:review' with reviewer/scope/verdict/findings. Reuses s5d_add_evidence. Decision-tier rule requires >=1 review-evidence verdict=pass before import. External reviewers (tribunal, reviewer agent, human) attach result.
+  scope: metamodel + import gate
+  kind: system
+  layer: L2
+  r_eff: null
+  evidence:
+  - id: 20260503-internal-review-as-evidence-type
+    type: internal
+    content: 'Aligns with S5D principle ''thin layer not methodology'': review becomes a recorded artifact, not a new pillar. Schema extension is bounded (one enum value).'
+    verdict: pass
+    valid_until: 2026-08-01T14:17:37.009226+00:00
+    carrier_ref: null
+    formality: 3
+    claim_scope:
+    - principles
+    congruence_level: null
+    reliability: 0.85
+  - id: 20260503-internal-review-as-evidence-type
+    type: internal
+    content: Existing evidence_type enum already covers internal/external/gate:test. Adding gate:review parallels gate:test — same shape (verdict, formality, claim_scope), same import-gating mechanism.
+    verdict: pass
+    valid_until: 2026-08-01T14:17:37.013856+00:00
+    carrier_ref: null
+    formality: 4
+    claim_scope:
+    - metamodel-fit
+    congruence_level: null
+    reliability: 0.9
+  - id: 20260503-internal-review-as-evidence-type
+    type: internal
+    content: 'Characterization space declared upfront: axes = {thinness, auditability, ergonomics, schema-impact, coupling, reversibility}. Parity: same input (decision-tier spec needs review trail), same budget (one schema change), same scope (decision tier first). Selection policy: minimize coupling and schema-impact subject to auditability >= structured (verdict+scope+reviewer).'
+    verdict: pass
+    valid_until: 2026-08-01T14:26:15.877861+00:00
+    carrier_ref: null
+    formality: 4
+    claim_scope:
+    - characterization
+    - parity
+    - policy
+    congruence_level: null
+    reliability: 0.9
+  - id: 20260503-internal-review-as-evidence-type
+    type: internal
+    content: 'NQD per axis (1=worst,5=best): A(evidence-type) thin=5 audit=4 ergo=4 schema=4 couple=5 rev=5; B(workflow-phase) thin=2 audit=5 ergo=3 schema=2 couple=2 rev=3; C(approval-only) thin=5 audit=2 ergo=5 schema=5 couple=5 rev=5. Pareto front: {A, C}. C dominated on auditability — fails hard constraint. B dominated on thinness/coupling. A wins on declared policy.'
+    verdict: pass
+    valid_until: 2026-08-01T14:26:15.882146+00:00
+    carrier_ref: null
+    formality: 4
+    claim_scope:
+    - nqd
+    - pareto
+    congruence_level: null
+    reliability: 0.85
+  - id: 20260503-internal-review-as-evidence-type
+    type: internal
+    content: 'Weakest link of chosen variant A: cargo-cult reviews (reviewer signs without reading). Mitigation: formality field forces explicit rigor claim (1-5), reviewer name lives in commit ledger (visible in git log). Not unique to A — same risk for any review mechanism. MONO check: adding evidence_type does not worsen any existing component (only enum extension, no behavioral change to existing flows).'
+    verdict: pass
+    valid_until: 2026-08-01T14:26:15.886545+00:00
+    carrier_ref: null
+    formality: 3
+    claim_scope:
+    - wlnk
+    - mono
+    congruence_level: null
+    reliability: 0.8
+  - id: 20260503-internal-review-as-evidence-type
+    type: internal
+    content: 'Falsifiable predictions if A is correct: (1) decision-tier specs created post-change cannot import without review-evidence — verifiable by attempting import on a fresh decision spec. (2) Existing decision specs already imported continue to work — verifiable via s5d status on prior specs. (3) tribunal/reviewer agent output maps cleanly to fields {reviewer, scope, verdict, findings} — verifiable by running tribunal on a sample spec and parsing. If any prediction fails, hypothesis A is refuted.'
+    verdict: pass
+    valid_until: 2026-08-01T14:26:15.892055+00:00
+    carrier_ref: null
+    formality: 4
+    claim_scope:
+    - predictions
+    congruence_level: null
+    reliability: 0.85
+  - id: 20260503-gate-review-review-as-evidence-type
+    type: gate:review
+    content: 'Self-review by Diana: implementation matches winner choice; gates/handler/docs vertical slice complete; cargo check passes; 4/4 GWT predictions verified on fresh repo. Reviewer: Diana (agent), Roman (human approval recorded).'
+    verdict: pass
+    valid_until: 2026-08-01T14:44:58.406716+00:00
+    carrier_ref: null
+    formality: 4
+    claim_scope:
+    - code
+    - docs
+    - acceptance
+    congruence_level: null
+    reliability: 0.85
+  depends_on: []
+  rationale: null
+  spec_ref: feat.s5d.review-evidence-type__20260503.s5d.yaml
+- id: review-as-workflow-phase
+  title: Review as workflow phase
+  content: 'New ''s5d review'' command and skill that invokes external reviewer, parses output, writes evidence. Optional ''review'' phase in standard workflow blocks. Heavier: s5d gains a dependency on external reviewer skills.'
+  scope: CLI + workflow shell
+  kind: system
+  layer: invalid
+  r_eff: null
+  evidence:
+  - id: 20260503-internal-review-as-workflow-phase
+    type: internal
+    content: Couples S5D to external reviewer ecosystem (tribunal/reviewer skills). Violates 'thin layer'. Phase already exists for engine runs — review-as-phase duplicates that machinery.
+    verdict: fail
+    valid_until: 2026-08-01T14:17:37.018643+00:00
+    carrier_ref: null
+    formality: 3
+    claim_scope:
+    - thin-layer
+    congruence_level: null
+    reliability: 0.8
+  depends_on: []
+  rationale: null
+  spec_ref: null
+- id: review-as-approval-only
+  title: Review as approval-only
+  content: 'Status quo + clarify: approve --reviewer is the review record. Document that reviewers must read the diff before signing. No new evidence_type, no new gate. Pure social/process change.'
+  scope: documentation only
+  kind: system
+  layer: invalid
+  r_eff: null
+  evidence:
+  - id: 20260503-internal-review-as-approval-only
+    type: internal
+    content: approve --reviewer captures only a name + timestamp. No verdict, no findings, no scope. Auditor cannot distinguish 'reviewer read diff carefully' from 'reviewer signed'. Insufficient for high-tier specs.
+    verdict: fail
+    valid_until: 2026-08-01T14:17:37.023506+00:00
+    carrier_ref: null
+    formality: 3
+    claim_scope:
+    - auditability
+    congruence_level: null
+    reliability: 0.85
+  depends_on: []
+  rationale: null
+  spec_ref: null
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false

@@ -1,0 +1,188 @@
+s5d: '1.0'
+id: feat.s5d.cli-surface-regroup
+version: 1.0.0
+product: s5d
+tier: standard
+allow_update: true
+meta:
+  title: CLI surface regroup
+  authors:
+  - Roman
+  - Diana
+  date: 2026-05-05
+  tickets: []
+  adrs: []
+  renames: []
+context: '## Problem
+
+  31 top-level CLI commands; first-screen overload (Zen-of-Python: one obvious way).
+
+
+  ## Goal
+
+  Regroup related commands under decision/verify/apply/phase/admin while keeping old
+  top-level names as hidden clap aliases. Visible top-level = 12 public commands.
+
+
+  ## Scope
+
+  rust/src/bin/s5d.rs, CLI tests, and human-facing command docs.
+
+
+  ## Acceptance
+
+  (i) all old commands continue to work by exact name as hidden aliases; (ii) `s5d
+  --help` shows 12 visible top-level commands; (iii) unit, synthetic, and integration
+  tests pass; (iv) MCP unchanged.
+
+
+  ## Privacy
+
+  Classification: Internal
+
+  '
+workflow:
+  mode: plan
+  target_architecture:
+    summary: 'Visible top-level commands: init, new, decision, verify, apply, status,
+      show, trace, phase, codebase, discover, admin. decision contains add-hypothesis/add-evidence/decide;
+      verify contains validate/graph-check/check/run-gates; apply contains preview/approve/import/drift-check/reconcile/rollback/reflect;
+      phase contains list/start/run/accept/loop/harness; admin contains install/update.
+      Old top-level commands remain callable as hidden aliases.'
+    invariants:
+    - All hidden commands continue to work when invoked by exact name
+    - cargo test passes — including standalone fixtures that use the old commands
+    - No MCP tool name changes
+  delivery_strategy:
+    summary: Describe how this change moves current code toward the target architecture
+    rationale: null
+  resources: null
+  role_map:
+    implementer: coder
+    owner: human
+    reviewer: reviewer
+    verifier: reviewer
+  review_policy:
+    cross_model_required: false
+    required_on: []
+  structure_outline: null
+  execution_mode:
+    engine: manual
+    max_iterations: null
+    stop_conditions:
+    - Phase acceptance reached
+    - Approved scope exhausted
+    - New decision required
+  phases:
+  - id: prototype
+    title: Prototype
+    scope: Reduce unknowns before committed implementation
+    roles:
+    - owner
+    - implementer
+    acceptance:
+    - Critical feasibility questions answered
+    - Telemetry approach identified
+    rollback:
+    - Discard spike output if assumptions fail
+  - id: build
+    title: Build
+    scope: Implement approved scope and pass local gates
+    roles:
+    - implementer
+    - reviewer
+    acceptance:
+    - Declared gates pass
+    - Change matches approved scope
+    rollback:
+    - Revert or reconcile if gates or review fail
+  - id: measure
+    title: Measure
+    scope: Collect telemetry and close the loop with an explicit verdict
+    roles:
+    - owner
+    - verifier
+    acceptance:
+    - Telemetry collected against success criteria
+    - Outcome verdict recorded
+    rollback:
+    - Iterate or kill if evidence stays weak
+artifacts:
+  products:
+  - id: s5d
+    name: s5d
+    organization: null
+  domains:
+  - id: dom.s5d.cli
+    product: s5d
+    name: CLI surface
+    classification: core
+    description: Public command-line surface of s5d.
+    team: null
+    maturity_level: product
+  capabilities:
+  - id: cap.s5d.cli-regroup
+    domain: dom.s5d.cli
+    name: CLI regroup
+    description: Group CLI commands while preserving hidden legacy aliases.
+    since: null
+  entities: []
+  features:
+  - id: feat.s5d.cli-surface-regroup
+    product: s5d
+    name: cli-surface-regroup
+    description: Group public CLI commands and hide legacy aliases from top-level help.
+  use_cases: []
+  systems:
+  - id: sys.s5d.cli
+    product: s5d
+    name: S5D CLI
+  containers:
+  - id: ctr.s5d.rust-cli
+    system: sys.s5d.cli
+    name: Rust CLI
+    technology: Rust
+  components:
+  - id: cmp.s5d.cli-regroup-bin
+    feature: feat.s5d.cli-surface-regroup
+    domain: dom.s5d.cli
+    container: ctr.s5d.rust-cli
+    name: CLI regroup
+    paths:
+    - rust/src/bin/s5d.rs
+  roles: []
+  concerns: []
+  metrics: []
+  supersystems: []
+  transports: []
+links:
+  feature_to_domain:
+  - feature: feat.s5d.cli-surface-regroup
+    domain: dom.s5d.cli
+  use_case_to_capability: []
+  use_case_to_entity: []
+  component_to_capability:
+  - component: cmp.s5d.cli-regroup-bin
+    capability: cap.s5d.cli-regroup
+  component_to_entity: []
+  container_to_capability: []
+  concern_to_metric: []
+  component_to_container:
+  - component: cmp.s5d.cli-regroup-bin
+    container: ctr.s5d.rust-cli
+  edges: []
+  depends_on: []
+  entity_relations: []
+  capability_to_entity: []
+  capability_to_concern: []
+contracts: []
+gates:
+- kind: schema
+- kind: graph
+roc: null
+problem: null
+hypotheses: []
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false

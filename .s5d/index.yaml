@@ -39,3 +39,33 @@ features:
   status: applied
   product: s5d
   version: 1.0.0
+- id: feat.s5d.review-evidence-type
+  spec_path: packages/feat.s5d.review-evidence-type__20260503.s5d.yaml
+  status: applied
+  product: s5d
+  version: 1.0.0
+- id: feat.s5d.fpf-decision-record
+  spec_path: packages/feat.s5d.fpf-decision-record__20260503.s5d.yaml
+  status: applied
+  product: s5d
+  version: 1.0.0
+- id: feat.s5d.fpf-drift-tolerance
+  spec_path: packages/feat.s5d.fpf-drift-tolerance__20260503.s5d.yaml
+  status: applied
+  product: s5d
+  version: 1.0.0
+- id: feat.s5d.fpf-gate-discipline
+  spec_path: packages/feat.s5d.fpf-gate-discipline__20260503.s5d.yaml
+  status: applied
+  product: s5d
+  version: 1.0.0
+- id: feat.s5d.fpf-hypothesis-record
+  spec_path: packages/feat.s5d.fpf-hypothesis-record__20260503.s5d.yaml
+  status: applied
+  product: s5d
+  version: 1.0.0
+- id: feat.s5d.cli-surface-regroup
+  spec_path: packages/feat.s5d.cli-surface-regroup__20260505.s5d.yaml
+  status: applied
+  product: s5d
+  version: 1.0.0

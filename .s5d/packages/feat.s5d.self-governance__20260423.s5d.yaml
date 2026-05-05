@@ -243,6 +243,7 @@ artifacts:
     name: Architecture linter
     paths:
     - rust/src/arch.rs
+    - rust/src/trace.rs
   - id: comp.s5d.adapters
     feature: feat.s5d.self-governance
     domain: s5d-adapters

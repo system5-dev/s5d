@@ -1,0 +1,35 @@
+spec_ref: decision.fpf.drift-tolerance__20260503.s5d.yaml
+spec_sha256: sha256:475a97bb0be6e147116d50fc6312676b528b6a771141ea1a7d097f885dcfe42d
+status: proposed
+sync_status: unknown
+status_history:
+- status: proposed
+  timestamp: 2026-05-03T15:06:21.710746+00:00
+active_phase: null
+phase_history: []
+phase_runs: []
+approvals: []
+preview: null
+reflection: null
+gate_results: []
+decision:
+  title: Tri-state drift verdict with tolerance policy
+  winner_id: tolerance-policy-with-partial-verdict
+  rejected_ids:
+  - binary-drift-check-per-spec-opt-in-tolerance
+  - status-quo-better-error-messages
+  context: drift-check binary, fails FPF A.3.3:9.3 tri-state.
+  decision: record.drift_tolerance per-artifact rules; drift-check returns {passed|failed|partial}; defaults schema=block, code=block, doc=warn.
+  rationale: Pareto winner with sensible defaults.
+  consequences: drift-check return type changes; status shows drift class.
+  decided_at: 2026-05-03T15:10:47.446628+00:00
+  confirmed_by: Roman
+  expires_at: 2026-08-01
+  do_list: []
+  dont_list: []
+  challenge:
+    mode: standard
+    passed: true
+    summary: 5 probes passed; sensible defaults reproduce binary behavior for legacy.
+    checks: []
+verified_by: null

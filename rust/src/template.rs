@@ -144,7 +144,7 @@ pub fn generate_decision_spec(id: &str, product: &str, question: &str) -> Spec {
         artifacts: None,
         links: None,
         contracts: vec![],
-        gates: vec![],
+        gates: crate::gates::default_gates_for_tier(&Tier::Decision),
         roc: None,
         problem: Some(ProblemField::Card(ProblemCard {
             signal: question.into(),
@@ -155,6 +155,7 @@ pub fn generate_decision_spec(id: &str, product: &str, question: &str) -> Spec {
             blast_radius: None,
             reversibility: None,
             status: Some("backlog".into()),
+            goodhart_guard: None,
         })),
         hypotheses: vec![],
         decision: None,
@@ -220,5 +221,6 @@ pub fn generate_record(spec_filename: &str, spec_sha256: &str) -> Record {
         gate_results: vec![],
         decision: None,
         verified_by: None,
+        drift_tolerance: None,
     }
 }

@@ -1,0 +1,208 @@
+s5d: '1.0'
+id: feat.s5d.fpf-drift-tolerance
+version: 1.0.0
+product: s5d
+tier: standard
+allow_update: true
+meta:
+  title: Tri-state drift verdict with tolerance policy
+  authors:
+  - Roman
+  - Diana
+  date: 2026-05-03
+  tickets: []
+  adrs: []
+  renames: []
+context: '## Problem
+
+  FPF gap identified by audit; see linked decision spec.
+
+
+  ## Goal
+
+  Add record.drift_tolerance per-artifact rules; drift-check returns {passed|failed|partial};
+  sensible defaults.
+
+
+  ## Privacy
+
+  Classification: Internal
+
+  '
+workflow:
+  mode: plan
+  target_architecture:
+    summary: Add record.drift_tolerance per-artifact rules; drift-check returns {passed|failed|partial};
+      sensible defaults.
+    invariants:
+    - 'Backward-compatible: existing specs continue to validate'
+    - 'Graduated enforcement: required at high tier, optional in lower tiers (where
+      applicable)'
+    - Schema additions are reversible (additive fields)
+  delivery_strategy:
+    summary: Describe how this change moves current code toward the target architecture
+    rationale: null
+  resources: null
+  role_map:
+    reviewer: reviewer
+    owner: human
+    implementer: coder
+    verifier: reviewer
+  review_policy:
+    cross_model_required: false
+    required_on: []
+  structure_outline: null
+  execution_mode:
+    engine: manual
+    max_iterations: null
+    stop_conditions:
+    - Phase acceptance reached
+    - Approved scope exhausted
+    - New decision required
+  phases:
+  - id: prototype
+    title: Prototype
+    scope: Reduce unknowns before committed implementation
+    roles:
+    - owner
+    - implementer
+    acceptance:
+    - Critical feasibility questions answered
+    - Telemetry approach identified
+    rollback:
+    - Discard spike output if assumptions fail
+  - id: build
+    title: Build
+    scope: Implement approved scope and pass local gates
+    roles:
+    - implementer
+    - reviewer
+    acceptance:
+    - Declared gates pass
+    - Change matches approved scope
+    rollback:
+    - Revert or reconcile if gates or review fail
+  - id: measure
+    title: Measure
+    scope: Collect telemetry and close the loop with an explicit verdict
+    roles:
+    - owner
+    - verifier
+    acceptance:
+    - Telemetry collected against success criteria
+    - Outcome verdict recorded
+    rollback:
+    - Iterate or kill if evidence stays weak
+artifacts:
+  products:
+  - id: s5d
+    name: s5d
+    organization: null
+  domains:
+  - id: dom.s5d.fpf-alignment
+    product: s5d
+    name: FPF Alignment
+    classification: core
+    description: Bring S5D into compliance with FPF normative kernel extensions.
+    team: null
+    maturity_level: product
+  capabilities:
+  - id: cap.s5d.drift-tolerance
+    domain: dom.s5d.fpf-alignment
+    name: drift-tolerance
+    description: Add record.drift_tolerance per-artifact rules; drift-check returns
+      {passed|failed|partial}; sensible defaults.
+    since: null
+  entities: []
+  features:
+  - id: feat.s5d.fpf-drift-tolerance
+    product: s5d
+    name: fpf-drift-tolerance
+    description: Tri-state drift verdict with tolerance policy
+  use_cases: []
+  systems:
+  - id: sys.s5d.cli
+    product: s5d
+    name: S5D CLI
+  containers:
+  - id: ctr.s5d.rust-cli
+    system: sys.s5d.cli
+    name: Rust CLI
+    technology: Rust
+  components:
+  - id: cmp.fpf.models-drift
+    feature: feat.s5d.fpf-drift-tolerance
+    domain: dom.s5d.fpf-alignment
+    container: ctr.s5d.rust-cli
+    name: drift_tolerance schema
+    paths:
+    - rust/src/models.rs
+  - id: cmp.fpf.lib-drift
+    feature: feat.s5d.fpf-drift-tolerance
+    domain: dom.s5d.fpf-alignment
+    container: ctr.s5d.rust-cli
+    name: drift_check tri-state
+    paths:
+    - rust/src/lib.rs
+  - id: cmp.fpf.cli-drift
+    feature: feat.s5d.fpf-drift-tolerance
+    domain: dom.s5d.fpf-alignment
+    container: ctr.s5d.rust-cli
+    name: status drift class output
+    paths:
+    - rust/src/bin/s5d.rs
+  - id: cmp.fpf.docs-drift
+    feature: feat.s5d.fpf-drift-tolerance
+    domain: dom.s5d.fpf-alignment
+    container: ctr.s5d.rust-cli
+    name: Drift tolerance docs
+    paths:
+    - skills/s5d/metamodel.md
+  roles: []
+  concerns: []
+  metrics: []
+  supersystems: []
+  transports: []
+links:
+  feature_to_domain:
+  - feature: feat.s5d.fpf-drift-tolerance
+    domain: dom.s5d.fpf-alignment
+  use_case_to_capability: []
+  use_case_to_entity: []
+  component_to_capability:
+  - component: cmp.fpf.models-drift
+    capability: cap.s5d.drift-tolerance
+  - component: cmp.fpf.lib-drift
+    capability: cap.s5d.drift-tolerance
+  - component: cmp.fpf.cli-drift
+    capability: cap.s5d.drift-tolerance
+  - component: cmp.fpf.docs-drift
+    capability: cap.s5d.drift-tolerance
+  component_to_entity: []
+  container_to_capability: []
+  concern_to_metric: []
+  component_to_container:
+  - component: cmp.fpf.models-drift
+    container: ctr.s5d.rust-cli
+  - component: cmp.fpf.lib-drift
+    container: ctr.s5d.rust-cli
+  - component: cmp.fpf.cli-drift
+    container: ctr.s5d.rust-cli
+  - component: cmp.fpf.docs-drift
+    container: ctr.s5d.rust-cli
+  edges: []
+  depends_on: []
+  entity_relations: []
+  capability_to_entity: []
+  capability_to_concern: []
+contracts: []
+gates:
+- kind: schema
+- kind: graph
+roc: null
+problem: null
+hypotheses: []
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false
