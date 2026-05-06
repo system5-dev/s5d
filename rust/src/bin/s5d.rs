@@ -2,10 +2,7 @@ use clap::{Args, Parser, Subcommand};
 use colored::Colorize;
 
 #[derive(Parser)]
-#[command(
-    name = "s5d",
-    about = "S5D — decision and validation layer for repo changes"
-)]
+#[command(name = "s5d", about = "S5D — control plane for agentic repo changes")]
 struct Cli {
     #[command(subcommand)]
     command: S5dCommand,
@@ -13,7 +10,7 @@ struct Cli {
 
 // ── Core commands — the critical path ────────────────────────────────────────
 //
-// intent → validate → approve → apply → detect drift → rollback
+// desired state → evidence → transition → verify → restore
 //
 
 #[derive(Subcommand)]
@@ -75,7 +72,13 @@ enum S5dCommand {
         #[command(subcommand)]
         command: VerifyCommand,
     },
+    /// State transitions: preview, approval, import, drift, rollback, and outcome evidence
+    State {
+        #[command(subcommand)]
+        command: ApplyCommand,
+    },
     /// Apply lifecycle: preview, approval, import, drift, rollback, and reflection
+    #[command(hide = true)]
     Apply {
         #[command(subcommand)]
         command: ApplyCommand,
@@ -131,18 +134,24 @@ enum S5dCommand {
     /// Compare live state vs last applied fingerprint
     #[command(hide = true)]
     DriftCheck(OptionalSpecArg),
+    /// Agent run control: active work, approved engines, task packages, and harnesses
+    Run {
+        #[command(subcommand)]
+        command: RunCommand,
+    },
     /// Phase lifecycle for workflow-driven execution
+    #[command(hide = true)]
     Phase {
         #[command(subcommand)]
         command: PhaseCommand,
     },
-    /// Execute a bounded loop inside an approved phase
+    /// Execute a bounded loop inside an approved work state
     #[command(hide = true)]
     Execute {
         #[command(subcommand)]
         command: ExecuteCommand,
     },
-    /// Operational harness around isolated worktrees and S5D workflow commands
+    /// Operational harness around isolated worktrees and S5D run commands
     #[command(hide = true)]
     Harness {
         #[command(subcommand)]
@@ -173,11 +182,13 @@ enum S5dCommand {
         command: IndexCommand,
     },
     /// Codebase ownership and coverage snapshot
+    #[command(hide = true)]
     Codebase {
         #[command(subcommand)]
         command: CodebaseCommand,
     },
     /// Stack-agnostic repository discovery index and evidence graph
+    #[command(hide = true)]
     Discover {
         #[command(subcommand)]
         command: DiscoverCommand,
@@ -262,6 +273,53 @@ enum ApplyCommand {
     Rollback(SpecArg),
     /// Record reflection for a spec (OPERATE stage) — closes lifecycle with production evidence
     Reflect(Box<ReflectArgs>),
+}
+
+#[derive(Subcommand)]
+enum RunCommand {
+    /// List executable work states and current active state
+    List {
+        /// Path to .s5d.yaml file
+        spec: String,
+    },
+    /// Mark an executable work state as active
+    Start {
+        /// Path to .s5d.yaml file
+        spec: String,
+        /// Work state ID
+        #[arg(long)]
+        id: String,
+    },
+    /// Human acceptance for an executable work state
+    Accept {
+        /// Path to .s5d.yaml file
+        spec: String,
+        /// Work state ID
+        #[arg(long)]
+        id: String,
+        /// Reviewer who accepts the resulting evidence
+        #[arg(long)]
+        reviewer: String,
+    },
+    /// Run an approved external engine for the active work state
+    Exec {
+        /// Path to .s5d.yaml file
+        spec: String,
+        /// Work state ID
+        #[arg(long)]
+        id: String,
+        /// Approved engine name from .s5d/config.yaml
+        #[arg(long)]
+        engine: String,
+    },
+    /// Emit a bounded task package for an active work state
+    #[command(alias = "loop")]
+    Task(ExecuteLoopArgs),
+    /// Operational harness around isolated worktrees and S5D run commands
+    Harness {
+        #[command(subcommand)]
+        command: HarnessCommand,
+    },
 }
 
 #[derive(Subcommand)]
@@ -628,45 +686,45 @@ enum UpdateCommand {
 
 #[derive(Subcommand)]
 enum PhaseCommand {
-    /// List workflow phases and current phase state
+    /// List executable work states and current active state
     List {
         /// Path to .s5d.yaml file
         spec: String,
     },
-    /// Mark a workflow phase as active
+    /// Mark an executable work state as active
     Start {
         /// Path to .s5d.yaml file
         spec: String,
-        /// Workflow phase ID
+        /// Work state ID
         #[arg(long)]
         id: String,
     },
-    /// Human acceptance for a workflow phase
+    /// Human acceptance for an executable work state
     Accept {
         /// Path to .s5d.yaml file
         spec: String,
-        /// Workflow phase ID
+        /// Work state ID
         #[arg(long)]
         id: String,
-        /// Reviewer who accepts the phase
+        /// Reviewer who accepts the run evidence
         #[arg(long)]
         reviewer: String,
     },
-    /// Run a configured external engine for an active workflow phase
+    /// Run a configured external engine for an active work state
     Run {
         /// Path to .s5d.yaml file
         spec: String,
-        /// Workflow phase ID
+        /// Work state ID
         #[arg(long)]
         id: String,
         /// Approved engine name from .s5d/config.yaml
         #[arg(long)]
         engine: String,
     },
-    /// Emit a bounded task package for a workflow phase
+    /// Emit a bounded task package for a work state
     #[command(alias = "execute")]
     Loop(ExecuteLoopArgs),
-    /// Operational harness around isolated worktrees and S5D workflow commands
+    /// Operational harness around isolated worktrees and S5D run commands
     Harness {
         #[command(subcommand)]
         command: HarnessCommand,
@@ -675,7 +733,7 @@ enum PhaseCommand {
 
 #[derive(Subcommand)]
 enum ExecuteCommand {
-    /// Emit a bounded task package for a workflow phase
+    /// Emit a bounded task package for a work state
     Loop(ExecuteLoopArgs),
 }
 
@@ -683,24 +741,24 @@ enum ExecuteCommand {
 struct ExecuteLoopArgs {
     /// Path to .s5d.yaml file
     spec: String,
-    /// Workflow phase ID
+    /// Work state ID
     #[arg(long)]
     phase: String,
     /// Execution engine name
     #[arg(long, default_value = "ralph")]
     engine: String,
-    /// Optional Ralph run mode (default inferred from phase)
+    /// Optional Ralph run mode (default inferred from work state)
     #[arg(long)]
     mode: Option<String>,
 }
 
 #[derive(Subcommand)]
 enum HarnessCommand {
-    /// Create an isolated worktree and start an approved workflow phase there
+    /// Create an isolated worktree and start an approved work state there
     Start {
         /// Path to .s5d.yaml file
         spec: String,
-        /// Workflow phase ID
+        /// Work state ID
         #[arg(long)]
         phase: String,
         /// Harness run ID
@@ -769,6 +827,7 @@ fn main() -> anyhow::Result<()> {
         S5dCommand::Note { text, product } => run_note(&text.join(" "), product.as_deref()),
         S5dCommand::Decision { command } => run_decision_command(command),
         S5dCommand::Verify { command } => run_verify_command(command),
+        S5dCommand::State { command } => run_apply_command(command),
         S5dCommand::Apply { command } => run_apply_command(command),
         S5dCommand::Validate(args) => run_validate(&args.spec),
         S5dCommand::Status => run_status(),
@@ -810,6 +869,7 @@ fn main() -> anyhow::Result<()> {
         S5dCommand::GraphCheck(args) => run_graph_check(&args.spec),
         S5dCommand::Check(args) => run_check(&args.spec, &args.format),
         S5dCommand::DriftCheck(args) => run_drift_check(args.spec.as_deref()),
+        S5dCommand::Run { command } => run_run_command(command),
         S5dCommand::Phase { command } => match command {
             PhaseCommand::List { spec } => run_phase_list(&spec),
             PhaseCommand::Start { spec, id } => run_phase_start(&spec, &id),
@@ -870,6 +930,19 @@ fn run_apply_command(command: ApplyCommand) -> anyhow::Result<()> {
         ApplyCommand::Reconcile(args) => run_reconcile(args.spec.as_deref()),
         ApplyCommand::Rollback(args) => run_rollback(&args.spec),
         ApplyCommand::Reflect(args) => run_reflect_command(*args),
+    }
+}
+
+fn run_run_command(command: RunCommand) -> anyhow::Result<()> {
+    match command {
+        RunCommand::List { spec } => run_phase_list(&spec),
+        RunCommand::Start { spec, id } => run_phase_start(&spec, &id),
+        RunCommand::Accept { spec, id, reviewer } => run_phase_accept(&spec, &id, &reviewer),
+        RunCommand::Exec { spec, id, engine } => run_phase_run(&spec, &id, &engine),
+        RunCommand::Task(args) => {
+            run_execute_loop(&args.spec, &args.phase, &args.engine, args.mode.as_deref())
+        }
+        RunCommand::Harness { command } => run_harness_command(command),
     }
 }
 
@@ -2120,7 +2193,7 @@ fn run_update_check(hook: bool, json: bool) -> anyhow::Result<()> {
                 .or(check.remote_commit.as_deref())
                 .unwrap_or("newer upstream");
             let message = format!(
-                "S5D update available: {} -> {}. Run: s5d update apply",
+                "S5D update available: {} -> {}. Run: s5d admin update apply",
                 check.current_version, latest
             );
             println!("{}", serde_json::json!({ "systemMessage": message }));
@@ -2149,7 +2222,7 @@ fn run_update_check(hook: bool, json: bool) -> anyhow::Result<()> {
     }
     if check.update_available {
         println!("  update: available");
-        println!("  run: s5d update apply");
+        println!("  run: s5d admin update apply");
     } else {
         println!("  update: current");
     }
@@ -2707,8 +2780,8 @@ fn run_init(
 
     println!("\n  {} Next steps:", "→".blue());
     println!("    1. s5d new <feature-id> --product <name>   Create your first spec");
-    println!("    2. s5d validate <spec>                     Validate the spec");
-    println!("    3. s5d preview <spec>                      Preview the import");
+    println!("    2. s5d verify validate <spec>              Validate the spec");
+    println!("    3. s5d state preview <spec>                Preview the import");
     println!();
 
     Ok(())
@@ -2721,16 +2794,16 @@ const AGENTS_END: &str = "<!-- s5d:end -->";
 
 fn agents_block() -> String {
     format!(
-        "{}\n## S5D — Decision & Validation Layer\n\n\
-This repo uses **S5D** (https://github.com/system5-dev/s5d) — a thin layer over git \
-for recording architectural decisions and verifying that code still matches them.\n\n\
+        "{}\n## S5D — Agentic Change Control Plane\n\n\
+This repo uses **S5D** (https://github.com/system5-dev/s5d) to describe target state, \
+record agent/tool evidence, bind architectural decisions, and verify that code still matches them.\n\n\
 **⛔ S5D is MANDATORY for non-trivial work.** Architectural decisions, new features, \
 refactors >30 LOC, and any change touching multiple modules MUST go through the S5D \
 flow before implementation. Skip ONLY for: bug fixes <30 LOC, config-only, docs-only. \
 `S5D_BYPASS=1` is an explicit break-glass escape hatch, not routine flow; document the \
 justification when you use it. When in doubt, run `s5d_route` to classify the request.\n\n\
-**Flow:** `s5d_new` → edit spec → `s5d_validate` → `s5d_preview` → `s5d_approve` \
-→ implement → `s5d_run_gates` → `s5d_import` → `s5d_drift_check`.\n\n\
+**Flow:** target state → edit spec → `s5d_validate` → `s5d_preview` → `s5d_approve` \
+→ run/implement → `s5d_run_gates` → `s5d_import` → `s5d_drift_check`.\n\n\
 **MCP tools** (prefer over shell CLI when available):\n\
 - `s5d_route` — classify a request into tier/mode/entry\n\
 - `s5d_new` / `s5d_note` — create spec / quick note\n\
@@ -3104,11 +3177,11 @@ fn run_status() -> anyhow::Result<()> {
 
         if let Some(ref rec) = record {
             if let Some(ref active_phase) = rec.active_phase {
-                println!("  {} {}", "Active phase:".dimmed(), active_phase);
+                println!("  {} {}", "Active work state:".dimmed(), active_phase);
             }
         }
 
-        // Determine current phase and print next-action hint
+        // Determine current lifecycle step and print next-action hint
         let phase: Option<s5d::Phase> = record.as_ref().and_then(|r| match &r.status {
             s5d::SpecStatus::Proposed => {
                 let has_hypotheses = !spec.hypotheses.is_empty();
@@ -3186,7 +3259,7 @@ fn workflow_phase_by_id<'a>(
         .phases
         .iter()
         .find(|p| p.id == phase_id)
-        .ok_or_else(|| anyhow::anyhow!("workflow phase not found: {}", phase_id))
+        .ok_or_else(|| anyhow::anyhow!("work state not found: {}", phase_id))
 }
 
 fn latest_phase_status(record: &s5d::Record, phase_id: &str) -> s5d::WorkflowPhaseStatus {
@@ -3303,11 +3376,11 @@ fn run_phase_start(spec_path: &str, phase_id: &str) -> anyhow::Result<()> {
             .execution_mode
             .as_ref()
             .map(|mode| mode.engine.clone()),
-        Some(format!("Started phase '{}'", phase.title)),
+        Some(format!("Started work state '{}'", phase.title)),
     );
     project.save_record(&spec_filename, &record)?;
 
-    println!("{} Active phase → {}", "ok".green(), phase_id);
+    println!("{} Active work state → {}", "ok".green(), phase_id);
     println!("  {} {}", "Scope:".dimmed(), phase.scope);
     Ok(())
 }
@@ -3335,12 +3408,12 @@ fn run_phase_accept(spec_path: &str, phase_id: &str, reviewer: &str) -> anyhow::
         s5d::WorkflowPhaseStatus::Accepted,
         Some(reviewer.to_string()),
         None,
-        Some("Human phase acceptance".into()),
+        Some("Human run evidence acceptance".into()),
     );
     project.save_record(&spec_filename, &record)?;
 
     println!(
-        "{} Phase '{}' accepted by {}",
+        "{} Work state '{}' accepted by {}",
         "ok".green(),
         phase_id,
         reviewer
@@ -3358,7 +3431,7 @@ fn run_phase_run(spec_path: &str, phase_id: &str, engine_name: &str) -> anyhow::
     ensure_phase_execution_ready(&spec, &record, phase_id)?;
 
     if record.active_phase.as_deref() != Some(phase_id) {
-        anyhow::bail!("phase '{}' must be active before phase run", phase_id);
+        anyhow::bail!("work state '{}' must be active before run exec", phase_id);
     }
 
     s5d::sanitize_id(phase_id)?;
@@ -3464,7 +3537,7 @@ fn run_phase_run(spec_path: &str, phase_id: &str, engine_name: &str) -> anyhow::
     }
     project.save_record(&spec_filename, &record)?;
 
-    println!("{} Phase run {}", "ok".green(), status);
+    println!("{} Run {}", "ok".green(), status);
     println!("  {} {}", "run_id:".dimmed(), run_id);
     println!("  {} {}", "engine:".dimmed(), engine_name);
     println!("  {} {}", "output:".dimmed(), output_ref);
@@ -3742,7 +3815,7 @@ fn run_harness_start(
         .map_err(|err| anyhow::anyhow!("failed to start phase in harness worktree: {}", err))?;
     let phase_command = vec![
         s5d_bin.display().to_string(),
-        "phase".into(),
+        "run".into(),
         "start".into(),
         worktree_spec.display().to_string(),
         "--id".into(),
@@ -3751,8 +3824,8 @@ fn run_harness_start(
     if phase_output.status.success() {
         append_harness_event(
             &mut state,
-            "phase_started",
-            format!("Started phase '{}'", phase_id),
+            "work_state_started",
+            format!("Started work state '{}'", phase_id),
             phase_command,
             phase_output.status.code(),
             None,
@@ -4105,7 +4178,7 @@ fn run_approve(spec_arg: &str, reviewer: &str, require_owner: bool) -> anyhow::R
     if let Some(ref preview) = record.preview {
         if !preview.previewed_spec_sha256.is_empty() && preview.previewed_spec_sha256 != spec_sha {
             eprintln!(
-                "  {} spec modified since preview — re-run `s5d preview` before approving",
+                "  {} spec modified since preview — re-run `s5d state preview` before approving",
                 "error:".red()
             );
             std::process::exit(1);
@@ -4116,7 +4189,9 @@ fn run_approve(spec_arg: &str, reviewer: &str, require_owner: bool) -> anyhow::R
         .preview
         .as_ref()
         .map(|p| p.diff_sha256.clone())
-        .ok_or_else(|| anyhow::anyhow!("no preview result on record — run `s5d preview` first"))?;
+        .ok_or_else(|| {
+            anyhow::anyhow!("no preview result on record — run `s5d state preview` first")
+        })?;
 
     record.approvals.push(s5d::Approval {
         reviewer: reviewer.into(),
@@ -4258,7 +4333,7 @@ fn run_import(spec_arg: &str, verified_by: &str, force: bool) -> anyhow::Result<
         });
         if !all_latest_passed {
             eprintln!(
-                "  {} all effective gates must pass (or have non-expired waivers) before import — run `s5d run-gates` first",
+                "  {} all effective gates must pass (or have non-expired waivers) before import — run `s5d verify run-gates` first",
                 "error:".red()
             );
             std::process::exit(7);
@@ -5077,13 +5152,13 @@ fn show_feature(spec: &s5d::Spec, record: Option<&s5d::Record>) {
             println!("  {}: {}", "Workflow".dimmed(), mode);
         }
         if !workflow.phases.is_empty() {
-            println!("  {}: {}", "Phases".dimmed(), workflow.phases.len());
+            println!("  {}: {}", "Work states".dimmed(), workflow.phases.len());
         }
     }
 
     if let Some(record) = record {
         if let Some(ref active_phase) = record.active_phase {
-            println!("  {}: {}", "Active phase".dimmed(), active_phase);
+            println!("  {}: {}", "Active work state".dimmed(), active_phase);
         }
     }
 
@@ -5860,8 +5935,7 @@ mod agents_md_tests {
         let help = String::from_utf8(buf).unwrap();
 
         for public in [
-            "init", "new", "decision", "verify", "apply", "status", "show", "trace", "phase",
-            "codebase", "discover", "admin",
+            "init", "new", "decision", "verify", "state", "run", "status", "show", "trace", "admin",
         ] {
             assert!(
                 help.lines()
@@ -5876,8 +5950,12 @@ mod agents_md_tests {
             "validate",
             "preview",
             "run-gates",
+            "apply",
             "execute",
             "harness",
+            "phase",
+            "codebase",
+            "discover",
             "hook",
             "install",
             "update",

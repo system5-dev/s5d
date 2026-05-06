@@ -141,6 +141,39 @@ fn only_spec_path(repo: &StandaloneRepo) -> PathBuf {
     only_matching_file(&repo.path().join(".s5d").join("packages"), ".s5d.yaml")
 }
 
+fn spec_path_by_id(repo: &StandaloneRepo, id: &str) -> PathBuf {
+    let dir = repo.path().join(".s5d").join("packages");
+    let prefix = format!("{id}__");
+    let mut matches = fs::read_dir(&dir)
+        .unwrap()
+        .map(|entry| entry.unwrap().path())
+        .filter(|path| {
+            path.file_name()
+                .and_then(|name| name.to_str())
+                .is_some_and(|name| name.starts_with(&prefix) && name.ends_with(".s5d.yaml"))
+        })
+        .collect::<Vec<_>>();
+    matches.sort();
+    assert_eq!(
+        matches.len(),
+        1,
+        "expected exactly one spec for {} in {}, got {:?}",
+        id,
+        dir.display(),
+        matches
+    );
+    matches.remove(0)
+}
+
+fn binding(fields: &[(&str, &str)]) -> s5d::Binding {
+    s5d::Binding {
+        fields: fields
+            .iter()
+            .map(|(key, value)| ((*key).to_string(), (*value).to_string()))
+            .collect(),
+    }
+}
+
 fn only_matching_file(dir: &Path, suffix: &str) -> PathBuf {
     let mut matches = fs::read_dir(dir)
         .unwrap()
@@ -464,6 +497,16 @@ fn write_architecture_lint_spec(repo: &StandaloneRepo, allow_billing_to_auth: bo
     let spec_path = spec_dir.join("feat.shop.billing-boundary__20260423.s5d.yaml");
 
     let mut links = s5d::Links::default();
+    links.component_to_capability = vec![
+        binding(&[
+            ("component", "comp.auth"),
+            ("capability", "cap.auth.tokens"),
+        ]),
+        binding(&[
+            ("component", "comp.billing"),
+            ("capability", "cap.billing.charge"),
+        ]),
+    ];
     if allow_billing_to_auth {
         links.edges.push(s5d::Edge {
             from: "dom.billing".into(),
@@ -655,7 +698,13 @@ fn write_codebase_governance_spec(repo: &StandaloneRepo) -> PathBuf {
             }],
             ..Default::default()
         }),
-        links: Some(s5d::Links::default()),
+        links: Some(s5d::Links {
+            component_to_capability: vec![binding(&[
+                ("component", "comp.app"),
+                ("capability", "cap.app.source"),
+            ])],
+            ..Default::default()
+        }),
         contracts: vec![],
         gates: vec![
             s5d::Gate {
@@ -707,8 +756,7 @@ fn public_help_hides_internal_commands() {
 
     let help = run_ok(repo.path(), ["--help"]);
     for public in [
-        "init", "new", "decision", "verify", "apply", "status", "show", "trace", "phase",
-        "codebase", "discover", "admin",
+        "init", "new", "decision", "verify", "state", "run", "status", "show", "trace", "admin",
     ] {
         assert!(
             help.stdout
@@ -730,6 +778,8 @@ fn public_help_hides_internal_commands() {
         "approve",
         "run-gates",
         "import",
+        "apply",
+        "phase",
         "search",
         "drift-check",
         "execute",
@@ -738,6 +788,8 @@ fn public_help_hides_internal_commands() {
         "rollback",
         "reflect",
         "route",
+        "codebase",
+        "discover",
         "hook",
         "update",
         "install",
@@ -757,8 +809,7 @@ fn public_help_hides_internal_commands() {
         );
     }
     let visible_public_count = [
-        "init", "new", "decision", "verify", "apply", "status", "show", "trace", "phase",
-        "codebase", "discover", "admin",
+        "init", "new", "decision", "verify", "state", "run", "status", "show", "trace", "admin",
     ]
     .iter()
     .filter(|command| {
@@ -768,8 +819,8 @@ fn public_help_hides_internal_commands() {
     })
     .count();
     assert_eq!(
-        visible_public_count, 12,
-        "top-level public surface should be exactly 12 commands:\n{}",
+        visible_public_count, 10,
+        "top-level public surface should be exactly 10 commands:\n{}",
         help.stdout
     );
 
@@ -797,7 +848,7 @@ fn public_help_hides_internal_commands() {
         );
     }
 
-    let apply_help = run_ok(repo.path(), ["apply", "--help"]);
+    let state_help = run_ok(repo.path(), ["state", "--help"]);
     for public in [
         "preview",
         "approve",
@@ -808,12 +859,24 @@ fn public_help_hides_internal_commands() {
         "reflect",
     ] {
         assert!(
-            apply_help
+            state_help
                 .stdout
                 .lines()
                 .any(|line| line.trim_start().starts_with(&format!("{public} "))),
-            "apply help should expose `{public}`:\n{}",
-            apply_help.stdout
+            "state help should expose `{public}`:\n{}",
+            state_help.stdout
+        );
+    }
+
+    let run_help = run_ok(repo.path(), ["run", "--help"]);
+    for public in ["list", "start", "accept", "exec", "task", "harness"] {
+        assert!(
+            run_help
+                .stdout
+                .lines()
+                .any(|line| line.trim_start().starts_with(&format!("{public} "))),
+            "run help should expose `{public}`:\n{}",
+            run_help.stdout
         );
     }
 
@@ -981,10 +1044,10 @@ fn verify_and_apply_groups_preserve_legacy_aliases() {
     run_ok(repo.path(), ["verify", "validate", spec_str]);
     run_ok(repo.path(), ["verify", "graph-check", spec_str]);
     run_ok(repo.path(), ["preview", spec_str]);
-    run_ok(repo.path(), ["apply", "preview", spec_str]);
+    run_ok(repo.path(), ["state", "preview", spec_str]);
     run_ok(
         repo.path(),
-        ["apply", "approve", spec_str, "--reviewer", "Roman"],
+        ["state", "approve", spec_str, "--reviewer", "Roman"],
     );
     let gates = run_ok(repo.path(), ["verify", "run-gates", spec_str]);
     assert!(gates.stdout.contains("gate:schema"), "{}", gates.summary());
@@ -999,11 +1062,11 @@ fn verify_and_apply_groups_preserve_legacy_aliases() {
     );
     let import = run_ok(
         repo.path(),
-        ["apply", "import", spec_str, "--verified-by", "Diana"],
+        ["state", "import", spec_str, "--verified-by", "Diana"],
     );
     assert!(import.stdout.contains("Imported"), "{}", import.summary());
 
-    let drift = run_ok(repo.path(), ["apply", "drift-check", spec_str]);
+    let drift = run_ok(repo.path(), ["state", "drift-check", spec_str]);
     assert!(drift.stdout.contains("synced"), "{}", drift.summary());
 }
 
@@ -1142,15 +1205,15 @@ fn workflow_phase_lifecycle_emits_ralph_task_package_and_records_outcome() {
     run_ok(repo.path(), ["preview", spec_str]);
     run_ok(repo.path(), ["approve", spec_str, "--reviewer", "Roman"]);
 
-    let phases = run_ok(repo.path(), ["phase", "list", spec_str]);
+    let phases = run_ok(repo.path(), ["run", "list", spec_str]);
     assert!(phases.stdout.contains("Prototype"), "{}", phases.summary());
     assert!(phases.stdout.contains("prototype"), "{}", phases.summary());
 
     let execute_before_start = run_fail(
         repo.path(),
         [
-            "execute",
-            "loop",
+            "run",
+            "task",
             spec_str,
             "--phase",
             "prototype",
@@ -1166,15 +1229,16 @@ fn workflow_phase_lifecycle_emits_ralph_task_package_and_records_outcome() {
         execute_before_start.summary()
     );
 
-    let start = run_ok(
-        repo.path(),
-        ["phase", "start", spec_str, "--id", "prototype"],
+    let start = run_ok(repo.path(), ["run", "start", spec_str, "--id", "prototype"]);
+    assert!(
+        start.stdout.contains("Active work state"),
+        "{}",
+        start.summary()
     );
-    assert!(start.stdout.contains("Active phase"), "{}", start.summary());
 
     let status = run_ok(repo.path(), ["status"]);
     assert!(
-        status.stdout.contains("Active phase:"),
+        status.stdout.contains("Active work state:"),
         "{}",
         status.summary()
     );
@@ -1183,8 +1247,8 @@ fn workflow_phase_lifecycle_emits_ralph_task_package_and_records_outcome() {
     let execute = run_ok(
         repo.path(),
         [
-            "phase",
-            "loop",
+            "run",
+            "task",
             spec_str,
             "--phase",
             "prototype",
@@ -1245,7 +1309,7 @@ fn workflow_phase_lifecycle_emits_ralph_task_package_and_records_outcome() {
     let accept = run_ok(
         repo.path(),
         [
-            "phase",
+            "run",
             "accept",
             spec_str,
             "--id",
@@ -1366,8 +1430,8 @@ fn workflow_phase_run_records_external_engine_artifact() {
     let before_start = run_fail(
         repo.path(),
         [
-            "phase",
             "run",
+            "exec",
             spec_str,
             "--id",
             "prototype",
@@ -1378,21 +1442,18 @@ fn workflow_phase_run_records_external_engine_artifact() {
     assert!(
         before_start
             .stderr
-            .contains("must be active before phase run"),
+            .contains("must be active before run exec"),
         "{}",
         before_start.summary()
     );
 
-    run_ok(
-        repo.path(),
-        ["phase", "start", spec_str, "--id", "prototype"],
-    );
+    run_ok(repo.path(), ["run", "start", spec_str, "--id", "prototype"]);
 
     let unapproved = run_fail(
         repo.path(),
         [
-            "phase",
             "run",
+            "exec",
             spec_str,
             "--id",
             "prototype",
@@ -1409,8 +1470,8 @@ fn workflow_phase_run_records_external_engine_artifact() {
     let run = run_ok(
         repo.path(),
         [
-            "phase",
             "run",
+            "exec",
             spec_str,
             "--id",
             "prototype",
@@ -1418,11 +1479,7 @@ fn workflow_phase_run_records_external_engine_artifact() {
             "local-s5d",
         ],
     );
-    assert!(
-        run.stdout.contains("Phase run completed"),
-        "{}",
-        run.summary()
-    );
+    assert!(run.stdout.contains("Run completed"), "{}", run.summary());
     assert!(run.stdout.contains("sha256:"), "{}", run.summary());
 
     let record: s5d::Record = load_yaml(&record_path_for(&spec_path));
@@ -1483,6 +1540,7 @@ fn operational_harness_creates_worktree_and_journals_commands() {
     let dirty = run_fail(
         repo.path(),
         [
+            "run",
             "harness",
             "start",
             spec_str,
@@ -1507,6 +1565,7 @@ fn operational_harness_creates_worktree_and_journals_commands() {
     let start = run_ok(
         repo.path(),
         [
+            "run",
             "harness",
             "start",
             spec_str,
@@ -1525,7 +1584,7 @@ fn operational_harness_creates_worktree_and_journals_commands() {
     );
     assert!(worktree.join(".s5d").is_dir());
 
-    let status = run_ok(repo.path(), ["harness", "status", "alpha"]);
+    let status = run_ok(repo.path(), ["run", "harness", "status", "alpha"]);
     assert!(status.stdout.contains("HARNESS"), "{}", status.summary());
     assert!(status.stdout.contains("prototype"), "{}", status.summary());
     assert!(status.stdout.contains("current:"), "{}", status.summary());
@@ -1538,6 +1597,7 @@ fn operational_harness_creates_worktree_and_journals_commands() {
     let exec = run_ok(
         repo.path(),
         [
+            "run",
             "harness",
             "exec",
             "alpha",
@@ -1562,7 +1622,7 @@ fn operational_harness_creates_worktree_and_journals_commands() {
     assert!(state
         .events
         .iter()
-        .any(|event| event.kind == "phase_started"));
+        .any(|event| event.kind == "work_state_started"));
     let completed = state
         .events
         .iter()
@@ -1894,7 +1954,9 @@ links:
   feature_to_domain: []
   use_case_to_capability: []
   use_case_to_entity: []
-  component_to_capability: []
+  component_to_capability:
+  - component: comp.widget_handler
+    capability: cap.DoThing
   component_to_entity: []
   container_to_capability: []
   concern_to_metric: []
@@ -2156,7 +2218,13 @@ fn architecture_check_accepts_markdown_component_paths() {
             }],
             ..Default::default()
         }),
-        links: Some(s5d::Links::default()),
+        links: Some(s5d::Links {
+            component_to_capability: vec![binding(&[
+                ("component", "comp.s5d.skill-docs"),
+                ("capability", "cap.s5d.shape-product-intent"),
+            ])],
+            ..Default::default()
+        }),
         contracts: vec![],
         gates: vec![
             s5d::Gate {
@@ -2184,6 +2252,61 @@ fn architecture_check_accepts_markdown_component_paths() {
     assert!(
         result.stdout.contains("architecture ok"),
         "architecture check should accept markdown component paths:\n{}",
+        result.summary()
+    );
+}
+
+#[test]
+fn architecture_check_blocks_component_path_escape() {
+    let repo = StandaloneRepo::new();
+    seed_architecture_lint_repo(&repo);
+    run_ok(repo.path(), ["init"]);
+
+    let spec_path = write_architecture_lint_spec(&repo, true);
+    let mut spec: s5d::Spec = load_yaml(&spec_path);
+    let artifacts = spec.artifacts.as_mut().unwrap();
+    let billing = artifacts
+        .components
+        .iter_mut()
+        .find(|component| component.id == "comp.billing")
+        .unwrap();
+    billing.paths = vec!["../outside.rs".into()];
+    fs::write(&spec_path, serde_yaml::to_string(&spec).unwrap()).unwrap();
+
+    let result = run_fail(repo.path(), ["check", spec_path.to_str().unwrap()]);
+    assert!(
+        result.stderr.contains("project root") && result.stderr.contains("../outside.rs"),
+        "architecture check should block component paths outside repo root:\n{}",
+        result.summary()
+    );
+}
+
+#[test]
+fn validate_blocks_component_without_capability_binding() {
+    let repo = StandaloneRepo::new();
+    seed_architecture_lint_repo(&repo);
+    run_ok(repo.path(), ["init"]);
+
+    let spec_path = write_architecture_lint_spec(&repo, true);
+    let mut spec: s5d::Spec = load_yaml(&spec_path);
+    spec.links
+        .as_mut()
+        .unwrap()
+        .component_to_capability
+        .retain(|binding| {
+            binding
+                .fields
+                .get("component")
+                .is_none_or(|component| component != "comp.billing")
+        });
+    fs::write(&spec_path, serde_yaml::to_string(&spec).unwrap()).unwrap();
+
+    let result = run_fail(repo.path(), ["validate", spec_path.to_str().unwrap()]);
+    assert!(
+        result.stderr.contains("comp.billing")
+            && result.stderr.contains("component_to_capability")
+            && result.stderr.contains("code cannot trace"),
+        "validation should block untraceable components:\n{}",
         result.summary()
     );
 }
@@ -2597,7 +2720,11 @@ links:
   feature_to_domain: []
   use_case_to_capability: []
   use_case_to_entity: []
-  component_to_capability: []
+  component_to_capability:
+  - component: comp.alpha_handler
+    capability: cap.DoAlpha
+  - component: comp.beta_handler
+    capability: cap.DoBeta
   component_to_entity: []
   container_to_capability: []
   concern_to_metric: []
@@ -2825,6 +2952,11 @@ fn contract_full_lifecycle_end_to_end() {
         name: "Order Service".into(),
         paths: vec!["crates/orders/src/service.rs".into()],
     });
+    let links = spec.links.get_or_insert_with(s5d::Links::default);
+    links.component_to_capability.push(binding(&[
+        ("component", "comp.order_service"),
+        ("capability", "cap.CreateOrder"),
+    ]));
     fs::write(&spec_path, serde_yaml::to_string(&spec).unwrap()).unwrap();
 
     // Configure gate commands — must use real s5d commands
@@ -2886,6 +3018,458 @@ fn contract_full_lifecycle_end_to_end() {
         "status should show the spec:\n{}",
         status.summary()
     );
+}
+
+#[test]
+fn synthetic_project_development_cycle_tracks_multiple_features_and_code() {
+    let repo = StandaloneRepo::new();
+    repo.write(
+        "Cargo.toml",
+        "[package]\nname = \"minishop\"\nversion = \"0.1.0\"\nedition = \"2021\"\n",
+    );
+    repo.write("src/lib.rs", "pub fn health() -> &'static str { \"ok\" }\n");
+    run_ok(repo.path(), ["init"]);
+
+    run_ok(
+        repo.path(),
+        [
+            "new",
+            "decision.minishop.checkout-risk",
+            "--tier",
+            "decision",
+            "--question",
+            "How should MiniShop score checkout risk?",
+            "--product",
+            "minishop",
+        ],
+    );
+    let decision_path = spec_path_by_id(&repo, "decision.minishop.checkout-risk");
+    let decision_str = decision_path.to_str().unwrap();
+    {
+        let mut decision: s5d::Spec = load_yaml(&decision_path);
+        let problem = match decision.problem.as_mut() {
+            Some(s5d::ProblemField::Card(card)) => card,
+            other => panic!("decision spec should have a problem card, got {other:?}"),
+        };
+        problem.acceptance = Some(
+            "Checkout risk can be traced to component paths; chosen policy has synthetic evidence; feature implementation is validated by gates"
+                .into(),
+        );
+        fs::write(&decision_path, serde_yaml::to_string(&decision).unwrap()).unwrap();
+    }
+
+    for (id, title, content) in [
+        (
+            "inline-risk-policy",
+            "Inline risk policy",
+            "Score risk synchronously inside checkout.",
+        ),
+        (
+            "async-risk-queue",
+            "Async risk queue",
+            "Emit checkout events and score risk asynchronously.",
+        ),
+        (
+            "manual-review-only",
+            "Manual review only",
+            "Route suspicious orders to manual review without automated scoring.",
+        ),
+    ] {
+        run_ok(
+            repo.path(),
+            [
+                "decision",
+                "add-hypothesis",
+                decision_str,
+                "--id",
+                id,
+                "--title",
+                title,
+                "--content",
+                content,
+                "--scope",
+                "checkout",
+                "--kind",
+                "system",
+                "--prompt",
+                "How should MiniShop score checkout risk?",
+                "--next-move",
+                "build",
+            ],
+        );
+        run_ok(
+            repo.path(),
+            [
+                "decision",
+                "add-evidence",
+                decision_str,
+                "--hypothesis-id",
+                id,
+                "--evidence-type",
+                "synthetic:test",
+                "--content",
+                "Synthetic product fixture compares traceability, latency, and implementation radius.",
+                "--verdict",
+                "pass",
+                "--formality",
+                "4",
+                "--claim-scope",
+                "minishop.checkout",
+                "--reliability",
+                "0.82",
+            ],
+        );
+    }
+
+    run_ok(
+        repo.path(),
+        [
+            "new",
+            "feat.minishop.checkout-risk",
+            "--tier",
+            "standard",
+            "--product",
+            "minishop",
+            "--hypothesis-id",
+            "inline-risk-policy",
+        ],
+    );
+    let risk_spec_path = spec_path_by_id(&repo, "feat.minishop.checkout-risk");
+
+    run_ok(
+        repo.path(),
+        [
+            "new",
+            "feat.minishop.receipts",
+            "--tier",
+            "standard",
+            "--product",
+            "minishop",
+        ],
+    );
+    let receipts_spec_path = spec_path_by_id(&repo, "feat.minishop.receipts");
+
+    populate_minishop_feature_spec(
+        &risk_spec_path,
+        "dom.minishop.checkout",
+        "Checkout",
+        "cap.minishop.score-risk",
+        "Score Checkout Risk",
+        "comp.minishop.risk",
+        "Checkout Risk Engine",
+        vec!["src/lib.rs", "src/risk.rs"],
+    );
+    populate_minishop_feature_spec(
+        &receipts_spec_path,
+        "dom.minishop.receipts",
+        "Receipts",
+        "cap.minishop.issue-receipt",
+        "Issue Receipt",
+        "comp.minishop.receipts",
+        "Receipt Formatter",
+        vec!["src/receipts.rs"],
+    );
+
+    run_ok(
+        repo.path(),
+        [
+            "decision",
+            "decide",
+            decision_str,
+            "--title",
+            "Use inline checkout risk policy",
+            "--winner",
+            "inline-risk-policy",
+            "--rejected",
+            "async-risk-queue,manual-review-only",
+            "--confirmed-by",
+            "SyntheticReviewer",
+            "--context",
+            "MiniShop needs deterministic local behavior in the synthetic fixture.",
+            "--decision",
+            "Score checkout risk inline and bind the implementation to src/risk.rs.",
+            "--rationale",
+            "Inline scoring gives the smallest implementation radius while preserving code traceability.",
+            "--consequences",
+            "Checkout stays synchronous; async queue can be reconsidered if latency evidence changes.",
+            "--challenge-summary",
+            "Checked async and manual-review alternatives against traceability and latency constraints.",
+            "--decision-subject",
+            "checkout risk policy",
+            "--decision-subject-granularity",
+            "component",
+            "--evaluative-surface",
+            "Pareto dimensions: traceability, latency, implementation radius",
+            "--belief-state",
+            "Synthetic checkout volume fits inline scoring.",
+            "--outcome-model",
+            "cargo check and S5D trace should prove the mapping after implementation.",
+            "--pareto-set",
+            "inline-risk-policy,async-risk-queue",
+            "--choice-rule",
+            "Choose the candidate with direct traceability and no extra runtime worker.",
+        ],
+    );
+
+    let risk_spec = risk_spec_path.to_str().unwrap();
+    run_ok(repo.path(), ["verify", "validate", risk_spec]);
+    run_ok(repo.path(), ["verify", "graph-check", risk_spec]);
+    run_ok(repo.path(), ["state", "preview", risk_spec]);
+    run_ok(
+        repo.path(),
+        [
+            "state",
+            "approve",
+            risk_spec,
+            "--reviewer",
+            "SyntheticReviewer",
+        ],
+    );
+    configure_engine(
+        &repo,
+        "synthetic-agent",
+        true,
+        vec![s5d_bin().into(), "show".into(), "{spec}".into()],
+    );
+    run_ok(repo.path(), ["run", "start", risk_spec, "--id", "build"]);
+    let engine_run = run_ok(
+        repo.path(),
+        [
+            "run",
+            "exec",
+            risk_spec,
+            "--id",
+            "build",
+            "--engine",
+            "synthetic-agent",
+        ],
+    );
+    assert!(
+        engine_run.stdout.contains("Run completed"),
+        "{}",
+        engine_run.summary()
+    );
+    run_ok(
+        repo.path(),
+        [
+            "run",
+            "accept",
+            risk_spec,
+            "--id",
+            "build",
+            "--reviewer",
+            "SyntheticReviewer",
+        ],
+    );
+
+    repo.write(
+        "src/lib.rs",
+        "pub mod risk;\n\npub fn health() -> &'static str { \"ok\" }\n\npub fn checkout_risk_cents(total_cents: u32) -> u8 {\n    risk::checkout_risk_cents(total_cents)\n}\n",
+    );
+    repo.write(
+        "src/risk.rs",
+        "pub fn checkout_risk_cents(total_cents: u32) -> u8 {\n    if total_cents > 10_000 { 80 } else { 10 }\n}\n",
+    );
+    let cargo_check = Command::new("cargo")
+        .arg("check")
+        .current_dir(repo.path())
+        .output()
+        .unwrap();
+    assert!(
+        cargo_check.status.success(),
+        "synthetic project should compile:\nstdout:\n{}\nstderr:\n{}",
+        String::from_utf8_lossy(&cargo_check.stdout),
+        String::from_utf8_lossy(&cargo_check.stderr)
+    );
+    run_ok(repo.path(), ["verify", "check", risk_spec]);
+    run_ok(repo.path(), ["verify", "run-gates", risk_spec]);
+    run_ok(
+        repo.path(),
+        [
+            "state",
+            "import",
+            risk_spec,
+            "--verified-by",
+            "SyntheticVerifier",
+        ],
+    );
+    run_ok(
+        repo.path(),
+        [
+            "state",
+            "reflect",
+            risk_spec,
+            "--summary",
+            "Synthetic checkout risk feature compiles and traces to its decision.",
+            "--verdict",
+            "confirmed",
+            "--measurement-window",
+            "synthetic fixture",
+            "--telemetry",
+            "cargo-check:pass",
+            "--heuristic",
+            "Decision-backed code must trace from component path to accepted decision.",
+        ],
+    );
+
+    repo.write(
+        "src/lib.rs",
+        "pub mod receipts;\npub mod risk;\n\npub fn health() -> &'static str { \"ok\" }\n\npub fn checkout_risk_cents(total_cents: u32) -> u8 {\n    risk::checkout_risk_cents(total_cents)\n}\n\npub fn receipt_for(order_id: u64) -> String {\n    receipts::receipt_for(order_id)\n}\n",
+    );
+    repo.write(
+        "src/receipts.rs",
+        "pub fn receipt_for(order_id: u64) -> String {\n    format!(\"receipt-{order_id}\")\n}\n",
+    );
+    let cargo_check = Command::new("cargo")
+        .arg("check")
+        .current_dir(repo.path())
+        .output()
+        .unwrap();
+    assert!(
+        cargo_check.status.success(),
+        "synthetic project with two features should compile:\nstdout:\n{}\nstderr:\n{}",
+        String::from_utf8_lossy(&cargo_check.stdout),
+        String::from_utf8_lossy(&cargo_check.stderr)
+    );
+
+    let receipts_spec = receipts_spec_path.to_str().unwrap();
+    run_ok(repo.path(), ["verify", "validate", receipts_spec]);
+    run_ok(repo.path(), ["verify", "graph-check", receipts_spec]);
+    run_ok(repo.path(), ["state", "preview", receipts_spec]);
+    run_ok(
+        repo.path(),
+        [
+            "state",
+            "approve",
+            receipts_spec,
+            "--reviewer",
+            "SyntheticReviewer",
+        ],
+    );
+    run_ok(repo.path(), ["verify", "check", receipts_spec]);
+    run_ok(repo.path(), ["verify", "run-gates", receipts_spec]);
+    run_ok(
+        repo.path(),
+        [
+            "state",
+            "import",
+            receipts_spec,
+            "--verified-by",
+            "SyntheticVerifier",
+        ],
+    );
+
+    let risk_trace = run_ok(repo.path(), ["trace", "src/risk.rs"]);
+    assert!(
+        risk_trace.stdout.contains("feat.minishop.checkout-risk")
+            && risk_trace.stdout.contains("comp.minishop.risk")
+            && risk_trace.stdout.contains("cap.minishop.score-risk")
+            && risk_trace
+                .stdout
+                .contains("decision.minishop.checkout-risk [accepted]"),
+        "risk trace should connect code to component, capability, and accepted decision:\n{}",
+        risk_trace.summary()
+    );
+    let receipts_trace = run_ok(repo.path(), ["trace", "src/receipts.rs"]);
+    assert!(
+        receipts_trace.stdout.contains("feat.minishop.receipts")
+            && receipts_trace.stdout.contains("comp.minishop.receipts")
+            && receipts_trace.stdout.contains("cap.minishop.issue-receipt"),
+        "receipts trace should connect code to its feature metamodel:\n{}",
+        receipts_trace.summary()
+    );
+
+    let codebase_sync = run_ok(repo.path(), ["codebase", "sync"]);
+    assert!(
+        codebase_sync
+            .stdout
+            .contains("1 governed, 0 partial, 0 blind"),
+        "codebase coverage should be fully governed after both feature specs:\n{}",
+        codebase_sync.summary()
+    );
+    run_ok(repo.path(), ["codebase", "check"]);
+    run_ok(repo.path(), ["discover", "sync"]);
+    run_ok(repo.path(), ["discover", "check"]);
+    let drift = run_ok(repo.path(), ["state", "drift-check"]);
+    assert!(drift.stdout.contains("synced"), "{}", drift.summary());
+
+    let risk_record: s5d::Record = load_yaml(&record_path_for(&risk_spec_path));
+    assert_eq!(risk_record.status, s5d::SpecStatus::Operated);
+    assert_eq!(risk_record.sync_status, s5d::SyncStatus::Synced);
+    assert!(risk_record.decision.is_none());
+    assert!(risk_record.reflection.is_some());
+    assert!(risk_record
+        .phase_runs
+        .iter()
+        .any(|run| run.engine == "synthetic-agent" && run.status == "completed"));
+
+    let decision_record: s5d::Record = load_yaml(&record_path_for(&decision_path));
+    assert!(decision_record.decision.is_some());
+}
+
+fn populate_minishop_feature_spec(
+    spec_path: &Path,
+    domain_id: &str,
+    domain_name: &str,
+    capability_id: &str,
+    capability_name: &str,
+    component_id: &str,
+    component_name: &str,
+    paths: Vec<&str>,
+) {
+    let mut spec: s5d::Spec = load_yaml(spec_path);
+    let artifacts = spec
+        .artifacts
+        .as_mut()
+        .expect("feature should have artifacts");
+    artifacts.domains.push(s5d::Domain {
+        id: domain_id.into(),
+        product: "minishop".into(),
+        name: domain_name.into(),
+        classification: Some("core".into()),
+        description: None,
+        team: None,
+        maturity_level: None,
+    });
+    artifacts.capabilities.push(s5d::Capability {
+        id: capability_id.into(),
+        domain: domain_id.into(),
+        name: capability_name.into(),
+        description: None,
+        since: None,
+    });
+    artifacts.systems.push(s5d::SoftwareSystem {
+        id: "sys.minishop".into(),
+        product: "minishop".into(),
+        name: "MiniShop".into(),
+    });
+    artifacts.containers.push(s5d::Container {
+        id: "ctr.minishop.lib".into(),
+        system: "sys.minishop".into(),
+        name: "MiniShop Library".into(),
+        technology: Some("Rust".into()),
+    });
+    artifacts.components.push(s5d::Component {
+        id: component_id.into(),
+        feature: spec.id.clone(),
+        domain: domain_id.into(),
+        container: "ctr.minishop.lib".into(),
+        name: component_name.into(),
+        paths: paths.into_iter().map(str::to_string).collect(),
+    });
+    let links = spec.links.get_or_insert_with(s5d::Links::default);
+    links.component_to_capability.push(s5d::Binding {
+        fields: std::collections::HashMap::from([
+            ("component".into(), component_id.into()),
+            ("capability".into(), capability_id.into()),
+        ]),
+    });
+    if !spec.gates.iter().any(|gate| gate.kind == "architecture") {
+        spec.gates.push(s5d::Gate {
+            kind: "architecture".into(),
+        });
+    }
+    fs::write(spec_path, serde_yaml::to_string(&spec).unwrap()).unwrap();
 }
 
 // ── Test 9: Decision tier — confirmed_by required, artifacts forbidden ──
@@ -3338,6 +3922,11 @@ fn setup_standard_spec(repo: &StandaloneRepo, feature_id: &str) -> String {
         name: "Handler".into(),
         paths: vec!["src/handler.rs".into()],
     });
+    let links = spec.links.get_or_insert_with(s5d::Links::default);
+    links.component_to_capability.push(binding(&[
+        ("component", "comp.handler"),
+        ("capability", "cap.Do"),
+    ]));
     fs::write(&spec_path, serde_yaml::to_string(&spec).unwrap()).unwrap();
     let spec_str = spec_path.to_str().unwrap().to_string();
     run_ok(repo.path(), ["validate", &spec_str]);

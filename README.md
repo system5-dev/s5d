@@ -2,16 +2,16 @@
 
 > **Status: alpha / experimental**
 
-A thin decision-and-validation layer for changes in a repository with AI participation.
+S5D is a control plane for repository changes with AI participation.
 
-Not a methodology. Not a replacement for git, tests, or planning tools. Four things on top of normal development:
+Not a replacement for git, tests, or planning tools. Its machine core tracks desired state, actual code state, transitions, evidence, invariants, and violations; its human layer renders that state in plain language. Four things on top of normal development:
 
-1. **Explicit choice** — compare alternatives before committing to one.
-2. **Reuse architecture** — describe changes in terms of the existing codebase.
-3. **Record decisions** — write down what was decided, with integrity.
-4. **Verify in code** — check that the code still matches the decision. Roll back when it doesn't.
+1. **Target state** — describe what the system should become and which existing architecture it reuses.
+2. **Explicit choice** — compare alternatives before committing to one.
+3. **Run evidence** — record what agents/tools actually produced.
+4. **Verify in code** — check that code matches the decision; trace, reconcile, or roll back when it doesn't.
 
-Optional on top of that: a workflow shell for teams that want S5D to support an existing process without replacing it. Specs can now carry workflow mode, role map, phased execution, review policy, and telemetry-backed outcome verdicts.
+Human-facing scope, ETA, phase names, and status summaries are derived explanations, not the source of truth.
 
 ## How it works
 
@@ -40,35 +40,27 @@ s5d init
 s5d admin update check
 s5d admin update apply
 
-# Optional: keep codebase ownership coverage current
-s5d codebase sync
-s5d codebase check
-
-# Optional: build a stack-agnostic discovery index and evidence graph
-s5d discover sync
-s5d discover check
-
 # Create a spec
 s5d new feat.my-feature --product myapp
 
 # Edit the spec YAML, then:
 s5d verify validate .s5d/packages/feat.my-feature__*.s5d.yaml
-s5d apply preview .s5d/packages/feat.my-feature__*.s5d.yaml
-s5d apply approve .s5d/packages/feat.my-feature__*.s5d.yaml --reviewer reviewername
+s5d state preview .s5d/packages/feat.my-feature__*.s5d.yaml
+s5d state approve .s5d/packages/feat.my-feature__*.s5d.yaml --reviewer reviewername
 
 # Implement your code, then:
 s5d verify run-gates .s5d/packages/feat.my-feature__*.s5d.yaml
-s5d apply import .s5d/packages/feat.my-feature__*.s5d.yaml --verified-by verifiername
+s5d state import .s5d/packages/feat.my-feature__*.s5d.yaml --verified-by verifiername
 
-# Optional: run a bounded workflow phase with Ralph
-s5d phase list .s5d/packages/feat.my-feature__*.s5d.yaml
-s5d phase start .s5d/packages/feat.my-feature__*.s5d.yaml --id prototype
-s5d phase loop .s5d/packages/feat.my-feature__*.s5d.yaml --phase prototype --engine ralph
-s5d phase run .s5d/packages/feat.my-feature__*.s5d.yaml --id prototype --engine local-engine
-s5d phase accept .s5d/packages/feat.my-feature__*.s5d.yaml --id prototype --reviewer yourname
+# Optional: run a bounded agent task and record evidence
+s5d run list .s5d/packages/feat.my-feature__*.s5d.yaml
+s5d run start .s5d/packages/feat.my-feature__*.s5d.yaml --id prototype
+s5d run task .s5d/packages/feat.my-feature__*.s5d.yaml --phase prototype --engine ralph
+s5d run exec .s5d/packages/feat.my-feature__*.s5d.yaml --id prototype --engine local-engine
+s5d run accept .s5d/packages/feat.my-feature__*.s5d.yaml --id prototype --reviewer yourname
 
 # Later: close the loop with telemetry-backed outcome
-s5d apply reflect .s5d/packages/feat.my-feature__*.s5d.yaml \
+s5d state reflect .s5d/packages/feat.my-feature__*.s5d.yaml \
   --summary "Telemetry stayed inside target bounds" \
   --verdict confirmed \
   --measurement-window "7d post-ship" \
@@ -76,26 +68,26 @@ s5d apply reflect .s5d/packages/feat.my-feature__*.s5d.yaml \
   --heuristic "Keep rollout verdicts tied to explicit telemetry refs"
 
 # Later: verify nothing drifted
-s5d apply drift-check
+s5d state drift-check
 ```
 
-## Workflow Shell
+## Agent Run Control
 
-When a team already has its own delivery/discovery process, S5D can support it instead of replacing it.
+S5D records agent execution as evidence against a desired system state. It can render that evidence for humans, but the durable state remains machine-readable.
 
-- `s5d phase list/start/run/accept` manages the active workflow phase in `.record.yaml`
-- `s5d phase run --engine <name>` executes an approved command template from `.s5d/config.yaml`, captures stdout/stderr under `.s5d/runs/`, and records the output hash in `.record.yaml`
-- `s5d phase loop --engine ralph [--mode init|bugfix]` emits a bounded task package for the active phase only
-- each `phase loop` call persists the package under `.s5d/tasks/`
-- engine completion does not accept the phase; human `phase accept` remains explicit
-- `s5d phase harness start/status/exec` adds the operational layer: isolated git worktree, clean preflight, heartbeat/status, timeout, and journal under `.s5d/harness/`
-- harness state is not workflow truth; `.record.yaml` remains authoritative for phase state, evidence, gates, and approvals
+- `s5d run list/start/exec/accept` manages active work state in `.record.yaml`
+- `s5d run exec --engine <name>` executes an approved command template from `.s5d/config.yaml`, captures stdout/stderr under `.s5d/runs/`, and records the output hash in `.record.yaml`
+- `s5d run task --engine ralph [--mode init|bugfix]` emits a bounded task package for the active work state only
+- each `run task` call persists the package under `.s5d/tasks/`
+- engine completion does not accept the work; human `run accept` remains explicit
+- `s5d run harness start/status/exec` adds the operational layer: isolated git worktree, clean preflight, heartbeat/status, timeout, and journal under `.s5d/harness/`
+- harness state is not run truth; `.record.yaml` remains authoritative for active work state, evidence, gates, and approvals
 - `s5d discover sync/check` builds `.s5d/discovery/*`: file index, evidence JSONL, graph JSON, and a metamodel projection. The core is stack-agnostic; language parsers can be added later as optional evidence providers.
 - `ralph-init` warms repo context from docs, tests, environment setup, and current test results
 - `ralph-bugfix` enforces regression-first bugfix execution with explicit root-cause evidence
-- `s5d apply reflect --verdict --measurement-window --telemetry` records outcome evidence after rollout
+- `s5d state reflect --verdict --measurement-window --telemetry` records outcome evidence after rollout
 
-Legacy aliases such as `s5d validate`, `s5d preview`, `s5d execute loop`, `s5d harness start`, `s5d update check`, and `s5d install` remain callable for existing scripts, but the grouped commands are the public surface shown in `s5d --help`.
+Legacy aliases such as `s5d validate`, `s5d preview`, `s5d apply preview`, `s5d phase run`, `s5d execute loop`, `s5d harness start`, `s5d update check`, and `s5d install` remain callable for existing scripts, but the public surface shown in `s5d --help` uses `verify`, `state`, `run`, and `admin`.
 
 ## Non-goals
 
@@ -138,7 +130,6 @@ Schema, graph, and architecture gates run built-in validation. Add `architecture
 - `skills/s5d/SKILL.md` — command reference and flow
 - `skills/s5d/metamodel.md` — artifact definitions and validation rules
 - `skills/s5d/session-protocol.md` — WAL format, conflict resolution
-- `docs/s5d-v2-workflow-spec.md` — workflow-shell target state and rollout plan
 
 ## License
 

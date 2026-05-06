@@ -319,7 +319,7 @@ fn core_tools() -> Vec<Value> {
         }),
         json!({
             "name": "s5d_phase_list",
-            "description": "List workflow phases and current phase state for a spec",
+            "description": "List executable work states and the current active state for a spec",
             "inputSchema": {
                 "type": "object",
                 "required": ["spec"],
@@ -330,38 +330,38 @@ fn core_tools() -> Vec<Value> {
         }),
         json!({
             "name": "s5d_phase_start",
-            "description": "Mark a workflow phase as active",
+            "description": "Mark an executable work state as active",
             "inputSchema": {
                 "type": "object",
                 "required": ["spec", "phase_id"],
                 "properties": {
                     "spec": {"type": "string", "description": "Path to .s5d.yaml file"},
-                    "phase_id": {"type": "string", "description": "Workflow phase ID"}
+                    "phase_id": {"type": "string", "description": "Work state ID"}
                 }
             }
         }),
         json!({
             "name": "s5d_phase_accept",
-            "description": "Record human phase acceptance for an active workflow phase",
+            "description": "Record human acceptance for an active work state",
             "inputSchema": {
                 "type": "object",
                 "required": ["spec", "phase_id", "reviewer"],
                 "properties": {
                     "spec": {"type": "string", "description": "Path to .s5d.yaml file"},
-                    "phase_id": {"type": "string", "description": "Workflow phase ID"},
-                    "reviewer": {"type": "string", "description": "Reviewer who accepts the phase"}
+                    "phase_id": {"type": "string", "description": "Work state ID"},
+                    "reviewer": {"type": "string", "description": "Reviewer who accepts the run evidence"}
                 }
             }
         }),
         json!({
             "name": "s5d_execute_loop",
-            "description": "Emit a bounded Ralph task package for an active workflow phase",
+            "description": "Emit a bounded Ralph task package for an active work state",
             "inputSchema": {
                 "type": "object",
                 "required": ["spec", "phase_id"],
                 "properties": {
                     "spec": {"type": "string", "description": "Path to .s5d.yaml file"},
-                    "phase_id": {"type": "string", "description": "Workflow phase ID"},
+                    "phase_id": {"type": "string", "description": "Work state ID"},
                     "engine": {"type": "string", "description": "Execution engine name (default: ralph)"},
                     "mode": {"type": "string", "description": "Optional Ralph run mode: init, bugfix, or generic"}
                 }
@@ -1423,7 +1423,7 @@ fn workflow_phase_by_id_mcp<'a>(
         .phases
         .iter()
         .find(|p| p.id == phase_id)
-        .ok_or_else(|| anyhow::anyhow!("workflow phase not found: {}", phase_id))
+        .ok_or_else(|| anyhow::anyhow!("work state not found: {}", phase_id))
 }
 
 fn latest_phase_status_mcp(record: &crate::Record, phase_id: &str) -> crate::WorkflowPhaseStatus {
@@ -1542,12 +1542,12 @@ fn tool_s5d_phase_start(args: &Value) -> anyhow::Result<String> {
             .execution_mode
             .as_ref()
             .map(|mode| mode.engine.clone()),
-        Some(format!("Started phase '{}'", phase.title)),
+        Some(format!("Started work state '{}'", phase.title)),
     );
     project.save_record(&spec_filename, &record)?;
 
     Ok(format!(
-        "Active phase -> {}\nScope: {}",
+        "Active work state -> {}\nScope: {}",
         phase_id, phase.scope
     ))
 }
@@ -1587,7 +1587,7 @@ fn tool_s5d_phase_accept(args: &Value) -> anyhow::Result<String> {
         crate::WorkflowPhaseStatus::Accepted,
         Some(reviewer.to_string()),
         None,
-        Some("Human phase acceptance".into()),
+        Some("Human run evidence acceptance".into()),
     );
     project.save_record(&spec_filename, &record)?;
 

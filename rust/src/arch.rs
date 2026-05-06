@@ -2,7 +2,7 @@ use crate::models::*;
 use regex::Regex;
 use serde::Serialize;
 use std::collections::{HashMap, HashSet};
-use std::path::{Path, PathBuf};
+use std::path::{Component as PathComponent, Path, PathBuf};
 
 #[derive(Debug, Clone, Serialize)]
 pub struct ArchitectureCheckReport {
@@ -61,6 +61,13 @@ pub fn architecture_check(
     for component in &artifacts.components {
         let mut matched_files = Vec::new();
         for pattern in &component.paths {
+            if component_path_escapes_project(pattern) {
+                report.errors.push(format!(
+                    "source: component '{}' path '{}' escapes the project root. Fix: use a relative source path under the repository.",
+                    component.id, pattern
+                ));
+                continue;
+            }
             let files = resolve_component_path(project_root, pattern)?;
             if files.is_empty() {
                 report.errors.push(format!(
@@ -179,6 +186,13 @@ pub fn architecture_check(
 }
 
 fn resolve_component_path(project_root: &Path, pattern: &str) -> anyhow::Result<Vec<PathBuf>> {
+    if component_path_escapes_project(pattern) {
+        anyhow::bail!(
+            "component path '{}' escapes the project root; use a relative source path",
+            pattern
+        );
+    }
+
     let mut files = Vec::new();
     let full_pattern = project_root.join(pattern);
 
@@ -194,6 +208,18 @@ fn resolve_component_path(project_root: &Path, pattern: &str) -> anyhow::Result<
     files.sort();
     files.dedup();
     Ok(files)
+}
+
+fn component_path_escapes_project(pattern: &str) -> bool {
+    pattern.is_empty()
+        || pattern.contains('\0')
+        || Path::new(pattern).is_absolute()
+        || Path::new(pattern).components().any(|component| {
+            matches!(
+                component,
+                PathComponent::ParentDir | PathComponent::RootDir | PathComponent::Prefix(_)
+            )
+        })
 }
 
 fn collect_source_files(path: &Path, files: &mut Vec<PathBuf>) -> anyhow::Result<()> {

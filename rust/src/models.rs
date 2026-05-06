@@ -692,10 +692,10 @@ impl Phase {
         match self {
             Phase::Scaffold => "Run: s5d new <id> --tier <tier> — create a spec scaffold",
             Phase::Synthesize => "Run: s5d add-hypothesis <spec> — add at least 3 hypotheses",
-            Phase::Preview => "Run: s5d preview <spec> — dry-run the import",
-            Phase::Approve => "Run: s5d approve <spec> --reviewer <name>",
-            Phase::Execute => "Run: s5d import <spec> — execute the approved spec",
-            Phase::Verify => "Run: s5d run-gates <spec> — verify all gates pass",
+            Phase::Preview => "Run: s5d state preview <spec> — dry-run the import",
+            Phase::Approve => "Run: s5d state approve <spec> --reviewer <name>",
+            Phase::Execute => "Run: s5d state import <spec> — execute the approved spec",
+            Phase::Verify => "Run: s5d verify run-gates <spec> — verify all gates pass",
             Phase::Learn => "Record reflection: what worked, what didn't, follow-ups",
         }
     }

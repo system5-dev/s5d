@@ -135,7 +135,7 @@ pub fn check_approve(record: &Option<Record>) -> Vec<PhaseCheck> {
     let has_preview = record.as_ref().is_some_and(|r| r.preview.is_some());
     checks.push(PhaseCheck::structural(
         has_preview,
-        "preview required before approval — SHA256 chain integrity depends on preview. Run `s5d preview` first",
+        "preview required before approval — SHA256 chain integrity depends on preview. Run `s5d state preview` first",
     ));
 
     checks
@@ -149,7 +149,7 @@ pub fn check_import(record: &Option<Record>, verified_by: &str) -> Vec<PhaseChec
     let has_approval = record.as_ref().is_some_and(|r| !r.approvals.is_empty());
     checks.push(PhaseCheck::structural(
         has_approval,
-        "spec must be approved before import — run `s5d approve` first",
+        "spec must be approved before import — run `s5d state approve` first",
     ));
 
     checks.push(PhaseCheck::structural(

@@ -378,6 +378,14 @@ mod tests {
                     },
                     Binding {
                         fields: [
+                            ("component".into(), "notif-dispatcher".into()),
+                            ("capability".into(), "send-notification".into()),
+                        ]
+                        .into_iter()
+                        .collect::<HashMap<_, _>>(),
+                    },
+                    Binding {
+                        fields: [
                             ("component".into(), "pref-handler".into()),
                             ("capability".into(), "manage-preferences".into()),
                         ]
@@ -640,6 +648,15 @@ mod tests {
                 paths: vec!["src/handler.rs".into()],
             });
         }
+        let links = spec.links.get_or_insert_with(Links::default);
+        links.component_to_capability.push(Binding {
+            fields: [
+                ("component".into(), "comp.handler".into()),
+                ("capability".into(), "cap.DoThing".into()),
+            ]
+            .into_iter()
+            .collect::<HashMap<_, _>>(),
+        });
     }
 
     #[test]
@@ -807,8 +824,8 @@ mod tests {
         );
         assert_eq!(
             links.component_to_capability.len(),
-            3,
-            "expected 3 component_to_capability"
+            4,
+            "expected 4 component_to_capability"
         );
         assert_eq!(
             links.component_to_entity.len(),
