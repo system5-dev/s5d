@@ -82,14 +82,14 @@ fn docs_state_existing_codebase_scope() {
 }
 
 #[test]
-fn workflow_shell_commands_are_documented() {
+fn agent_run_commands_are_documented() {
     let readme = read_repo_file("README.md");
     let skill = read_repo_file("skills/s5d/SKILL.md");
 
     for term in [
-        "s5d phase start",
-        "s5d phase run",
-        "s5d execute loop",
+        "s5d run start",
+        "s5d run exec",
+        "s5d run task",
         "--verdict",
         "--measurement-window",
         "--telemetry",
@@ -98,9 +98,9 @@ fn workflow_shell_commands_are_documented() {
         "ralph-init",
         "ralph-bugfix",
         ".s5d/runs/",
-        "s5d harness start",
-        "s5d harness status",
-        "s5d harness exec",
+        "s5d run harness start",
+        "s5d run harness status",
+        "s5d run harness exec",
         ".s5d/harness/",
     ] {
         assert!(

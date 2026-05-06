@@ -125,7 +125,7 @@ pub fn build_ralph_task_package(
     push_bullets(&mut out, "Done Definition", preset_done_definition(preset));
 
     let mut evidence_package = vec![
-        "Diff scoped to the active phase only".to_string(),
+        "Diff scoped to the active work state only".to_string(),
         "Notes that explain non-obvious trade-offs and reviewer handoff".to_string(),
         "Evidence that acceptance criteria are satisfied".to_string(),
     ];
@@ -147,10 +147,10 @@ pub fn build_ralph_task_package(
 
     let mut escalations = vec![
         "Target architecture must change".to_string(),
-        "Phase scope must expand".to_string(),
+        "Work-state scope must expand".to_string(),
         "New roles or dependencies are required".to_string(),
         "A stop condition fires before acceptance".to_string(),
-        "Evidence package cannot support a human phase acceptance".to_string(),
+        "Evidence package cannot support human run acceptance".to_string(),
     ];
     escalations.extend(
         preset_escalations(preset)
@@ -206,7 +206,9 @@ fn push_bullets(out: &mut String, title: &str, bullets: &[impl AsRef<str>]) {
 
 fn preset_required_inputs(preset: RalphPreset) -> &'static [&'static str] {
     match preset {
-        RalphPreset::Generic => &["Approved spec, active phase, and the current repository state"],
+        RalphPreset::Generic => {
+            &["Approved spec, active work state, and the current repository state"]
+        }
         RalphPreset::Init => &[
             "Repository root with docs, code, and tests available",
             "Documented setup path or CI hints for the dev environment",
@@ -214,7 +216,7 @@ fn preset_required_inputs(preset: RalphPreset) -> &'static [&'static str] {
         RalphPreset::Bugfix => &[
             "Clear bug statement: expected vs actual behavior",
             "Reproduction path, failing scenario, or issue text",
-            "Scope small enough to stay inside the active phase boundary",
+            "Scope small enough to stay inside the active work-state boundary",
         ],
     }
 }
@@ -222,7 +224,7 @@ fn preset_required_inputs(preset: RalphPreset) -> &'static [&'static str] {
 fn preset_runbook(preset: RalphPreset) -> &'static [&'static str] {
     match preset {
         RalphPreset::Generic => &[
-            "Work only inside the approved phase scope",
+            "Work only inside the approved work-state scope",
             "Preserve target architecture and stop on architecture drift",
             "Produce an evidence package instead of claiming the work is done",
         ],

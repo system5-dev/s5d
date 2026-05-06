@@ -1,4 +1,5 @@
 use crate::models::*;
+use std::path::{Component as PathComponent, Path};
 
 pub fn validate_spec(spec: &Spec) -> Vec<String> {
     let mut errors = Vec::new();
@@ -140,6 +141,9 @@ pub fn validate_spec(spec: &Spec) -> Vec<String> {
                     "component {}: paths is required and must not be empty",
                     c.id
                 ));
+            }
+            for path in &c.paths {
+                validate_component_path(&c.id, path, &mut errors);
             }
         }
         for r in &artifacts.roles {
@@ -314,6 +318,8 @@ pub fn validate_spec(spec: &Spec) -> Vec<String> {
             }
         }
     }
+
+    validate_component_capability_traceability(spec, &mut errors);
 
     if let Some(ref links) = spec.links {
         let transport_ids: std::collections::HashSet<&str> = spec
@@ -691,6 +697,54 @@ pub fn validate_spec(spec: &Spec) -> Vec<String> {
     }
 
     errors
+}
+
+fn validate_component_path(component_id: &str, path: &str, errors: &mut Vec<String>) {
+    let invalid = path.is_empty()
+        || path.contains('\0')
+        || Path::new(path).is_absolute()
+        || Path::new(path).components().any(|component| {
+            matches!(
+                component,
+                PathComponent::ParentDir | PathComponent::RootDir | PathComponent::Prefix(_)
+            )
+        });
+
+    if invalid {
+        errors.push(format!(
+            "component {component_id}: path '{path}' must be a relative source path under the project root (no absolute paths, '..', or null bytes)"
+        ));
+    }
+}
+
+fn validate_component_capability_traceability(spec: &Spec, errors: &mut Vec<String>) {
+    let Some(artifacts) = spec.artifacts.as_ref() else {
+        return;
+    };
+    if artifacts.components.is_empty() || artifacts.capabilities.is_empty() {
+        return;
+    }
+
+    let linked_components: std::collections::HashSet<&str> = spec
+        .links
+        .as_ref()
+        .map(|links| {
+            links
+                .component_to_capability
+                .iter()
+                .filter_map(|binding| binding.fields.get("component").map(String::as_str))
+                .collect()
+        })
+        .unwrap_or_default();
+
+    for component in &artifacts.components {
+        if !linked_components.contains(component.id.as_str()) {
+            errors.push(format!(
+                "architecture: component '{}' is not linked to any capability via links.component_to_capability — code cannot trace to target state",
+                component.id
+            ));
+        }
+    }
 }
 
 fn validate_workflow(workflow: &Workflow, errors: &mut Vec<String>) {

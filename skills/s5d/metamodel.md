@@ -305,7 +305,7 @@ Code module implementing capabilities. All five structural fields are required �
 | `feature` | string | **required** — parent feature id |
 | `container` | string | **required** — parent container id |
 | `name` | string | **required** |
-| `paths` | `Vec<String>` | **required** — source paths relative to repo root |
+| `paths` | `Vec<String>` | **required** — source paths relative to repo root; absolute paths, parent traversal (`..`), and null bytes are invalid |
 
 Component has no `capabilities[]` or `entities[]` fields. Binding to capabilities and entities happens through the `links` section (`component_to_capability`, `component_to_entity` link kinds), not via direct fields on the component.
 
@@ -566,7 +566,7 @@ S5D's lifecycle stages map onto the FPF reasoning kernel:
 
 ### Gate Kinds
 - Valid kinds: `schema`, `graph`, `architecture`, `review`, `contract`, `lint`, `test`, `typecheck`, `policy`
-- `architecture` is built in: it validates the spec/graph first, checks that `components[].paths` resolve to source files, rejects overlapping component ownership, and requires cross-domain source imports to be represented by `links.edges`.
+- `architecture` is built in: it validates the spec/graph first, checks that `components[].paths` stay under the repo root and resolve to source files, rejects overlapping component ownership, and requires cross-domain source imports to be represented by `links.edges`.
 - `review` is built in: it validates that review evidence exists (`evidence_type=gate:review`, `verdict=pass`).
 - `.s5d/codebase/modules.yaml` and `.s5d/codebase/coverage.yaml` are optional coverage snapshots. `s5d codebase sync` rebuilds them from source files and component paths; `s5d codebase check` fails when the snapshot is stale.
 
@@ -603,6 +603,12 @@ forall edge in edges:
 
 forall binding in links.component_to_capability:
   component(binding.component).domain == capability(binding.capability).domain
+
+forall component in components where capabilities.len() > 0:
+  exists binding in links.component_to_capability where binding.component == component.id
+
+forall path in components[].paths:
+  path is relative to repo root AND path does not contain '..' or null bytes
 
 features.len() == 1 AND features[0].id == spec.id
 
