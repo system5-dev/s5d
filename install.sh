@@ -69,25 +69,10 @@ if [ -d "${HOME}/.claude" ] || command -v claude &>/dev/null; then
     echo "✓ Skills linked for Claude Code (~/.claude/skills/)"
 fi
 
-# Codex CLI
-if [ -d "${HOME}/.codex" ] || command -v codex &>/dev/null; then
-    mkdir -p "${HOME}/.codex/skills"
-    cleanup_retired_skills "${HOME}/.codex/skills"
-    for skill in $SKILLS; do
-        link_skill "${HOME}/.codex/skills" "$skill"
-    done
-    echo "✓ Skills linked for Codex CLI (~/.codex/skills/)"
-fi
-
-# Gemini CLI
-if [ -d "${HOME}/.gemini" ] || command -v gemini &>/dev/null; then
-    mkdir -p "${HOME}/.gemini/skills"
-    cleanup_retired_skills "${HOME}/.gemini/skills"
-    for skill in $SKILLS; do
-        link_skill "${HOME}/.gemini/skills" "$skill"
-    done
-    echo "✓ Skills linked for Gemini CLI (~/.gemini/skills/)"
-fi
+# Codex CLI + Gemini CLI: skipped intentionally — both read ~/.agents/skills
+# natively. Duplicating into ~/.codex/skills and ~/.gemini/skills triggers
+# "Skill conflict detected" warnings via double-load. Use codex-plugin /
+# gemini-extension.json manifests for native discovery instead.
 
 # Diana
 if [ -d "${HOME}/.diana/src/skills" ]; then
