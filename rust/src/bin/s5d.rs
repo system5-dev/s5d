@@ -2398,12 +2398,10 @@ fn install_skills_from_repo(repo_root: &std::path::Path) -> anyhow::Result<()> {
     if home.join(".claude").is_dir() {
         targets.push(home.join(".claude/skills"));
     }
-    if home.join(".codex").is_dir() {
-        targets.push(home.join(".codex/skills"));
-    }
-    if home.join(".gemini").is_dir() {
-        targets.push(home.join(".gemini/skills"));
-    }
+    // Codex + Gemini: skipped — both read ~/.agents/skills natively.
+    // Duplicating into ~/.codex/skills or ~/.gemini/skills triggers
+    // "Skill conflict detected" warnings via double-load. Use codex-plugin /
+    // gemini-extension.json manifests for native discovery.
     if home.join(".diana/src/skills").is_dir() {
         targets.push(home.join(".diana/src/skills"));
     }
