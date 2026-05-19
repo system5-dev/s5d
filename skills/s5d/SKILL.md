@@ -55,6 +55,54 @@ These cannot be done from the CLI; the schema is only registered with the MCP se
 
 ---
 
+## Worked Example
+
+Decision-first, feature-second path. Copy and adapt — this is the canonical shape new agents should reach for before any deep reading.
+
+```bash
+# 1. Bootstrap + decision skeleton
+s5d init
+s5d new decision.refresh-rotation --tier decision --product auth \
+  --question "How should refresh tokens rotate?"
+
+# 2. Hypotheses + evidence
+s5d decision add-hypothesis <spec> --title "Server-side rotation" \
+  --content "Rotate on every refresh, persist token family state" --scope "auth boundary"
+s5d decision add-evidence <spec> --hypothesis-id server-side-rotation \
+  --evidence-type internal --content "Revocation lookup <5ms at p95" \
+  --verdict pass --formality 4 --claim-scope latency --reliability 0.8
+
+# 3. Feature spec linked to winner
+s5d new feat.refresh-rotation --tier standard --product auth \
+  --hypothesis-id server-side-rotation
+
+# 4. Validate + decide + preview
+s5d verify validate <feature-spec>
+s5d verify graph-check <feature-spec>
+s5d decision decide <decision-spec> --title "Use server-side rotation" \
+  --winner server-side-rotation --confirmed-by Roman \
+  --context "Revocation correctness > token statelessness" \
+  --decision "Adopt server-side rotation" \
+  --rationale "Best revocation/complexity balance" \
+  --consequences "Needs persistent token-family store"
+s5d state preview <feature-spec>
+# → WAL: status=AWAITING_HUMAN, pending=approve
+
+# 5. After human approval: approve → build → gates → import → verify
+s5d state approve <feature-spec> --reviewer Roman
+# implement code
+s5d verify run-gates <feature-spec>
+s5d state import <feature-spec> --verified-by Diana
+
+# 6. Ship (explicit human permission for push/deploy)
+
+# 7. Learn
+s5d state reflect <feature-spec> --summary "Shipped cleanly" \
+  --heuristic "Link winner to feature spec before decide"
+```
+
+Hidden legacy CLI aliases such as `s5d add-hypothesis`, `s5d validate`, `s5d apply preview`, `s5d phase run`, `s5d execute loop`, and `s5d harness start` remain supported for existing scripts, but the grouped forms above are the canonical surface.
+
 ---
 
 ## Scope
@@ -244,56 +292,6 @@ Ralph run modes stay runtime-only for now:
 | Verify applied state | `s5d_drift_check` / `s5d state drift-check` | Compares live state to last applied fingerprint. Legacy aliases: `s5d drift-check`, `s5d apply drift-check`. |
 | Fix drifted state | `s5d_reconcile` / `s5d state reconcile` | Re-imports without re-approval. Legacy aliases: `s5d reconcile`, `s5d apply reconcile`. |
 | Undo import | `s5d_rollback` / `s5d state rollback` | Tombstones last import for that spec. Legacy aliases: `s5d rollback`, `s5d apply rollback`. |
-
----
-
-## Worked Example
-
-Decision-first, feature-second path:
-
-```bash
-# 1. Bootstrap + decision skeleton
-s5d init
-s5d new decision.refresh-rotation --tier decision --product auth \
-  --question "How should refresh tokens rotate?"
-
-# 2. Hypotheses + evidence
-s5d decision add-hypothesis <spec> --title "Server-side rotation" \
-  --content "Rotate on every refresh, persist token family state" --scope "auth boundary"
-s5d decision add-evidence <spec> --hypothesis-id server-side-rotation \
-  --evidence-type internal --content "Revocation lookup <5ms at p95" \
-  --verdict pass --formality 4 --claim-scope latency --reliability 0.8
-
-# 3. Feature spec linked to winner
-s5d new feat.refresh-rotation --tier standard --product auth \
-  --hypothesis-id server-side-rotation
-
-# 4. Validate + decide + preview
-s5d verify validate <feature-spec>
-s5d verify graph-check <feature-spec>
-s5d decision decide <decision-spec> --title "Use server-side rotation" \
-  --winner server-side-rotation --confirmed-by Roman \
-  --context "Revocation correctness > token statelessness" \
-  --decision "Adopt server-side rotation" \
-  --rationale "Best revocation/complexity balance" \
-  --consequences "Needs persistent token-family store"
-s5d state preview <feature-spec>
-# → WAL: status=AWAITING_HUMAN, pending=approve
-
-# 5. After human approval: approve → build → gates → import → verify
-s5d state approve <feature-spec> --reviewer Roman
-# implement code
-s5d verify run-gates <feature-spec>
-s5d state import <feature-spec> --verified-by Diana
-
-# 6. Ship (explicit human permission for push/deploy)
-
-# 7. Learn
-s5d state reflect <feature-spec> --summary "Shipped cleanly" \
-  --heuristic "Link winner to feature spec before decide"
-```
-
-Hidden legacy CLI aliases such as `s5d add-hypothesis`, `s5d validate`, `s5d apply preview`, `s5d phase run`, `s5d execute loop`, and `s5d harness start` remain supported for existing scripts, but the grouped forms above are the canonical surface.
 
 ---
 
