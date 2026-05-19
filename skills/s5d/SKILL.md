@@ -27,11 +27,33 @@ Route → Target → Decide → Spec → Run → Verify → Ship → Learn
 
 Applies only to work grounded in an existing repository. No codebase, no S5D.
 
-**Reference docs** (read when needed, not upfront):
-- [metamodel.md](metamodel.md) — abstract metamodel: concepts, relations, enums, constraints
+**Reference docs:**
+- [metamodel.md](metamodel.md) — **read §Complete Artifact Definitions BEFORE writing your first spec.** Required-field cascade is documented per artifact; skipping this reference costs about an hour of validator-bounce.
 - [domain-capability-mode.md](domain-capability-mode.md) — Product Intent → domain/capability design → implementation scope mode
 - [session-protocol.md](session-protocol.md) — WAL format, spec:// URI, REVIEW markers, conflicts, effectiveness metrics
 - [references/fpf/](references/fpf/) — FPF (First Principles Framework) modular corpus. Load via `references/fpf/agent/load-policy.md`: start with `entrypoints.yaml` / `glossary.yaml` / `query-index.jsonl`, then load 1–5 cards from `cards/`, expand to a full `modules/*.md` only when exact wording is needed. Cite by module id + source span (e.g. `B.5.2:13.3`).
+
+---
+
+## Common Gotchas
+
+Hard-learned during real sessions. Skim before writing your first spec.
+
+- **Quote any string that contains `:`** when it lives inside a YAML list. `- Backward compat: foo` is parsed as a one-key map, not a string, and the validator dies with `data did not match any variant of untagged enum ProblemField` blaming a totally unrelated section. Either reword (use `—` instead of `:`) or quote: `- "Backward compat: foo"`.
+- **Required-field cascade.** Adding a `component` requires `feature` + `domain` + `container` + `paths`. Adding a `domain` requires `product` + `classification` (`core` / `supporting` / `generic`). `capability` requires `domain`. `container` requires `system` + `technology`. `contract.binds_to` must be non-empty. `contract.format` is an enum: `openapi` / `json_schema` / `protobuf` / `typespec` — nothing else passes. All of this is in `metamodel.md`; reading it once up front beats discovering it one error at a time.
+- **`structure_outline` is an object, not a string.** Shape: `{ summary: string, signatures: [string], types: [string] }`. Signatures and types are plain-string lists, one declaration per entry.
+- **Edit-after-approve invalidates approval.** Any change to a spec file after `s5d state approve` changes its sha256 and `s5d state import` refuses with a hash mismatch. Recovery: `s5d state preview <spec>` → `s5d state approve` again → `s5d state import`. Plan to do all edits in one batch before approve.
+- **`verified-by` ≠ `reviewer`.** Import requires a verifier whose name differs from the approver. Conventional split: human approves, Diana verifies. `--force` overrides, but only when the trust-separation claim genuinely doesn't apply.
+- **gate:review on standard / high tier closes via waiver, not evidence.** `s5d decision add-evidence --evidence-type gate:review` only works on decision-tier specs. For standard / high feat specs the only path is `s5d_waiver` — **MCP-only, no CLI**. Either add a tribunal-grade evidence note to satisfy the gate retroactively, or accept the spec stays in `approved` (not `applied`) until a waiver lands.
+- **Decide requires ≥3 hypotheses.** Two-hypothesis decisions are blocked unless you pass `--force`. The CLAUDE.md FPF baseline says "2-3"; S5D enforces the upper end. Generate a third genuinely-distinct option, even when the choice feels binary — it tends to surface what you actually compared against.
+
+### MCP-only operations
+
+These cannot be done from the CLI; the schema is only registered with the MCP server. If the CLI command appears to be missing, this is why.
+
+- `s5d_waiver` — waive a gate (only path for gate:review on standard / high tier specs)
+
+---
 
 ---
 
