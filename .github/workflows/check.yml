@@ -1,0 +1,91 @@
+name: Check
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache cargo registry + target
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            rust/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('rust/Cargo.lock') }}
+      - name: cargo fmt --check
+        working-directory: rust
+        run: cargo fmt --all -- --check
+      - name: cargo clippy
+        working-directory: rust
+        run: cargo clippy --all-targets -- -D warnings
+      - name: cargo test
+        working-directory: rust
+        run: cargo test --all
+
+  architecture-lint:
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache cargo registry + target
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            rust/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('rust/Cargo.lock') }}
+      - name: Build s5d from source
+        working-directory: rust
+        run: cargo build --release --bin s5d
+      - name: Add s5d to PATH
+        run: echo "${{ github.workspace }}/rust/target/release" >> $GITHUB_PATH
+      # Validate every spec under .s5d/packages against the schema.
+      - name: s5d validate (all specs)
+        run: |
+          set -e
+          shopt -s nullglob
+          fail=0
+          for spec in .s5d/packages/*.s5d.yaml; do
+            echo "::group::$spec"
+            if ! s5d validate "$spec"; then
+              fail=1
+            fi
+            echo "::endgroup::"
+          done
+          exit "$fail"
+      # Architecture check: source-to-spec component coverage + graph rules
+      # for every spec that declares an `architecture` gate.
+      - name: s5d check (architecture)
+        run: |
+          set -e
+          shopt -s nullglob
+          fail=0
+          for spec in .s5d/packages/*.s5d.yaml; do
+            # Only run on specs whose YAML mentions an `architecture` gate
+            # — avoids spurious "no architecture defined" failures on specs
+            # that intentionally don't gate on it.
+            if grep -q 'kind:[[:space:]]*architecture' "$spec"; then
+              echo "::group::$spec"
+              if ! s5d check --format text "$spec"; then
+                fail=1
+              fi
+              echo "::endgroup::"
+            fi
+          done
+          exit "$fail"
+      # Drift check: every approved spec must still match the source.
+      - name: s5d drift-check
+        run: s5d drift-check
