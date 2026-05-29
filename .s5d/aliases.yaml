@@ -71,6 +71,12 @@ global:
   package_id: null
   owning_package: feat.s5d.generic-skill-suite
   deprecated: false
+- uuid: 035f68f0-cd7a-4f5a-a084-a962d0f97a06
+  artifact_id: skill-distribution
+  artifact_type: Domain
+  package_id: null
+  owning_package: feat.s5d.skill-suite-integration
+  deprecated: false
 packages:
 - uuid: 0d3f4abc-8b28-422f-ba12-3bdb515b33ac
   artifact_id: cap.LogError
@@ -394,5 +400,23 @@ packages:
   artifact_id: cmp.s5d.skill-plugin-manifests
   artifact_type: Component
   package_id: feat.s5d.generic-skill-suite
+  owning_package: null
+  deprecated: false
+- uuid: 5f984505-33b8-47ad-94b8-e4d55402ee67
+  artifact_id: ship-skill-suite
+  artifact_type: Capability
+  package_id: feat.s5d.skill-suite-integration
+  owning_package: null
+  deprecated: false
+- uuid: 88946663-5e1e-43c3-8740-d08b83561dea
+  artifact_id: cli-mediated-emit
+  artifact_type: Capability
+  package_id: feat.s5d.skill-suite-integration
+  owning_package: null
+  deprecated: false
+- uuid: 02bf806b-0133-47eb-8950-4e394183ead9
+  artifact_id: feat.s5d.skill-suite-integration
+  artifact_type: Feature
+  package_id: feat.s5d.skill-suite-integration
   owning_package: null
   deprecated: false

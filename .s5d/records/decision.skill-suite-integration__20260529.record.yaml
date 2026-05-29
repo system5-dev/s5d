@@ -1,0 +1,43 @@
+spec_ref: decision.skill-suite-integration__20260529.s5d.yaml
+spec_sha256: sha256:60cc2ae96f520a1cc6080698c652e000bce41e6ea402429441928e0f7e66e8d6
+status: proposed
+sync_status: unknown
+status_history:
+- status: proposed
+  timestamp: 2026-05-29T14:49:38.819623+00:00
+active_phase: null
+phase_history: []
+phase_runs: []
+approvals: []
+preview: null
+reflection: null
+gate_results: []
+decision:
+  title: Ship the 9 skills via CLI-mediated S5D wiring; defer schema extension
+  winner_id: cli-mediated-wiring-skills-emit-consume-s5d-through-the-existing-contract
+  rejected_ids:
+  - thin-packaging-co-locate-and-ship-keep-file-based-coupling-as-is
+  - schema-extension-first-class-skill-provenance-checkpoints-in-the-data-model
+  context: 9 generic stack-agnostic skills in gigsure's .claude/skills/ already touch S5D semantics. S5D currently ships one skill. Roman wants them shipped first-class with semantic wiring so skills make decisions/checkpoints inside S5D's ecosystem.
+  decision: Co-locate all 9 skills under skills/, extend install.sh SKILLS list + Claude/Codex plugin manifests (Gemini unaffected), AND route producer skills (system-design, domain-refactor, security-scan) through the existing s5d CLI/MCP contract instead of hand-rolling YAML. No schema extension now; H3 deferred behind a concrete trace/query need.
+  rationale: H2 matches Roman's intent, uses the existing contract (zero backward-compat risk on operated specs), only gap (acceptance injection) is small. H1 ships the fragility S5D exists to prevent; H3 is a solution without a proven need.
+  consequences: Producer skills gain a dependency on the s5d CLI (ships with suite; needs graceful degradation). scenario-mine acceptance path may need a small verb or stays file-based (WLNK). install.sh multi-skill loop exercised for the first time. H3 deferred.
+  decided_at: 2026-05-29T16:27:37.807620+00:00
+  confirmed_by: Roman
+  expires_at: 2026-08-27
+  do_list: []
+  dont_list: []
+  challenge:
+    mode: standard
+    passed: true
+    summary: '5 probes on H2: (1) counter — direct YAML works today, but shipping schema-drifting skills under S5D''s name contradicts S5D''s core value (validation); CLI mediation is the point. (2) tail failure — s5d not on PATH: suite ships with the CLI and skills already assume it (gigsure hooks call `s5d hook`); degrade to file-write+warning. (3) evidence weakness — acceptance-injection gap is [INFERRED], not exhaustively grepped; verify at implementation. (4) WLNK — scenario-mine acceptance path is the one uncovered link; acceptable to keep file-based or add a ~30 LOC verb. (5) alternatives — H1 ships fragility, H3 premature. No fatal flaw; H2 holds.'
+    checks: []
+  decision_subject: null
+  decision_subject_granularity: null
+  evaluative_surface: null
+  belief_state: null
+  outcome_model: null
+  pareto_set: []
+  choice_rule: null
+verified_by: null
+drift_tolerance: null

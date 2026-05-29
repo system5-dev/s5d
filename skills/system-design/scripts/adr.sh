@@ -51,16 +51,129 @@ YAML="$DECISIONS_DIR/${COMMODITY}.yaml"
 # Pull the chosen variant's metadata (name, kind, notes) via python.
 command -v python3 >/dev/null 2>&1 || { echo "python3 required" >&2; exit 2; }
 
-# Default output path follows s5d conventions
 DEC_ID="decision.${COMMODITY}-choice"
-[ -z "$OUTPUT" ] && OUTPUT=".s5d/packages/${DEC_ID}.s5d.yaml"
-
-mkdir -p "$(dirname "$OUTPUT")"
-
-NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 PRODUCT=$(basename "$(pwd)")
 
-VARIANT_BLOB=$(python3 - "$YAML" "$CHOSEN" <<'PYEOF'
+# ── s5d CLI path ───────────────────────────────────────────────────────────────
+
+if command -v s5d >/dev/null 2>&1; then
+    # Create the spec scaffold via the real CLI.
+    QUESTION="Which ${COMMODITY} variant should we use, given the constraints captured during the system-design interview?"
+    S5D_NEW_OUT=$(s5d new "$DEC_ID" --tier decision --product "$PRODUCT" --question "$QUESTION" 2>&1)
+    SPEC_PATH=$(printf '%s\n' "$S5D_NEW_OUT" | grep "^ok Created spec:" | sed 's/^ok Created spec: //')
+
+    if [ -z "$SPEC_PATH" ]; then
+        echo "error: s5d new did not emit a spec path. Output was:" >&2
+        echo "$S5D_NEW_OUT" >&2
+        exit 1
+    fi
+
+    # Extract all variant ids from the commodity yaml, winner first, then rejected.
+    # For each variant: pull name and notes for --title and --content.
+    python3 - "$YAML" "$CHOSEN" "$SPEC_PATH" <<'PYEOF'
+import sys, subprocess, re
+
+yaml_file, chosen, spec_path = sys.argv[1], sys.argv[2], sys.argv[3]
+
+with open(yaml_file) as f:
+    text = f.read()
+
+# Parse variant blocks: collect (id, name, kind, notes) for each variant.
+variants = []
+lines = text.split('\n')
+i = 0
+while i < len(lines):
+    stripped = lines[i].lstrip()
+    if stripped.startswith('- id:'):
+        vid = stripped.split(':', 1)[1].strip()
+        vname = ''
+        vkind = ''
+        vnotes_lines = []
+        j = i + 1
+        indent_base = len(lines[i]) - len(stripped)
+        in_notes = False
+        notes_indent = None
+        while j < len(lines):
+            s = lines[j].lstrip()
+            cur_indent = len(lines[j]) - len(s) if lines[j].strip() else 999
+            # Next top-level variant item?
+            if lines[j].strip() and cur_indent <= indent_base and s.startswith('- '):
+                break
+            # Top-level section outside variants list?
+            if lines[j].strip() and cur_indent <= indent_base and not lines[j][indent_base:indent_base+1] == ' ':
+                break
+            if s.startswith('name:'):
+                vname = s.split(':', 1)[1].strip()
+            elif s.startswith('kind:'):
+                vkind = s.split(':', 1)[1].strip()
+            elif s.startswith('notes:'):
+                in_notes = True
+                notes_indent = None
+                inline = s[len('notes:'):].strip().lstrip('|').strip()
+                if inline:
+                    vnotes_lines.append(inline)
+            elif in_notes:
+                if notes_indent is None and lines[j].strip():
+                    notes_indent = cur_indent
+                if lines[j].strip() and cur_indent < (notes_indent or 0):
+                    in_notes = False
+                else:
+                    stripped_line = lines[j].strip().lstrip('- ').strip()
+                    if stripped_line:
+                        vnotes_lines.append(stripped_line)
+            j += 1
+        notes_text = '; '.join(l for l in vnotes_lines if l).strip()
+        if not notes_text:
+            notes_text = f"{vname} ({vkind})"
+        variants.append({'id': vid, 'name': vname, 'kind': vkind, 'notes': notes_text})
+        i = j
+    else:
+        i += 1
+
+# Emit hypotheses: chosen first, then the rest.
+def add_hypothesis(vid, vname, vnotes, spec):
+    title = vname if vname else vid
+    content = vnotes if vnotes else vid
+    scope = f"{yaml_file.split('/')[-1].replace('.yaml','')} commodity selection"
+    cmd = ['s5d', 'decision', 'add-hypothesis', spec,
+           '--title', title, '--content', content, '--scope', scope]
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode != 0:
+        print(f"  warning: add-hypothesis for {vid} failed: {result.stderr.strip()}", file=sys.stderr)
+    else:
+        print(f"  + hypothesis: {result.stdout.strip()}", file=sys.stderr)
+
+chosen_variant = next((v for v in variants if v['id'] == chosen), None)
+if chosen_variant:
+    add_hypothesis(chosen_variant['id'], chosen_variant['name'], chosen_variant['notes'], spec_path)
+else:
+    print(f"  warning: chosen variant '{chosen}' not found in yaml", file=sys.stderr)
+
+for v in variants:
+    if v['id'] != chosen:
+        add_hypothesis(v['id'], v['name'], v['notes'], spec_path)
+PYEOF
+
+    echo "✓ wrote $SPEC_PATH" >&2
+    if [ -n "$ANSWERS_FILE" ] && [ -f "$ANSWERS_FILE" ]; then
+        echo "  interview answers: $ANSWERS_FILE" >&2
+    fi
+    echo "  decided-by: $DECIDED_BY" >&2
+    echo "  rationale: $RATIONALE" >&2
+    echo "" >&2
+    echo "  next: review with the s5d skill — s5d_preview / s5d_decide via MCP" >&2
+    echo "  (s5d_decide requires human confirmation — not called by this script)" >&2
+    echo "$SPEC_PATH"
+
+else
+    # ── FALLBACK: s5d not on PATH — write a clearly-marked draft YAML ──────────
+    echo "warning: s5d binary not found on PATH — emitting unvalidated DRAFT yaml" >&2
+    echo "         install s5d and re-run to get a schema-valid spec." >&2
+
+    [ -z "$OUTPUT" ] && OUTPUT=".s5d/packages/${DEC_ID}.s5d.yaml"
+    mkdir -p "$(dirname "$OUTPUT")"
+
+    VARIANT_BLOB=$(python3 - "$YAML" "$CHOSEN" <<'PYEOF'
 import sys
 fn, target = sys.argv[1], sys.argv[2]
 with open(fn) as f: text = f.read()
@@ -85,10 +198,12 @@ print('\n'.join(out))
 PYEOF
 )
 
-# Compose the ADR / s5d decision spec.
-cat > "$OUTPUT" <<YAMLEOF
-# Architecture Decision Record — generated by system-design/adr.sh.
-# Treat this as an s5d decision-tier spec; review with the s5d skill.
+    NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+    cat > "$OUTPUT" <<YAMLEOF
+# DRAFT — generated without s5d CLI (binary not on PATH).
+# This file uses an UNVALIDATED schema. Run adr.sh again with s5d installed
+# to produce a schema-valid spec. Until then, treat this as a reference only.
 schema: '1.0'
 id: ${DEC_ID}
 tier: decision
@@ -146,5 +261,6 @@ consequences:
 #   4. s5d state import ${OUTPUT} --verified-by <reviewer-different-from-approver>
 YAMLEOF
 
-echo "✓ wrote $OUTPUT" >&2
-echo "  next: review with the s5d skill — s5d_preview / s5d_approve" >&2
+    echo "✓ wrote $OUTPUT (DRAFT — unvalidated)" >&2
+    echo "  next: install s5d, then re-run adr.sh to get a schema-valid spec" >&2
+fi

@@ -1,0 +1,127 @@
+s5d: '1.0'
+id: decision.skill-suite-integration
+version: 1.0.0
+product: s5d
+tier: decision
+allow_update: true
+meta:
+  title: skill-suite-integration
+  authors: []
+  date: 2026-05-29
+  tickets: []
+  adrs: []
+  renames: []
+context: null
+workflow: null
+artifacts: null
+links: null
+contracts: []
+gates:
+- kind: review
+roc: null
+problem:
+  signal: How deep should the 9 gigsure skills integrate into S5D when shipped as a first-class suite — co-located packaging only, CLI-mediated semantic wiring through the existing contract, or extending the spec schema with first-class skill provenance/checkpoints?
+  constraints: []
+  targets: []
+  indicators: []
+  goodhart_guard: null
+  acceptance: |
+    (1) All 9 skills ship from skills/ and link for Claude + Codex + Gemini via the existing install.sh loop (verified by a clean install run with >1 skill).
+    (2) The 3 producer skills (system-design, domain-refactor, security-scan) emit S5D artifacts through the s5d CLI/MCP contract, not hand-rolled YAML.
+    (3) No change to rust/src/models.rs; all existing specs still validate and import (zero backward-compat break).
+    (4) The scenario-mine acceptance-injection path is explicitly resolved — either a new s5d verb or a documented file-based fallback — not left ambiguous.
+  blast_radius: S5D distribution surface + 3 producer skills' emit paths; no schema/data-model change
+  reversibility: high — packaging is revertible; CLI-mediation is per-skill and falls back to file-write
+  status: backlog
+hypotheses:
+- id: thin-packaging-co-locate-and-ship-keep-file-based-coupling-as-is
+  title: Thin packaging — co-locate and ship, keep file-based coupling as-is
+  content: 'Move the 9 skills into skills/, extend install.sh SKILLS list + Claude/Codex plugin manifests (Gemini reads ~/.agents/skills natively, no change). Skills keep producing S5D artifacts exactly as they do now: direct YAML composition into .s5d/packages/, .s5d/scenarios/, .s5d/security-waivers.yaml. No CLI mediation, no schema change. S5D stays a thin layer; the suite is just bundled alongside it. Distribution is the only thing that changes.'
+  scope: distribution + skills/ layout; no behavioral or schema change
+  kind: system
+  layer: L1
+  r_eff: null
+  evidence:
+  - id: 20260529-internal-thin-packaging-co-locate-and-ship-keep-file-based-coupling-as-is
+    type: internal
+    content: '[OBSERVED] install.sh loops over $SKILLS and link_skill already handles N skills; .claude-plugin and .codex-plugin skills[] are arrays. Mechanical packaging is ~10 LOC across 3 files, zero risk, loop just never exercised with >1. [INFERRED] But H1 preserves the existing fragility: system-design/domain-refactor/scenario-mine hand-roll spec YAML with NO validation against rust/src/models.rs (the Rust source of truth), so shipped-under-S5D skills can silently drift from the schema they claim to target.'
+    verdict: pass
+    valid_until: 2026-08-27T14:50:52.878654+00:00
+    carrier_ref: null
+    formality: 4
+    claim_scope:
+    - packaging feasibility
+    congruence_level: null
+    reliability: 0.9
+    refine_kind: null
+  depends_on: []
+  rationale: null
+  spec_ref: null
+  prompt: Is bundling enough, or does shipping under S5D's name require the skills to honor S5D's contract?
+  next_move: build
+- id: cli-mediated-wiring-skills-emit-consume-s5d-through-the-existing-contract
+  title: CLI-mediated wiring — skills emit/consume S5D through the existing contract
+  content: 'Co-locate + distribute (H1''s mechanical part), AND make the producer skills route through the s5d CLI/MCP instead of hand-rolling YAML. system-design runs `s5d new` + `s5d decision decide`; domain-refactor emits its decision skeleton via `s5d new`; scenario-mine injects acceptance via a command path; security-scan uses `s5d_waiver` instead of writing .s5d/security-waivers.yaml directly; e2e-tests/scenario-mine keep reading .s5d/scenarios. Source of truth becomes the Rust schema (validated, drift-checkable). No schema extension — uses the contract that already exists. Matches Roman''s intent: skills make decisions/checkpoints inside S5D''s ecosystem.'
+  scope: 'skill behavior: producers call s5d CLI/MCP; schema unchanged'
+  kind: system
+  layer: L1
+  r_eff: null
+  evidence:
+  - id: 20260529-internal-cli-mediated-wiring-skills-emit-consume-s5d-through-the-existing-contract
+    type: internal
+    content: '[OBSERVED] The s5d CLI/MCP already exposes s5d_new, s5d_add_hypothesis, s5d_add_evidence, s5d_decide, and s5d_waiver — these cover system-design (new+decide), domain-refactor (new), and security-scan (waiver) directly, replacing their hand-rolled YAML with validated, drift-checkable artifacts. [INFERRED] One gap: no command found to inject use_case acceptance scenarios (scenario-mine writes .s5d/scenarios/acceptance/ YAML; acceptance is a YAML-layer injection under use_cases[], not a CLI verb). So scenario-mine''s acceptance path needs either a small new `s5d` subcommand or stays file-based for that one output. Everything else maps onto the existing contract with no schema change.'
+    verdict: refine
+    valid_until: 2026-08-27T14:51:04.315213+00:00
+    carrier_ref: null
+    formality: 4
+    claim_scope:
+    - CLI coverage for skill emission
+    congruence_level: null
+    reliability: 0.75
+    refine_kind: specialise
+  - id: 20260529-internal-cli-mediated-wiring-skills-emit-consume-s5d-through-the-existing-contract
+    type: internal
+    content: '[OBSERVED] Core producer mapping holds on the existing contract: system-design''s decision-ADR → s5d_new + s5d_add_hypothesis + s5d_decide; domain-refactor''s decision skeleton → s5d_new; security-scan''s .s5d/security-waivers.yaml → s5d_waiver. These three are the only skills that currently WRITE S5D decision/waiver artifacts, and all three map onto CLI/MCP verbs that exist today with no schema change. [INFERRED] The earlier refine (acceptance-injection for scenario-mine) is a narrower, separable scope: scenario-mine''s main outputs are .feature files (no S5D verb needed); only the optional acceptance-snippet path lacks a verb, and it can stay file-based or get a ~30 LOC subcommand without affecting this decision. The integration depth itself (route producers through the contract) is sound and adoptable now.'
+    verdict: pass
+    valid_until: 2026-08-27T16:22:00.812839+00:00
+    carrier_ref: null
+    formality: 4
+    claim_scope:
+    - core producer→CLI mapping (excludes acceptance-injection sub-path)
+    congruence_level: null
+    reliability: 0.85
+    refine_kind: null
+  depends_on: []
+  rationale: null
+  spec_ref: feat.s5d.skill-suite-integration__20260529.s5d.yaml
+  prompt: Does the current CLI/MCP surface expose everything the skills need to emit, or are there gaps that force schema work?
+  next_move: probe
+- id: schema-extension-first-class-skill-provenance-checkpoints-in-the-data-model
+  title: Schema extension — first-class skill provenance + checkpoints in the data model
+  content: 'Everything in H2, plus extend the Rust spec schema (rust/src/models.rs): add skill provenance to HypothesisEvidence (which skill produced this evidence + its report ref), and a first-class checkpoint/skill-report artifact attached to a spec so a skill run (e.g. security-scan gate, scaling-review) becomes data the schema knows about, not a freeform file. Skills become first-class evidence producers S5D can validate, trace, and drift-check. Heaviest: backward-compat risk on existing specs, bloats the thin layer, but is the only path if we want skill runs to be queryable/traceable S5D objects.'
+  scope: Rust schema + CLI + skill behavior; affects all existing specs (backward compat)
+  kind: system
+  layer: invalid
+  r_eff: null
+  evidence:
+  - id: 20260529-internal-schema-extension-first-class-skill-provenance-checkpoints-in-the-data-model
+    type: internal
+    content: '[OBSERVED] rust/src/models.rs has zero skill/checkpoint/report fields; evidence_type is already a freeform string (skills can attach typed evidence today without any schema change). [OBSERVED] ~13 specs are in ''operated'' state plus several applied/synced — a schema change adding non-Option fields risks deserialization breakage across the existing ledger. [INFERRED] No concrete capability (trace/drift/query) was identified that file-based or CLI-mediated coupling cannot deliver and that would justify a backward-compat-risking schema change NOW. The schema extension is a real option but currently a solution without a proven need.'
+    verdict: fail
+    valid_until: 2026-08-27T14:51:13.568778+00:00
+    carrier_ref: null
+    formality: 4
+    claim_scope:
+    - schema-extension justification
+    congruence_level: null
+    reliability: 0.7
+    refine_kind: null
+  depends_on: []
+  rationale: null
+  spec_ref: null
+  prompt: Is there a concrete capability (trace, drift-check, query) that file-based coupling cannot deliver and that justifies a backward-compat-risking schema change now?
+  next_move: defer
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false
