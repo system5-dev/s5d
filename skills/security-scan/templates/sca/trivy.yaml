@@ -1,0 +1,42 @@
+# Trivy config — SCA (dependency CVE scanning) for this repo.
+# Run:  trivy fs --config .trivy.yaml --scanners vuln --format sarif \
+#         --output test-reports/security/sca/findings.sarif .
+# Or let the skill's run.sh drive it.
+#
+# Trivy is the spine: this same binary also handles container, IaC, and license
+# (separate config files). Keep them split so each category gates independently.
+
+scan:
+  scanners:
+    - vuln
+  # Skip dirs that aren't ours to scan. run.sh adds --skip-dirs too; this is the
+  # project-local floor so a direct `trivy fs` invocation matches CI.
+  skip-dirs:
+    - node_modules
+    - .next
+    - dist
+    - build
+    - vendor
+    - .venv
+    - test-reports
+
+vulnerability:
+  # Only OS+library vulns with a fix or confirmed advisory. Unfixed are reported
+  # but the gate (run.sh) decides on severity, not fix-availability.
+  type:
+    - os
+    - library
+
+severity:
+  # Trivy emits all; run.sh computes the gate from CVSS (>=7 fails by default).
+  # Listing all here keeps the SARIF complete for triage + waivers.
+  - UNKNOWN
+  - LOW
+  - MEDIUM
+  - HIGH
+  - CRITICAL
+
+# Gate: run.sh fails on CVSS >= 7 (HIGH/CRITICAL). Lower with `run.sh --fail-on medium`.
+#
+# Suppression: never use `.trivyignore` inline. Route every false positive through
+#   bash scripts/waiver.sh add <CVE-id> --reason ... --approved-by ... --expires YYYY-MM-DD

@@ -1,0 +1,159 @@
+id: observability-stack
+title: Observability stack (logs + metrics + traces)
+description: |
+  Picking where to ship logs, metrics, and traces, and what to query
+  with. OpenTelemetry as the wire format is assumed.
+
+axes:
+  throughput:        10
+  data_volume:       15
+  ops_capacity:      20
+  budget_monthly_usd: 25
+  lock_in_tolerance: 10
+  time_to_prod:      10
+  team_familiarity:  10
+
+variants:
+  - id: grafana_lgtm
+    name: Grafana LGTM (Loki + Grafana + Tempo + Mimir/Prometheus)
+    kind: self-hosted
+    self_hostable: true
+    scores:
+      throughput: 5
+      data_volume: 4
+      ops_capacity: 1          # 4 services, S3 for storage, ops-heavy
+      budget_monthly_usd: 4
+      lock_in_tolerance: 5
+      time_to_prod: 1
+      team_familiarity: 3
+    notes: |
+      - Open-source SoTA. Wins on cost at high cardinality.
+      - All 4 components store in object storage (S3/R2) — storage tier
+        is cheap.
+      - Run via Grafana Cloud's managed option if you don't have a
+        platform team.
+
+  - id: grafana_cloud
+    name: Grafana Cloud (managed LGTM)
+    kind: managed
+    self_hostable: false
+    scores:
+      throughput: 5
+      data_volume: 4
+      ops_capacity: 5
+      budget_monthly_usd: 3
+      lock_in_tolerance: 4
+      time_to_prod: 5
+      team_familiarity: 4
+    notes: |
+      - Generous free tier (10k metrics series, 50 GB logs).
+      - Cost predictable until cardinality blows up.
+
+  - id: datadog
+    name: Datadog
+    kind: managed
+    self_hostable: false
+    scores:
+      throughput: 5
+      data_volume: 5
+      ops_capacity: 5
+      budget_monthly_usd: 1    # famously expensive
+      lock_in_tolerance: 1
+      time_to_prod: 5
+      team_familiarity: 5
+    notes: |
+      - Best DX. Worst bill. Integrations broader than anyone.
+      - APM + RUM + logs + infra. Pick when team velocity > infra cost.
+
+  - id: honeycomb
+    name: Honeycomb
+    kind: managed
+    self_hostable: false
+    scores:
+      throughput: 4
+      data_volume: 4
+      ops_capacity: 5
+      budget_monthly_usd: 3
+      lock_in_tolerance: 2
+      time_to_prod: 5
+      team_familiarity: 2
+    notes: |
+      - Trace-first. Wins on high-cardinality debugging.
+      - Smaller team / focus, less infra-monitoring depth than Datadog.
+
+  - id: sentry_self
+    name: Sentry (self-hosted, errors + traces)
+    kind: self-hosted
+    self_hostable: true
+    scores:
+      throughput: 3
+      data_volume: 3
+      ops_capacity: 2
+      budget_monthly_usd: 4
+      lock_in_tolerance: 5
+      time_to_prod: 3
+      team_familiarity: 5
+    notes: |
+      - Error tracking + a useful tracing layer.
+      - Self-host avoids vendor cost but the cluster is heavy
+        (Kafka, ClickHouse, Snuba, Relay).
+
+  - id: sentry_managed
+    name: Sentry (managed)
+    kind: managed
+    self_hostable: false
+    scores:
+      throughput: 4
+      data_volume: 3
+      ops_capacity: 5
+      budget_monthly_usd: 3
+      lock_in_tolerance: 3
+      time_to_prod: 5
+      team_familiarity: 5
+    notes: |
+      - Free tier is generous for small teams.
+      - Combine with a separate metrics backend (Prom/Grafana) if you
+        outgrow Sentry Metrics.
+
+  - id: glitchtip
+    name: GlitchTip (OSS Sentry alternative)
+    kind: self-hosted
+    self_hostable: true
+    scores:
+      throughput: 2
+      data_volume: 2
+      ops_capacity: 4          # single Django app, simple
+      budget_monthly_usd: 5
+      lock_in_tolerance: 5
+      time_to_prod: 5
+      team_familiarity: 2
+    notes: |
+      - Drop-in for Sentry SDKs. Lighter feature set.
+      - Best for: small projects that want self-host with zero fuss.
+
+  - id: signoz
+    name: SigNoz (OSS Datadog alternative)
+    kind: self-hosted
+    self_hostable: true
+    scores:
+      throughput: 3
+      data_volume: 4
+      ops_capacity: 2
+      budget_monthly_usd: 4
+      lock_in_tolerance: 5
+      time_to_prod: 3
+      team_familiarity: 2
+    notes: |
+      - OpenTelemetry-native, ClickHouse-backed.
+      - Logs + metrics + traces in one UI. Active dev 2025-2026.
+
+hard_constraints:
+  - rule: "ops_capacity:zero AND variant.kind == 'self-hosted'"
+    action: disqualify
+    reason: "self-hosted observability is a full-time engineering job"
+  - rule: "budget_monthly_usd:1 AND variant.id == 'datadog'"
+    action: warn
+    reason: "Datadog at small budgets blows past plan quickly"
+  - rule: "data_volume:5 AND variant.id == 'glitchtip'"
+    action: warn
+    reason: "GlitchTip is best for small projects, not high-volume telemetry"

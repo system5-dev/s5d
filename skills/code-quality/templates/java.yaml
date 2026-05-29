@@ -1,0 +1,25 @@
+  # === Java — Spotless + (Google or Palantir Java Format) + Error Prone + NullAway ===
+  # This setup runs Spotless via Gradle/Maven from a local hook. Configure Spotless
+  # in build.gradle.kts (preferred) — see references/catalog.md for the SoTA config.
+  #
+  # Required: Spotless plugin enabled in build config, with Palantir or Google formatter.
+  # Error Prone + NullAway integrate at compile-time, not via pre-commit; they run in `gradle build`.
+  - repo: local
+    hooks:
+      - id: spotless-check
+        name: spotless check (formatting)
+        entry: bash -c 'if [ -f gradlew ]; then ./gradlew spotlessCheck --quiet; else mvn -q spotless:check; fi'
+        language: system
+        types_or: [java, kotlin]
+        pass_filenames: false
+
+      - id: spotless-apply
+        name: spotless apply (auto-fix)
+        entry: bash -c 'if [ -f gradlew ]; then ./gradlew spotlessApply --quiet; else mvn -q spotless:apply; fi'
+        language: system
+        types_or: [java, kotlin]
+        pass_filenames: false
+        stages: [manual]  # Run with: pre-commit run spotless-apply --hook-stage manual
+
+  # NOTE: Error Prone + NullAway must be wired into the build itself (annotationProcessor),
+  # not as a pre-commit hook. See references/catalog.md → Java section.

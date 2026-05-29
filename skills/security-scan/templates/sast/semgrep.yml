@@ -1,0 +1,25 @@
+# Semgrep config — SAST for this repo.
+# Run:  semgrep --config .semgrep.yml --sarif --output test-reports/security/sast/findings.sarif
+# Or let the skill's run.sh drive it.
+#
+# `--config auto` (the registry) is the default the skill invokes; this file
+# pins the project-local rule selection + gate so the registry can't silently
+# change what fails the build. Keep both: registry breadth + this floor.
+
+rules: []
+# ^ Project-specific custom rules go here. Example:
+#   - id: no-hardcoded-jwt-secret
+#     pattern: jwt.sign($PAYLOAD, "...")
+#     message: JWT secret must come from env, not a string literal.
+#     severity: ERROR
+#     languages: [javascript, typescript]
+
+# The registry ruleset (p/default, p/owasp-top-ten, p/secrets, framework packs)
+# is selected by run.sh via `--config auto`. This file is merged on top.
+#
+# Gate: run.sh fails on any finding with severity ERROR (high+). Semgrep
+# WARNING/INFO are reported but do not fail by default — raise with
+# `run.sh --fail-on medium`.
+#
+# Suppression: never use `// nosemgrep`. Route every false positive through
+#   bash scripts/waiver.sh add <rule-id> --reason ... --approved-by ... --expires YYYY-MM-DD

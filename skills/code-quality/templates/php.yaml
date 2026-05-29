@@ -1,0 +1,17 @@
+  # === PHP — PHP-CS-Fixer + PHPStan ===
+  # Install (Composer dev deps):
+  #   composer require --dev friendsofphp/php-cs-fixer phpstan/phpstan
+  - repo: local
+    hooks:
+      - id: php-cs-fixer
+        name: php-cs-fixer
+        entry: vendor/bin/php-cs-fixer fix
+        language: system
+        types: [php]
+      - id: phpstan
+        name: phpstan analyse
+        entry: vendor/bin/phpstan analyse --no-progress --memory-limit=1G
+        language: system
+        types: [php]
+        pass_filenames: false
+        stages: [pre-push]  # PHPStan is slow; run on push not commit.

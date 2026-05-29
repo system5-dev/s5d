@@ -1,0 +1,141 @@
+id: blob-storage
+title: Object / blob storage
+description: |
+  Picking a place for user uploads, generated artifacts, backups,
+  static content delivered via CDN.
+
+axes:
+  throughput:        10
+  data_volume:       15
+  durability:        20
+  ops_capacity:      10
+  budget_monthly_usd: 20
+  multi_region:       5
+  lock_in_tolerance: 10
+  time_to_prod:       5
+  compliance:         5
+
+variants:
+  - id: s3
+    name: AWS S3
+    kind: managed
+    self_hostable: false
+    cloud: aws
+    scores:
+      throughput: 5
+      data_volume: 5
+      durability: 5            # 11 9s
+      ops_capacity: 5
+      budget_monthly_usd: 3    # storage cheap, egress expensive
+      multi_region: 4
+      lock_in_tolerance: 3     # API is the de-facto standard
+      time_to_prod: 5
+      compliance: 5
+    notes: |
+      - Reference implementation. Pick when you're on AWS or pay for
+        egress optimization (CloudFront).
+      - Intelligent-Tiering is the default for unknown access patterns.
+
+  - id: r2
+    name: Cloudflare R2
+    kind: managed
+    self_hostable: false
+    cloud: cloudflare
+    scores:
+      throughput: 5
+      data_volume: 5
+      durability: 5
+      ops_capacity: 5
+      budget_monthly_usd: 5    # zero egress
+      multi_region: 4
+      lock_in_tolerance: 3
+      time_to_prod: 5
+      compliance: 4
+    notes: |
+      - Zero egress bandwidth fee — devastating cost win vs S3 for
+        public/CDN content.
+      - S3-compatible API. Pair with Cloudflare Workers for edge serving.
+
+  - id: b2
+    name: Backblaze B2
+    kind: managed
+    self_hostable: false
+    scores:
+      throughput: 3
+      data_volume: 5
+      durability: 5
+      ops_capacity: 5
+      budget_monthly_usd: 5    # cheapest storage tier
+      multi_region: 3
+      lock_in_tolerance: 4
+      time_to_prod: 5
+      compliance: 4
+    notes: |
+      - Cheapest blob storage on the market. Best for cold backups.
+      - S3-compatible API. Egress is free to Cloudflare + Bunny CDN.
+
+  - id: gcs
+    name: Google Cloud Storage
+    kind: managed
+    self_hostable: false
+    cloud: gcp
+    scores:
+      throughput: 5
+      data_volume: 5
+      durability: 5
+      ops_capacity: 5
+      budget_monthly_usd: 3
+      multi_region: 5          # multi-region buckets are first-class
+      lock_in_tolerance: 3
+      time_to_prod: 5
+      compliance: 5
+    notes: |
+      - S3 equivalent on GCP. Multi-region buckets simpler than S3's MRAP.
+
+  - id: minio
+    name: MinIO (self-hosted)
+    kind: self-hosted
+    self_hostable: true
+    scores:
+      throughput: 4
+      data_volume: 4
+      durability: 4            # depends on your storage layer
+      ops_capacity: 1          # erasure coding, hardware ops, networking
+      budget_monthly_usd: 3
+      multi_region: 2
+      lock_in_tolerance: 5
+      time_to_prod: 2
+      compliance: 4
+    notes: |
+      - The right answer when data sovereignty is non-negotiable
+        (data-in-country regulation, air-gapped, GovCloud).
+      - License changed (AGPL → "Server-side public" then back); confirm
+        current terms before commercial deployment.
+
+  - id: box
+    name: Box (or similar managed-document)
+    kind: managed
+    self_hostable: false
+    scores:
+      throughput: 2
+      data_volume: 3
+      durability: 5
+      ops_capacity: 5
+      budget_monthly_usd: 2    # per-seat pricing
+      multi_region: 3
+      lock_in_tolerance: 1
+      time_to_prod: 5
+      compliance: 5            # HIPAA, GxP, etc.
+    notes: |
+      - NOT a generic blob store — picks itself when the use case is
+        "share documents with humans" and compliance is bought-in.
+      - Used for human-facing compliance artefacts; right tool there, wrong for
+        generic asset hosting.
+
+hard_constraints:
+  - rule: "compliance contains 'hipaa' AND variant.id == 'b2'"
+    action: warn
+    reason: "verify BAA availability before storing PHI on Backblaze"
+  - rule: "data_volume:5 AND variant.id == 'minio'"
+    action: warn
+    reason: "self-hosted MinIO at PB scale is a platform team's full-time job"

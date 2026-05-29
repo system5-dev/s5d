@@ -1,0 +1,17 @@
+# Example Maestro flow — replace with a real critical-path flow.
+# Run: maestro test .maestro/example.yaml
+# Or via skill: bash <skill>/scripts/run.sh --axes mobile
+
+appId: com.example.app   # TODO replace with your actual app bundle id
+name: example-flow
+tags:
+  - critical
+  - smoke
+---
+- launchApp
+- assertVisible: "TODO: first observable state, e.g. 'Welcome'"
+# - tapOn: "Get started"
+# - inputText: "test@example.com"
+# - tapOn: "Continue"
+# - assertVisible: "TODO: next observable state"
+# - takeScreenshot: post-signup

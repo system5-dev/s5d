@@ -1,0 +1,147 @@
+id: search
+title: Full-text search / semantic search
+description: |
+  Picking a search engine for typeahead, faceted browsing, full-text
+  queries, vector / hybrid semantic search.
+
+axes:
+  throughput:        15
+  latency_p99:       20
+  data_volume:       10
+  ops_capacity:      20
+  budget_monthly_usd: 10
+  lock_in_tolerance: 10
+  time_to_prod:      10
+  team_familiarity:   5
+
+variants:
+  - id: pg_fts
+    name: PostgreSQL FTS + pg_trgm + pgvector
+    kind: self-hosted
+    self_hostable: true
+    scores:
+      throughput: 2
+      latency_p99: 3
+      data_volume: 2           # OK up to ~10M docs
+      ops_capacity: 5          # piggybacks on the DB you already run
+      budget_monthly_usd: 5
+      lock_in_tolerance: 5
+      time_to_prod: 5
+      team_familiarity: 5
+    notes: |
+      - The right answer up to ~10M documents, especially if you already
+        run Postgres. tsvector + GIN index covers full-text; pgvector
+        (or pg_embedding) covers semantic.
+      - Outgrows when you need >100ms p99 on >10M docs.
+
+  - id: meilisearch
+    name: Meilisearch
+    kind: self-hosted
+    self_hostable: true
+    scores:
+      throughput: 4
+      latency_p99: 5            # millisecond typeahead
+      data_volume: 3
+      ops_capacity: 4
+      budget_monthly_usd: 4
+      lock_in_tolerance: 5
+      time_to_prod: 5
+      team_familiarity: 3
+    notes: |
+      - SoTA for typeahead UX. Single binary, friendly defaults.
+      - Best for: ≤100M documents, search-as-you-type, faceted UI.
+      - Vector search in 2024+ via hybrid mode.
+
+  - id: typesense
+    name: Typesense
+    kind: self-hosted
+    self_hostable: true
+    scores:
+      throughput: 4
+      latency_p99: 5
+      data_volume: 3
+      ops_capacity: 4
+      budget_monthly_usd: 4
+      lock_in_tolerance: 5
+      time_to_prod: 5
+      team_familiarity: 3
+    notes: |
+      - Very similar feature set to Meilisearch; pick by team taste.
+      - Typesense Cloud available; OSS self-host is straightforward.
+
+  - id: opensearch
+    name: OpenSearch (or Elasticsearch OSS)
+    kind: self-hosted
+    self_hostable: true
+    scores:
+      throughput: 5
+      latency_p99: 3
+      data_volume: 5
+      ops_capacity: 1
+      budget_monthly_usd: 2
+      lock_in_tolerance: 4
+      time_to_prod: 2
+      team_familiarity: 3
+    notes: |
+      - SoTA when you need >100M docs, analytics, aggregations.
+      - Heavy ops surface. Run it when you have a platform team.
+      - AWS OpenSearch Service is the managed escape hatch.
+
+  - id: algolia
+    name: Algolia
+    kind: managed
+    self_hostable: false
+    scores:
+      throughput: 5
+      latency_p99: 5
+      data_volume: 3
+      ops_capacity: 5
+      budget_monthly_usd: 2    # premium pricing
+      lock_in_tolerance: 1
+      time_to_prod: 5
+      team_familiarity: 4
+    notes: |
+      - Best DX, best latency, worst pricing at scale.
+      - Pick for early product velocity; replace with self-hosted when
+        the bill bites.
+
+  - id: pinecone
+    name: Pinecone (vector-only)
+    kind: managed
+    self_hostable: false
+    scores:
+      throughput: 4
+      latency_p99: 4
+      data_volume: 4
+      ops_capacity: 5
+      budget_monthly_usd: 3
+      lock_in_tolerance: 1
+      time_to_prod: 5
+      team_familiarity: 2
+    notes: |
+      - Vector-search only — pair with another engine for keyword.
+      - 2026: hybrid (keyword + vector) baked in. Serverless tier is cheap.
+
+  - id: qdrant
+    name: Qdrant (vector-only)
+    kind: self-hosted
+    self_hostable: true
+    scores:
+      throughput: 4
+      latency_p99: 4
+      data_volume: 4
+      ops_capacity: 3
+      budget_monthly_usd: 4
+      lock_in_tolerance: 5
+      time_to_prod: 4
+      team_familiarity: 2
+    notes: |
+      - Best OSS vector engine in 2026. Rust core, payload filtering.
+      - Pair with Meilisearch / Typesense if you need traditional FTS too.
+
+hard_constraints:
+  - rule: "data_volume:5 AND variant.id IN ['pg_fts', 'meilisearch', 'typesense']"
+    action: warn
+    reason: "these struggle past ~100M docs; consider OpenSearch / Vespa"
+  - rule: "ops_capacity:zero AND variant.kind == 'self-hosted'"
+    action: disqualify

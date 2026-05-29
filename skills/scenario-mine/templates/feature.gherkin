@@ -1,0 +1,40 @@
+# Template for a generated .feature file.
+# Replace placeholders <LIKE_THIS>. Strip this comment block before saving.
+# All scenarios MUST carry @s5d-use-case and @source tags for traceability.
+
+@s5d-use-case:<use-case-id>
+@s5d-domain:<domain-id>
+Feature: <Feature Title — matches the s5d use case name>
+  <One-paragraph problem statement: who the user is, what they want,
+   and why this matters. Lifted from architecture-map.md or product docs.>
+
+  Background:
+    Given <preconditions that apply to every scenario in this feature>
+
+  @source:<file:line>
+  Scenario: <Happy path — one sentence>
+    Given <state>
+    When <action>
+    Then <observable outcome>
+    And <secondary observable outcome>
+
+  @source:<file:line> @kind:edge
+  Scenario: <Edge case — one sentence>
+    Given <state>
+    When <action>
+    Then <expected handling>
+
+  @from-test:<test-file:line>
+  Scenario Outline: <Parametrised behaviour, derived from existing test cases>
+    Given <state>
+    When <action with "<input>">
+    Then the result is "<expected>"
+
+    Examples:
+      | input | expected |
+      | a     | A        |
+      | b     | B        |
+
+  # Add more scenarios for: failure modes, permission boundaries,
+  # validation rules. Cap at ~7 scenarios per Feature; split into
+  # additional .feature files if behaviour is large.

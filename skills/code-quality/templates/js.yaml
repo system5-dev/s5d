@@ -1,0 +1,28 @@
+  # === JS/TS — Biome (SoTA 2026, Rust-based, replaces ESLint+Prettier) ===
+  # Biome v2 has type-aware linting without TSC. ~15-50x faster than ESLint.
+  # Install as project dep: bun add -D --exact @biomejs/biome
+  #                     or: npm install --save-dev --save-exact @biomejs/biome
+  # Initialize config: bunx @biomejs/biome init
+  - repo: local
+    hooks:
+      - id: biome-check
+        name: biome check (lint + format)
+        entry: npx --no-install @biomejs/biome check --write --no-errors-on-unmatched --files-ignore-unknown=true
+        language: system
+        types_or: [javascript, jsx, ts, tsx, json, jsonc, css]
+        require_serial: false
+
+  # If the project already uses ESLint+Prettier and you cannot migrate yet,
+  # comment out the Biome block above and uncomment the ESLint block below.
+  # - repo: local
+  #   hooks:
+  #     - id: eslint
+  #       name: eslint
+  #       entry: npx --no-install eslint --fix
+  #       language: system
+  #       types_or: [javascript, jsx, ts, tsx]
+  #     - id: prettier
+  #       name: prettier
+  #       entry: npx --no-install prettier --write
+  #       language: system
+  #       types_or: [javascript, jsx, ts, tsx, json, css, scss, html, markdown, yaml]

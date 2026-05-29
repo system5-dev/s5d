@@ -1,0 +1,181 @@
+# Decision frame: message queue / event bus
+# Used by: interview.sh queue / matrix.sh queue / recommend.sh queue
+
+id: queue
+title: Message queue / event bus
+description: |
+  Choosing a queue or event bus for asynchronous work — background jobs,
+  inter-service events, fan-out, retry semantics, ordering guarantees.
+
+# Which axes from interview-axes.yaml matter for this commodity, and
+# how much. Sum of weights = 100 (not strictly required but useful).
+axes:
+  throughput:        15
+  durability:        15
+  ops_capacity:      20
+  budget_monthly_usd: 10
+  latency_p99:       10
+  multi_region:       5
+  lock_in_tolerance: 10
+  time_to_prod:       5
+  team_familiarity:  10
+
+variants:
+  - id: sqs
+    name: AWS SQS
+    kind: managed
+    self_hostable: false
+    cloud: aws
+    scores:
+      throughput: 5            # internet-scale
+      durability: 4
+      ops_capacity: 5          # zero ops
+      budget_monthly_usd: 4    # ~$0.40/M msgs
+      latency_p99: 3           # 10-100ms
+      multi_region: 3
+      lock_in_tolerance: 2
+      time_to_prod: 5
+      team_familiarity: 4
+    notes: |
+      - At-least-once delivery, no ordering unless FIFO queue (lower throughput).
+      - Best when you're already on AWS and want zero ops.
+      - DLQ is a separate queue; configure it explicitly.
+
+  - id: rabbitmq
+    name: RabbitMQ (self-hosted)
+    kind: self-hosted
+    self_hostable: true
+    cloud: any
+    scores:
+      throughput: 3
+      durability: 4
+      ops_capacity: 2          # cluster ops are real
+      budget_monthly_usd: 3
+      latency_p99: 4           # ~1-10ms
+      multi_region: 2
+      lock_in_tolerance: 5     # AMQP standard
+      time_to_prod: 3
+      team_familiarity: 3
+    notes: |
+      - AMQP standard — most universal protocol.
+      - Best for: rich routing (topics, headers, RPC), low-latency.
+      - Quorum queues (RabbitMQ 4) replaced classic mirrored queues.
+      - Watch for memory pressure under backlog; configure flow control.
+
+  - id: nats_jetstream
+    name: NATS JetStream
+    kind: self-hosted
+    self_hostable: true
+    cloud: any
+    scores:
+      throughput: 4
+      durability: 4
+      ops_capacity: 3          # simpler clusters than Kafka
+      budget_monthly_usd: 4
+      latency_p99: 5           # sub-ms
+      multi_region: 4
+      lock_in_tolerance: 5     # OSS, CNCF
+      time_to_prod: 4
+      team_familiarity: 2
+    notes: |
+      - Single binary, no ZK/etcd. Streams = persistent topics.
+      - Best for: edge / IoT / cross-region replication via leaf nodes.
+      - Light on ops vs Kafka, more capable than RabbitMQ for streaming.
+
+  - id: kafka
+    name: Kafka (self-hosted via KRaft)
+    kind: self-hosted
+    self_hostable: true
+    cloud: any
+    scores:
+      throughput: 5            # internet-scale streaming
+      durability: 5
+      ops_capacity: 1          # heavy ops
+      budget_monthly_usd: 2    # storage + ops are expensive
+      latency_p99: 3
+      multi_region: 4
+      lock_in_tolerance: 4
+      time_to_prod: 1          # weeks
+      team_familiarity: 3
+    notes: |
+      - SoTA when you need a log, not just a queue.
+      - KRaft mode (Kafka 3.5+) removed ZooKeeper.
+      - Use when stream-processing or replay matter; overkill otherwise.
+
+  - id: redis_streams
+    name: Redis Streams
+    kind: self-hosted
+    self_hostable: true
+    cloud: any
+    scores:
+      throughput: 3
+      durability: 3            # AOF + RDB; not as durable as Kafka
+      ops_capacity: 4          # if you already run Redis
+      budget_monthly_usd: 4
+      latency_p99: 5           # sub-ms
+      multi_region: 2
+      lock_in_tolerance: 4
+      time_to_prod: 5
+      team_familiarity: 4
+    notes: |
+      - Pragmatic when you already operate Redis.
+      - Consumer groups + XACK gives at-least-once.
+      - Not for >100k msg/s sustained throughput.
+
+  - id: temporal
+    name: Temporal
+    kind: hybrid
+    self_hostable: true
+    cloud: managed_too         # Temporal Cloud
+    scores:
+      throughput: 3
+      durability: 5            # durable execution is the feature
+      ops_capacity: 2          # cluster ops if self-hosted; trivial if Cloud
+      budget_monthly_usd: 2    # Temporal Cloud is pricey
+      latency_p99: 2           # workflow tick, not message-passing
+      multi_region: 4
+      lock_in_tolerance: 3
+      time_to_prod: 3
+      team_familiarity: 2
+    notes: |
+      - Not a queue — durable workflows. The right answer when you need
+        long-running, retry-with-state, saga-style orchestration.
+      - Picked when business logic is the orchestrator; AWS Step Functions
+        is the managed-only analog.
+
+  - id: inngest
+    name: Inngest
+    kind: managed
+    self_hostable: false
+    cloud: any
+    scores:
+      throughput: 3
+      durability: 4
+      ops_capacity: 5
+      budget_monthly_usd: 3
+      latency_p99: 2
+      multi_region: 4
+      lock_in_tolerance: 2
+      time_to_prod: 5
+      team_familiarity: 1
+    notes: |
+      - Developer-first workflow runner: events → functions → durable retries.
+      - Excellent fit for serverless / Next.js stacks.
+      - Free tier covers small projects; pricing scales with steps.
+
+# Heuristic short-circuits — agent applies these BEFORE running the
+# weighted scoring. If a hard constraint is violated, the variant is
+# disqualified regardless of its score.
+hard_constraints:
+  - rule: "ops_capacity:zero AND variant.kind == 'self-hosted'"
+    action: disqualify
+    reason: "self-hosted needs ops capacity"
+  - rule: "compliance contains 'pci' AND variant.id == 'inngest'"
+    action: warn
+    reason: "verify Inngest BAA / sub-processor list before processing card data"
+  - rule: "throughput:5 AND variant.id == 'redis_streams'"
+    action: warn
+    reason: "Redis Streams is not battle-tested at internet-scale throughput"
+  - rule: "lock_in_tolerance == 'zero' AND variant.kind == 'managed'"
+    action: disqualify
+    reason: "managed-only services don't satisfy zero lock-in"

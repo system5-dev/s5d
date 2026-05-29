@@ -1,0 +1,121 @@
+id: email-transactional
+title: Transactional email
+description: |
+  Sending one-to-one transactional email (confirmation, receipts,
+  password reset). Bulk / marketing email is a different decision.
+
+axes:
+  throughput:        10
+  ops_capacity:      15
+  budget_monthly_usd: 25
+  compliance:        15
+  lock_in_tolerance: 15
+  time_to_prod:      10
+  team_familiarity:  10
+
+variants:
+  - id: resend
+    name: Resend
+    kind: managed
+    self_hostable: false
+    scores:
+      throughput: 4
+      ops_capacity: 5
+      budget_monthly_usd: 4
+      compliance: 4
+      lock_in_tolerance: 3
+      time_to_prod: 5
+      team_familiarity: 3
+    notes: |
+      - Modern DX. React Email templates first-class.
+      - 3000 free emails/month; cheaper than SES once you account for
+        ops time.
+
+  - id: postmark
+    name: Postmark
+    kind: managed
+    self_hostable: false
+    scores:
+      throughput: 4
+      ops_capacity: 5
+      budget_monthly_usd: 3
+      compliance: 5
+      lock_in_tolerance: 3
+      time_to_prod: 5
+      team_familiarity: 4
+    notes: |
+      - Transactional-only focus. Excellent deliverability.
+      - Separate "broadcast" stream for marketing.
+
+  - id: ses
+    name: AWS SES
+    kind: managed
+    self_hostable: false
+    cloud: aws
+    scores:
+      throughput: 5
+      ops_capacity: 3          # sandbox release, DKIM, bounces to handle yourself
+      budget_monthly_usd: 5    # cheapest at scale
+      compliance: 5
+      lock_in_tolerance: 3
+      time_to_prod: 3
+      team_familiarity: 4
+    notes: |
+      - Cheap at $0.10/1k. Bounce / complaint handling is on you.
+      - Sandbox-to-production sandbox release takes 1-2 days.
+
+  - id: mailgun
+    name: Mailgun
+    kind: managed
+    self_hostable: false
+    scores:
+      throughput: 5
+      ops_capacity: 5
+      budget_monthly_usd: 3
+      compliance: 4
+      lock_in_tolerance: 2
+      time_to_prod: 4
+      team_familiarity: 4
+    notes: |
+      - Veteran. EU region for GDPR.
+      - Verification flow takes longer than newer providers.
+
+  - id: sendgrid
+    name: SendGrid (Twilio)
+    kind: managed
+    self_hostable: false
+    scores:
+      throughput: 5
+      ops_capacity: 5
+      budget_monthly_usd: 2
+      compliance: 4
+      lock_in_tolerance: 1
+      time_to_prod: 4
+      team_familiarity: 5
+    notes: |
+      - Old workhorse. Free tier 100 emails/day.
+      - Deliverability has reputation issues; warm IPs carefully.
+
+  - id: postal_self
+    name: Postal (self-hosted)
+    kind: self-hosted
+    self_hostable: true
+    scores:
+      throughput: 3
+      ops_capacity: 1          # MX records, IP warm-up, spam reputation
+      budget_monthly_usd: 5
+      compliance: 4
+      lock_in_tolerance: 5
+      time_to_prod: 1
+      team_familiarity: 1
+    notes: |
+      - Only consider when sending volume is huge AND you have a
+        deliverability specialist on the team. Otherwise, the spam
+        folder eats your transactional mail.
+
+hard_constraints:
+  - rule: "ops_capacity:zero AND variant.id == 'postal_self'"
+    action: disqualify
+  - rule: "compliance contains 'hipaa'"
+    action: warn
+    reason: "verify BAA availability with the chosen provider before sending PHI in emails"

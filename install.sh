@@ -32,7 +32,7 @@ echo "Installing S5D..."
 
 # 1. Skills — symlink into vendor-agnostic location + agent runtimes
 #    Source of truth: $SCRIPT_DIR/skills/
-SKILLS="s5d"
+SKILLS="s5d code-quality unit-tests e2e-tests security-scan domain-refactor scaling-review system-design scenario-mine infra-scan"
 RETIRED_SKILLS="fpf fpf-modules domain-capability-design"
 
 link_skill() {
@@ -86,6 +86,36 @@ fi
 echo ""
 echo "  Canonical location: ~/.agents/skills/"
 echo "  Agent runtimes get symlinks for compatibility."
+
+# 1b. Agents shipped with the skill — symlink agent definitions into runtimes
+#     that auto-discover them. Agents live next to SKILL.md in skills/<name>/agents/.
+link_skill_agents() {
+    local target_dir="$1"
+    local skill_name="$2"
+    local agents_src="$SCRIPT_DIR/skills/$skill_name/agents"
+    [ -d "$agents_src" ] || return 0
+    mkdir -p "$target_dir"
+    local agent_file
+    for agent_file in "$agents_src"/*.md; do
+        [ -f "$agent_file" ] || continue
+        local name="$(basename "$agent_file")"
+        rm -f "$target_dir/$name"
+        ln -sf "$agent_file" "$target_dir/$name"
+    done
+}
+
+# Vendor-agnostic agents location
+for skill in $SKILLS; do
+    link_skill_agents "${HOME}/.agents/agents" "$skill"
+done
+
+# Claude Code auto-discovers agents in ~/.claude/agents/
+if [ -d "${HOME}/.claude" ] || command -v claude &>/dev/null; then
+    for skill in $SKILLS; do
+        link_skill_agents "${HOME}/.claude/agents" "$skill"
+    done
+    echo "✓ Agents linked for Claude Code (~/.claude/agents/)"
+fi
 
 # 2. Binary — prebuilt or build from source
 mkdir -p "$BIN_DIR"

@@ -1,0 +1,27 @@
+  # === .NET / C# — dotnet format + Roslyn analyzers (StyleCop / Roslynator / SonarAnalyzer) ===
+  # Roslyn analyzers are NuGet packages, configured in Directory.Build.props or per-project.
+  # See references/catalog.md → .NET section for the recommended Directory.Build.props block.
+  - repo: local
+    hooks:
+      - id: dotnet-format
+        name: dotnet format --verify-no-changes
+        entry: dotnet format --verify-no-changes --severity warn
+        language: system
+        types_or: [c#, vb]
+        pass_filenames: false
+
+      - id: dotnet-format-fix
+        name: dotnet format (auto-fix)
+        entry: dotnet format
+        language: system
+        types_or: [c#, vb]
+        pass_filenames: false
+        stages: [manual]
+
+      - id: dotnet-build-warnings
+        name: dotnet build /warnaserror
+        entry: dotnet build /warnaserror /nologo -v quiet
+        language: system
+        types_or: [c#]
+        pass_filenames: false
+        stages: [pre-push]

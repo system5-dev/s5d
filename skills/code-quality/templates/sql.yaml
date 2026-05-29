@@ -1,0 +1,8 @@
+  # === SQL — sqlfluff (multi-dialect linter + formatter) ===
+  - repo: https://github.com/sqlfluff/sqlfluff
+    rev: 3.2.5
+    hooks:
+      - id: sqlfluff-lint
+        # args: [--dialect, postgres]  # set dialect per project
+      - id: sqlfluff-fix
+        stages: [manual]

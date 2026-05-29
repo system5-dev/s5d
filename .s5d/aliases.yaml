@@ -47,6 +47,30 @@ global:
   package_id: null
   owning_package: feat.s5d.cli-surface-regroup
   deprecated: false
+- uuid: de0a0e74-b939-4340-9104-846f0c2e5010
+  artifact_id: dom.s5d.skill-distribution
+  artifact_type: Domain
+  package_id: null
+  owning_package: feat.s5d.generic-skill-suite
+  deprecated: false
+- uuid: ffb9875b-7b83-45b2-a375-7e74404f1275
+  artifact_id: sys.s5d.distribution
+  artifact_type: SoftwareSystem
+  package_id: null
+  owning_package: feat.s5d.generic-skill-suite
+  deprecated: false
+- uuid: 2022023f-503b-44fe-bf34-8c03dcf3eb83
+  artifact_id: ctr.s5d.skill-files
+  artifact_type: Container
+  package_id: null
+  owning_package: feat.s5d.generic-skill-suite
+  deprecated: false
+- uuid: 7d5ee999-5191-41a0-bd04-7ea85d4df8cd
+  artifact_id: ctr.s5d.install-surface
+  artifact_type: Container
+  package_id: null
+  owning_package: feat.s5d.generic-skill-suite
+  deprecated: false
 packages:
 - uuid: 0d3f4abc-8b28-422f-ba12-3bdb515b33ac
   artifact_id: cap.LogError
@@ -316,5 +340,59 @@ packages:
   artifact_id: cmp.s5d.cli-regroup-bin
   artifact_type: Component
   package_id: feat.s5d.cli-surface-regroup
+  owning_package: null
+  deprecated: false
+- uuid: 3a1634ec-4b53-49eb-a637-eecacac6c793
+  artifact_id: cap.s5d.ship-generic-skills
+  artifact_type: Capability
+  package_id: feat.s5d.generic-skill-suite
+  owning_package: null
+  deprecated: false
+- uuid: 543c4ba8-51ee-417c-b31b-a7edb5260591
+  artifact_id: cap.s5d.skill-artifact-handshake
+  artifact_type: Capability
+  package_id: feat.s5d.generic-skill-suite
+  owning_package: null
+  deprecated: false
+- uuid: eb6a28f0-57c5-42ee-88ec-d694c5de9ba9
+  artifact_id: feat.s5d.generic-skill-suite
+  artifact_type: Feature
+  package_id: feat.s5d.generic-skill-suite
+  owning_package: null
+  deprecated: false
+- uuid: 1a5de9c8-608b-448d-a5ed-cb4cf6d4721b
+  artifact_id: uc.s5d.install-generic-skill-suite
+  artifact_type: UseCase
+  package_id: feat.s5d.generic-skill-suite
+  owning_package: null
+  deprecated: false
+- uuid: f35ecec3-7d4f-4ee6-9b3c-10640880e3be
+  artifact_id: uc.s5d.plugin-discover-generic-skill-suite
+  artifact_type: UseCase
+  package_id: feat.s5d.generic-skill-suite
+  owning_package: null
+  deprecated: false
+- uuid: 94e42a91-edfb-45c6-b4cf-8d9534b19e82
+  artifact_id: uc.s5d.consume-skill-artifacts
+  artifact_type: UseCase
+  package_id: feat.s5d.generic-skill-suite
+  owning_package: null
+  deprecated: false
+- uuid: 3ba9129c-1bba-4dbc-8b4b-7f17cc2b0d41
+  artifact_id: cmp.s5d.generic-skill-suite
+  artifact_type: Component
+  package_id: feat.s5d.generic-skill-suite
+  owning_package: null
+  deprecated: false
+- uuid: 5134cc1b-f5ca-4037-ab98-a7668ed0ebd0
+  artifact_id: cmp.s5d.skill-installer
+  artifact_type: Component
+  package_id: feat.s5d.generic-skill-suite
+  owning_package: null
+  deprecated: false
+- uuid: eb50cfcf-4c96-45da-95c5-957615b4696f
+  artifact_id: cmp.s5d.skill-plugin-manifests
+  artifact_type: Component
+  package_id: feat.s5d.generic-skill-suite
   owning_package: null
   deprecated: false

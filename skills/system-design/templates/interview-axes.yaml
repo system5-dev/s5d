@@ -1,0 +1,126 @@
+# interview-axes.yaml — the canonical set of questions used across all
+# commodity decisions. Each axis has a stable id, a question phrasing,
+# and an answer scale that decision YAMLs use to score variants.
+#
+# Skill flow: interview.sh emits the subset of axes a commodity declares
+# in its `axes:` field. Roman / the human gives answers. recommend.sh
+# computes a weighted score per variant.
+
+axes:
+  throughput:
+    question: "Peak throughput, requests per second? (ballpark — order of magnitude is fine)"
+    type: numeric
+    bands:
+      - { max: 10,      label: "low",       score: 1 }
+      - { max: 100,     label: "moderate",  score: 2 }
+      - { max: 1000,    label: "high",      score: 3 }
+      - { max: 10000,   label: "very-high", score: 4 }
+      - { label: "internet-scale", score: 5 }
+
+  data_volume:
+    question: "How much data (in bytes / rows) do you expect to store, at year-1 and year-3?"
+    type: numeric_pair
+    bands:
+      - { max: 1e9,   label: "GB",   score: 1 }
+      - { max: 1e10,  label: "10s of GB", score: 2 }
+      - { max: 1e12,  label: "TB",   score: 3 }
+      - { max: 1e13,  label: "10s of TB", score: 4 }
+      - { label: "PB+", score: 5 }
+
+  latency_p99:
+    question: "Acceptable p99 latency for a single operation? (ms)"
+    type: numeric
+    bands:
+      - { max: 1,    label: "<1ms (hot path)", score: 5 }
+      - { max: 10,   label: "1-10ms",          score: 4 }
+      - { max: 100,  label: "10-100ms",        score: 3 }
+      - { max: 1000, label: "100ms-1s",        score: 2 }
+      - { label: ">1s (batch)",                 score: 1 }
+
+  durability:
+    question: "Durability requirement — what happens if you lose one record?"
+    type: enum
+    values:
+      - { id: ephemeral,    label: "fine — cache / re-derivable", score: 1 }
+      - { id: best_effort,  label: "annoying — can recompute",    score: 2 }
+      - { id: standard,     label: "data loss is a bug",          score: 3 }
+      - { id: critical,     label: "regulatory / financial loss",  score: 5 }
+
+  consistency:
+    question: "Consistency model required by the workload?"
+    type: enum
+    values:
+      - { id: eventual,         label: "eventual (caches, feeds)",       score: 1 }
+      - { id: read_your_writes, label: "read-your-writes",               score: 2 }
+      - { id: strong,           label: "strong / serializable (money)",   score: 4 }
+      - { id: linearizable,     label: "linearizable (leader election)",  score: 5 }
+
+  ops_capacity:
+    question: "Engineering capacity available for ops / on-call on this component? (FTE)"
+    type: enum
+    values:
+      - { id: zero,       label: "0 — nobody owns ops",                  score: 0 }
+      - { id: marginal,   label: "<0.2 FTE — best-effort",               score: 1 }
+      - { id: dedicated,  label: "0.2-1 FTE — one engineer part-time",   score: 3 }
+      - { id: team,       label: "≥1 FTE — owned by a platform team",    score: 5 }
+
+  budget_monthly_usd:
+    question: "Monthly budget ceiling for this component (USD)?"
+    type: numeric
+    bands:
+      - { max: 50,    label: "<$50",       score: 1 }
+      - { max: 500,   label: "$50-500",    score: 2 }
+      - { max: 5000,  label: "$500-5k",    score: 3 }
+      - { max: 50000, label: "$5k-50k",    score: 4 }
+      - { label: ">$50k", score: 5 }
+
+  compliance:
+    question: "Compliance regimes that touch this component?"
+    type: multi_enum
+    values:
+      - { id: none,    label: "none / consumer"  }
+      - { id: gdpr,    label: "GDPR (EU PII)"    }
+      - { id: hipaa,   label: "HIPAA (US health)" }
+      - { id: pci,     label: "PCI-DSS (card data)" }
+      - { id: soc2,    label: "SOC2 (audit-friendly)" }
+      - { id: ferpa,   label: "FERPA (education)" }
+      - { id: ccpa,    label: "CCPA (California)" }
+
+  multi_region:
+    question: "Multi-region requirement?"
+    type: enum
+    values:
+      - { id: single,        label: "single region is fine",                 score: 1 }
+      - { id: warm_standby,  label: "warm standby in a second region",       score: 3 }
+      - { id: active_active, label: "active-active across regions",          score: 5 }
+
+  lock_in_tolerance:
+    question: "Tolerance for vendor lock-in?"
+    type: enum
+    values:
+      - { id: zero,    label: "must be OSS / portable",                      score: 1 }
+      - { id: low,     label: "managed OK if there's a self-host escape",    score: 2 }
+      - { id: medium,  label: "managed OK, exit cost acceptable",            score: 4 }
+      - { id: high,    label: "vendor lock-in is fine if it ships faster",   score: 5 }
+
+  time_to_prod:
+    question: "How fast does this need to be in production?"
+    type: enum
+    values:
+      - { id: hours,   label: "hours — prototype / hackathon", score: 5 }
+      - { id: days,    label: "days — startup-velocity",        score: 4 }
+      - { id: weeks,   label: "weeks — proper integration",     score: 2 }
+      - { id: months,  label: "months — strategic platform",    score: 1 }
+
+  team_familiarity:
+    question: "Team's existing familiarity with the underlying technology?"
+    type: enum
+    values:
+      - { id: greenfield,   label: "no exposure",          score: 1 }
+      - { id: tangential,   label: "tangential exposure",  score: 2 }
+      - { id: proficient,   label: "used in another project", score: 4 }
+      - { id: expert,       label: "team has shipped it before", score: 5 }
+
+# Weights are NOT here — each commodity decision YAML declares the weight
+# it puts on each axis. The same axes are reused across decisions; only
+# the weights vary.

@@ -1,0 +1,247 @@
+s5d: '1.0'
+id: feat.s5d.generic-skill-suite
+version: 1.0.0
+product: s5d
+tier: standard
+allow_update: true
+meta:
+  title: generic-skill-suite
+  authors: []
+  date: 2026-05-29
+  tickets:
+  - RAN-430
+  adrs: []
+  renames: []
+context: |
+  ## Problem
+  Nine generic, S5D-aware skills currently live under Gigsure's local Claude
+  skill directory. They are useful beyond that consumer repo, but S5D ships only
+  the umbrella `s5d` skill, so install/plugin discovery cannot expose the suite
+  as a first-class package.
+
+  ## Goal
+  Make S5D the canonical source of truth for the full nine-skill suite:
+  code-quality, unit-tests, e2e-tests, security-scan, domain-refactor,
+  scaling-review, system-design, scenario-mine, and infra-scan.
+
+  ## Scope
+  Copy complete skill directories, including scripts/templates/references;
+  register them in install.sh and Claude/Codex plugin manifests; preserve the
+  existing Gemini context-file surface; and document the first semantic contract:
+  skill outputs are S5D-adjacent artifacts (reports, SARIF/JUnit/LCOV, scenarios,
+  acceptance YAML, ADR specs, waivers) that feed existing S5D evidence/checkpoint
+  flows rather than a new Rust schema in this slice.
+
+  ## Acceptance
+  (i) all nine skill directories are present under `skills/`;
+  (ii) `install.sh` installs all nine plus `s5d`;
+  (iii) Claude and Codex plugin manifests expose all ten skills;
+  (iv) source references to `.claude/skills/<name>/...` inside imported skill
+  docs/scripts are rewritten to the installed `skills/<name>/...` layout or made
+  repo-root relative;
+  (v) validation proves the S5D package graph is sound and distribution files
+  parse as JSON/shell.
+
+  ## Privacy
+  Classification: Internal
+workflow:
+  mode: plan
+  target_architecture:
+    summary: S5D ships a complete reusable skill suite whose runtime helpers travel with each skill, while semantic integration uses current S5D artifact/evidence surfaces until a schema-backed checkpoint model is justified.
+    invariants:
+    - Gigsure is no longer the source of truth for these generic skills.
+    - A skill's SKILL.md, scripts, templates, and references move together.
+    - Install and plugin manifests stay in sync with the `skills/` tree.
+    - First-slice semantic integration is honest — reports and generated specs feed existing S5D records; no new Rust schema is claimed.
+    - Consumer examples may mention Gigsure only as examples, not as required paths.
+  delivery_strategy:
+    summary: Import the suite whole, update distribution manifests, normalize local path references, then verify with S5D validation and lightweight distribution checks.
+    rationale: Keeps the requested shipped-skills outcome narrow while avoiding a premature schema migration over still-variable report formats.
+  resources: null
+  role_map:
+    implementer: coder
+    owner: human
+    reviewer: reviewer
+    verifier: reviewer
+  review_policy:
+    cross_model_required: false
+    required_on: []
+  structure_outline: null
+  execution_mode:
+    engine: manual
+    max_iterations: null
+    stop_conditions:
+    - Phase acceptance reached
+    - Approved scope exhausted
+    - New decision required
+  phases:
+  - id: prototype
+    title: Prototype
+    scope: Reduce unknowns before committed implementation
+    roles:
+    - owner
+    - implementer
+    acceptance:
+    - Critical feasibility questions answered
+    - Telemetry approach identified
+    rollback:
+    - Discard spike output if assumptions fail
+  - id: build
+    title: Build
+    scope: Implement approved scope and pass local gates
+    roles:
+    - implementer
+    - reviewer
+    acceptance:
+    - Declared gates pass
+    - Change matches approved scope
+    rollback:
+    - Revert or reconcile if gates or review fail
+  - id: measure
+    title: Measure
+    scope: Collect telemetry and close the loop with an explicit verdict
+    roles:
+    - owner
+    - verifier
+    acceptance:
+    - Telemetry collected against success criteria
+    - Outcome verdict recorded
+    rollback:
+    - Iterate or kill if evidence stays weak
+artifacts:
+  products:
+  - id: s5d
+    name: s5d
+    organization: null
+  domains:
+  - id: dom.s5d.skill-distribution
+    product: s5d
+    name: Skill Distribution
+    classification: supporting
+    description: Shipped agent skills and distribution metadata for S5D-compatible runtimes.
+    team: null
+    maturity_level: custom
+  capabilities:
+  - id: cap.s5d.ship-generic-skills
+    domain: dom.s5d.skill-distribution
+    name: Ship Generic Skills
+    description: Package reusable S5D-aware skills with their scripts, templates, and references.
+    since: null
+  - id: cap.s5d.skill-artifact-handshake
+    domain: dom.s5d.skill-distribution
+    name: Preserve Skill Artifact Handshake
+    description: Keep generated reports, scenarios, ADRs, waivers, and test artifacts compatible with existing S5D evidence flows.
+    since: null
+  entities: []
+  features:
+  - id: feat.s5d.generic-skill-suite
+    product: s5d
+    name: generic-skill-suite
+    description: First-class distribution of the nine generic S5D-aware skills.
+  use_cases:
+  - id: uc.s5d.install-generic-skill-suite
+    feature: feat.s5d.generic-skill-suite
+    name: Install generic skill suite
+  - id: uc.s5d.plugin-discover-generic-skill-suite
+    feature: feat.s5d.generic-skill-suite
+    name: Runtime plugin discovers generic skill suite
+  - id: uc.s5d.consume-skill-artifacts
+    feature: feat.s5d.generic-skill-suite
+    name: Consume skill artifacts through S5D evidence flow
+  systems:
+  - id: sys.s5d.distribution
+    product: s5d
+    name: S5D Distribution
+  containers:
+  - id: ctr.s5d.skill-files
+    system: sys.s5d.distribution
+    name: Skill files
+    technology: Markdown shell YAML JSON templates
+  - id: ctr.s5d.install-surface
+    system: sys.s5d.distribution
+    name: Install and plugin surfaces
+    technology: Shell JSON
+  components:
+  - id: cmp.s5d.generic-skill-suite
+    feature: feat.s5d.generic-skill-suite
+    domain: dom.s5d.skill-distribution
+    container: ctr.s5d.skill-files
+    name: Generic skill suite
+    paths:
+    - skills/code-quality
+    - skills/domain-refactor
+    - skills/e2e-tests
+    - skills/infra-scan
+    - skills/scaling-review
+    - skills/scenario-mine
+    - skills/security-scan
+    - skills/system-design
+    - skills/unit-tests
+  - id: cmp.s5d.skill-installer
+    feature: feat.s5d.generic-skill-suite
+    domain: dom.s5d.skill-distribution
+    container: ctr.s5d.install-surface
+    name: Skill installer registration
+    paths:
+    - install.sh
+  - id: cmp.s5d.skill-plugin-manifests
+    feature: feat.s5d.generic-skill-suite
+    domain: dom.s5d.skill-distribution
+    container: ctr.s5d.install-surface
+    name: Skill plugin manifests
+    paths:
+    - .claude-plugin/plugin.json
+    - .codex-plugin/plugin.json
+    - gemini-extension.json
+  roles: []
+  concerns: []
+  metrics: []
+  supersystems: []
+  transports: []
+links:
+  feature_to_domain:
+  - feature: feat.s5d.generic-skill-suite
+    domain: dom.s5d.skill-distribution
+  use_case_to_capability:
+  - use_case: uc.s5d.install-generic-skill-suite
+    capability: cap.s5d.ship-generic-skills
+  - use_case: uc.s5d.plugin-discover-generic-skill-suite
+    capability: cap.s5d.ship-generic-skills
+  - use_case: uc.s5d.consume-skill-artifacts
+    capability: cap.s5d.skill-artifact-handshake
+  use_case_to_entity: []
+  component_to_capability:
+  - component: cmp.s5d.generic-skill-suite
+    capability: cap.s5d.ship-generic-skills
+  - component: cmp.s5d.generic-skill-suite
+    capability: cap.s5d.skill-artifact-handshake
+  - component: cmp.s5d.skill-installer
+    capability: cap.s5d.ship-generic-skills
+  - component: cmp.s5d.skill-plugin-manifests
+    capability: cap.s5d.ship-generic-skills
+  component_to_entity: []
+  container_to_capability: []
+  concern_to_metric: []
+  component_to_container:
+  - component: cmp.s5d.generic-skill-suite
+    container: ctr.s5d.skill-files
+  - component: cmp.s5d.skill-installer
+    container: ctr.s5d.install-surface
+  - component: cmp.s5d.skill-plugin-manifests
+    container: ctr.s5d.install-surface
+  edges: []
+  depends_on: []
+  entity_relations: []
+  capability_to_entity: []
+  capability_to_concern: []
+contracts: []
+gates:
+- kind: schema
+- kind: graph
+roc: null
+problem: null
+hypotheses: []
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false

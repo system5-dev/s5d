@@ -1,0 +1,106 @@
+id: payments
+title: Payments / billing platform
+description: |
+  Picking a payments processor for collecting one-time charges,
+  subscriptions, marketplace flows.
+
+axes:
+  throughput:        10
+  budget_monthly_usd: 20  # actually % of revenue; fees-as-cost
+  compliance:        25
+  lock_in_tolerance: 10
+  time_to_prod:      15
+  team_familiarity:  10
+  multi_region:      10
+
+variants:
+  - id: stripe
+    name: Stripe
+    kind: managed
+    self_hostable: false
+    scores:
+      throughput: 5
+      budget_monthly_usd: 3    # 2.9% + 30¢; competitive but not cheapest
+      compliance: 5
+      lock_in_tolerance: 1     # famous lock-in via Subscription objects
+      time_to_prod: 5
+      team_familiarity: 5
+      multi_region: 5
+    notes: |
+      - Default. Best DX, best docs, best ecosystem.
+      - Stripe Tax / Billing / Connect cover most adjacent needs.
+      - PaymentIntent + idempotency keys are non-negotiable.
+
+  - id: adyen
+    name: Adyen
+    kind: managed
+    self_hostable: false
+    scores:
+      throughput: 5
+      budget_monthly_usd: 4    # interchange++ for enterprise volumes
+      compliance: 5
+      lock_in_tolerance: 2
+      time_to_prod: 2          # weeks of integration
+      team_familiarity: 2
+      multi_region: 5
+    notes: |
+      - SoTA for global enterprise (FX, local payment methods).
+      - Picks itself at >$1M GMV / month or when you need 100+ payment methods.
+      - Setup is enterprise sales — not self-serve.
+
+  - id: paddle
+    name: Paddle (merchant-of-record)
+    kind: managed
+    self_hostable: false
+    scores:
+      throughput: 4
+      budget_monthly_usd: 2    # 5% + 50¢ — highest fees
+      compliance: 5
+      lock_in_tolerance: 2
+      time_to_prod: 5
+      team_familiarity: 3
+      multi_region: 5
+    notes: |
+      - Merchant-of-record: Paddle handles VAT/sales tax globally.
+      - Right answer for digital products selling worldwide if you
+        don't want to manage tax compliance yourself.
+
+  - id: lemon_squeezy
+    name: Lemon Squeezy (Stripe-owned MoR)
+    kind: managed
+    self_hostable: false
+    scores:
+      throughput: 3
+      budget_monthly_usd: 2
+      compliance: 5
+      lock_in_tolerance: 3
+      time_to_prod: 5
+      team_familiarity: 3
+      multi_region: 4
+    notes: |
+      - Stripe acquired 2024. Indie-hacker friendly MoR.
+      - Less control than Stripe direct; more compliance burden offloaded.
+
+  - id: square
+    name: Square
+    kind: managed
+    self_hostable: false
+    scores:
+      throughput: 4
+      budget_monthly_usd: 3
+      compliance: 5
+      lock_in_tolerance: 2
+      time_to_prod: 5
+      team_familiarity: 3
+      multi_region: 2
+    notes: |
+      - In-person + online. US-first.
+      - Picks itself when you need terminal + online together.
+
+hard_constraints:
+  - rule: "compliance contains 'pci' AND variant.kind == 'self-hosted'"
+    action: disqualify
+    reason: "self-hosted payments processing is PCI Level 1 territory — out of scope for this skill"
+  - rule: "multi_region:active_active AND variant.id IN ['square']"
+    action: warn
+    reason: "Square is US-strong; verify international support"

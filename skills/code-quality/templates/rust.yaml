@@ -1,0 +1,27 @@
+  # === Rust — built-in toolchain (clippy + rustfmt) + supply-chain checks ===
+  - repo: local
+    hooks:
+      - id: cargo-fmt
+        name: cargo fmt --check
+        entry: cargo fmt --all -- --check
+        language: system
+        types: [rust]
+        pass_filenames: false
+      - id: cargo-clippy
+        name: cargo clippy -D warnings
+        entry: cargo clippy --all-targets --all-features -- -D warnings
+        language: system
+        types: [rust]
+        pass_filenames: false
+
+  # Supply-chain audit. Install:
+  #   cargo install cargo-audit cargo-deny cargo-machete
+  - repo: local
+    hooks:
+      - id: cargo-audit
+        name: cargo audit
+        entry: cargo audit
+        language: system
+        files: ^Cargo\.(toml|lock)$
+        pass_filenames: false
+        stages: [pre-push]

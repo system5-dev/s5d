@@ -1,0 +1,137 @@
+id: auth
+title: Authentication / identity
+description: |
+  Picking where user accounts live, how login works, session model.
+
+axes:
+  ops_capacity:      15
+  budget_monthly_usd: 15
+  compliance:        15
+  lock_in_tolerance: 15
+  time_to_prod:      15
+  team_familiarity:  10
+  multi_region:      15
+
+variants:
+  - id: nextauth
+    name: NextAuth / Auth.js
+    kind: self-hosted
+    self_hostable: true
+    scores:
+      ops_capacity: 4
+      budget_monthly_usd: 5
+      compliance: 3
+      lock_in_tolerance: 5
+      time_to_prod: 4
+      team_familiarity: 4
+      multi_region: 3
+    notes: |
+      - Library, not a service. You own the database, sessions, emails.
+      - Best for Next.js / SvelteKit / Astro stacks.
+      - v5 beta in 2024-2025 stabilised in 2026.
+
+  - id: better_auth
+    name: Better Auth
+    kind: self-hosted
+    self_hostable: true
+    scores:
+      ops_capacity: 4
+      budget_monthly_usd: 5
+      compliance: 3
+      lock_in_tolerance: 5
+      time_to_prod: 4
+      team_familiarity: 2
+      multi_region: 3
+    notes: |
+      - 2025 OSS challenger. Framework-agnostic. Plugins (org, 2FA, RBAC).
+      - Active dev — review release cadence before adopting in prod.
+
+  - id: clerk
+    name: Clerk
+    kind: managed
+    self_hostable: false
+    scores:
+      ops_capacity: 5
+      budget_monthly_usd: 3
+      compliance: 5
+      lock_in_tolerance: 1
+      time_to_prod: 5
+      team_familiarity: 4
+      multi_region: 5
+    notes: |
+      - Best DX. Pre-built sign-in / sign-up UI. Org / RBAC built-in.
+      - 10k MAU free tier; scales expensive past that.
+
+  - id: auth0
+    name: Auth0
+    kind: managed
+    self_hostable: false
+    scores:
+      ops_capacity: 5
+      budget_monthly_usd: 1    # bills famously climb
+      compliance: 5
+      lock_in_tolerance: 1
+      time_to_prod: 5
+      team_familiarity: 4
+      multi_region: 5
+    notes: |
+      - Veteran. Universal Login is solid. Rules → Actions migration painful.
+      - Hard to leave once integrated; budget alarms recommended.
+
+  - id: supabase_auth
+    name: Supabase Auth
+    kind: hybrid
+    self_hostable: true
+    scores:
+      ops_capacity: 4
+      budget_monthly_usd: 4
+      compliance: 4
+      lock_in_tolerance: 3
+      time_to_prod: 5
+      team_familiarity: 3
+      multi_region: 3
+    notes: |
+      - Best when you're also using Supabase Postgres.
+      - GoTrue underneath; Apache 2.0.
+
+  - id: keycloak
+    name: Keycloak
+    kind: self-hosted
+    self_hostable: true
+    scores:
+      ops_capacity: 1
+      budget_monthly_usd: 4
+      compliance: 5
+      lock_in_tolerance: 5
+      time_to_prod: 1
+      team_familiarity: 2
+      multi_region: 3
+    notes: |
+      - Enterprise / federated identity (SAML, OIDC IdP).
+      - Heavy ops surface; the right answer only when you must operate
+        IdP / SSO infrastructure yourself.
+
+  - id: aws_cognito
+    name: AWS Cognito
+    kind: managed
+    self_hostable: false
+    cloud: aws
+    scores:
+      ops_capacity: 5
+      budget_monthly_usd: 4    # cheap until MFA / advanced security tiers
+      compliance: 5
+      lock_in_tolerance: 1
+      time_to_prod: 3
+      team_familiarity: 3
+      multi_region: 4
+    notes: |
+      - Cheap. Painful DX. Picks itself when you're heavily on AWS and
+        the constraint is cost.
+      - User-pool migration to a different IdP is a real project.
+
+hard_constraints:
+  - rule: "compliance contains 'hipaa' AND variant.id IN ['nextauth', 'better_auth']"
+    action: warn
+    reason: "library-based auth puts compliance burden on you; verify HIPAA design carefully"
+  - rule: "ops_capacity:zero AND variant.id == 'keycloak'"
+    action: disqualify
