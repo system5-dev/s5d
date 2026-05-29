@@ -1,0 +1,60 @@
+spec_ref: feat.s5d.skill-suite-integration__20260529.s5d.yaml
+spec_sha256: sha256:0ac6ee425f98bf8985468cee9b2b462bddc0f9ba839c6987d65b77c72eee0af8
+status: operated
+sync_status: synced
+status_history:
+- status: proposed
+  timestamp: 2026-05-29T16:27:21.927498+00:00
+- status: previewed
+  timestamp: 2026-05-29T16:35:30.562171+00:00
+- status: approved
+  timestamp: 2026-05-29T16:38:38.670436+00:00
+- status: applied
+  timestamp: 2026-05-29T16:50:09.055638+00:00
+- status: operated
+  timestamp: 2026-05-29T16:50:47.011917+00:00
+active_phase: null
+phase_history: []
+phase_runs: []
+approvals:
+- reviewer: Roman
+  date: 2026-05-29T16:38:38.670434+00:00
+  spec_sha256: sha256:17877b7b5c33da713129c0d00a86b88e41e48b351b2e53f1813a0dc76cf73b52
+  diff_sha256: sha256:f1875b800dd7f71e6398ced1f8566705c6d53ae0bb06b88f9ebae229df9dbe2c
+preview:
+  diff_sha256: sha256:f1875b800dd7f71e6398ced1f8566705c6d53ae0bb06b88f9ebae229df9dbe2c
+  previewed_spec_sha256: sha256:17877b7b5c33da713129c0d00a86b88e41e48b351b2e53f1813a0dc76cf73b52
+  actions:
+    create: 4
+    link: 0
+    update: 1
+    delete: 0
+  log: null
+reflection:
+  verdict: iterate
+  measurement_window: null
+  telemetry_refs: []
+  summary: 'Shipped the 9-skill suite first-class. Packaging (skills/ + install.sh SKILLS + Claude/Codex manifests) landed via Roman''s parallel commit 6c288d5; my redundant cp created nested dups which I removed. CLI-rewire done on the 2 producers that have CLI verbs: adr.sh (system-design) and plan.sh (domain-refactor) now call `s5d new` + `s5d decision add-hypothesis` instead of hand-rolling YAML — both verified to emit specs that pass `s5d validate` (previously they wrote schema-invalid YAML with `schema:`/`question:` top-level keys that would fail validation). security-scan waiver stays file-based because `s5d_waiver` is MCP-only (no CLI verb) — documented MCP as canonical. scenario-mine acceptance stays YAML-layer injection — documented, CLI verb deferred. [OBSERVED] local validation passes; production/consumer-run exercise still pending. install.sh multi-skill loop verified by inspection, not run live (would mutate ~/.claude/skills).'
+  worked: []
+  issues:
+  - scenario-mine acceptance-injection CLI verb deferred (H3-adjacent); security-scan waiver can't be CLI-mediated until/unless a CLI waiver verb exists; install.sh multi-skill loop not exercised live
+  structured_issues: []
+  follow_ups: []
+  evidence: []
+  heuristics:
+  - 'A skill that emits S5D artifacts must route through the `s5d` CLI/MCP, never hand-roll the spec YAML — hand-rolled YAML silently drifts from the Rust schema (rust/src/models.rs) and fails `s5d validate` (proven: adr.sh wrote `schema:`/`question:` top-level keys that don''t exist in the real schema). Validation against the source of truth is the whole point of shipping under S5D''s name.'
+gate_results:
+- kind: schema
+  status: passed
+  attempt: 1
+  timestamp: 2026-05-29T16:50:02.457509+00:00
+  log: schema validation passed (built-in)
+  exit_code: null
+  evidence_path: evidence/feat.s5d.skill-suite-integration/schema_1.log
+  command: null
+  duration_ms: 0
+  waiver_expires_at: null
+  kind_class: null
+decision: null
+verified_by: Diana
+drift_tolerance: null

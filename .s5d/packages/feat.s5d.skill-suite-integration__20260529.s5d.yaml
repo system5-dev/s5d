@@ -1,0 +1,158 @@
+s5d: '1.0'
+id: feat.s5d.skill-suite-integration
+version: 1.0.0
+product: s5d
+tier: lightweight
+allow_update: true
+meta:
+  title: skill-suite-integration
+  authors: []
+  date: 2026-05-29
+  tickets: []
+  adrs: []
+  renames: []
+context: |
+  ## Problem
+  9 generic, stack-agnostic, S5D-aware skills live in the gigsure consumer repo
+  (.claude/skills/) but S5D ships only the s5d control-plane skill. The skills
+  hand-roll S5D artifacts (decision YAML, scenarios, waivers) with no validation
+  against the Rust schema, so shipping them as-is would propagate drift under S5D's name.
+
+  ## Goal
+  Ship all 9 skills first-class from S5D's skills/ with full distribution wiring,
+  and route the producer skills through the s5d CLI/MCP contract so emitted
+  artifacts are validated and drift-checkable. No schema change (per
+  decision.skill-suite-integration, winner H2; H3 deferred).
+
+  ## Privacy
+  Classification: Internal
+workflow:
+  mode: plan
+  target_architecture:
+    summary: |
+      S5D ships a 10-skill suite: the s5d control plane plus 9 domain skills under
+      skills/. install.sh links all 10 via the existing $SKILLS loop; Claude and Codex
+      plugin manifests list all 10 paths; Gemini auto-reads ~/.agents/skills. The 3
+      producer skills (system-design, domain-refactor, security-scan) emit S5D artifacts
+      through the s5d CLI/MCP, not hand-rolled YAML.
+    invariants:
+    - rust/src/models.rs schema is unchanged; all existing specs still validate and import
+    - Every shipped skill is self-contained (SKILL.md + scripts/ + templates/ + references/)
+    - Producer skills degrade gracefully (file-write + warning) if the s5d CLI is absent
+  delivery_strategy:
+    summary: |
+      Vertical slices: (1) co-locate 9 skill dirs + wire install.sh/manifests, verify a
+      clean multi-skill install; (2) rewire the 3 producers to the CLI contract one at a
+      time, each verified; (3) resolve scenario-mine acceptance path (verb or documented
+      fallback). Mechanical packaging first (lowest risk), behavioral wiring second.
+    rationale: Packaging is the prerequisite and is independently testable before any behavior change.
+  resources: null
+  role_map:
+    owner: human
+    implementer: coder
+    reviewer: reviewer
+    verifier: reviewer
+  review_policy:
+    cross_model_required: false
+    required_on: []
+  structure_outline:
+    summary: |
+      Move 9 skill dirs from gigsure into skills/; extend distribution wiring; rewire 3
+      producers to the s5d CLI. No Rust changes. scenario-mine acceptance path resolved
+      via documented file-based fallback (defer the optional CLI verb to a follow-up).
+    signatures:
+    - "skills/<name>/ x9: code-quality, unit-tests, e2e-tests, security-scan, domain-refactor, scaling-review, system-design, scenario-mine, infra-scan (copied from gigsure, source of truth = S5D)"
+    - "install.sh: SKILLS=\"s5d code-quality unit-tests e2e-tests security-scan domain-refactor scaling-review system-design scenario-mine infra-scan\""
+    - ".claude-plugin/plugin.json: skills[] += 9 ./skills/<name> paths"
+    - ".codex-plugin/plugin.json: skills[] += 9 ./skills/<name> paths"
+    - "system-design/scripts/adr.sh: replace raw .s5d/packages YAML write with `s5d new --tier decision` + `s5d decision add-hypothesis/decide`"
+    - "domain-refactor/scripts/plan.sh: replace decision-skeleton YAML write with `s5d new --tier decision`"
+    - "security-scan/scripts/waiver.sh: replace .s5d/security-waivers.yaml write with `s5d_waiver` (MCP) / documented fallback"
+    types:
+    - "producer skills (emit S5D artifacts): system-design, domain-refactor, security-scan"
+    - "consumer skills (read S5D artifacts): scenario-mine, e2e-tests"
+    - "standalone skills (no S5D coupling): code-quality, unit-tests, scaling-review, infra-scan"
+  execution_mode:
+    engine: manual
+    max_iterations: null
+    stop_conditions:
+    - Phase acceptance reached
+    - Approved scope exhausted
+    - New decision required
+  phases:
+  - id: prototype
+    title: Prototype
+    scope: Reduce unknowns before committed implementation
+    roles:
+    - owner
+    - implementer
+    acceptance:
+    - Critical feasibility questions answered
+    - Telemetry approach identified
+    rollback:
+    - Discard spike output if assumptions fail
+  - id: build
+    title: Build
+    scope: Implement approved scope and pass local gates
+    roles:
+    - implementer
+    - reviewer
+    acceptance:
+    - Declared gates pass
+    - Change matches approved scope
+    rollback:
+    - Revert or reconcile if gates or review fail
+  - id: measure
+    title: Measure
+    scope: Collect telemetry and close the loop with an explicit verdict
+    roles:
+    - owner
+    - verifier
+    acceptance:
+    - Telemetry collected against success criteria
+    - Outcome verdict recorded
+    rollback:
+    - Iterate or kill if evidence stays weak
+artifacts:
+  products:
+  - id: s5d
+    name: s5d
+    organization: null
+  domains:
+  - id: skill-distribution
+    product: s5d
+    name: Skill distribution & wiring
+    classification: generic
+  capabilities:
+  - id: ship-skill-suite
+    domain: skill-distribution
+    name: Ship and wire the 10-skill suite across runtimes
+  - id: cli-mediated-emit
+    domain: skill-distribution
+    name: Producer skills emit S5D artifacts via the CLI contract
+  entities: []
+  features:
+  - id: feat.s5d.skill-suite-integration
+    product: s5d
+    name: skill-suite-integration
+    description: null
+  use_cases: []
+  systems: []
+  containers: []
+  components: []
+  roles: []
+  concerns: []
+  metrics: []
+  supersystems: []
+  transports: []
+links: null
+contracts: []
+gates:
+- kind: schema
+roc: null
+problem: null
+hypotheses: []
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false

@@ -220,25 +220,65 @@ PYEOF
 echo "✓ wrote $OUTPUT" >&2
 
 if [ "$EMIT_DECISION" -eq 1 ]; then
-    DSPEC=".s5d/packages/decision.domain-refactor.s5d.yaml"
-    PRODUCT="${S5D_PRODUCT:-s5d}"
-    if [ -e "$DSPEC" ]; then
-        DSPEC="${DSPEC}.new"
-        echo "→ decision spec exists; writing to $DSPEC" >&2
-    fi
-    mkdir -p .s5d/packages
-    NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-    cat > "$DSPEC" <<YAMLEOF
-# Decision spec scaffold for domain-refactor. Fill in hypotheses + evidence
-# via MCP s5d_add_hypothesis / s5d_add_evidence, then s5d_decide.
+    PRODUCT="${S5D_PRODUCT:-$(basename "$(pwd)")}"
+    DEC_ID="decision.domain-refactor"
+    QUESTION="How should we sequence the refactor of god-components and resolve drift in the architecture map, given the current test coverage profile?"
+
+    if command -v s5d >/dev/null 2>&1; then
+        # Ensure .s5d/ exists in cwd (s5d new requires it).
+        if [ ! -d ".s5d" ]; then
+            s5d init >/dev/null 2>&1 || true
+        fi
+
+        S5D_NEW_OUT=$(s5d new "$DEC_ID" --tier decision --product "$PRODUCT" --question "$QUESTION" 2>&1)
+        DSPEC=$(printf '%s\n' "$S5D_NEW_OUT" | grep "^ok Created spec:" | sed 's/^ok Created spec: //')
+
+        if [ -z "$DSPEC" ]; then
+            echo "error: s5d new did not emit a spec path. Output was:" >&2
+            echo "$S5D_NEW_OUT" >&2
+            exit 1
+        fi
+
+        # Add the three canonical hypotheses for domain-refactor sequencing.
+        s5d decision add-hypothesis "$DSPEC" \
+            --title "safe-first" \
+            --content "Refactor SAFE god-components now (coverage sufficient), defer UNSAFE ones until tests exist. Lowest blast radius." \
+            --scope "god-component decomposition order" >/dev/null 2>&1
+        s5d decision add-hypothesis "$DSPEC" \
+            --title "test-first" \
+            --content "Write tests for ALL god-components before any refactor move, regardless of current coverage. Maximises safety but delays delivery." \
+            --scope "god-component decomposition order" >/dev/null 2>&1
+        s5d decision add-hypothesis "$DSPEC" \
+            --title "extract-shared-contract" \
+            --content "Introduce typed interfaces across domain edges before any code move, so refactor moves can lean on the type-checker as a regression guard." \
+            --scope "domain-edge contract enforcement" >/dev/null 2>&1
+
+        echo "✓ wrote $DSPEC" >&2
+        echo "  next: review with the s5d skill — s5d_preview / s5d_decide via MCP" >&2
+        echo "  (s5d_decide requires human confirmation — not called by this script)" >&2
+    else
+        # ── FALLBACK: s5d not on PATH — write a clearly-marked draft YAML ──────
+        echo "warning: s5d binary not found on PATH — emitting unvalidated DRAFT yaml" >&2
+        echo "         install s5d and re-run with --decision-spec to get a schema-valid spec." >&2
+
+        DSPEC=".s5d/packages/${DEC_ID}.s5d.yaml"
+        if [ -e "$DSPEC" ]; then
+            DSPEC="${DSPEC}.new"
+            echo "→ decision spec exists; writing to $DSPEC" >&2
+        fi
+        mkdir -p .s5d/packages
+        NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+        cat > "$DSPEC" <<YAMLEOF
+# DRAFT — generated without s5d CLI (binary not on PATH).
+# This file uses an UNVALIDATED schema. Run plan.sh --decision-spec again
+# with s5d installed to produce a schema-valid spec.
 schema: '1.0'
-id: decision.domain-refactor
+id: ${DEC_ID}
 tier: decision
 product: ${PRODUCT}
 question: |
-  How should we sequence the refactor of god-components and resolve drift
-  in the architecture map, given the current test coverage profile?
-created_at: '$NOW'
+  ${QUESTION}
+created_at: '${NOW}'
 context: |
   analyze.sh surfaced N violations across god-component, drift-missing,
   missing-contract, orphan, capability-dup. See refactor-plan.md for the
@@ -250,5 +290,6 @@ context: |
   - extract-shared-contract: introduce typed interfaces across domain edges
     before any code move, so refactor moves can lean on type-check.
 YAMLEOF
-    echo "✓ wrote $DSPEC" >&2
+        echo "✓ wrote $DSPEC (DRAFT — unvalidated)" >&2
+    fi
 fi

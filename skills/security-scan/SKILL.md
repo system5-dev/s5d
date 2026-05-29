@@ -29,7 +29,11 @@ install one-liners; it does **not** install scanner binaries.
   lockfiles SCA scans. Sign with Cosign in CI when keys are present.
 - **Waivers are explicit, never silent** — a suppressed finding requires a
   `.s5d/security-waivers.yaml` entry with rule-id, reason, condition, approver,
-  and expiry date. Mirrors `s5d_waiver`. No `# nosec`-style inline silencing.
+  and expiry date. No `# nosec`-style inline silencing. **S5D canonical waiver
+  (per decision.skill-suite-integration):** when an S5D spec gates the work, the
+  authoritative waiver is the MCP `s5d_waiver` tool (gate waivers are MCP-only —
+  no CLI verb). This skill's `.s5d/security-waivers.yaml` is the scanner-local
+  fallback for repos not running through S5D's MCP.
 - **All reports under `test-reports/security/<category>/`** — single root so CI
   artefact uploads, `.gitignore`, and triage can target one path.
 

@@ -45,6 +45,8 @@ Output is **traceable**: every scenario carries `@s5d-use-case`, `@s5d-domain`, 
 
 `acceptance/` is **mandatory**, not optional. Every `.feature` file gets a paired `.yaml` snippet so a future s5d feature spec can pull acceptance scenarios mechanically.
 
+> **S5D injection (per decision.skill-suite-integration):** acceptance snippets are injected into a feature spec's `use_cases[].acceptance` at the **YAML layer** — copy the snippet into the spec, then `s5d validate`. There is no dedicated `s5d` CLI verb for acceptance injection yet (deferred); the file-based snippet is the canonical path for now.
+
 ## Use case ID convention
 
 A use case ID is the **slug column** in `.s5d/discovery/architecture-map.md` → §"## 4. Use cases". If a use case has no `id` column, **add one before mining** — do not derive slugs implicitly. Two agents mining the same map must reach the same slugs, so the map is the source of truth, not naming intuition.
