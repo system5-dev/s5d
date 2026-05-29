@@ -1,0 +1,161 @@
+s5d: '1.0'
+id: decision.s5d.generic-skill-suite
+version: 1.0.0
+product: s5d
+tier: decision
+allow_update: true
+meta:
+  title: generic-skill-suite
+  authors: []
+  date: 2026-05-29
+  tickets: []
+  adrs: []
+  renames: []
+context: null
+workflow: null
+artifacts: null
+links: null
+contracts: []
+gates:
+- kind: review
+roc: null
+problem:
+  signal: How should S5D absorb the nine generic Gigsure skills as a first-class suite without overstating semantic integration?
+  constraints:
+  - The suite must become first-class in S5D distribution, not stay consumer-local.
+  - The shipped skill contract must include scripts, templates, and references needed by SKILL.md instructions.
+  - Semantic integration must be verifiable and must not claim schema enforcement that does not exist.
+  - Existing dirty Rust/discovery work in the S5D worktree must not be overwritten by this slice.
+  targets:
+  - Canonical source for all nine generic skills moves to `skills/` in S5D.
+  - Claude/Codex plugin manifests and install.sh expose the same skill set.
+  - The first semantic contract is stated as S5D artifact/evidence handoff, with schema extension deferred.
+  indicators:
+  - Count of imported skill directories equals nine.
+  - Manifest skill arrays include `s5d` plus the nine imported skills.
+  - No imported instruction path requires Gigsure's `.claude/skills` layout.
+  goodhart_guard: Do not treat manifest presence as semantic integration; require explicit artifact/evidence handoff language and verification.
+  acceptance: Winner is acceptable iff it makes S5D the canonical source, preserves runtime helper files, wires install and plugin discovery, and states whether schema-backed checkpoint enforcement is in or out of the first slice.
+  blast_radius: skills directory plus distribution manifests; Rust schema changes only if explicitly selected.
+  reversibility: high — imported skills and manifest entries can be removed without data migration.
+  status: framed
+hypotheses:
+- id: first-class-suite-existing-contract
+  title: First-class suite with existing S5D contract
+  content: Move all nine skill directories into S5D as the canonical source, wire install/plugin distribution, and treat each skill's reports, scenarios, ADRs, waivers, and gates as artifacts that feed the existing S5D package/record/evidence model. Defer a Rust schema extension until a concrete report schema needs enforcement.
+  scope: skills/, install.sh, plugin manifests, S5D decision evidence contract
+  kind: system
+  layer: L2
+  r_eff: null
+  evidence:
+  - id: 20260529-internal-first-class-suite-existing-contract
+    type: internal
+    content: Source survey found 147 files / 864K under gigsure/.claude/skills across scripts, templates, references, and SKILL.md files. Copying complete directories is necessary for the skill contract to remain executable; the suite is small enough for S5D distribution.
+    verdict: pass
+    valid_until: 2026-08-27T14:43:45.791171+00:00
+    carrier_ref: /Users/random1st/src/giggster/gigsure/.claude/skills
+    formality: 3
+    claim_scope:
+    - source-size
+    - distribution-scope
+    congruence_level: null
+    reliability: 0.9
+    refine_kind: null
+  - id: 20260529-internal-first-class-suite-existing-contract
+    type: internal
+    content: 'Skill entrypoints already speak S5D semantics: scenario-mine emits .s5d/scenarios and acceptance YAML, system-design emits decision-tier ADRs, domain-refactor consumes architecture maps/scenarios/test reports, security-scan manages .s5d/security-waivers. Existing package/record/evidence surfaces can carry this without a new Rust schema in the first slice.'
+    verdict: pass
+    valid_until: 2026-08-27T14:43:47.700631+00:00
+    carrier_ref: /Users/random1st/src/giggster/gigsure/.claude/skills/*/SKILL.md
+    formality: 3
+    claim_scope:
+    - semantic-fit
+    - checkpoint-contract
+    congruence_level: null
+    reliability: 0.85
+    refine_kind: null
+  depends_on: []
+  rationale: null
+  spec_ref: feat.s5d.generic-skill-suite__20260529.s5d.yaml
+  prompt: How should S5D absorb the nine generic Gigsure skills without overstating semantic integration?
+  next_move: build
+- id: skillmd-only-distribution
+  title: SKILL.md-only distribution
+  content: Copy only the nine SKILL.md entrypoints into S5D and omit scripts, templates, and references. This gives plugin visibility quickly but treats runtime helpers as local Gigsure assets.
+  scope: skills/*/SKILL.md and plugin manifests only
+  kind: system
+  layer: invalid
+  r_eff: null
+  evidence:
+  - id: 20260529-internal-skillmd-only-distribution
+    type: internal
+    content: 'SKILL.md-only import is contradicted by the actual source layout: scripts perform detection/setup/run/report work and templates carry generated configs/CI/spec stubs. Omitting them would make plugin-discovered skills describe commands that are not shipped.'
+    verdict: fail
+    valid_until: 2026-08-27T14:43:54.505988+00:00
+    carrier_ref: find gigsure/.claude/skills -type f
+    formality: 3
+    claim_scope:
+    - runtime-completeness
+    congruence_level: null
+    reliability: 0.9
+    refine_kind: null
+  depends_on: []
+  rationale: null
+  spec_ref: null
+  prompt: How should S5D absorb the nine generic Gigsure skills without overstating semantic integration?
+  next_move: probe
+- id: schema-first-checkpoint-model
+  title: Schema-first checkpoint model
+  content: Before shipping the skills, extend Rust schemas and validators with first-class SkillRun, SkillReport, and Checkpoint objects, then make each skill emit those records into S5D. Distribution happens only after the new semantic model is enforced.
+  scope: Rust metamodel, validators, skill runtime contract, all nine skill directories
+  kind: system
+  layer: L0
+  r_eff: null
+  evidence:
+  - id: 20260529-internal-schema-first-checkpoint-model
+    type: internal
+    content: Schema-first integration would touch Rust metamodel/validators while the current S5D worktree already has unrelated dirty Rust/Cargo/discovery files. It also lacks evidence for a stable cross-skill report schema beyond existing markdown/YAML/SARIF/JUnit/LCOV artifacts.
+    verdict: refine
+    valid_until: 2026-08-27T14:43:46.821527+00:00
+    carrier_ref: git status --short; skill SKILL.md survey
+    formality: 3
+    claim_scope:
+    - blast-radius
+    - schema-readiness
+    congruence_level: null
+    reliability: 0.8
+    refine_kind: calibrate
+  depends_on: []
+  rationale: null
+  spec_ref: null
+  prompt: How should S5D absorb the nine generic Gigsure skills without overstating semantic integration?
+  next_move: probe
+- id: consumer-repo-source-of-truth
+  title: Consumer repo remains source of truth
+  content: Keep the nine skills in Gigsure and let S5D reference, sync, or copy them as consumer-local examples. No first-class shipped suite is added to the S5D distribution until multiple downstream projects prove the suite boundary.
+  scope: gigsure/.claude/skills as source, S5D docs or external sync only
+  kind: system
+  layer: invalid
+  r_eff: null
+  evidence:
+  - id: 20260529-internal-consumer-repo-source-of-truth
+    type: internal
+    content: RAN-430 explicitly asks to bring the nine generic S5D-aware skills into /Users/random1st/src/s5d as first-class shipped skills with install and plugin wiring. Keeping Gigsure as source-of-truth fails that requested distribution target.
+    verdict: fail
+    valid_until: 2026-08-27T14:43:44.650442+00:00
+    carrier_ref: Linear RAN-430 description
+    formality: 4
+    claim_scope:
+    - requirement-fit
+    congruence_level: null
+    reliability: 0.9
+    refine_kind: null
+  depends_on: []
+  rationale: null
+  spec_ref: null
+  prompt: How should S5D absorb the nine generic Gigsure skills without overstating semantic integration?
+  next_move: defer
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false

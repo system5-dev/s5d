@@ -1,0 +1,18 @@
+  # === Kotlin — ktlint (format) + detekt (analysis) ===
+  # ktlint: ./gradlew ktlintCheck / ktlintFormat (via jlleitschuh/ktlint-gradle plugin)
+  # detekt: ./gradlew detekt (via io.gitlab.arturbosch.detekt plugin)
+  - repo: local
+    hooks:
+      - id: ktlint
+        name: ktlint format check
+        entry: bash -c 'if [ -f gradlew ]; then ./gradlew ktlintCheck --quiet; else exit 0; fi'
+        language: system
+        types: [kotlin]
+        pass_filenames: false
+      - id: detekt
+        name: detekt analysis
+        entry: bash -c 'if [ -f gradlew ]; then ./gradlew detekt --quiet; else exit 0; fi'
+        language: system
+        types: [kotlin]
+        pass_filenames: false
+        stages: [pre-push]

@@ -1,0 +1,27 @@
+# Snippet for the `acceptance` field of an s5d feature spec's use_cases entry.
+# Drop into .s5d/packages/<feature>.s5d.yaml under:
+#   artifacts:
+#     use_cases:
+#       - id: <use-case-id>
+#         acceptance:
+#           - <copy from here>
+#
+# Mirrors Given/When/Then on one line, terse, machine-friendly.
+# Keep ≥3 scenarios per use case (s5d Spec rule).
+
+- given: "<preconditions>"
+  when:  "<action>"
+  then:  "<observable outcome>"
+  source: "<file:line>"          # traceability back to code / docs
+
+- given: "<preconditions, edge case>"
+  when:  "<action>"
+  then:  "<expected error handling>"
+  source: "<file:line>"
+  kind:   "edge"                 # optional: happy | edge | failure | permission
+
+- given: "<preconditions, derived from test>"
+  when:  "<action>"
+  then:  "<assertion>"
+  source: "<test-file:line>"
+  from_test: true                # marks scenario as reverse-engineered from a real test

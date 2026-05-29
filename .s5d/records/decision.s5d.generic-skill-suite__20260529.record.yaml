@@ -1,0 +1,46 @@
+spec_ref: decision.s5d.generic-skill-suite__20260529.s5d.yaml
+spec_sha256: sha256:55c5ac0b7533f4fb9528e898f31e4efcb589411f57b6717b303c3d925b52a811
+status: proposed
+sync_status: unknown
+status_history:
+- status: proposed
+  timestamp: 2026-05-29T14:38:51.207711+00:00
+active_phase: null
+phase_history: []
+phase_runs: []
+approvals: []
+preview: null
+reflection: null
+gate_results: []
+decision:
+  title: Ship generic skill suite through existing S5D surfaces
+  winner_id: first-class-suite-existing-contract
+  rejected_ids:
+  - schema-first-checkpoint-model
+  - consumer-repo-source-of-truth
+  - skillmd-only-distribution
+  context: RAN-430 asks S5D to absorb nine generic Gigsure skills as first-class shipped skills with install/plugin wiring and deeper semantic integration.
+  decision: Import complete skill directories into S5D, make S5D the canonical distribution source, wire install and plugin manifests, and express the first semantic integration as an artifact/evidence handshake over existing S5D records rather than a new Rust schema.
+  rationale: This satisfies the shipped-suite requirement with the smallest truthful architecture move. Schema-first work is deferred because report formats are still heterogeneous; SKILL.md-only import fails runtime completeness; leaving Gigsure as source fails the requested target state.
+  consequences: Distribution grows by about 864K and manifests must stay synchronized with skills/. A future schema extension remains open once multiple skills converge on a stable checkpoint/report shape.
+  decided_at: 2026-05-29T15:14:21.683418+00:00
+  confirmed_by: Roman
+  expires_at: 2026-08-27
+  do_list: []
+  dont_list: []
+  challenge:
+    mode: standard
+    passed: true
+    summary: 'Five probes run: counterargument favored schema-first integration; tail failure was stale Gigsure paths in imported scripts/docs; evidence weakness was local-only adoption; weakest link was scripts/templates travelling with SKILL.md; existing alternatives were plugin-only and consumer-repo source. Decision response: copy full directories, normalize paths, verify manifests and shell/JSON surfaces, and avoid claiming schema enforcement until evidence exists.'
+    checks: []
+  decision_subject: S5D generic skill suite distribution and semantic integration boundary
+  decision_subject_granularity: system
+  evaluative_surface: axes=requirement-fit,runtime-completeness,semantic-honesty,blast-radius,reversibility; policy=prefer complete shipped suite without premature schema claim
+  belief_state: Source has 147 files / 864K under Gigsure; current S5D distribution exposes only s5d skill; imported skills already output S5D-adjacent artifacts.
+  outcome_model: After implementation, install/plugin surfaces expose all ten skills and S5D evidence remains compatible through existing records; schema extension can be added later without moving source again.
+  pareto_set:
+  - first-class-suite-existing-contract
+  - schema-first-checkpoint-model
+  choice_rule: lex-order(requirement-fit > runtime-completeness > semantic-honesty > lower-blast-radius)
+verified_by: null
+drift_tolerance: null

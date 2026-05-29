@@ -1,0 +1,16 @@
+  # === Python — Ruff (SoTA, Rust-based, replaces flake8+isort+pylint+black) ===
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.4
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+      - id: ruff-format
+
+  # Type checking — pick one:
+  #   pyright (faster, IDE-aligned) via local hook with `uv run pyright`
+  #   mypy (more mature) via the upstream pre-commit hook
+  # - repo: https://github.com/pre-commit/mirrors-mypy
+  #   rev: v1.13.0
+  #   hooks:
+  #     - id: mypy
+  #       additional_dependencies: [types-requests]

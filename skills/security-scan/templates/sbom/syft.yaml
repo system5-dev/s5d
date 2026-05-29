@@ -1,0 +1,30 @@
+# Syft config — SBOM generation for this repo.
+# Run:  syft scan dir:. --config .syft.yaml -o cyclonedx-json=test-reports/security/sbom/sbom.cdx.json
+# Or let the skill's run.sh drive it.
+#
+# An SBOM is not a gate — it's an artifact. It enumerates every component so that
+# (a) a future CVE can be matched against what you actually ship, and (b) the
+# build can be signed/attested. CycloneDX is the output format the skill standardizes
+# on (Trivy, Grype, and Dependency-Track all consume it natively).
+
+# Output format is set on the CLI (-o cyclonedx-json). This file pins catalogers
+# and exclusions so a bare `syft scan dir:.` matches CI.
+
+exclude:
+  - ./node_modules/**
+  - ./.next/**
+  - ./dist/**
+  - ./build/**
+  - ./vendor/**
+  - ./.venv/**
+  - ./test-reports/**
+
+# Catalogers: let Syft auto-detect by default (it picks the right ones per ecosystem
+# — npm, pip, go modules, etc.). Pin explicitly only if auto-detection over-collects.
+package:
+  cataloger:
+    scope: squashed
+
+# In CI: sign the SBOM with Cosign so downstream consumers can verify provenance:
+#   cosign attest --predicate sbom.cdx.json --type cyclonedx <image>
+# (handled by templates/ci/github.yaml when an image is present).

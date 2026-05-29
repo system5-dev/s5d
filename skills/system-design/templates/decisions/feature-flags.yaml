@@ -1,0 +1,127 @@
+id: feature-flags
+title: Feature flags / progressive delivery
+description: |
+  Runtime toggles, A/B tests, gradual rollouts, kill-switches.
+
+axes:
+  throughput:        10
+  latency_p99:       15
+  ops_capacity:      15
+  budget_monthly_usd: 15
+  lock_in_tolerance: 10
+  time_to_prod:      15
+  team_familiarity:  10
+  compliance:        10
+
+variants:
+  - id: growthbook_self
+    name: GrowthBook (OSS, self-hosted)
+    kind: self-hosted
+    self_hostable: true
+    scores:
+      throughput: 4
+      latency_p99: 5            # edge SDK delivery
+      ops_capacity: 3
+      budget_monthly_usd: 5
+      lock_in_tolerance: 5
+      time_to_prod: 4
+      team_familiarity: 3
+      compliance: 5
+    notes: |
+      - SoTA OSS in 2026. Native experimentation + flag eval.
+      - Local SDKs cache feature config — no per-request roundtrip.
+      - Self-host needs Mongo + (optional) ClickHouse for analytics.
+
+  - id: growthbook_cloud
+    name: GrowthBook Cloud
+    kind: managed
+    self_hostable: false
+    scores:
+      throughput: 5
+      latency_p99: 5
+      ops_capacity: 5
+      budget_monthly_usd: 4
+      lock_in_tolerance: 4     # OSS escape hatch
+      time_to_prod: 5
+      team_familiarity: 3
+      compliance: 4
+    notes: |
+      - Easy upgrade path: managed → self-host without code changes.
+
+  - id: unleash
+    name: Unleash (OSS)
+    kind: self-hosted
+    self_hostable: true
+    scores:
+      throughput: 4
+      latency_p99: 4
+      ops_capacity: 3
+      budget_monthly_usd: 5
+      lock_in_tolerance: 5
+      time_to_prod: 4
+      team_familiarity: 3
+      compliance: 5
+    notes: |
+      - Mature OSS, broad SDK support.
+      - Less integrated experimentation than GrowthBook.
+
+  - id: launchdarkly
+    name: LaunchDarkly
+    kind: managed
+    self_hostable: false
+    scores:
+      throughput: 5
+      latency_p99: 5
+      ops_capacity: 5
+      budget_monthly_usd: 1
+      lock_in_tolerance: 1
+      time_to_prod: 5
+      team_familiarity: 5
+      compliance: 5
+    notes: |
+      - Polished, enterprise. Per-seat pricing is the catch.
+      - Pick when team velocity > cost and audit / role controls matter.
+
+  - id: posthog
+    name: PostHog (flags + analytics + session replay)
+    kind: hybrid
+    self_hostable: true
+    scores:
+      throughput: 4
+      latency_p99: 4
+      ops_capacity: 3
+      budget_monthly_usd: 4
+      lock_in_tolerance: 3
+      time_to_prod: 5
+      team_familiarity: 4
+      compliance: 4
+    notes: |
+      - All-in-one product analytics + flags + session replay.
+      - The right answer when you don't yet have separate analytics.
+
+  - id: config_files
+    name: Config files / env vars (no flag system)
+    kind: self-hosted
+    self_hostable: true
+    scores:
+      throughput: 5
+      latency_p99: 5
+      ops_capacity: 5
+      budget_monthly_usd: 5
+      lock_in_tolerance: 5
+      time_to_prod: 5
+      team_familiarity: 5
+      compliance: 5
+    notes: |
+      - Always an option. Deploy to flip a toggle.
+      - Fine for <5 flags, single environment, no A/B testing.
+      - Becomes unsustainable at ~10 flags or when product wants
+        targeting without engineering.
+
+hard_constraints:
+  - rule: "throughput:5 AND variant.id == 'config_files'"
+    action: warn
+    reason: "config files don't scale to high-throughput environments needing live changes"
+  - rule: "compliance contains 'soc2' AND variant.id == 'config_files'"
+    action: warn
+    reason: "SOC2 audits prefer flag systems with audit logs"

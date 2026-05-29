@@ -1,0 +1,7 @@
+  # === Ruby — Standard (zero-config RuboCop wrapper) ===
+  # Install: gem install standard  (or add to Gemfile)
+  - repo: https://github.com/standardrb/standard
+    rev: v1.40.0
+    hooks:
+      - id: standardrb
+        args: [--fix]

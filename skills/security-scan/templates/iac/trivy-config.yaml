@@ -1,0 +1,36 @@
+# Trivy config — IaC / misconfiguration scanning for this repo.
+# Run:  trivy config --config .trivy-config.yaml --format sarif \
+#         --output test-reports/security/iac/findings.sarif .
+# Or let the skill's run.sh drive it.
+#
+# Same Trivy binary as SCA/container/license. `trivy config` covers Terraform,
+# CloudFormation, Kubernetes manifests, Helm charts, Dockerfiles, and compose
+# files against a built-in policy library (misconfig + best-practice rules).
+
+scan:
+  skip-dirs:
+    - node_modules
+    - .next
+    - dist
+    - build
+    - vendor
+    - .venv
+    - test-reports
+
+misconfiguration:
+  # Include all severities in the SARIF; the gate (run.sh) decides what fails.
+  # Built-in checks cover the common cloud footguns: public buckets, 0.0.0.0/0
+  # ingress, privileged containers, missing encryption, etc.
+  include-non-failures: false
+
+severity:
+  - UNKNOWN
+  - LOW
+  - MEDIUM
+  - HIGH
+  - CRITICAL
+
+# Gate: run.sh fails on HIGH/CRITICAL misconfigurations. Lower with `--fail-on medium`.
+#
+# Suppression: never use inline `#trivy:ignore` comments. Route every false positive
+#   through scripts/waiver.sh add <check-id> --reason ... --approved-by ... --expires ...

@@ -1,0 +1,44 @@
+# Trivy config — license compliance scanning for this repo.
+# Run:  trivy fs --config .trivy-license.yaml --scanners license --format sarif \
+#         --output test-reports/security/license/findings.sarif .
+# Or let the skill's run.sh drive it.
+#
+# Same Trivy binary as SCA/container/IaC. License scanning classifies every
+# dependency's license and flags ones that conflict with your distribution policy
+# (e.g. copyleft GPL/AGPL in a proprietary product).
+
+scan:
+  scanners:
+    - license
+  skip-dirs:
+    - node_modules
+    - .next
+    - dist
+    - build
+    - vendor
+    - .venv
+    - test-reports
+
+license:
+  # Trivy groups licenses into risk tiers. Tune the policy to your distribution
+  # model. Default below treats strong-copyleft as the gate-failing tier — adjust
+  # for your legal posture (a GPL dep is fine for internal tools, fatal for SaaS
+  # binaries you ship).
+  full: true
+  # Forbidden categories fail the gate. Categories: forbidden, restricted,
+  # reciprocal, notice, permissive, unencumbered, unknown.
+  forbidden:
+    - AGPL-1.0
+    - AGPL-3.0
+    - GPL-2.0
+    - GPL-3.0
+    - LGPL-2.0
+    - LGPL-2.1
+    - LGPL-3.0
+
+# Gate: run.sh fails on any dependency carrying a forbidden/restricted license.
+# This is POLICY-defined, not CVSS — there is no "severity" for a license, only
+# "allowed under our distribution model or not". Edit the list above to match legal.
+#
+# Suppression: a deliberately accepted license goes through a waiver with legal
+#   sign-off: scripts/waiver.sh add <pkg-license> --reason ... --approved-by legal ...

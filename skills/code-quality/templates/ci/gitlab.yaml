@@ -1,0 +1,28 @@
+# .gitlab-ci.yml fragment — code-quality job. Merge into the project's pipeline.
+# Add to your existing .gitlab-ci.yml or include via `include:`.
+
+code-quality:
+  stage: test
+  image: python:3.12-slim
+  cache:
+    key: pre-commit-${CI_COMMIT_REF_SLUG}
+    paths:
+      - .cache/pre-commit
+  variables:
+    PRE_COMMIT_HOME: ${CI_PROJECT_DIR}/.cache/pre-commit
+  before_script:
+    - apt-get update -qq && apt-get install -y --no-install-recommends git curl
+    - pip install --upgrade pre-commit
+  script:
+    - |
+      if [ -n "$CI_MERGE_REQUEST_DIFF_BASE_SHA" ]; then
+        pre-commit run --show-diff-on-failure --color=always \
+          --from-ref "$CI_MERGE_REQUEST_DIFF_BASE_SHA" \
+          --to-ref "$CI_COMMIT_SHA"
+      else
+        pre-commit run --show-diff-on-failure --color=always --all-files
+      fi
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_COMMIT_BRANCH == "staging"'

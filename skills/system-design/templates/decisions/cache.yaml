@@ -1,0 +1,138 @@
+id: cache
+title: In-memory cache / KV store
+description: |
+  Picking a cache for hot data, session storage, rate-limit counters,
+  pub/sub fan-out. Sub-millisecond access expected.
+
+axes:
+  throughput:        20
+  latency_p99:       25
+  durability:         5
+  ops_capacity:      15
+  budget_monthly_usd: 10
+  multi_region:       5
+  lock_in_tolerance: 10
+  time_to_prod:       5
+  team_familiarity:   5
+
+variants:
+  - id: redis_oss
+    name: Redis (OSS, self-hosted)
+    kind: self-hosted
+    self_hostable: true
+    scores:
+      throughput: 4
+      latency_p99: 5
+      durability: 3
+      ops_capacity: 3
+      budget_monthly_usd: 4
+      multi_region: 2
+      lock_in_tolerance: 5
+      time_to_prod: 4
+      team_familiarity: 5
+    notes: |
+      - Single most familiar. Sentinel for HA, Cluster for sharding.
+      - License caveat (2024-2025 BSL → AGPL): use Redis OSS 7.4+ or
+        switch to Valkey (Linux Foundation fork) for pure permissive license.
+
+  - id: valkey
+    name: Valkey (Linux Foundation Redis fork)
+    kind: self-hosted
+    self_hostable: true
+    scores:
+      throughput: 4
+      latency_p99: 5
+      durability: 3
+      ops_capacity: 3
+      budget_monthly_usd: 4
+      multi_region: 2
+      lock_in_tolerance: 5
+      time_to_prod: 4
+      team_familiarity: 4
+    notes: |
+      - 2024 Redis fork. BSD-licensed. Drop-in protocol compatible.
+      - Default choice in 2026 for new self-hosted Redis-compatible work.
+
+  - id: dragonfly
+    name: DragonFly DB
+    kind: self-hosted
+    self_hostable: true
+    scores:
+      throughput: 5
+      latency_p99: 5
+      durability: 3
+      ops_capacity: 4          # single binary, fewer ops than Redis Cluster
+      budget_monthly_usd: 4
+      multi_region: 2
+      lock_in_tolerance: 4
+      time_to_prod: 4
+      team_familiarity: 2
+    notes: |
+      - 25x throughput over Redis on multi-core, vertical scaling first.
+      - Redis-protocol compatible — client code unchanged.
+      - Best when one machine fits the working set.
+
+  - id: elasticache
+    name: AWS ElastiCache (Redis / Valkey)
+    kind: managed
+    self_hostable: false
+    cloud: aws
+    scores:
+      throughput: 4
+      latency_p99: 4
+      durability: 4
+      ops_capacity: 5
+      budget_monthly_usd: 2    # always-on pricing
+      multi_region: 3
+      lock_in_tolerance: 3
+      time_to_prod: 5
+      team_familiarity: 4
+    notes: |
+      - Zero ops once provisioned. Reserved instances for cost.
+      - ElastiCache for Valkey landed 2024; usually cheaper than Redis.
+
+  - id: upstash
+    name: Upstash Redis
+    kind: managed
+    self_hostable: false
+    cloud: any
+    scores:
+      throughput: 3
+      latency_p99: 3            # edge replicas; cold path is slower
+      durability: 4
+      ops_capacity: 5
+      budget_monthly_usd: 5    # per-request pricing for low traffic
+      multi_region: 5
+      lock_in_tolerance: 2
+      time_to_prod: 5
+      team_familiarity: 4
+    notes: |
+      - Per-request pricing wins for spiky / serverless workloads.
+      - HTTPS endpoint — works from Vercel Functions, Cloudflare Workers.
+      - Edge global replicas in higher tier.
+
+  - id: memcached
+    name: Memcached
+    kind: self-hosted
+    self_hostable: true
+    scores:
+      throughput: 4
+      latency_p99: 5
+      durability: 1            # no persistence
+      ops_capacity: 4
+      budget_monthly_usd: 5
+      multi_region: 1
+      lock_in_tolerance: 5
+      time_to_prod: 5
+      team_familiarity: 3
+    notes: |
+      - Pure cache, no data structures. Picks itself if you only need
+        get/set with TTL and want minimum ops surface.
+
+hard_constraints:
+  - rule: "durability:critical"
+    action: warn
+    reason: "a cache is not a system of record — protect against cache being the only copy"
+  - rule: "ops_capacity:zero AND variant.kind == 'self-hosted'"
+    action: disqualify
+    reason: "self-hosted Redis needs ops capacity for replication, failover, OOM"

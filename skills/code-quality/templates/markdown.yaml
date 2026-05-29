@@ -1,0 +1,8 @@
+  # === Markdown — markdownlint-cli2 ===
+  - repo: https://github.com/DavidAnson/markdownlint-cli2
+    rev: v0.15.0
+    hooks:
+      - id: markdownlint-cli2
+        args: [--fix]
+        # Config: .markdownlint.jsonc at repo root. Sensible defaults:
+        #   { "MD013": { "line_length": 120 }, "MD033": false, "MD041": false }

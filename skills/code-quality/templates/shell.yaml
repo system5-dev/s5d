@@ -1,0 +1,12 @@
+  # === Shell — shellcheck (lint) + shfmt (format) ===
+  - repo: https://github.com/koalaman/shellcheck-precommit
+    rev: v0.10.0
+    hooks:
+      - id: shellcheck
+        args: [-x]  # follow `source` directives
+
+  - repo: https://github.com/scop/pre-commit-shfmt
+    rev: v3.10.0-2
+    hooks:
+      - id: shfmt
+        args: [-i, '2', -ci, -bn, -w]  # 2-space indent, case-indent, binary on next line

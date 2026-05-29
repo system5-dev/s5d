@@ -1,0 +1,16 @@
+  # === Terraform / OpenTofu — fmt + tflint + trivy IaC scan ===
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.96.2
+    hooks:
+      - id: terraform_fmt
+      - id: terraform_validate
+      - id: terraform_tflint
+        args:
+          - --args=--config=.tflint.hcl
+
+  # Security scanning (Trivy, replaces tfsec):
+  - repo: https://github.com/aquasecurity/trivy
+    rev: v0.58.1
+    hooks:
+      - id: trivy
+        args: [config, --severity, HIGH,CRITICAL]

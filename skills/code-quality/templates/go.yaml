@@ -1,0 +1,15 @@
+  # === Go — golangci-lint v2 (SoTA, 100+ linters bundled) ===
+  # Install: brew install golangci-lint
+  #     or:  go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
+  # Migrate from v1: `golangci-lint migrate` (auto-converts config).
+  - repo: https://github.com/golangci/golangci-lint
+    rev: v2.7.2
+    hooks:
+      - id: golangci-lint
+        args: [--config=.golangci.yaml]
+      - id: golangci-lint-fmt
+        # New in v2: replaces gofumpt / gofmt as a unified formatter.
+
+  # If your repo has multiple Go modules, run on each:
+  # - id: golangci-lint-full
+  #   args: [--allow-parallel-runners]

@@ -1,0 +1,7 @@
+  # === Docker — hadolint ===
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.13.1-beta
+    hooks:
+      - id: hadolint-docker
+        # Use hadolint-docker (containerized) to avoid local install.
+        # For native: `brew install hadolint` and switch to id: hadolint

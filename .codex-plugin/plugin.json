@@ -2,6 +2,17 @@
   "name": "s5d",
   "version": "0.3.0",
   "description": "S5D — decision and validation layer for repo changes. Preview, approve, import, drift-check, rollback.",
-  "skills": ["./skills/s5d"],
+  "skills": [
+    "./skills/s5d",
+    "./skills/code-quality",
+    "./skills/unit-tests",
+    "./skills/e2e-tests",
+    "./skills/security-scan",
+    "./skills/domain-refactor",
+    "./skills/scaling-review",
+    "./skills/system-design",
+    "./skills/scenario-mine",
+    "./skills/infra-scan"
+  ],
   "hooks": "./hooks/hooks.json"
 }

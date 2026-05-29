@@ -1,0 +1,154 @@
+id: relational-db
+title: Relational / OLTP database
+description: |
+  Picking a primary OLTP database. Strong consistency, transactions,
+  rich query language, schema-as-code.
+
+axes:
+  throughput:        15
+  latency_p99:       15
+  data_volume:       10
+  durability:        20
+  consistency:       15
+  ops_capacity:      10
+  budget_monthly_usd:  5
+  multi_region:       5
+  lock_in_tolerance:  5
+
+variants:
+  - id: postgres_self
+    name: PostgreSQL (self-hosted)
+    kind: self-hosted
+    self_hostable: true
+    scores:
+      throughput: 4
+      latency_p99: 4
+      data_volume: 4
+      durability: 5
+      consistency: 5
+      ops_capacity: 3          # backups, vacuum, replication
+      budget_monthly_usd: 5
+      multi_region: 2          # logical replication = work
+      lock_in_tolerance: 5
+      time_to_prod: 3
+      team_familiarity: 5
+    notes: |
+      - Default OLTP choice. Extensions (pgvector, PostGIS, TimescaleDB,
+        Citus) cover most niche needs.
+      - 2026: Postgres 17 brings better partitioning, faster vacuum.
+
+  - id: neon
+    name: Neon (serverless Postgres)
+    kind: managed
+    self_hostable: false
+    scores:
+      throughput: 4
+      latency_p99: 3            # cold-start when scaled-to-zero
+      data_volume: 4
+      durability: 5
+      consistency: 5
+      ops_capacity: 5
+      budget_monthly_usd: 5    # scale-to-zero saves money
+      multi_region: 3
+      lock_in_tolerance: 3     # mostly Postgres, branching is proprietary
+      time_to_prod: 5
+      team_familiarity: 4
+    notes: |
+      - Storage / compute split → cheap branches for previews, instant
+        scale-to-zero.
+      - Pricing wins for dev/preview environments; production-OK but
+        verify cold-start budget.
+
+  - id: supabase
+    name: Supabase (managed Postgres + BaaS)
+    kind: managed
+    self_hostable: true       # actually self-hostable but most use managed
+    scores:
+      throughput: 3
+      latency_p99: 3
+      data_volume: 3
+      durability: 5
+      consistency: 5
+      ops_capacity: 4
+      budget_monthly_usd: 4
+      multi_region: 3
+      lock_in_tolerance: 3
+      time_to_prod: 5
+      team_familiarity: 4
+    notes: |
+      - Postgres plus auth + storage + realtime. Right answer when you
+        want batteries-included for an MVP.
+      - Postgres APIs are exposed directly; no ORM lock-in.
+
+  - id: planetscale
+    name: PlanetScale (Vitess / MySQL)
+    kind: managed
+    self_hostable: false
+    scores:
+      throughput: 5
+      latency_p99: 4
+      data_volume: 5
+      durability: 5
+      consistency: 4           # cross-shard txns weaker
+      ops_capacity: 5
+      budget_monthly_usd: 2
+      multi_region: 5
+      lock_in_tolerance: 2     # Vitess sharding is the lock-in
+      time_to_prod: 4
+      team_familiarity: 3
+    notes: |
+      - MySQL + Vitess sharding. Branching for schema migrations.
+      - Picks itself at YouTube/Slack scale; overkill for most.
+      - Free tier removed 2024 — check current pricing.
+
+  - id: cockroachdb
+    name: CockroachDB
+    kind: hybrid
+    self_hostable: true
+    scores:
+      throughput: 4
+      latency_p99: 3
+      data_volume: 5
+      durability: 5
+      consistency: 5           # serializable + multi-region
+      ops_capacity: 2
+      budget_monthly_usd: 2
+      multi_region: 5          # this is the headline feature
+      lock_in_tolerance: 4
+      time_to_prod: 2
+      team_familiarity: 2
+    notes: |
+      - SoTA for multi-region active-active OLTP.
+      - PostgreSQL wire-compatible; not 1:1 — review CRDB-specific patterns.
+      - Pick when geo-distributed correctness is the requirement.
+
+  - id: rds_postgres
+    name: AWS RDS Postgres (or Aurora)
+    kind: managed
+    self_hostable: false
+    cloud: aws
+    scores:
+      throughput: 4
+      latency_p99: 4
+      data_volume: 5
+      durability: 5
+      consistency: 5
+      ops_capacity: 5
+      budget_monthly_usd: 2
+      multi_region: 4          # Aurora Global Database
+      lock_in_tolerance: 3
+      time_to_prod: 4
+      team_familiarity: 4
+    notes: |
+      - Boring tech for AWS shops. Aurora Serverless v2 for variable load.
+      - Cost gotcha: I/O and replica reads scale fast.
+
+hard_constraints:
+  - rule: "consistency:linearizable AND variant.id NOT IN ['cockroachdb', 'postgres_self']"
+    action: disqualify
+    reason: "linearizable across regions narrows the field"
+  - rule: "multi_region:active_active AND variant.id NOT IN ['cockroachdb', 'planetscale']"
+    action: warn
+    reason: "true active-active needs specialist DB; otherwise use warm standby"
+  - rule: "ops_capacity:zero AND variant.id == 'postgres_self'"
+    action: disqualify

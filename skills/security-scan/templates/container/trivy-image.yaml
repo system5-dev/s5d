@@ -1,0 +1,36 @@
+# Trivy config — container image scanning for this repo.
+# Run:  trivy image --config .trivy-image.yaml --format sarif \
+#         --output test-reports/security/container/findings.sarif <image:tag>
+# Or let the skill's run.sh drive it (it discovers built images / Dockerfiles).
+#
+# Same Trivy binary as SCA/IaC/license — kept in its own config so the container
+# gate is independent of the dependency gate. Image scanning covers the OS layer
+# (apt/apk/yum packages) plus app dependencies baked into the image.
+
+scan:
+  scanners:
+    - vuln
+    - secret
+  # Secret scanning inside images catches keys baked into layers — a common
+  # mistake (COPY .env, leftover ~/.aws). Cheap to add here, high signal.
+
+vulnerability:
+  type:
+    - os
+    - library
+
+severity:
+  - UNKNOWN
+  - LOW
+  - MEDIUM
+  - HIGH
+  - CRITICAL
+
+# Ignore unfixed OS vulns? No — report them. The gate decides on severity, not on
+# whether a distro has shipped a patch yet. An unfixed CRITICAL is still your risk.
+# (Override per-run with `trivy image --ignore-unfixed` if your policy differs.)
+
+# Gate: run.sh fails on CVSS >= 7 (HIGH/CRITICAL). Lower with `run.sh --fail-on medium`.
+#
+# Suppression: never use `.trivyignore` inline. Route every false positive through
+#   bash scripts/waiver.sh add <CVE-id> --reason ... --approved-by ... --expires YYYY-MM-DD
