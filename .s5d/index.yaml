@@ -79,3 +79,8 @@ features:
   status: applied
   product: s5d
   version: 1.0.0
+- id: feat.s5d.skill-suite-routing
+  spec_path: packages/feat.s5d.skill-suite-routing__20260530.s5d.yaml
+  status: applied
+  product: s5d
+  version: 1.0.0

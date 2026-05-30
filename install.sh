@@ -32,7 +32,7 @@ echo "Installing S5D..."
 
 # 1. Skills — symlink into vendor-agnostic location + agent runtimes
 #    Source of truth: $SCRIPT_DIR/skills/
-SKILLS="s5d code-quality unit-tests e2e-tests security-scan domain-refactor scaling-review system-design scenario-mine infra-scan"
+SKILLS="s5d code-quality unit-tests e2e-tests security-scan domain-refactor scaling-review system-design scenario-mine infra-scan ai-technical-writer ddd-refactor"
 RETIRED_SKILLS="fpf fpf-modules domain-capability-design"
 
 link_skill() {

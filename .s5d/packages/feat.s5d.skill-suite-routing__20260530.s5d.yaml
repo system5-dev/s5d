@@ -1,0 +1,155 @@
+s5d: '1.0'
+id: feat.s5d.skill-suite-routing
+version: 1.0.0
+product: s5d
+tier: lightweight
+allow_update: true
+meta:
+  title: skill-suite-routing
+  authors: []
+  date: 2026-05-30
+  tickets: []
+  adrs: []
+  renames: []
+context: |
+  ## Problem
+  Two more generic S5D-aware skills landed in the gigsure consumer repo
+  (ai-technical-writer, ddd-refactor) but were not shipped by S5D. Separately,
+  the shipped suite has no explicit mapping of which domain skill belongs at
+  which S5D flow stage — "automatic use in the right places" was undefined, so
+  the skills were a flat menu rather than stage-routed.
+
+  ## Goal
+  Ship the 2 new skills first-class (suite 10 -> 12) under the existing
+  decision.skill-suite-integration pattern, AND add a stage-routing map so the
+  s5d control plane recommends/invokes the right domain skill per flow stage
+  (Discover / Target-Decide / Spec / Run-Verify) automatically. Prompt-level
+  routing (in the s5d skill), not a new Rust hook.
+
+  ## Privacy
+  Classification: Internal
+workflow:
+  mode: plan
+  target_architecture:
+    summary: |
+      S5D ships a 12-skill suite (s5d + 11 domain skills). The s5d skill carries a
+      stage-routing map (references/skill-suite.md) keyed by flow stage, so each
+      stage pulls its matching skill automatically. New skills are non-producers
+      (read-only assessment) and need no CLI-mediation.
+    invariants:
+    - install.sh SKILLS, Claude and Codex manifests stay in sync (same skill set)
+    - Routing is prompt-level in the s5d skill; no new Rust hook is added
+    - New skills ship self-contained (SKILL.md + scripts/ + references/)
+  delivery_strategy:
+    summary: |
+      Packaging first (copy 2 dirs + wire install.sh/manifests, verify JSON/bash),
+      then add the stage-routing reference doc + a one-line pointer in the s5d
+      SKILL.md. Both reversible, no schema or hook change.
+    rationale: Packaging rides the already-operated decision; routing is the only new behavior.
+  resources: null
+  role_map:
+    reviewer: reviewer
+    verifier: reviewer
+    owner: human
+    implementer: coder
+  review_policy:
+    cross_model_required: false
+    required_on: []
+  structure_outline:
+    summary: |
+      Copy 2 skill dirs from gigsure; extend SKILLS + both manifests to 12; add a
+      stage-routing reference doc and a pointer in the s5d SKILL.md. No producers,
+      no schema, no hook.
+    signatures:
+    - "skills/ai-technical-writer/ + skills/ddd-refactor/ (copied from gigsure, source of truth = S5D)"
+    - "install.sh: SKILLS += ai-technical-writer ddd-refactor (now 12)"
+    - ".claude-plugin/plugin.json + .codex-plugin/plugin.json: skills[] += 2 paths (now 12)"
+    - "skills/s5d/references/skill-suite.md: NEW — stage->skill routing table + how-automatic + precedence"
+    - "skills/s5d/SKILL.md: one-line 'Skill suite' pointer near Flow -> references/skill-suite.md"
+    types:
+    - "new skills (non-producer, read-only assessment): ai-technical-writer (docs architecture), ddd-refactor (DDD modeling quality)"
+    - "routing artifact: stage->skill map consumed by the s5d control plane at route time"
+  execution_mode:
+    engine: manual
+    max_iterations: null
+    stop_conditions:
+    - Phase acceptance reached
+    - Approved scope exhausted
+    - New decision required
+  phases:
+  - id: prototype
+    title: Prototype
+    scope: Reduce unknowns before committed implementation
+    roles:
+    - owner
+    - implementer
+    acceptance:
+    - Critical feasibility questions answered
+    - Telemetry approach identified
+    rollback:
+    - Discard spike output if assumptions fail
+  - id: build
+    title: Build
+    scope: Implement approved scope and pass local gates
+    roles:
+    - implementer
+    - reviewer
+    acceptance:
+    - Declared gates pass
+    - Change matches approved scope
+    rollback:
+    - Revert or reconcile if gates or review fail
+  - id: measure
+    title: Measure
+    scope: Collect telemetry and close the loop with an explicit verdict
+    roles:
+    - owner
+    - verifier
+    acceptance:
+    - Telemetry collected against success criteria
+    - Outcome verdict recorded
+    rollback:
+    - Iterate or kill if evidence stays weak
+artifacts:
+  products:
+  - id: s5d
+    name: s5d
+    organization: null
+  domains:
+  - id: skill-distribution
+    product: s5d
+    name: Skill distribution & wiring
+    classification: generic
+  capabilities:
+  - id: stage-routing
+    domain: skill-distribution
+    name: Map domain skills to S5D flow stages for automatic per-stage use
+  - id: ship-new-skills
+    domain: skill-distribution
+    name: Ship ai-technical-writer and ddd-refactor first-class
+  entities: []
+  features:
+  - id: feat.s5d.skill-suite-routing
+    product: s5d
+    name: skill-suite-routing
+    description: null
+  use_cases: []
+  systems: []
+  containers: []
+  components: []
+  roles: []
+  concerns: []
+  metrics: []
+  supersystems: []
+  transports: []
+links: null
+contracts: []
+gates:
+- kind: schema
+roc: null
+problem: null
+hypotheses: []
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false

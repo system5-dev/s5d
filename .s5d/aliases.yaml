@@ -420,3 +420,21 @@ packages:
   package_id: feat.s5d.skill-suite-integration
   owning_package: null
   deprecated: false
+- uuid: 3b8b6fde-c502-4cbd-b2ef-3f6a993d892e
+  artifact_id: stage-routing
+  artifact_type: Capability
+  package_id: feat.s5d.skill-suite-routing
+  owning_package: null
+  deprecated: false
+- uuid: 03cd8cb8-76de-495b-bf1f-527585e856d0
+  artifact_id: ship-new-skills
+  artifact_type: Capability
+  package_id: feat.s5d.skill-suite-routing
+  owning_package: null
+  deprecated: false
+- uuid: 08e61047-e816-40bf-ac00-1cf35aa673f1
+  artifact_id: feat.s5d.skill-suite-routing
+  artifact_type: Feature
+  package_id: feat.s5d.skill-suite-routing
+  owning_package: null
+  deprecated: false
