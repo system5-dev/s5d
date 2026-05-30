@@ -276,6 +276,8 @@ mod tests {
             congruence_level: None,
             reliability: None,
             refine_kind: None,
+            skill: None,
+            agent: None,
         }];
         h
     }

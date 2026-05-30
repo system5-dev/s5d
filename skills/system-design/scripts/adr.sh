@@ -166,101 +166,14 @@ PYEOF
     echo "$SPEC_PATH"
 
 else
-    # ── FALLBACK: s5d not on PATH — write a clearly-marked draft YAML ──────────
-    echo "warning: s5d binary not found on PATH — emitting unvalidated DRAFT yaml" >&2
-    echo "         install s5d and re-run to get a schema-valid spec." >&2
-
-    [ -z "$OUTPUT" ] && OUTPUT=".s5d/packages/${DEC_ID}.s5d.yaml"
-    mkdir -p "$(dirname "$OUTPUT")"
-
-    VARIANT_BLOB=$(python3 - "$YAML" "$CHOSEN" <<'PYEOF'
-import sys
-fn, target = sys.argv[1], sys.argv[2]
-with open(fn) as f: text = f.read()
-in_variant = False
-indent_base = None
-out = []
-for line in text.split('\n'):
-    stripped = line.lstrip()
-    if stripped.startswith('- id:'):
-        vid = stripped.split(':',1)[1].strip()
-        if vid == target:
-            in_variant = True
-            indent_base = len(line) - len(stripped)
-            out.append(line)
-            continue
-        if in_variant: break
-    if in_variant:
-        if line.strip() and (len(line) - len(stripped) <= indent_base) and not stripped.startswith('-'):
-            break
-        out.append(line)
-print('\n'.join(out))
-PYEOF
-)
-
-    NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-
-    cat > "$OUTPUT" <<YAMLEOF
-# DRAFT — generated without s5d CLI (binary not on PATH).
-# This file uses an UNVALIDATED schema. Run adr.sh again with s5d installed
-# to produce a schema-valid spec. Until then, treat this as a reference only.
-schema: '1.0'
-id: ${DEC_ID}
-tier: decision
-product: ${PRODUCT}
-question: |
-  Which ${COMMODITY} variant should we use, given the constraints captured
-  during the system-design interview?
-created_at: '${NOW}'
-
-context: |
-  Decision frame: ${COMMODITY} (see ~/.agents/skills/system-design/templates/decisions/${COMMODITY}.yaml)
-  Chosen variant: ${CHOSEN}
-  Confirmed by: ${DECIDED_BY}
-$(if [ -n "$ANSWERS_FILE" ] && [ -f "$ANSWERS_FILE" ]; then
-    echo "  Interview answers stored at: ${ANSWERS_FILE}"
-fi)
-
-decision: |
-  ${RATIONALE}
-
-chosen:
-${VARIANT_BLOB}
-
-# Hypotheses considered (fill in via s5d_add_hypothesis to formalise):
-hypotheses:
-  - id: ${CHOSEN}
-    decision: winner
-$(python3 - "$YAML" "$CHOSEN" <<'PYEOF'
-import sys
-fn, chosen = sys.argv[1], sys.argv[2]
-with open(fn) as f: text = f.read()
-ids = []
-for line in text.split('\n'):
-    s = line.lstrip()
-    if s.startswith('- id:'):
-        ids.append(s.split(':',1)[1].strip())
-for i in ids:
-    if i != chosen:
-        print(f"  - id: {i}")
-        print(f"    decision: rejected")
-PYEOF
-)
-
-# Consequences (fill in before running s5d_decide via MCP):
-consequences:
-  - operational: "TODO — what does ${DECIDED_BY} now own ops-wise?"
-  - financial:   "TODO — monthly cost estimate"
-  - lock_in:     "TODO — exit cost if we want to switch in 2 years"
-  - team:        "TODO — onboarding / training cost"
-
-# Next steps once this ADR is approved:
-#   1. s5d state preview ${OUTPUT}
-#   2. s5d state approve ${OUTPUT} --reviewer ${DECIDED_BY}
-#   3. Implement the chosen variant.
-#   4. s5d state import ${OUTPUT} --verified-by <reviewer-different-from-approver>
-YAMLEOF
-
-    echo "✓ wrote $OUTPUT (DRAFT — unvalidated)" >&2
-    echo "  next: install s5d, then re-run adr.sh to get a schema-valid spec" >&2
+    # s5d CLI not on PATH. The previous fallback wrote a raw, UNVALIDATED YAML spec
+    # here — it interpolated user input into a YAML heredoc with no escaping (YAML
+    # injection) and honored an arbitrary --output (arbitrary file overwrite). Both
+    # were HIGH findings (tribunal 2026-05-30, .s5d/tribunal/cluster-runtime-20260530.md).
+    # The suite ships WITH the s5d CLI, so the safe behavior is to require it rather
+    # than emit an injectable draft to a caller-chosen path.
+    echo "error: s5d CLI not found on PATH — cannot emit a schema-valid decision spec." >&2
+    echo "  adr.sh routes through the s5d CLI by design. Install it first:" >&2
+    echo "    git clone https://github.com/system5-dev/s5d && cd s5d && ./install.sh" >&2
+    exit 127
 fi

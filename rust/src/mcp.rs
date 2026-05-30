@@ -242,7 +242,9 @@ fn core_tools() -> Vec<Value> {
                     "formality": {"type": "integer", "description": "Rigor of evidence method (1-5)"},
                     "claim_scope": {"type": "string", "description": "What the claim covers (comma-separated)"},
                     "reliability": {"type": "number", "description": "Confidence that the claim is true (0.0-1.0)"},
-                    "refine_kind": {"type": "string", "description": "FPF C.2:4.2 Δ-move kind. Required when verdict=refine.", "enum": ["formalise", "generalise", "specialise", "calibrate", "validate", "congrue"]}
+                    "refine_kind": {"type": "string", "description": "FPF C.2:4.2 Δ-move kind. Required when verdict=refine.", "enum": ["formalise", "generalise", "specialise", "calibrate", "validate", "congrue"]},
+                    "skill": {"type": "string", "description": "Provenance: which cluster skill produced this evidence (e.g. \"security-scan\")."},
+                    "agent": {"type": "string", "description": "Provenance: which assess agent produced this evidence (e.g. \"security-scan-assess\")."}
                 }
             }
         }),
@@ -1235,6 +1237,8 @@ fn tool_s5d_add_evidence(args: &Value) -> anyhow::Result<String> {
     let claim_scope = args["claim_scope"].as_str().map(|s| s.to_string());
     let reliability = args["reliability"].as_f64();
     let refine_kind = args["refine_kind"].as_str();
+    let skill = args["skill"].as_str().map(|s| s.to_string());
+    let agent = args["agent"].as_str().map(|s| s.to_string());
 
     if let Some(f) = formality {
         if !(1..=5).contains(&f) {
@@ -1304,6 +1308,8 @@ fn tool_s5d_add_evidence(args: &Value) -> anyhow::Result<String> {
         congruence_level: None,
         reliability,
         refine_kind: refine_kind.map(|s| s.into()),
+        skill,
+        agent,
     };
 
     hyp.evidence.push(ev);
