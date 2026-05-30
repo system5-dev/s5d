@@ -1,0 +1,60 @@
+spec_ref: feat.s5d.cluster-agent-decomposition__20260530.s5d.yaml
+spec_sha256: sha256:3c62d6423ddf610e51072ecc55363c5ec0f007fc3087956417dcafdaa2a5096d
+status: operated
+sync_status: synced
+status_history:
+- status: proposed
+  timestamp: 2026-05-30T08:19:36.932944+00:00
+- status: previewed
+  timestamp: 2026-05-30T08:42:31.377725+00:00
+- status: approved
+  timestamp: 2026-05-30T08:42:37.462298+00:00
+- status: applied
+  timestamp: 2026-05-30T08:42:58.378782+00:00
+- status: operated
+  timestamp: 2026-05-30T08:43:24.621113+00:00
+active_phase: null
+phase_history: []
+phase_runs: []
+approvals:
+- reviewer: Roman
+  date: 2026-05-30T08:42:37.462296+00:00
+  spec_sha256: sha256:ec5751e34f5d216d4ed888b5c44a125a671634405ebc1b1cb4685d5397e1a5da
+  diff_sha256: sha256:ccd19b55061b8aff0469e67c2e04c5ad5d611506e3dc68ae3e9005dbf5f0a70e
+preview:
+  diff_sha256: sha256:ccd19b55061b8aff0469e67c2e04c5ad5d611506e3dc68ae3e9005dbf5f0a70e
+  previewed_spec_sha256: sha256:ec5751e34f5d216d4ed888b5c44a125a671634405ebc1b1cb4685d5397e1a5da
+  actions:
+    create: 3
+    link: 0
+    update: 2
+    delete: 0
+  log: null
+reflection:
+  verdict: iterate
+  measurement_window: null
+  telemetry_refs: []
+  summary: 'Built the agent-isolation cluster per decision.skill-cluster-decomposition (H2). Deterministic flattener skills/s5d/scripts/flatten.sh normalizes the cluster''s 3 output shapes — findings[] (4 skills), violations[] (domain-refactor), SARIF runs[] (security-scan) — into anomalies-only markdown at a severity floor; all 3 shapes tested (findings/SARIF live+synthetic, violations synthetic; bash -n clean). 6 read-only assess subagents (1 proven template + 5 replicated): each runs its deterministic script internally and returns the flattener output verbatim. Vertical slice proven end-to-end on ai-technical-writer (5 anomalies distilled, skill-root resolution works). security-scan agent''s run.sh --no-gate + all.sarif path verified against the script. [OBSERVED] flattener + chain work; full agent invocation needs install (mutates ~/.claude/agents) — not run live. Orchestration fan-out + MCP evidence-bind deferred to prompt-level follow-up; provenance schema (H3) still deferred.'
+  worked: []
+  issues:
+  - agents not invoked live (needs install); orchestration fan-out + MCP evidence-bind are prompt-level follow-up; domain-refactor agent depends on architecture-map.md existing
+  structured_issues: []
+  follow_ups: []
+  evidence: []
+  heuristics:
+  - 'A vertical slice on ONE skill surfaces structural facts a horizontal plan hides: here, the cluster''s output shapes are heterogeneous (findings[]/violations[]/SARIF), so a single flattener must normalize shapes, not assume one. Prove the distiller + one agent end-to-end before replicating; the flattener is the shared weakest link (WLNK) and earns the most test scrutiny.'
+gate_results:
+- kind: schema
+  status: passed
+  attempt: 1
+  timestamp: 2026-05-30T08:42:53.164699+00:00
+  log: schema validation passed (built-in)
+  exit_code: null
+  evidence_path: evidence/feat.s5d.cluster-agent-decomposition/schema_1.log
+  command: null
+  duration_ms: 0
+  waiver_expires_at: null
+  kind_class: null
+decision: null
+verified_by: Diana
+drift_tolerance: null

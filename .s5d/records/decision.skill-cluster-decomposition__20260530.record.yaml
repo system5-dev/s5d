@@ -1,0 +1,43 @@
+spec_ref: decision.skill-cluster-decomposition__20260530.s5d.yaml
+spec_sha256: sha256:f56b098049703e5fd1fed949f188ea14aee3b7bfd035fe5fcd0e6c45942d2d19
+status: proposed
+sync_status: unknown
+status_history:
+- status: proposed
+  timestamp: 2026-05-30T08:05:03.568316+00:00
+active_phase: null
+phase_history: []
+phase_runs: []
+approvals: []
+preview: null
+reflection: null
+gate_results: []
+decision:
+  title: Agent-isolate the heavy assess cluster + deterministic flattener; defer provenance schema
+  winner_id: agent-isolation-heavy-assess-skills-become-subagents-with-isolated-context
+  rejected_ids:
+  - flattener-only-deterministic-anomalies-only-distillation-no-agents
+  - full-hybrid-agents-run-deterministic-flattener-distills-mcp-evidence-with-provenance-tier-routing
+  context: The heavy assess cluster (ddd-refactor, domain-refactor, security-scan, infra-scan, scaling-review, ai-technical-writer) bloats the orchestrator context when run (one heavy report can fill the window). BMAD research surfaced flattener (output distillation), step-files/sharding (isolation), and scale-adaptive routing. The S5D evidence loop is currently open (skills print reports, don't bind to S5D). Need a decomposition that kills run-bloat and can feed S5D evidence without a risky data-model change.
+  decision: 'Adopt agent-isolation as the core: wrap the heavy assess skills as subagents with isolated context and read-only tools; the Discover sweep becomes a parallel agent fan-out; each agent runs its deterministic bash internally and returns ONLY findings; findings bind to S5D via MCP (s5d_add_evidence) best-effort with a file fallback. A deterministic flattener (H1''s value) is adopted as the distillation mechanism inside/after the agent path so the anomalies-only output never drifts. Defer H3''s provenance schema-extension and hard tier-gating until a concrete trace/query need appears (acceptance #4).'
+  rationale: Agents cure the RUN-side bloat (the real source), not just the output; the Agent tool natively returns only the final message, and the loop closes via the existing MCP with zero schema risk on ~14 operated specs. H1 alone leaves skills running in-context (insufficient); H3's provenance schema is a solution ahead of its proven need (same reasoning that deferred it last session).
+  consequences: New agent definitions for the 6 heavy skills + an agent-orchestration path for Discover fan-out. A deterministic flattener script. An agent→MCP evidence handshake with file fallback (the weakest link — must pass structured JSON verbatim). Provenance schema + mandatory tier-gating remain deferred; revisit when a concrete 'which agent produced this finding' query is needed.
+  decided_at: 2026-05-30T08:19:59.616721+00:00
+  confirmed_by: Roman
+  expires_at: 2026-08-28
+  do_list: []
+  dont_list: []
+  challenge:
+    mode: standard
+    passed: true
+    summary: '5 probes on H2: (1) counter — flattener (H1) only fixes output; bloat source is skills RUNNING in the orchestrator context, which agents fix; flattener folds INTO the agent path, not exclusive. (2) tail — agent hangs/garbage/MCP-absent: agent returns null, orchestrator takes partial (.filter(Boolean)); MCP-evidence best-effort with file fallback (like security-scan waiver). (3) evidence weakness — agent prose ≠ deterministic: mitigated by agent running the deterministic bash internally and transporting JSON verbatim, not reinterpreting; drift risk enforced away via agent instruction. (4) WLNK — agent→S5D evidence handshake (drift + MCP availability); bound by passing structured JSON verbatim and distilling deterministically on top. (5) alternatives — H1 insufficient alone, H3 schema premature. No fatal flaw.'
+    checks: []
+  decision_subject: null
+  decision_subject_granularity: null
+  evaluative_surface: null
+  belief_state: null
+  outcome_model: null
+  pareto_set: []
+  choice_rule: null
+verified_by: null
+drift_tolerance: null

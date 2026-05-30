@@ -1,0 +1,156 @@
+s5d: '1.0'
+id: feat.s5d.cluster-agent-decomposition
+version: 1.0.0
+product: s5d
+tier: lightweight
+allow_update: true
+meta:
+  title: cluster-agent-decomposition
+  authors: []
+  date: 2026-05-30
+  tickets: []
+  adrs: []
+  renames: []
+context: |
+  ## Problem
+  Running the heavy assess skills (ddd-refactor, domain-refactor, security-scan,
+  infra-scan, scaling-review, ai-technical-writer) in the orchestrator's single
+  context bloats the window — one heavy report can fill it. The skills also print
+  reports instead of binding findings into S5D.
+
+  ## Goal
+  Per decision.skill-cluster-decomposition (winner H2): wrap the 6 heavy assess
+  skills as isolated subagents that run their deterministic bash internally and
+  return ONLY distilled anomalies; add a deterministic flattener so distillation
+  is a fixed rule, not LLM prose; the orchestrator binds returned anomalies to S5D
+  evidence (MCP, best-effort + file fallback). No schema change (H3 deferred).
+
+  ## Privacy
+  Classification: Internal
+workflow:
+  mode: plan
+  target_architecture:
+    summary: |
+      Each heavy assess skill ships an <skill>-assess subagent (read-only tools,
+      isolated context) under skills/<skill>/agents/. One deterministic flattener
+      (skills/s5d/scripts/flatten.sh) normalizes the cluster's 3 output shapes
+      (findings[] / violations[] / SARIF runs[]) into anomalies-only markdown at a
+      severity floor. Discover = parallel fan-out of these agents; each returns only
+      its distilled block; the orchestrator binds them to S5D evidence.
+    invariants:
+    - Assess agents are read-only (no Write/Edit) — cannot mutate the repo under assessment
+    - Distillation is deterministic (flatten.sh, not agent prose); agents transport verbatim
+    - No Rust schema change; findings bind via existing MCP s5d_add_evidence
+  delivery_strategy:
+    summary: |
+      Vertical slice first: flatten.sh + one agent (ai-technical-writer) proven
+      end-to-end, then flatten.sh extended to all 3 shapes, then the remaining 5
+      agents replicated from the template. Orchestration (fan-out + evidence bind)
+      is prompt-level in the s5d skill.
+    rationale: Prove the pattern on one skill before replicating; flattener is the shared core.
+  resources: null
+  role_map:
+    verifier: reviewer
+    owner: human
+    implementer: coder
+    reviewer: reviewer
+  review_policy:
+    cross_model_required: false
+    required_on: []
+  structure_outline:
+    summary: |
+      One deterministic flattener + 6 read-only assess subagents (1 template + 5
+      replicated). No Rust/schema change. Orchestration is prompt-level (follow-up).
+    signatures:
+    - "skills/s5d/scripts/flatten.sh: NEW — jq distiller, normalizes findings[]/violations[]/SARIF runs[] -> anomalies-only md at FLATTEN_MIN_SEVERITY floor"
+    - "skills/ai-technical-writer/agents/ai-technical-writer-assess.md: NEW — template assess agent (read-only, runs analyze|flatten, returns verbatim)"
+    - "skills/{ddd-refactor,infra-scan,scaling-review,domain-refactor}/agents/<skill>-assess.md: NEW — analyze.sh|flatten replicas"
+    - "skills/security-scan/agents/security-scan-assess.md: NEW — runs run.sh --no-gate, pipes test-reports/security/all.sarif|flatten"
+    types:
+    - "flattener input shapes: findings[] (4 skills), violations[] (domain-refactor), SARIF runs[] (security-scan)"
+    - "assess agents: 6 read-only subagents, model sonnet, isolated context, transport-only"
+    - "deferred: orchestration fan-out + MCP evidence-bind (prompt-level), provenance schema (H3)"
+  execution_mode:
+    engine: manual
+    max_iterations: null
+    stop_conditions:
+    - Phase acceptance reached
+    - Approved scope exhausted
+    - New decision required
+  phases:
+  - id: prototype
+    title: Prototype
+    scope: Reduce unknowns before committed implementation
+    roles:
+    - owner
+    - implementer
+    acceptance:
+    - Critical feasibility questions answered
+    - Telemetry approach identified
+    rollback:
+    - Discard spike output if assumptions fail
+  - id: build
+    title: Build
+    scope: Implement approved scope and pass local gates
+    roles:
+    - implementer
+    - reviewer
+    acceptance:
+    - Declared gates pass
+    - Change matches approved scope
+    rollback:
+    - Revert or reconcile if gates or review fail
+  - id: measure
+    title: Measure
+    scope: Collect telemetry and close the loop with an explicit verdict
+    roles:
+    - owner
+    - verifier
+    acceptance:
+    - Telemetry collected against success criteria
+    - Outcome verdict recorded
+    rollback:
+    - Iterate or kill if evidence stays weak
+artifacts:
+  products:
+  - id: s5d
+    name: s5d
+    organization: null
+  domains:
+  - id: skill-distribution
+    product: s5d
+    name: Skill distribution & wiring
+    classification: generic
+  capabilities:
+  - id: assess-agent-isolation
+    domain: skill-distribution
+    name: Heavy assess skills run as isolated read-only subagents
+  - id: deterministic-flatten
+    domain: skill-distribution
+    name: Deterministic distillation of cluster output shapes into anomalies-only
+  entities: []
+  features:
+  - id: feat.s5d.cluster-agent-decomposition
+    product: s5d
+    name: cluster-agent-decomposition
+    description: null
+  use_cases: []
+  systems: []
+  containers: []
+  components: []
+  roles: []
+  concerns: []
+  metrics: []
+  supersystems: []
+  transports: []
+links: null
+contracts: []
+gates:
+- kind: schema
+roc: null
+problem: null
+hypotheses: []
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false

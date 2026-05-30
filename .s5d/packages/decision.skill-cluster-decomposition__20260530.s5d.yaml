@@ -1,0 +1,117 @@
+s5d: '1.0'
+id: decision.skill-cluster-decomposition
+version: 1.0.0
+product: s5d
+tier: decision
+allow_update: true
+meta:
+  title: skill-cluster-decomposition
+  authors: []
+  date: 2026-05-30
+  tickets: []
+  adrs: []
+  renames: []
+context: null
+workflow: null
+artifacts: null
+links: null
+contracts: []
+gates:
+- kind: review
+roc: null
+problem:
+  signal: How should the skill cluster be decomposed/architected to eliminate report-context-bloat and close the S5D evidence loop — a deterministic output-flattener only, agent-isolation per heavy skill, or a full hybrid (agents + flattener + MCP-evidence + tier-routing)?
+  constraints: []
+  targets: []
+  indicators: []
+  goodhart_guard: null
+  acceptance: |
+    (1) Running the heavy assess cluster on a real repo does NOT bloat the orchestrator context — only distilled findings reach the main loop, not raw dumps.
+    (2) The distillation is deterministic where it matters (a passing check never silently becomes a finding and vice versa).
+    (3) Findings can bind into S5D as evidence through an existing path (MCP), with no break to the ~14 operated specs.
+    (4) Any data-model/schema change is justified by a concrete, named trace/query capability — not added speculatively.
+  blast_radius: skill runtime + an output/evidence layer; schema only if provenance is chosen
+  reversibility: high for flattener/agents (additive, per-skill); low for the schema-provenance variant
+  status: backlog
+hypotheses:
+- id: flattener-only-deterministic-anomalies-only-distillation-no-agents
+  title: Flattener only — deterministic anomalies-only distillation, no agents
+  content: Keep skills invoked directly (no agent wrapping). Add one deterministic bash/jq aggregator that reads all skill JSON reports, strips passing checks, and emits a single anomalies-only violations.md. The orchestrator reads only the distilled output, never the raw dumps. Optionally bind the distilled anomalies into S5D as evidence. Cures the OUTPUT side of report-bloat with the cheapest, most deterministic move (BMAD Flattener mapped to our world). No isolated context, no parallelism, no schema change.
+  scope: output distillation layer over existing skill invocation; no agent/runtime change
+  kind: system
+  layer: L1
+  r_eff: null
+  evidence:
+  - id: 20260530-internal-flattener-only-deterministic-anomalies-only-distillation-no-agents
+    type: internal
+    content: '[OBSERVED] A bash/jq aggregator over existing skill JSON is Low effort and fully deterministic — fits the cluster''s no-LLM-for-detection philosophy. [INFERRED] But it only distills the OUTPUT: the heavy skills still RUN inside the orchestrator''s single context, so a chatty mid-run skill still grows the window. Flattener is necessary (cheap output cure) but not sufficient for the run-side bloat — which is the real source per the stated pain (one heavy report bloats the orchestrator).'
+    verdict: pass
+    valid_until: 2026-08-28T08:06:08.035859+00:00
+    carrier_ref: null
+    formality: 3
+    claim_scope:
+    - output-distillation
+    - cheap and deterministic
+    congruence_level: null
+    reliability: 0.8
+    refine_kind: null
+  depends_on: []
+  rationale: null
+  spec_ref: null
+  prompt: Does distilling the OUTPUT fix the bloat, or does the bloat come from the skills RUNNING in the orchestrator's context?
+  next_move: build
+- id: agent-isolation-heavy-assess-skills-become-subagents-with-isolated-context
+  title: Agent isolation — heavy assess skills become subagents with isolated context
+  content: Wrap the heavy assessment skills (ddd-refactor, domain-refactor, security-scan, infra-scan, scaling-review, ai-technical-writer) as subagents with isolated context and read-only tools. The Discover sweep becomes a parallel agent fan-out; each agent runs the deterministic bash internally and returns ONLY its findings to the orchestrator — the dumps stay in the agent's window. Agents write findings into S5D via the MCP (s5d_add_evidence). Lightweight setup skills and producer skills stay direct. Cures the RUN side of bloat (BMAD step-files/sharding mapped to Claude-native agents). No deterministic flattener; the agent's final message is the distillation.
+  scope: 'runtime: heavy skills -> subagents + MCP evidence handshake; no schema change'
+  kind: system
+  layer: L1
+  r_eff: null
+  evidence:
+  - id: 20260530-internal-agent-isolation-heavy-assess-skills-become-subagents-with-isolated-context
+    type: internal
+    content: '[OBSERVED] The Agent tool natively returns only the subagent''s final message to the orchestrator — the file dumps stay in the agent''s window. So agent-wrapping the heavy assess skills directly cures the RUN-side bloat (the real source), and the Discover sweep becomes a parallel fan-out. [OBSERVED] Agents reach S5D via MCP (s5d_add_evidence), so the evidence loop closes without a schema change. [INFERRED] One weakness: an agent''s prose final message is less deterministic than a jq filter — drift risk on what counts as a finding; mitigated by having the agent run the deterministic bash internally and pass its JSON through, distilling rather than reinterpreting.'
+    verdict: pass
+    valid_until: 2026-08-28T08:06:18.713707+00:00
+    carrier_ref: null
+    formality: 3
+    claim_scope:
+    - run-isolation + parallel fan-out + MCP evidence loop
+    - no schema change
+    congruence_level: null
+    reliability: 0.82
+    refine_kind: null
+  depends_on: []
+  rationale: null
+  spec_ref: feat.s5d.cluster-agent-decomposition__20260530.s5d.yaml
+  prompt: Is an agent's prose final message a reliable distillation, or do we still want a deterministic anomalies filter the agent can't drift on?
+  next_move: probe
+- id: full-hybrid-agents-run-deterministic-flattener-distills-mcp-evidence-with-provenance-tier-routing
+  title: Full hybrid — agents run, deterministic flattener distills, MCP evidence with provenance, tier-routing
+  content: 'Combine both routes into the target architecture: (1) heavy assess skills run as isolated subagents (parallel Discover fan-out); (2) their JSON outputs hit disk and a deterministic flattener distills anomalies-only — distillation stays deterministic, not LLM-prose; (3) distilled anomalies bind as S5D evidence WITH skill/agent provenance (resurfacing the previously-deferred schema-extension for skill provenance — now with a concrete trace/query need); (4) S5D tier-by-risk gates WHICH agents run (lightweight -> code-quality only; high -> full suite). Best coverage of run-isolation + deterministic distillation + closed evidence loop + tier-adaptive, but highest effort and touches the Rust schema (backward-compat risk on operated specs).'
+  scope: runtime + flattener + Rust schema (provenance) + tier-routing; affects existing specs
+  kind: system
+  layer: L0
+  r_eff: null
+  evidence:
+  - id: 20260530-internal-full-hybrid-agents-run-deterministic-flattener-distills-mcp-evidence-with-provenance-tier-routing
+    type: internal
+    content: '[INFERRED] The hybrid has the best coverage (isolation + deterministic distillation + closed loop + tier-adaptive), and its non-schema parts are exactly H2 + the cheap flattener from H1 — deliverable today with zero data-model risk. [OBSERVED] The one genuinely new/risky element is skill/agent PROVENANCE on evidence, which requires the Rust schema change deferred last session (decision.skill-suite-integration H3) — and that risks deserialization across ~14 operated specs. [INFERRED] No concrete trace/query need ("show me every anomaly agent X ever produced") has materialised yet; provenance is still a solution ahead of its proven need. So the hybrid''s value is real but its differentiator over H2+flattener (the provenance schema) is not justified NOW.'
+    verdict: refine
+    valid_until: 2026-08-28T08:06:31.062663+00:00
+    carrier_ref: null
+    formality: 3
+    claim_scope:
+    - provenance-schema differentiator vs H2+flattener
+    congruence_level: null
+    reliability: 0.75
+    refine_kind: specialise
+  depends_on: []
+  rationale: null
+  spec_ref: null
+  prompt: Is the provenance schema change justified now by a concrete trace/query need, or can H1+H2 deliver the value without touching the data model?
+  next_move: defer
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false
