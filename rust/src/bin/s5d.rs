@@ -436,6 +436,12 @@ struct AddEvidenceArgs {
     /// FPF C.2:4.2 Δ-move kind (formalise|generalise|specialise|calibrate|validate|congrue). Required when verdict=refine.
     #[arg(long)]
     refine_kind: Option<String>,
+    /// Provenance: which cluster skill produced this evidence (e.g. "security-scan").
+    #[arg(long)]
+    skill: Option<String>,
+    /// Provenance: which assess agent produced this evidence (e.g. "security-scan-assess").
+    #[arg(long)]
+    agent: Option<String>,
 }
 
 #[derive(Args)]
@@ -1015,6 +1021,8 @@ fn run_add_evidence_command(args: AddEvidenceArgs) -> anyhow::Result<()> {
         args.claim_scope,
         args.reliability,
         args.refine_kind.as_deref(),
+        args.skill,
+        args.agent,
     )
 }
 
@@ -5301,6 +5309,8 @@ fn run_add_evidence(
     claim_scope: Option<String>,
     reliability: Option<f64>,
     refine_kind: Option<&str>,
+    skill: Option<String>,
+    agent: Option<String>,
 ) -> anyhow::Result<()> {
     if let Some(f) = formality {
         if !(1..=5).contains(&f) {
@@ -5377,6 +5387,8 @@ fn run_add_evidence(
         congruence_level: None,
         reliability,
         refine_kind: refine_kind.map(|s| s.into()),
+        skill,
+        agent,
     };
     hyp.evidence.push(ev);
 

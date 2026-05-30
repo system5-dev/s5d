@@ -584,6 +584,12 @@ pub struct HypothesisEvidence {
     /// Required when verdict=refine (validator-enforced); ignored otherwise.
     #[serde(default)]
     pub refine_kind: Option<String>,
+    /// Provenance: which cluster skill produced this evidence (e.g. "security-scan"). Optional.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub skill: Option<String>,
+    /// Provenance: which assess agent produced this evidence (e.g. "security-scan-assess"). Optional.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub agent: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
