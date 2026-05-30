@@ -1,0 +1,59 @@
+spec_ref: feat.s5d.skill-suite-routing__20260530.s5d.yaml
+spec_sha256: sha256:0e24ad3b41874a850e7f7c4b24ca189f2109918219e7b8291b26753229962e43
+status: operated
+sync_status: synced
+status_history:
+- status: proposed
+  timestamp: 2026-05-30T06:52:05.329796+00:00
+- status: previewed
+  timestamp: 2026-05-30T06:53:22.076081+00:00
+- status: approved
+  timestamp: 2026-05-30T06:54:38.979801+00:00
+- status: applied
+  timestamp: 2026-05-30T06:54:52.340688+00:00
+- status: operated
+  timestamp: 2026-05-30T06:55:07.095107+00:00
+active_phase: null
+phase_history: []
+phase_runs: []
+approvals:
+- reviewer: Roman
+  date: 2026-05-30T06:54:38.979799+00:00
+  spec_sha256: sha256:f8c31bb95a473382aa098a5eda61e1296b9344d828f7d06d511ab2e70144684e
+  diff_sha256: sha256:d39044a2fddf99a6224911e4a484a1fb091950f9d56acce3fb884ddb6365988c
+preview:
+  diff_sha256: sha256:d39044a2fddf99a6224911e4a484a1fb091950f9d56acce3fb884ddb6365988c
+  previewed_spec_sha256: sha256:f8c31bb95a473382aa098a5eda61e1296b9344d828f7d06d511ab2e70144684e
+  actions:
+    create: 3
+    link: 0
+    update: 2
+    delete: 0
+  log: null
+reflection:
+  verdict: confirmed
+  measurement_window: null
+  telemetry_refs: []
+  summary: 'Shipped 2 new skills (ai-technical-writer, ddd-refactor) first-class: suite 10->12, install.sh + both manifests wired (verified valid JSON / bash -n). Both are non-producers (read-only assessment) so no CLI-mediation needed. Added stage-routing: new skills/s5d/references/skill-suite.md maps each domain skill to its S5D flow stage (Discover / Target-Decide / Spec / Run-Verify) with how-automatic + precedence rules, plus a one-line pointer near Flow in the s5d SKILL.md. Prompt-level routing, no new Rust hook (matches "automatic use" without adding infra). Validate + graph-check pass, gate:schema pass, imported.'
+  worked: []
+  issues: []
+  structured_issues: []
+  follow_ups: []
+  evidence: []
+  heuristics:
+  - '"Automatic use in the right places" for an agent skill suite = a stage->skill map in the orchestrating skill (prompt-level), not a new hook. The skills'' own description: triggers already give /find discovery; the control plane only needs to know which skill belongs at which lifecycle stage. Reach for a Rust hook only when hard/deterministic enforcement is required, not for recommendation.'
+gate_results:
+- kind: schema
+  status: passed
+  attempt: 1
+  timestamp: 2026-05-30T06:54:46.703792+00:00
+  log: schema validation passed (built-in)
+  exit_code: null
+  evidence_path: evidence/feat.s5d.skill-suite-routing/schema_1.log
+  command: null
+  duration_ms: 0
+  waiver_expires_at: null
+  kind_class: null
+decision: null
+verified_by: Diana
+drift_tolerance: null
