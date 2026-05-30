@@ -438,3 +438,21 @@ packages:
   package_id: feat.s5d.skill-suite-routing
   owning_package: null
   deprecated: false
+- uuid: b0fd0fe1-da38-44d1-a296-475897e0f6e0
+  artifact_id: assess-agent-isolation
+  artifact_type: Capability
+  package_id: feat.s5d.cluster-agent-decomposition
+  owning_package: null
+  deprecated: false
+- uuid: 9cd78f9c-d399-49bb-a341-4693001303f2
+  artifact_id: deterministic-flatten
+  artifact_type: Capability
+  package_id: feat.s5d.cluster-agent-decomposition
+  owning_package: null
+  deprecated: false
+- uuid: 2061f404-08fe-410e-8b4e-43ba6a3fb17c
+  artifact_id: feat.s5d.cluster-agent-decomposition
+  artifact_type: Feature
+  package_id: feat.s5d.cluster-agent-decomposition
+  owning_package: null
+  deprecated: false

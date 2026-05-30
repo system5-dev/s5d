@@ -84,3 +84,8 @@ features:
   status: applied
   product: s5d
   version: 1.0.0
+- id: feat.s5d.cluster-agent-decomposition
+  spec_path: packages/feat.s5d.cluster-agent-decomposition__20260530.s5d.yaml
+  status: applied
+  product: s5d
+  version: 1.0.0
