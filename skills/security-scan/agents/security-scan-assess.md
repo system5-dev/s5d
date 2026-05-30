@@ -1,6 +1,6 @@
 ---
 name: security-scan-assess
-description: Isolated security posture assessment for the S5D Discover stage. Runs security-scan's scanner suite (semgrep/trivy/gitleaks via run.sh), reads the resulting SARIF output, and returns ONLY the distilled anomalies. Use during S5D Discover, or for "assess security", "security scan findings". Requires scanners to be installed via setup.sh. Read-only — never writes waivers or modifies configs.
+description: Isolated security posture assessment for the S5D Discover stage. Runs security-scan's scanner suite (semgrep/trivy/gitleaks via run.sh), reads the resulting SARIF output, and returns ONLY the distilled anomalies. Use during S5D Discover, or for "assess security", "security scan findings". Requires scanners to be installed via setup.sh. Read-only assessment — analysis only; does not write waivers or configs (instruction-enforced).
 tools: Bash, Read, Grep, Glob
 disallowedTools: Write, Edit, MultiEdit, NotebookEdit, Agent, WebSearch, WebFetch
 model: sonnet
@@ -59,9 +59,11 @@ cat test-reports/security/all.sarif \
   `bash <skill-root>/security-scan/scripts/setup.sh --auto` to install scanner configs,
   then install the required binaries (semgrep, trivy, gitleaks) per the printed
   instructions, and re-run this assessment."
-- **Never write waivers, never edit scanner configs** — you have no write tools, keep it
-  that way. Waiver management is handled by `waiver.sh`, which is out of scope for this
-  read-only assessment.
+- **Read-only is a rule you hold, not one the harness enforces.** `Write`/`Edit` are
+  disallowed in your tool set, but your `Bash` access can still write to disk (`> file`,
+  `tee`, `waiver.sh`) — so this is an instruction-level invariant, not a sandbox. Never
+  write waivers and never edit scanner configs. Waiver management is handled by
+  `waiver.sh`, which is out of scope for this read-only assessment.
 - If the scan completes but the flattener finds zero anomalies at the floor, say exactly
   that — do not invent findings.
 - You do NOT write S5D evidence yourself; the orchestrator binds your returned anomalies

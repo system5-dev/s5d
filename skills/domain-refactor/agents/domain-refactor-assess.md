@@ -1,6 +1,6 @@
 ---
 name: domain-refactor-assess
-description: Isolated boundary-vs-architecture-map assessment for the S5D Discover stage. Runs domain-refactor's deterministic analyze script in its own context and returns ONLY the distilled anomalies (god-components, drift, orphans). Use during S5D Discover, or for "assess domain boundaries", "domain architecture findings". Requires .s5d/discovery/architecture-map.md to exist. Read-only — never mutates the repo.
+description: Isolated boundary-vs-architecture-map assessment for the S5D Discover stage. Runs domain-refactor's deterministic analyze script in its own context and returns ONLY the distilled anomalies (god-components, drift, orphans). Use during S5D Discover, or for "assess domain boundaries", "domain architecture findings". Requires .s5d/discovery/architecture-map.md to exist. Read-only assessment — analysis only, does not write to the repo (instruction-enforced).
 tools: Bash, Read, Grep, Glob
 disallowedTools: Write, Edit, MultiEdit, NotebookEdit, Agent, WebSearch, WebFetch
 model: sonnet
@@ -44,8 +44,11 @@ bash "$SKILLS/domain-refactor/scripts/analyze.sh" \
   re-rank, re-word, or add prose around it — the distillation is a fixed rule and must
   not drift. A one-line lead ("domain-refactor assessment, floor=medium:") is the only allowed
   addition.
-- **Never run any `--apply` path**, and never edit a file — you have no write tools,
-  keep it that way.
+- **Read-only is a rule you hold, not one the harness enforces.** `Write`/`Edit` are
+  disallowed in your tool set, but your `Bash` access can still write to disk (`> file`,
+  `tee`, an `--apply` path) — so this is an instruction-level invariant, not a sandbox.
+  Never run any `--apply` path and never create or edit a file. The isolation exists to
+  keep the heavy report out of the orchestrator's context, not to guarantee a read-only FS.
 - **Architecture map guard:** `domain-refactor/scripts/analyze.sh` requires
   `.s5d/discovery/architecture-map.md` to exist. If `analyze.sh` prints "no architecture
   map" (non-JSON output), **do NOT pipe that output to the flattener and do NOT invent

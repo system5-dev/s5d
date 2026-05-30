@@ -27,16 +27,16 @@ COMMODITY="$1"; shift
 CHOSEN=""
 DECIDED_BY=""
 RATIONALE=""
-OUTPUT=""
 ANSWERS_FILE=""
+
+need_val() { [ "$2" -ge 2 ] || { echo "$1 requires a value" >&2; exit 2; }; }
 
 while [ $# -gt 0 ]; do
     case "$1" in
-        --chose)      CHOSEN="$2"; shift 2 ;;
-        --decided-by) DECIDED_BY="$2"; shift 2 ;;
-        --rationale)  RATIONALE="$2"; shift 2 ;;
-        --output)     OUTPUT="$2"; shift 2 ;;
-        --answers)    ANSWERS_FILE="$2"; shift 2 ;;
+        --chose)      need_val "$1" "$#"; CHOSEN="$2"; shift 2 ;;
+        --decided-by) need_val "$1" "$#"; DECIDED_BY="$2"; shift 2 ;;
+        --rationale)  need_val "$1" "$#"; RATIONALE="$2"; shift 2 ;;
+        --answers)    need_val "$1" "$#"; ANSWERS_FILE="$2"; shift 2 ;;
         *) echo "unknown arg: $1" >&2; exit 2 ;;
     esac
 done
@@ -44,6 +44,15 @@ done
 [ -z "$CHOSEN" ]     && { echo "--chose is required" >&2; exit 2; }
 [ -z "$DECIDED_BY" ] && { echo "--decided-by is required" >&2; exit 2; }
 [ -z "$RATIONALE" ]  && { echo "--rationale is required" >&2; exit 2; }
+
+# COMMODITY is positional ($1) and selects a template file. Without an allowlist,
+# `../x` escapes templates/decisions and parses any caller-readable *.yaml as a
+# decision frame (tribunal MED #5: commodity path traversal). Confine it to a flat,
+# safe name — no slashes, no dots, no traversal.
+case "$COMMODITY" in
+    *[!A-Za-z0-9_-]* | "")
+        echo "invalid commodity '$COMMODITY' — use only [A-Za-z0-9_-]" >&2; exit 2 ;;
+esac
 
 YAML="$DECISIONS_DIR/${COMMODITY}.yaml"
 [ ! -f "$YAML" ] && { echo "no decision frame: $COMMODITY" >&2; exit 2; }
@@ -60,11 +69,21 @@ if command -v s5d >/dev/null 2>&1; then
     # Create the spec scaffold via the real CLI.
     QUESTION="Which ${COMMODITY} variant should we use, given the constraints captured during the system-design interview?"
     S5D_NEW_OUT=$(s5d new "$DEC_ID" --tier decision --product "$PRODUCT" --question "$QUESTION" 2>&1)
-    SPEC_PATH=$(printf '%s\n' "$S5D_NEW_OUT" | grep "^ok Created spec:" | sed 's/^ok Created spec: //')
+    S5D_NEW_RC=$?
 
+    # Primary: parse the documented "ok Created spec: <path>" line.
+    SPEC_PATH=$(printf '%s\n' "$S5D_NEW_OUT" | sed -n 's/^ok Created spec: //p' | head -1)
+    # Fallback: an older/mismatched installed binary may word that line differently
+    # (or be missing it) yet still write the spec to the deterministic path. Recover
+    # it by id glob so we don't depend on a single hard-coded output string.
     if [ -z "$SPEC_PATH" ]; then
-        echo "error: s5d new did not emit a spec path. Output was:" >&2
+        SPEC_PATH=$(ls -t .s5d/packages/"${DEC_ID}"__*.s5d.yaml 2>/dev/null | head -1)
+    fi
+
+    if [ "$S5D_NEW_RC" -ne 0 ] || [ -z "$SPEC_PATH" ] || [ ! -f "$SPEC_PATH" ]; then
+        echo "error: s5d new failed (rc=$S5D_NEW_RC) or produced no spec. Output was:" >&2
         echo "$S5D_NEW_OUT" >&2
+        echo "hint: a killed/stale installed s5d looks like this — reinstall: ./install.sh" >&2
         exit 1
     fi
 
@@ -132,6 +151,9 @@ while i < len(lines):
 
 # Emit hypotheses: chosen first, then the rest.
 def add_hypothesis(vid, vname, vnotes, spec):
+    """Return True on success. A failed add leaves the spec partial, so the caller
+    propagates a non-zero exit rather than printing ✓ over a half-written spec
+    (tribunal MED #3)."""
     title = vname if vname else vid
     content = vnotes if vnotes else vid
     scope = f"{yaml_file.split('/')[-1].replace('.yaml','')} commodity selection"
@@ -139,20 +161,35 @@ def add_hypothesis(vid, vname, vnotes, spec):
            '--title', title, '--content', content, '--scope', scope]
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode != 0:
-        print(f"  warning: add-hypothesis for {vid} failed: {result.stderr.strip()}", file=sys.stderr)
-    else:
-        print(f"  + hypothesis: {result.stdout.strip()}", file=sys.stderr)
+        print(f"  error: add-hypothesis for {vid} failed: {result.stderr.strip()}", file=sys.stderr)
+        return False
+    print(f"  + hypothesis: {result.stdout.strip()}", file=sys.stderr)
+    return True
+
+failures = 0
 
 chosen_variant = next((v for v in variants if v['id'] == chosen), None)
 if chosen_variant:
-    add_hypothesis(chosen_variant['id'], chosen_variant['name'], chosen_variant['notes'], spec_path)
+    if not add_hypothesis(chosen_variant['id'], chosen_variant['name'], chosen_variant['notes'], spec_path):
+        failures += 1
 else:
-    print(f"  warning: chosen variant '{chosen}' not found in yaml", file=sys.stderr)
+    # The winner is missing — the spec cannot represent the decision. Hard failure.
+    print(f"  error: chosen variant '{chosen}' not found in yaml", file=sys.stderr)
+    failures += 1
 
 for v in variants:
     if v['id'] != chosen:
-        add_hypothesis(v['id'], v['name'], v['notes'], spec_path)
+        if not add_hypothesis(v['id'], v['name'], v['notes'], spec_path):
+            failures += 1
+
+sys.exit(1 if failures else 0)
 PYEOF
+    PY_RC=$?
+    if [ "$PY_RC" -ne 0 ]; then
+        echo "error: hypothesis emission failed — spec $SPEC_PATH is partial." >&2
+        echo "       Inspect/repair it before relying on it; not printing success." >&2
+        exit 1
+    fi
 
     echo "✓ wrote $SPEC_PATH" >&2
     if [ -n "$ANSWERS_FILE" ] && [ -f "$ANSWERS_FILE" ]; then

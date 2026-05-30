@@ -1,0 +1,17 @@
+spec_ref: note.h3-provenance-override__20260530.s5d.yaml
+spec_sha256: sha256:7b6ea81c7131ae84dd4313bba3e77867148b5221565f4ecd2f0202c26e9d56df
+status: proposed
+sync_status: unknown
+status_history:
+- status: proposed
+  timestamp: 2026-05-30T18:38:49.278382+00:00
+active_phase: null
+phase_history: []
+phase_runs: []
+approvals: []
+preview: null
+reflection: null
+gate_results: []
+decision: null
+verified_by: null
+drift_tolerance: null
