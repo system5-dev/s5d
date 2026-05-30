@@ -136,6 +136,20 @@ else
     echo "  Install Rust (rustup.rs) and re-run. Skills are installed, CLI skipped."
 fi
 
+# macOS hardening: a cp'd adhoc-signed Mach-O is SIGKILL'd by AMFI on macOS 15+/26
+# because copying invalidates the original inode's in-kernel code-signing trust.
+# Re-sign the installed copy in place with a fresh adhoc signature so the kernel
+# accepts it. Without this, `cp`-install produces a binary that dies with signal 9
+# on every invocation (diagnosed 2026-05-30 on Darwin 25 / macOS 26).
+if [ -f "$BIN_DIR/s5d" ] && [ "$(uname -s)" = "Darwin" ]; then
+    if codesign --force --sign - "$BIN_DIR/s5d" 2>/dev/null; then
+        echo "✓ Binary re-signed (adhoc) for macOS AMFI"
+    else
+        echo "⚠ codesign re-sign failed — if 's5d' is killed (signal 9), run:"
+        echo "    codesign --force --sign - $BIN_DIR/s5d"
+    fi
+fi
+
 echo ""
 echo "What was installed:"
 echo "  s5d binary — CLI for decisions, features, gates"

@@ -1,0 +1,26 @@
+s5d: '1.0'
+id: note.h3-provenance-override
+version: 1.0.0
+product: s5d
+tier: note
+allow_update: true
+meta:
+  title: note.h3-provenance-override
+  authors: []
+  date: 2026-05-30
+  tickets: []
+  adrs: []
+  renames: []
+context: null
+workflow: null
+artifacts: null
+links: null
+contracts: []
+gates: []
+roc: null
+problem: null
+hypotheses: []
+decision: null
+note_rationale: 'AMENDMENT to decision.skill-cluster-decomposition (2026-05-30), which DEFERRED H3 (provenance schema-extension + mandatory tier-gating). Override: the provenance schema half was adopted in DEBUG-ONLY form — DiscoveryProvenance{schema,claim,evidence,symbol} structs now ship in the discovery graph types and emit under debug, compiled live into the release binary (bin/s5d-darwin-arm64, verified strings + runtime). Tier-gating (mandatory provenance enforcement) REMAINS deferred per the original rationale (solution ahead of proven need). Net: provenance is a live debug-only capability, no longer fully deferred; the gating obligation stays open until a concrete which-agent-produced-this-finding trace/query need appears. Recorded so the override is not silent.'
+expires_at: 2026-08-28
+auto_noted: false

@@ -48,12 +48,15 @@ echo "$JSON" | jq -r --argjson rank "$RANK" --arg min "$MIN" --arg label "$LABEL
       elif (.runs | type) == "array" then
         [ .runs[].results[]? | {sev:(($sarif[(.level // "warning")]) // "medium"), label:(.ruleId // "?"), path:((.locations[0].physicalLocation.artifactLocation.uri) // ""), detail:((.message.text) // ""), fix:""} ]
       else [] end ) as $items
-  | ($rank[$min] // 2) as $floor
-  | [ $items[] | select( ($rank[.sev] // 0) >= $floor ) ] as $kept
+  # ascii_downcase before ranking: cluster scripts emit severities in mixed case
+  # (e.g. "HIGH", "High"); without normalizing, $rank lookup misses and silently
+  # downgrades them to 0/info, dropping real anomalies (tribunal LOW, flatten.sh).
+  | ($rank[($min|ascii_downcase)] // 2) as $floor
+  | [ $items[] | select( ($rank[(.sev|ascii_downcase)] // 0) >= $floor ) ] as $kept
   | "## " + $label + " — " + ($kept | length | tostring) + " anomaly(ies) >= " + $min,
     ( if ($kept|length) == 0
       then "✓ none at/above " + $min
-      else ($kept | sort_by(-($rank[.sev] // 0))[]
+      else ($kept | sort_by(-($rank[(.sev|ascii_downcase)] // 0))[]
             | "- **[" + (.sev | ascii_upcase) + "]** "
               + .label
               + (if (.path|length>0) and (.path != "(repo)") then " (`" + .path + "`)" else "" end)

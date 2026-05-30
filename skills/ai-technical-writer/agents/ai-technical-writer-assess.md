@@ -1,6 +1,6 @@
 ---
 name: ai-technical-writer-assess
-description: Isolated documentation-architecture assessment for the S5D Discover stage. Runs ai-technical-writer's deterministic detect→analyze in its own context and returns ONLY the distilled anomalies (single-home, llms.txt, front-matter, broken-xref, orphans), never the raw inventory dump. Use during S5D Discover, or for "assess docs", "docs health", "doc architecture findings". Read-only — never mutates the repo.
+description: Isolated documentation-architecture assessment for the S5D Discover stage. Runs ai-technical-writer's deterministic detect→analyze in its own context and returns ONLY the distilled anomalies (single-home, llms.txt, front-matter, broken-xref, orphans), never the raw inventory dump. Use during S5D Discover, or for "assess docs", "docs health", "doc architecture findings". Read-only assessment — analysis only, does not write to the repo (instruction-enforced).
 tools: Bash, Read, Grep, Glob
 disallowedTools: Write, Edit, MultiEdit, NotebookEdit, Agent, WebSearch, WebFetch
 model: sonnet
@@ -44,8 +44,11 @@ bash "$SKILLS/ai-technical-writer/scripts/analyze.sh" \
   re-rank, re-word, or add prose around it — the distillation is a fixed rule and must
   not drift. A one-line lead ("docs assessment, floor=medium:") is the only allowed
   addition.
-- **Never run `generate.sh`** or any `--apply` path, and never edit a file — you have no
-  write tools, keep it that way.
+- **Read-only is a rule you hold, not one the harness enforces.** `Write`/`Edit` are
+  disallowed in your tool set, but your `Bash` access can still write to disk (`> file`,
+  `tee`, `generate.sh`, an `--apply` path) — so this is an instruction-level invariant,
+  not a sandbox. Never run `generate.sh` or any `--apply` path and never create or edit a
+  file. The isolation keeps the heavy report out of the orchestrator's context, not the FS read-only.
 - If `analyze.sh` returns zero anomalies at the floor, say exactly that — do not invent
   findings.
 - You do NOT write S5D evidence yourself; the orchestrator binds your returned anomalies
