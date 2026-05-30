@@ -25,10 +25,11 @@ hand. Each skill is read-only / plan-emitting by default; the producer skills
 
 ## How "automatic" works
 
-1. **Discovery sweep.** When running `Discover`, run the Discover-row skills in
-   detect/report mode to populate the architecture map and surface findings —
-   this is the read-only assessment pass. Their reports become the evidence the
-   Target/Decide stages reason over.
+1. **Discovery sweep (agent fan-out).** When running `Discover`, dispatch the heavy
+   assess skills as their `*-assess` subagents in PARALLEL (see "Assess fan-out"
+   below). Each runs its deterministic bash in its OWN context and returns only a
+   distilled anomalies block — the raw dumps never reach the orchestrator. Their
+   blocks become the evidence the Target/Decide stages reason over.
 2. **Decision authoring.** At `Target`/`Decide`, `system-design` runs the
    interview and lands a decision-tier ADR through the CLI; `domain-refactor`
    lands its move plan the same way. No hand-rolled YAML.
@@ -45,3 +46,23 @@ hand. Each skill is read-only / plan-emitting by default; the producer skills
   `code-quality`; docs *architecture* → `ai-technical-writer`.
 - A skill with no matching stage need (e.g. no docs to organize) is simply skipped
   — the suite is a menu keyed by stage, not a mandatory checklist.
+
+## Assess fan-out (Discover orchestration)
+
+Per `decision.skill-cluster-decomposition`, the heavy assess skills run as isolated
+read-only subagents so a heavy report never bloats the orchestrator context.
+
+1. **Fan out.** Issue the relevant `*-assess` agents in a SINGLE message (concurrent):
+   `ai-technical-writer-assess`, `ddd-refactor-assess`, `domain-refactor-assess`,
+   `infra-scan-assess`, `scaling-review-assess`, `security-scan-assess`. Tier gates
+   the set — a lightweight change may dispatch only one; a high-tier change all six.
+   Skip an agent whose precondition is unmet (e.g. `domain-refactor-assess` needs
+   `.s5d/discovery/architecture-map.md`; `security-scan-assess` needs scanners set up).
+2. **Collect.** Each agent returns one anomalies-only markdown block (already distilled
+   by `flatten.sh`). Concatenate them — that is the Discover findings surface.
+3. **Bind to evidence (when a spec is in play).** For each material anomaly, record it
+   against the relevant hypothesis with `s5d_add_evidence` (`evidence-type: internal`,
+   verdict `fail` for a real defect). Best-effort: if the MCP is unavailable, leave the
+   distilled block in the run notes as a file-based fallback. The agent never writes
+   evidence itself — binding is the orchestrator's job, keeping agents read-only.
+
