@@ -39,6 +39,8 @@ gate_results:
   evidence_path: evidence/feat.s5d.discovery-index-graph/schema_1.log
   command: null
   duration_ms: 0
+  waiver_expires_at: null
+  kind_class: null
 - kind: schema
   status: passed
   attempt: 1
@@ -48,5 +50,8 @@ gate_results:
   evidence_path: evidence/feat.s5d.discovery-index-graph/schema_1.log
   command: null
   duration_ms: 0
+  waiver_expires_at: null
+  kind_class: null
 decision: null
 verified_by: cargo-test
+drift_tolerance: null
