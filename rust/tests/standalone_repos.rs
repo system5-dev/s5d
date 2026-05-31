@@ -399,6 +399,29 @@ fn discovery_sync_builds_stack_agnostic_index_graph_and_projection() {
 }
 
 #[test]
+fn discovery_respects_ignore_files_without_hiding_dotfiles_by_default() {
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+    repo.write(".gitignore", ".uv-cache/\nignored.py\n");
+    repo.write(".ignore", "scratch/\n");
+    repo.write("src/lib.rs", "pub fn marker() {}\n");
+    repo.write(".github/workflows/ci.yml", "name: ci\n");
+    repo.write(".uv-cache/archive/generated.py", "print('cache')\n");
+    repo.write("scratch/generated.py", "print('scratch')\n");
+    repo.write("ignored.py", "print('ignored')\n");
+
+    run_ok(repo.path(), ["discover", "sync"]);
+
+    let discovery_dir = repo.path().join(".s5d").join("discovery");
+    let files = fs::read_to_string(discovery_dir.join("files.jsonl")).unwrap();
+    assert!(files.contains("src/lib.rs"));
+    assert!(files.contains(".github/workflows/ci.yml"));
+    assert!(!files.contains(".uv-cache/archive/generated.py"));
+    assert!(!files.contains("scratch/generated.py"));
+    assert!(!files.contains("ignored.py"));
+}
+
+#[test]
 fn discovery_check_fails_when_snapshot_is_missing() {
     let repo = StandaloneRepo::new();
     run_ok(repo.path(), ["init"]);
@@ -496,17 +519,19 @@ fn write_architecture_lint_spec(repo: &StandaloneRepo, allow_billing_to_auth: bo
     fs::create_dir_all(&spec_dir).unwrap();
     let spec_path = spec_dir.join("feat.shop.billing-boundary__20260423.s5d.yaml");
 
-    let mut links = s5d::Links::default();
-    links.component_to_capability = vec![
-        binding(&[
-            ("component", "comp.auth"),
-            ("capability", "cap.auth.tokens"),
-        ]),
-        binding(&[
-            ("component", "comp.billing"),
-            ("capability", "cap.billing.charge"),
-        ]),
-    ];
+    let mut links = s5d::Links {
+        component_to_capability: vec![
+            binding(&[
+                ("component", "comp.auth"),
+                ("capability", "cap.auth.tokens"),
+            ]),
+            binding(&[
+                ("component", "comp.billing"),
+                ("capability", "cap.billing.charge"),
+            ]),
+        ],
+        ..Default::default()
+    };
     if allow_billing_to_auth {
         links.edges.push(s5d::Edge {
             from: "dom.billing".into(),
@@ -3407,6 +3432,7 @@ fn synthetic_project_development_cycle_tracks_multiple_features_and_code() {
     assert!(decision_record.decision.is_some());
 }
 
+#[allow(clippy::too_many_arguments)] // test-scaffold helper; a params struct adds no value here
 fn populate_minishop_feature_spec(
     spec_path: &Path,
     domain_id: &str,
