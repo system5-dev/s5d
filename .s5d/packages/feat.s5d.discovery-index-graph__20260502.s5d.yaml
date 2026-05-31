@@ -134,7 +134,26 @@ artifacts:
   metrics: []
   supersystems: []
   transports: []
-links: null
+links:
+  feature_to_domain:
+  - feature: feat.s5d.discovery-index-graph
+    domain: dom.s5d.discovery
+  use_case_to_capability: []
+  use_case_to_entity: []
+  component_to_capability:
+  - component: cmp.s5d.discovery
+    capability: cap.s5d.discovery-index-graph
+  component_to_entity: []
+  container_to_capability: []
+  concern_to_metric: []
+  component_to_container:
+  - component: cmp.s5d.discovery
+    container: ctr.s5d.rust-cli
+  edges: []
+  depends_on: []
+  entity_relations: []
+  capability_to_entity: []
+  capability_to_concern: []
 contracts: []
 gates:
 - kind: schema

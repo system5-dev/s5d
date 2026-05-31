@@ -94,7 +94,12 @@ artifacts:
     name: s5d
     organization: null
   domains: []
-  capabilities: []
+  capabilities:
+  - id: cap.s5d.structure-outline
+    domain: dom.s5d.workflow
+    name: Structure Outline and Vertical Phases
+    description: Optional design-contract outline (summary, signatures, types, slice boundaries) on a Workflow, rendered into the Ralph task package, plus a methodological warning when phase scope looks horizontal.
+    since: null
   entities: []
   features:
   - id: feat.s5d.structure-outline-and-vertical-phases
