@@ -206,6 +206,8 @@ Legacy hidden aliases (e.g. `s5d add-hypothesis`, `s5d validate`, `s5d apply pre
 
 ## Skill Runtime Contract
 
+The skill is a **human-facing conductor** of the S5D state machine — it is **not a second state machine**. The CLI/MCP own durable state (records, ledger, harness journal); the skill routes, drafts, summarizes, and recommends. It runs only engines marked `approved: true` in `.s5d/config.yaml`.
+
 **The skill may:** route the request, help draft/edit spec YAML, read run artifacts and summarize, normalize engine outputs into hypotheses/evidence via S5D commands, recommend run acceptance when evidence is sufficient.
 
 **The skill must not:** store its own run state outside S5D files, treat harness journal state as run truth, treat engine run as accepted evidence, call Claude/Codex/Gemini directly for S5D execution when `s5d run exec` applies, approve an engine not in `.s5d/config.yaml`, bypass preview/approve/import hash checks.

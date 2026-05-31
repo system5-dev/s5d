@@ -80,7 +80,7 @@ S5D records agent execution as evidence against a desired system state. It can r
 - `s5d run task --engine ralph [--mode init|bugfix]` emits a bounded task package for the active work state only
 - each `run task` call persists the package under `.s5d/tasks/`
 - engine completion does not accept the work; human `run accept` remains explicit
-- `s5d run harness start/status/exec` adds the operational layer: isolated git worktree, clean preflight, heartbeat/status, timeout, and journal under `.s5d/harness/`
+- `s5d run harness start`, `s5d run harness status`, and `s5d run harness exec` add the operational layer: isolated git worktree, clean preflight, heartbeat/status, timeout, and journal under `.s5d/harness/`
 - harness state is not run truth; `.record.yaml` remains authoritative for active work state, evidence, gates, and approvals
 - `s5d discover sync/check` builds `.s5d/discovery/*`: file index, evidence JSONL, graph JSON, and a metamodel projection. The core is stack-agnostic; language parsers can be added later as optional evidence providers.
 - `ralph-init` warms repo context from docs, tests, environment setup, and current test results
