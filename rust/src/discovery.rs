@@ -1,5 +1,6 @@
 use crate::project::atomic_write_string;
 use crate::{Artifacts, Links, S5dProject};
+use ignore::WalkBuilder;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
@@ -288,25 +289,29 @@ fn collect_project_files(
     path: &Path,
     files: &mut Vec<DiscoveryFile>,
 ) -> anyhow::Result<()> {
-    if path.is_file() {
-        if is_discovery_file(path) {
-            files.push(build_file(project_root, path)?);
+    let mut walker = WalkBuilder::new(path);
+    walker
+        .hidden(false)
+        .ignore(true)
+        .git_ignore(true)
+        .git_global(true)
+        .git_exclude(true)
+        .parents(true)
+        .filter_entry(|entry| !should_skip_dir(entry.path()));
+    if !project_root.join(".git").exists() {
+        walker.add_custom_ignore_filename(".gitignore");
+    }
+
+    for entry in walker.build() {
+        let entry = entry?;
+        let entry_path = entry.path();
+        let is_file = entry
+            .file_type()
+            .map(|file_type| file_type.is_file())
+            .unwrap_or_else(|| entry_path.is_file());
+        if is_file && is_discovery_file(entry_path) {
+            files.push(build_file(project_root, entry_path)?);
         }
-        return Ok(());
-    }
-
-    if should_skip_dir(path) {
-        return Ok(());
-    }
-
-    let mut entries = std::fs::read_dir(path)?
-        .collect::<Result<Vec<_>, _>>()?
-        .into_iter()
-        .map(|entry| entry.path())
-        .collect::<Vec<_>>();
-    entries.sort();
-    for entry in entries {
-        collect_project_files(project_root, &entry, files)?;
     }
     Ok(())
 }
