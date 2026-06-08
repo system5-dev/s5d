@@ -13,6 +13,7 @@ pub mod graph;
 pub mod hooks_json;
 pub mod identity;
 pub mod import;
+pub mod lsp;
 pub mod mcp;
 pub mod models;
 pub mod phase_gates;
