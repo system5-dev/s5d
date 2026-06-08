@@ -133,3 +133,32 @@ fn skill_defines_cli_conductor_contract() {
         );
     }
 }
+
+#[test]
+fn flow_vocabulary_is_canonical_and_consistent() {
+    // One operational flow string, byte-identical across every doc that states it.
+    // Guards the drift that prompted this test: metamodel.md once cited a
+    // "Bootstrap → Frame → … → Build" flow as "defined in SKILL.md" while SKILL.md
+    // actually said "Route → Discover → … → Run". Four vocabularies, one lifecycle.
+    const CANONICAL_FLOW: &str =
+        "Route → Discover → Target → Decide → Spec → Run → Verify → Ship → Learn";
+
+    for doc in ["skills/s5d/SKILL.md", "S5D.md", "skills/s5d/metamodel.md"] {
+        let text = read_repo_file(doc);
+        assert!(
+            text.contains(CANONICAL_FLOW),
+            "{doc} must state the canonical flow `{CANONICAL_FLOW}`"
+        );
+    }
+
+    // Retired stage vocabularies must not reappear in any loaded doc.
+    for doc in ["skills/s5d/SKILL.md", "S5D.md", "skills/s5d/metamodel.md"] {
+        let text = read_repo_file(doc);
+        for banned in ["Bootstrap → Frame", "→ Build →"] {
+            assert!(
+                !text.contains(banned),
+                "{doc} still contains retired flow vocabulary `{banned}`"
+            );
+        }
+    }
+}
