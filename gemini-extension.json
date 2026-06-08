@@ -13,6 +13,8 @@
     "./skills/scaling-review",
     "./skills/system-design",
     "./skills/scenario-mine",
-    "./skills/infra-scan"
+    "./skills/infra-scan",
+    "./skills/ai-technical-writer",
+    "./skills/ddd-refactor"
   ]
 }

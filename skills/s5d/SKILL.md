@@ -13,7 +13,7 @@ Control plane for changes in a repository with AI participation. Four things on 
 3. **Run evidence** — record what agents/tools produced, with integrity (approval chain, SHA256 binding, ledger).
 4. **Verify in code** — check that code matches the decision; roll back when it doesn't.
 
-Flow: `Route → Discover? → Target → Decide → Spec → Run → Verify → Ship → Learn`
+Flow: `Route → Discover → Target → Decide → Spec → Run → Verify → Ship → Learn`
 
 `Discover` runs once per project (or when the map is stale). Skip it on follow-up tasks that already have a current map.
 
@@ -180,7 +180,7 @@ Learn: `s5d_reflect`. Update WAL. Record reusable heuristics.
 
 ## Command Contract
 
-See full command table in [session-protocol.md](session-protocol.md). Key commands:
+Key commands (MCP + CLI). Full preconditions and the run/harness surface live in the repo's `S5D.md` Command Contract.
 
 | Action | MCP | CLI |
 |--------|-----|-----|
