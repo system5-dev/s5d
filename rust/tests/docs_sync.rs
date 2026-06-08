@@ -162,3 +162,19 @@ fn flow_vocabulary_is_canonical_and_consistent() {
         }
     }
 }
+
+#[test]
+fn waiver_semantics_are_consistent_across_runtime_docs() {
+    // The High-tier "no waivers" vs Target/Decide auto-waiver resolution must
+    // appear in BOTH runtime entry docs (Claude/Codex SKILL.md and the Gemini
+    // context S5D.md). Otherwise an agent on one runtime hits the contradiction
+    // a behavioral probe surfaced (auto-waiver Target+Decide vs "No waivers
+    // allowed") while the other runtime does not.
+    for doc in ["skills/s5d/SKILL.md", "S5D.md"] {
+        let text = read_repo_file(doc);
+        assert!(
+            text.contains("assurance gates"),
+            "{doc} must carry the High-tier no-waivers vs auto-waiver resolution"
+        );
+    }
+}

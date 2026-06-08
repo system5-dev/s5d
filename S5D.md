@@ -181,7 +181,8 @@ Classify before touching tools. First match wins.
 
 **Mode:**
 - "Evaluate/compare" → `prepare` (analyze + target framing, stop for human)
-- "Implement X" with clear architecture → `execute` (auto-waiver Target+Decide)
+- "Implement X" with a confirmed decision record or stated existing architecture → `execute` (enters at Spec; records the Target+Decide auto-waiver)
+- Too vague to tell the domain count → run Discover / Domain-Capability mapping first, then classify
 - No signal → `prepare`
 
 Emit routing explicitly:
@@ -208,11 +209,11 @@ State what's anomalous. Define acceptance BEFORE options.
 
 **Challenge probes before `s5d_decide`:**
 - Lightweight: 1 probe — strongest counter-argument
-- Standard/High: 5 probes — counter-argument, tail failure, evidence weakness, weakest link, existing alternatives
+- Standard / High / Decision: 5 probes — counter-argument, tail failure, evidence weakness, weakest link, existing alternatives
 
 If a probe reveals a fatal flaw, stop — revisit hypotheses.
 
-**Human confirms (non-waivable).** WAL: `status=AWAITING_HUMAN`. If winner needs implementation, create linked feature spec first (`s5d new <id> --hypothesis-id <winner>`).
+**Human confirms (non-waivable).** WAL: `status=AWAITING_HUMAN`. If the winner needs implementation, create the linked feature spec **before** `s5d_decide` (`s5d new <id> --hypothesis-id <winner>`) — the winner must carry a `spec_ref` — then confirm.
 
 ---
 
@@ -260,3 +261,5 @@ WAIVER: <step> | Reason: <why> | Condition: <when required again> | Approved: <n
 ```
 Non-waivable: Decide human confirmation, Run approval.
 Route-to-Spec is an auto-waiver for Target and Decide. Record it explicitly.
+
+**High-tier "no waivers" ≠ the Target/Decide auto-waiver.** "No waivers" governs *assurance gates* (schema, graph, review, contract, privacy, human approval) — never waivable, any tier. The Target+Decide auto-waiver is *not* a gate waiver: it points at a **prior confirmed decision** (winner + `confirmed_by`), it does not skip one. A high-tier feature with no prior decision record cannot auto-waive Decide — frame it first.
