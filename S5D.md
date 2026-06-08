@@ -18,10 +18,10 @@ If a term doesn't serve one of these four, it doesn't belong. If an artifact isn
 The flow sequences these four:
 
 ```
-Route → Target → Decide → Spec → Run → Verify → Ship → Learn
+Route → Discover → Target → Decide → Spec → Run → Verify → Ship → Learn
 ```
 
-Applies only to work grounded in an existing repository. No codebase, no S5D.
+`Discover` runs once per project (or when the architecture map is stale); later tasks skip it. Applies only to work grounded in an existing repository. No codebase, no S5D.
 
 **Reference docs** (read when needed, not upfront):
 - [metamodel.md](metamodel.md) — artifact graph, DDD decomposition, validation rules
