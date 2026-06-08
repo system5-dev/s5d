@@ -28,6 +28,8 @@ pub struct RouteResult {
     pub mode: Option<RouteMode>,
     /// Entry step number (None if out of scope).
     pub entry_step: Option<u8>,
+    /// Entry stage name matching the skill flow (e.g. "Target", "Spec").
+    pub entry_stage: Option<&'static str>,
     /// Waiver text if any steps are auto-waived.
     pub waiver: Option<String>,
     /// Human-readable reason for the routing decision.
@@ -49,12 +51,8 @@ impl std::fmt::Display for RouteResult {
             .as_ref()
             .map(|m| m.to_string())
             .unwrap_or_default();
-        let step = self.entry_step.unwrap_or(0);
-        write!(
-            f,
-            "Route: tier={}, mode={}, entry=Step {}",
-            tier, mode, step
-        )?;
+        let stage = self.entry_stage.unwrap_or("Target");
+        write!(f, "Route: tier={}, mode={}, entry={}", tier, mode, stage)?;
         if let Some(waiver) = &self.waiver {
             write!(f, "\nWaiver: {}", waiver)?;
         }
@@ -157,6 +155,7 @@ pub fn route(description: &str) -> RouteResult {
                 tier: None,
                 mode: None,
                 entry_step: None,
+                entry_stage: None,
                 waiver: None,
                 reason: format!("matched out-of-scope signal: \"{}\"", signal),
             };
@@ -174,6 +173,7 @@ pub fn route(description: &str) -> RouteResult {
                     tier: None,
                     mode: None,
                     entry_step: None,
+                    entry_stage: None,
                     waiver: None,
                     reason: format!("small fix pattern: \"{}\"", signal),
                 };
@@ -206,9 +206,10 @@ pub fn route(description: &str) -> RouteResult {
         (_, RouteMode::Prepare) => (1, None),
         (_, RouteMode::Execute) => (
             3,
-            Some("WAIVER: Steps 1-2 | Reason: architecture decided | Approved: router".into()),
+            Some("WAIVER: Target+Decide | Reason: architecture decided | Approved: router".into()),
         ),
     };
+    let entry_stage = if entry_step == 3 { "Spec" } else { "Target" };
 
     // Build reason
     let tier_reason = match &tier {
@@ -228,6 +229,7 @@ pub fn route(description: &str) -> RouteResult {
         tier: Some(tier),
         mode: Some(mode),
         entry_step: Some(entry_step),
+        entry_stage: Some(entry_stage),
         waiver,
         reason: format!("{}; {}", tier_reason, mode_reason),
     }
@@ -322,7 +324,7 @@ mod tests {
         let s = r.to_string();
         assert!(s.contains("tier=standard"));
         assert!(s.contains("mode=execute"));
-        assert!(s.contains("Step 3"));
+        assert!(s.contains("entry=Spec"));
     }
 
     #[test]

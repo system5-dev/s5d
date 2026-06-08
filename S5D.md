@@ -191,6 +191,8 @@ Route: tier=standard, mode=prepare, entry=Target
 Reason: touches auth + payments, needs target-state framing
 ```
 
+Cross-check with `s5d_route` (deterministic keyword classifier) when unsure. On disagreement — especially non-English requests or "X and Y" multi-domain, where the classifier is weaker — trust your semantic read and note the divergence.
+
 `s5d_init` if no `.s5d/` directory. Proceed to entry point.
 
 ---
