@@ -38,7 +38,15 @@ fn main_loop(connection: &Connection) -> anyhow::Result<()> {
                 if connection.handle_shutdown(&req)? {
                     return Ok(());
                 }
-                // Slice 1 answers no other requests.
+                // Slice 1 advertises only diagnostics, but every JSON-RPC request
+                // still needs a response or the client hangs waiting on it. Reply
+                // MethodNotFound rather than dropping it.
+                let resp = lsp_server::Response::new_err(
+                    req.id,
+                    -32601, // JSON-RPC MethodNotFound
+                    format!("s5d lsp (slice 1) does not handle request: {}", req.method),
+                );
+                connection.sender.send(Message::Response(resp))?;
             }
             Message::Notification(note) => match note.method.as_str() {
                 "textDocument/didOpen" => {
@@ -95,6 +103,10 @@ pub fn diagnostics_for(text: &str) -> Vec<Diagnostic> {
                 .location()
                 .map(|loc| {
                     // serde_yaml line/column are 1-based; LSP positions are 0-based.
+                    // `character` here is a Unicode-scalar offset; LSP defaults to
+                    // UTF-16 code units — identical for ASCII/BMP YAML (the common
+                    // case for specs). Exact non-BMP ranges need position-encoding
+                    // negotiation, deferred past slice 1.
                     let line = loc.line().saturating_sub(1) as u32;
                     let col = loc.column().saturating_sub(1) as u32;
                     Range::new(Position::new(line, col), Position::new(line, col + 1))
