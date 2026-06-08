@@ -15,7 +15,7 @@ Control plane for changes in a repository with AI participation. Four things on 
 
 Flow: `Route → Discover → Target → Decide → Spec → Run → Verify → Ship → Learn`
 
-`Discover` runs once per project (or when the map is stale). Skip it on follow-up tasks that already have a current map.
+`Discover` runs once per project (or when the map is stale — treat it as stale if the domains/components you're about to touch are absent from `.s5d/discovery/architecture-map.md`). Skip it on follow-up tasks that already have a current map.
 
 Applies only to work grounded in an existing repository.
 
@@ -96,7 +96,9 @@ Out of scope (exit S5D): bugfix <30 LOC, config-only, docs-only, status query.
 
 **Tier:** choice/tradeoff/architecture → `decision` | feature, 1 domain, no auth/payment/security → `lightweight` | feature, 2+ domains → `standard` | auth/payment/security/PII/compliance → `high` | ambiguous → pick higher.
 
-**Mode:** "discovery" / "дискавери" / "onboard project" / "map the domains" → `discover` (go to Discover, not Target) | raw product intent / ticket / design → `prepare` | "evaluate/compare" → `prepare` | "implement X" with clear architecture → `execute` | no signal → `prepare`.
+**Mode:** "discovery" / "дискавери" / "onboard project" / "map the domains" → `discover` (go to Discover, not Target) | raw product intent / ticket / design → `prepare` | "evaluate/compare" → `prepare` | "implement X" with a confirmed decision record or stated existing architecture → `execute` (enters at Spec; records the Target+Decide auto-waiver) | no signal → `prepare`.
+
+Too vague to tell the domain count → run Discover / Domain-Capability mapping first, then classify. Don't force a tier on unreadable intent.
 
 Emit routing explicitly:
 ```
@@ -138,7 +140,7 @@ Triggers: explicit ("discovery", "дискавери проекта", "map the d
 
 State what's anomalous. Define acceptance BEFORE options.
 
-`s5d_new` (tier: decision) creates skeleton. For raw product intent, run Domain-Capability Design first: extract feature intent and use cases, discover current architecture, map impacted capabilities/entities/components/UX surfaces, then decide tier. Use the resulting map to populate the feature spec; do not jump from product text to code.
+`s5d_new` (tier: decision) creates skeleton. For raw product intent, run Domain-Capability Design first: extract feature intent and use cases, discover current architecture, map impacted capabilities/entities/components/UX surfaces, then decide tier. Use the resulting map to populate the feature spec; do not jump from product text to code. If `--product` is unknown, infer it from existing `.s5d/` specs or the repo manifest and label the assumption; ask only when it can't be inferred.
 
 ---
 
@@ -146,9 +148,9 @@ State what's anomalous. Define acceptance BEFORE options.
 
 ≥3 hypotheses, different in kind. Per hypothesis: predictions, decomposition, rigor rating, weakest-link analysis.
 
-Challenge probes before `s5d_decide`: Lightweight → 1 probe (strongest counter-argument). Standard/High → 5 probes (counter-argument, tail failure, evidence weakness, weakest link, existing alternatives). Fatal flaw from probe → revisit hypotheses.
+Challenge probes before `s5d_decide`: Lightweight → 1 probe (strongest counter-argument). Standard / High / Decision → 5 probes (counter-argument, tail failure, evidence weakness, weakest link, existing alternatives). Fatal flaw from probe → revisit hypotheses.
 
-Human confirms (non-waivable). WAL: `status=AWAITING_HUMAN`. If winner needs implementation, create linked feature spec first.
+Human confirms (non-waivable). WAL: `status=AWAITING_HUMAN`. If the winner needs implementation, create the linked feature spec **before** `s5d_decide` — the winner must carry a `spec_ref` — then confirm.
 
 ---
 
@@ -221,3 +223,5 @@ Only way to skip a step:
 WAIVER: <step> | Reason: <why> | Condition: <when required again> | Approved: <name>
 ```
 Non-waivable: Decide human confirmation, Run approval. Route-to-Spec is an auto-waiver for Target and Decide — record it explicitly.
+
+**High-tier "no waivers" ≠ the Target/Decide auto-waiver.** "No waivers" governs *assurance gates* (schema, graph, review, contract, privacy, human approval) — never waivable, any tier. The Target+Decide auto-waiver is *not* a gate waiver: it points at a **prior confirmed decision** (winner + `confirmed_by`), it does not skip one. A high-tier feature with no prior decision record cannot auto-waive Decide — frame it first.
