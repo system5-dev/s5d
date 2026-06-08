@@ -228,6 +228,8 @@ enum S5dCommand {
     /// Start stdio MCP server (for Claude Code integration)
     #[command(hide = true)]
     Mcp,
+    /// Start the LSP server over stdio (live diagnostics for .s5d.yaml specs)
+    Lsp,
     /// Register s5d MCP server for supported assistants.
     /// Default: project-level for Claude (.mcp.json). Use flags to target
     /// other assistants or --global to install at user level.
@@ -905,6 +907,7 @@ fn main() -> anyhow::Result<()> {
         S5dCommand::Search { query } => run_search(&query),
         S5dCommand::Reflect(args) => run_reflect_command(args),
         S5dCommand::Mcp => s5d::mcp::run_mcp_server(),
+        S5dCommand::Lsp => s5d::lsp::run(),
         S5dCommand::Install(args) => run_install_command(args),
         S5dCommand::Gate { command } => run_gate(command),
     }
