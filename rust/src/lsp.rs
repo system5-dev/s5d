@@ -81,10 +81,12 @@ fn publish(connection: &Connection, uri: lsp_types::Uri, text: &str) -> anyhow::
         diagnostics,
         version: None,
     };
-    connection.sender.send(Message::Notification(ServerNotification::new(
-        "textDocument/publishDiagnostics".to_string(),
-        params,
-    )))?;
+    connection
+        .sender
+        .send(Message::Notification(ServerNotification::new(
+            "textDocument/publishDiagnostics".to_string(),
+            params,
+        )))?;
     Ok(())
 }
 
@@ -115,8 +117,7 @@ pub fn diagnostics_for(text: &str) -> Vec<Diagnostic> {
             vec![diag(range, format!("parse error: {e}"))]
         }
         Ok(spec) => {
-            let first_line_len =
-                text.lines().next().map(|l| l.chars().count()).unwrap_or(0) as u32;
+            let first_line_len = text.lines().next().map(|l| l.chars().count()).unwrap_or(0) as u32;
             let range = Range::new(Position::new(0, 0), Position::new(0, first_line_len));
             crate::validate_spec(&spec)
                 .into_iter()

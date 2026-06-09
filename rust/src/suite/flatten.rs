@@ -39,14 +39,14 @@ pub fn flatten(json: &str, label: &str, min: Severity) -> anyhow::Result<String>
     }
 
     // Partial coverage must be visible on the human-readable path too.
-    let truncated = v.get("truncated").and_then(|t| t.as_bool()).unwrap_or(false);
+    let truncated = v
+        .get("truncated")
+        .and_then(|t| t.as_bool())
+        .unwrap_or(false);
 
     let items = normalize_items(&v);
 
-    let kept: Vec<_> = items
-        .into_iter()
-        .filter(|i| i.sev >= min)
-        .collect();
+    let kept: Vec<_> = items.into_iter().filter(|i| i.sev >= min).collect();
 
     // Sort descending by severity
     let mut kept = kept;
@@ -71,7 +71,11 @@ pub fn flatten(json: &str, label: &str, min: Severity) -> anyhow::Result<String>
     } else {
         for item in &kept {
             // "- **[SEV]** label" + optional path + " — detail" + optional fix
-            out.push_str(&format!("- **[{}]** {}", item.sev.to_string().to_uppercase(), item.label));
+            out.push_str(&format!(
+                "- **[{}]** {}",
+                item.sev.to_string().to_uppercase(),
+                item.label
+            ));
             if !item.path.is_empty() && item.path != "(repo)" {
                 out.push_str(&format!(" (`{}`)", item.path));
             }
@@ -189,7 +193,13 @@ fn normalize_items(v: &Value) -> Vec<Item> {
                         .and_then(|s| s.as_str())
                         .unwrap_or("")
                         .to_string();
-                    items.push(Item { sev, label, path, detail, fix: String::new() });
+                    items.push(Item {
+                        sev,
+                        label,
+                        path,
+                        detail,
+                        fix: String::new(),
+                    });
                 }
             }
         }
@@ -225,7 +235,11 @@ mod tests {
 
         let out = flatten(json, "test", Severity::Medium).unwrap();
         // header says 2
-        assert!(out.contains("2 anomaly(ies) >= medium"), "expected 2 kept: {}", out);
+        assert!(
+            out.contains("2 anomaly(ies) >= medium"),
+            "expected 2 kept: {}",
+            out
+        );
         // 2 bullet lines
         let bullets = out.lines().filter(|l| l.starts_with("- **[")).count();
         assert_eq!(bullets, 2, "expected 2 bullet lines: {}", out);
@@ -240,7 +254,11 @@ mod tests {
         ]}"#;
 
         let out = flatten(json, "test", Severity::High).unwrap();
-        assert!(out.contains("1 anomaly(ies) >= high"), "expected 1: {}", out);
+        assert!(
+            out.contains("1 anomaly(ies) >= high"),
+            "expected 1: {}",
+            out
+        );
         let bullets = out.lines().filter(|l| l.starts_with("- **[")).count();
         assert_eq!(bullets, 1);
     }
@@ -249,7 +267,11 @@ mod tests {
     fn empty_findings_shows_check_mark() {
         let json = r#"{"findings":[]}"#;
         let out = flatten(json, "test", Severity::Medium).unwrap();
-        assert!(out.contains("✓ none at/above medium"), "expected none: {}", out);
+        assert!(
+            out.contains("✓ none at/above medium"),
+            "expected none: {}",
+            out
+        );
     }
 
     #[test]
@@ -259,16 +281,28 @@ mod tests {
         ]}]}"#;
 
         let out = flatten(json, "sarif-test", Severity::High).unwrap();
-        assert!(out.contains("[HIGH]"), "SARIF error must map to HIGH: {}", out);
+        assert!(
+            out.contains("[HIGH]"),
+            "SARIF error must map to HIGH: {}",
+            out
+        );
     }
 
     #[test]
     fn stack_not_covered_survives_flatten() {
         let json = r#"{"status":"stack-not-covered","stacks":["rust"],"findings":[]}"#;
         let out = flatten(json, "ddd-refactor", Severity::Medium).unwrap();
-        assert!(out.contains("stack not covered"), "must carry verdict: {}", out);
+        assert!(
+            out.contains("stack not covered"),
+            "must carry verdict: {}",
+            out
+        );
         assert!(out.contains("NOT a clean verdict"), "must warn: {}", out);
-        assert!(!out.contains("anomaly(ies) >="), "must not render as count: {}", out);
+        assert!(
+            !out.contains("anomaly(ies) >="),
+            "must not render as count: {}",
+            out
+        );
     }
 
     #[test]
@@ -277,7 +311,11 @@ mod tests {
             {"ruleId":"r","level":"ERROR","locations":[{"physicalLocation":{"artifactLocation":{"uri":"x"}}}],"message":{"text":"m"}}
         ]}]}"#;
         let out = flatten(json, "s", Severity::High).unwrap();
-        assert!(out.contains("[HIGH]"), "uppercase SARIF level must map: {}", out);
+        assert!(
+            out.contains("[HIGH]"),
+            "uppercase SARIF level must map: {}",
+            out
+        );
     }
 
     #[test]
@@ -286,7 +324,11 @@ mod tests {
             {"check":"a","severity":"high","path":"x.ts","detail":"d","fix":"f"}
         ]}"#;
         let out = flatten(json, "t", Severity::Medium).unwrap();
-        assert!(out.contains("truncated at the file cap"), "must surface: {}", out);
+        assert!(
+            out.contains("truncated at the file cap"),
+            "must surface: {}",
+            out
+        );
     }
 
     #[test]

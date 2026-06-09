@@ -112,5 +112,10 @@ fn router_known_limitations() {
     // small-fix patterns, not the out-of-scope list, so a config change to an
     // AUTH timeout exits S5D even though it touches a security path. A human/LLM
     // should pull this back in when the auth surface is material.
-    assert_route("config change for the auth service timeout", false, None, None);
+    assert_route(
+        "config change for the auth service timeout",
+        false,
+        None,
+        None,
+    );
 }

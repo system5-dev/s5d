@@ -12,7 +12,9 @@ pub mod scaling;
 pub mod scan;
 
 /// Severity ordered ascending so `>=` comparisons work naturally.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize,
+)]
 #[serde(rename_all = "lowercase")]
 pub enum Severity {
     Info,
@@ -86,7 +88,12 @@ pub struct Summary {
 
 impl Summary {
     pub fn from_findings(findings: &[Finding]) -> Self {
-        let mut s = Self { high: 0, medium: 0, low: 0, total: findings.len() };
+        let mut s = Self {
+            high: 0,
+            medium: 0,
+            low: 0,
+            total: findings.len(),
+        };
         for f in findings {
             match f.severity {
                 Severity::High | Severity::Critical => s.high += 1,

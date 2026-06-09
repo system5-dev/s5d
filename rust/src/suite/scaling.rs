@@ -42,7 +42,10 @@ pub fn detect(root: &Path) -> Result<DetectReport> {
         stacks,
         truncated: scan.truncated,
         signals,
-        summary: DetectSummary { present, signals_total: total },
+        summary: DetectSummary {
+            present,
+            signals_total: total,
+        },
     })
 }
 
@@ -61,7 +64,12 @@ pub fn analyze(root: &Path) -> Result<AnalysisReport> {
             truncated: scan.truncated,
             status: CoverageStatus::StackNotCovered,
             findings: vec![],
-            summary: Summary { high: 0, medium: 0, low: 0, total: 0 },
+            summary: Summary {
+                high: 0,
+                medium: 0,
+                low: 0,
+                total: 0,
+            },
         });
     }
 
@@ -79,19 +87,38 @@ pub fn analyze(root: &Path) -> Result<AnalysisReport> {
             truncated: scan.truncated,
             status: CoverageStatus::StackNotCovered,
             findings: vec![],
-            summary: Summary { high: 0, medium: 0, low: 0, total: 0 },
+            summary: Summary {
+                high: 0,
+                medium: 0,
+                low: 0,
+                total: 0,
+            },
         });
     }
 
     let mut findings = Vec::new();
 
-    if let Some(f) = check_n_plus_1(&scan) { findings.push(f); }
-    if let Some(f) = check_unbounded_query(&scan) { findings.push(f); }
-    if let Some(f) = check_sync_heavy_in_request(&scan) { findings.push(f); }
-    if let Some(f) = check_missing_timeout(&scan) { findings.push(f); }
-    if let Some(f) = check_local_fs_write(&scan) { findings.push(f); }
-    if let Some(f) = check_no_cache_layer(&scan, scanned_files) { findings.push(f); }
-    if let Some(f) = check_serverless_conn_pool(&scan) { findings.push(f); }
+    if let Some(f) = check_n_plus_1(&scan) {
+        findings.push(f);
+    }
+    if let Some(f) = check_unbounded_query(&scan) {
+        findings.push(f);
+    }
+    if let Some(f) = check_sync_heavy_in_request(&scan) {
+        findings.push(f);
+    }
+    if let Some(f) = check_missing_timeout(&scan) {
+        findings.push(f);
+    }
+    if let Some(f) = check_local_fs_write(&scan) {
+        findings.push(f);
+    }
+    if let Some(f) = check_no_cache_layer(&scan, scanned_files) {
+        findings.push(f);
+    }
+    if let Some(f) = check_serverless_conn_pool(&scan) {
+        findings.push(f);
+    }
 
     let summary = Summary::from_findings(&findings);
 
@@ -113,9 +140,10 @@ fn detect_orm(scan: &RepoScan) -> DetectSignal {
 
     // prisma: schema file at any depth
     if scan.root.join("prisma/schema.prisma").exists()
-        || scan.files.iter().any(|p| {
-            p.file_name().and_then(|n| n.to_str()) == Some("schema.prisma")
-        })
+        || scan
+            .files
+            .iter()
+            .any(|p| p.file_name().and_then(|n| n.to_str()) == Some("schema.prisma"))
     {
         parts.push("prisma".to_string());
     }
@@ -136,13 +164,19 @@ fn detect_orm(scan: &RepoScan) -> DetectSignal {
     parts.sort();
     parts.dedup();
     let present = !parts.is_empty();
-    DetectSignal { id: "orm".to_string(), present, evidence: parts.join(",") }
+    DetectSignal {
+        id: "orm".to_string(),
+        present,
+        evidence: parts.join(","),
+    }
 }
 
 fn detect_db(scan: &RepoScan) -> DetectSignal {
     let orm_present = detect_orm(scan).present;
     let mut parts: Vec<String> = Vec::new();
-    if orm_present { parts.push("via-orm".to_string()); }
+    if orm_present {
+        parts.push("via-orm".to_string());
+    }
 
     // Check .env.example / package.json for connection strings
     let conn_re = Regex::new(r"(?i)DATABASE_URL|POSTGRES|MYSQL").unwrap();
@@ -159,44 +193,63 @@ fn detect_db(scan: &RepoScan) -> DetectSignal {
     parts.sort();
     parts.dedup();
     let present = !parts.is_empty();
-    DetectSignal { id: "db".to_string(), present, evidence: parts.join(",") }
+    DetectSignal {
+        id: "db".to_string(),
+        present,
+        evidence: parts.join(","),
+    }
 }
 
 fn detect_api(scan: &RepoScan) -> DetectSignal {
-    let api_route_count = scan.files.iter().filter(|p| {
-        let name = p.file_name().and_then(|n| n.to_str()).unwrap_or("");
-        (name == "route.ts" || name == "route.js") && p.to_string_lossy().contains("/api/")
-    }).count();
+    let api_route_count = scan
+        .files
+        .iter()
+        .filter(|p| {
+            let name = p.file_name().and_then(|n| n.to_str()).unwrap_or("");
+            (name == "route.ts" || name == "route.js") && p.to_string_lossy().contains("/api/")
+        })
+        .count();
 
     let re_go = Regex::new(r"http\.(HandleFunc|Handle)|chi\.|gin\.|echo\.").unwrap();
     let go_files: Vec<&std::path::Path> = scan.files_with_ext(&["go"]);
-    let go_count = go_files.iter().filter(|p| {
-        let full = scan.root.join(p);
-        std::fs::read_to_string(&full)
-            .map(|c| re_go.is_match(&c))
-            .unwrap_or(false)
-    }).count();
+    let go_count = go_files
+        .iter()
+        .filter(|p| {
+            let full = scan.root.join(p);
+            std::fs::read_to_string(&full)
+                .map(|c| re_go.is_match(&c))
+                .unwrap_or(false)
+        })
+        .count();
 
     let re_py = Regex::new(r"@(app|router)\.(get|post|put|delete)|@(app)\.route").unwrap();
     let py_files: Vec<&std::path::Path> = scan.files_with_ext(&["py"]);
-    let py_count = py_files.iter().filter(|p| {
-        let full = scan.root.join(p);
-        std::fs::read_to_string(&full)
-            .map(|c| re_py.is_match(&c))
-            .unwrap_or(false)
-    }).count();
+    let py_count = py_files
+        .iter()
+        .filter(|p| {
+            let full = scan.root.join(p);
+            std::fs::read_to_string(&full)
+                .map(|c| re_py.is_match(&c))
+                .unwrap_or(false)
+        })
+        .count();
 
     let total = api_route_count + go_count + py_count;
     let present = total > 0;
     DetectSignal {
         id: "api".to_string(),
         present,
-        evidence: if present { format!("{} handlers", total) } else { String::new() },
+        evidence: if present {
+            format!("{} handlers", total)
+        } else {
+            String::new()
+        },
     }
 }
 
 fn detect_cache(scan: &RepoScan) -> DetectSignal {
-    let re = Regex::new(r#"(?i)ioredis|"redis"|node-redis|go-redis|redis/go-redis|memcached"#).unwrap();
+    let re =
+        Regex::new(r#"(?i)ioredis|"redis"|node-redis|go-redis|redis/go-redis|memcached"#).unwrap();
     let mut parts: Vec<String> = Vec::new();
     for name in &["redis", "memcached", "go-redis"] {
         let r = Regex::new(&format!("(?i){}", name)).unwrap();
@@ -216,7 +269,11 @@ fn detect_cache(scan: &RepoScan) -> DetectSignal {
     DetectSignal {
         id: "cache".to_string(),
         present,
-        evidence: if present { parts.join(",") } else { "none-detected".to_string() },
+        evidence: if present {
+            parts.join(",")
+        } else {
+            "none-detected".to_string()
+        },
     }
 }
 
@@ -246,7 +303,11 @@ fn detect_queue(scan: &RepoScan) -> DetectSignal {
     DetectSignal {
         id: "queue".to_string(),
         present,
-        evidence: if present { parts.join(",") } else { "none-detected".to_string() },
+        evidence: if present {
+            parts.join(",")
+        } else {
+            "none-detected".to_string()
+        },
     }
 }
 
@@ -265,12 +326,20 @@ fn detect_realtime(scan: &RepoScan) -> DetectSignal {
 
     let present = has_dep || has_sse;
     let mut parts = Vec::new();
-    if has_dep { parts.push("ws"); }
-    if has_sse { parts.push("sse"); }
+    if has_dep {
+        parts.push("ws");
+    }
+    if has_sse {
+        parts.push("sse");
+    }
     DetectSignal {
         id: "realtime".to_string(),
         present,
-        evidence: if present { parts.join(",") } else { String::new() },
+        evidence: if present {
+            parts.join(",")
+        } else {
+            String::new()
+        },
     }
 }
 
@@ -305,7 +374,11 @@ fn detect_runtime(scan: &RepoScan) -> DetectSignal {
     parts.sort();
     parts.dedup();
     let present = !parts.is_empty();
-    DetectSignal { id: "runtime".to_string(), present, evidence: parts.join(",") }
+    DetectSignal {
+        id: "runtime".to_string(),
+        present,
+        evidence: parts.join(","),
+    }
 }
 
 fn detect_heavy_libs(scan: &RepoScan) -> DetectSignal {
@@ -322,7 +395,11 @@ fn detect_heavy_libs(scan: &RepoScan) -> DetectSignal {
         }
     }
     let present = !parts.is_empty();
-    DetectSignal { id: "heavy-libs".to_string(), present, evidence: parts.join(",") }
+    DetectSignal {
+        id: "heavy-libs".to_string(),
+        present,
+        evidence: parts.join(","),
+    }
 }
 
 // ── analyze helpers ───────────────────────────────────────────────────────────
@@ -346,17 +423,25 @@ fn api_ts_js_files(scan: &RepoScan) -> Vec<&Path> {
 }
 
 fn check_n_plus_1(scan: &RepoScan) -> Option<Finding> {
-    let re = Regex::new(
-        r"\.map\([^)]*await (prisma|db)\.|for *\([^)]*\) *\{[^}]*await (prisma|db)\.",
-    )
-    .unwrap();
+    let re =
+        Regex::new(r"\.map\([^)]*await (prisma|db)\.|for *\([^)]*\) *\{[^}]*await (prisma|db)\.")
+            .unwrap();
     let ts_js: Vec<&Path> = scan.files_with_ext(&["ts", "tsx", "js", "jsx"]);
     let hits = scan.grep_files(&ts_js, &re);
-    if hits.is_empty() { return None; }
+    if hits.is_empty() {
+        return None;
+    }
 
     let mut hit_files: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
-    for h in &hits { hit_files.insert(h.path.to_string_lossy().to_string()); }
-    let sample = hit_files.iter().take(3).cloned().collect::<Vec<_>>().join(", ");
+    for h in &hits {
+        hit_files.insert(h.path.to_string_lossy().to_string());
+    }
+    let sample = hit_files
+        .iter()
+        .take(3)
+        .cloned()
+        .collect::<Vec<_>>()
+        .join(", ");
 
     Some(Finding {
         check: "n-plus-1".to_string(),
@@ -396,11 +481,20 @@ fn check_unbounded_query(scan: &RepoScan) -> Option<Finding> {
         }
     }
 
-    if hit_lines.is_empty() { return None; }
+    if hit_lines.is_empty() {
+        return None;
+    }
 
     let mut hit_files: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
-    for (f, _, _) in &hit_lines { hit_files.insert(f.clone()); }
-    let sample = hit_files.iter().take(3).cloned().collect::<Vec<_>>().join(", ");
+    for (f, _, _) in &hit_lines {
+        hit_files.insert(f.clone());
+    }
+    let sample = hit_files
+        .iter()
+        .take(3)
+        .cloned()
+        .collect::<Vec<_>>()
+        .join(", ");
 
     Some(Finding {
         check: "unbounded-query".to_string(),
@@ -423,11 +517,20 @@ fn check_sync_heavy_in_request(scan: &RepoScan) -> Option<Finding> {
     let re = Regex::new(r"puppeteer|generatePdf|pdfkit|sharp\(|setContent\(").unwrap();
     let api_files = api_ts_js_files(scan);
     let hits = scan.grep_files(&api_files, &re);
-    if hits.is_empty() { return None; }
+    if hits.is_empty() {
+        return None;
+    }
 
     let mut hit_files: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
-    for h in &hits { hit_files.insert(h.path.to_string_lossy().to_string()); }
-    let sample = hit_files.iter().take(3).cloned().collect::<Vec<_>>().join(", ");
+    for h in &hits {
+        hit_files.insert(h.path.to_string_lossy().to_string());
+    }
+    let sample = hit_files
+        .iter()
+        .take(3)
+        .cloned()
+        .collect::<Vec<_>>()
+        .join(", ");
 
     Some(Finding {
         check: "sync-heavy-in-request".to_string(),
@@ -440,9 +543,10 @@ ties up the request, no backpressure, serverless timeout risk",
         ),
         fix: "Move to a background job/queue; return 202 + a status URL; render off the hot path"
             .to_string(),
-        validate: "Load-test the endpoint at concurrency C: request p95 drops to the enqueue time; \
+        validate:
+            "Load-test the endpoint at concurrency C: request p95 drops to the enqueue time; \
 queue depth is observable; a failed job retries without losing the request."
-            .to_string(),
+                .to_string(),
         dimension: Some("api".to_string()),
     })
 }
@@ -467,11 +571,20 @@ fn check_missing_timeout(scan: &RepoScan) -> Option<Finding> {
         }
     }
 
-    if hit_lines.is_empty() { return None; }
+    if hit_lines.is_empty() {
+        return None;
+    }
 
     let mut hit_files: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
-    for (f, _) in &hit_lines { hit_files.insert(f.clone()); }
-    let sample = hit_files.iter().take(3).cloned().collect::<Vec<_>>().join(", ");
+    for (f, _) in &hit_lines {
+        hit_files.insert(f.clone());
+    }
+    let sample = hit_files
+        .iter()
+        .take(3)
+        .cloned()
+        .collect::<Vec<_>>()
+        .join(", ");
 
     Some(Finding {
         check: "missing-timeout".to_string(),
@@ -517,11 +630,20 @@ fn check_local_fs_write(scan: &RepoScan) -> Option<Finding> {
         .collect();
 
     let hits = scan.grep_files(&target_files, &re);
-    if hits.is_empty() { return None; }
+    if hits.is_empty() {
+        return None;
+    }
 
     let mut hit_files: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
-    for h in &hits { hit_files.insert(h.path.to_string_lossy().to_string()); }
-    let sample = hit_files.iter().take(3).cloned().collect::<Vec<_>>().join(", ");
+    for h in &hits {
+        hit_files.insert(h.path.to_string_lossy().to_string());
+    }
+    let sample = hit_files
+        .iter()
+        .take(3)
+        .cloned()
+        .collect::<Vec<_>>()
+        .join(", ");
 
     Some(Finding {
         check: "local-fs-write".to_string(),
@@ -544,8 +666,7 @@ retrievable via instance B; redeploy mid-flight loses nothing."
 
 fn check_no_cache_layer(scan: &RepoScan, scanned_files: usize) -> Option<Finding> {
     let _ = scanned_files;
-    let re_cache =
-        Regex::new(r#"(?i)ioredis|"redis"|node-redis|go-redis|redis/go-redis"#).unwrap();
+    let re_cache = Regex::new(r#"(?i)ioredis|"redis"|node-redis|go-redis|redis/go-redis"#).unwrap();
     if scan.dep_seen(&re_cache) {
         return None;
     }
@@ -565,12 +686,15 @@ fn check_no_cache_layer(scan: &RepoScan, scanned_files: usize) -> Option<Finding
         .map(|p| p.as_path())
         .collect();
 
-    let handler_count = ts_js_api.iter().filter(|p| {
-        let full = scan.root.join(p);
-        std::fs::read_to_string(&full)
-            .map(|c| re_handler.is_match(&c))
-            .unwrap_or(false)
-    }).count();
+    let handler_count = ts_js_api
+        .iter()
+        .filter(|p| {
+            let full = scan.root.join(p);
+            std::fs::read_to_string(&full)
+                .map(|c| re_handler.is_match(&c))
+                .unwrap_or(false)
+        })
+        .count();
 
     if handler_count <= 20 {
         return None;
@@ -585,8 +709,7 @@ fn check_no_cache_layer(scan: &RepoScan, scanned_files: usize) -> Option<Finding
 every read hits the DB; repeated reads aren't memoized",
             handler_count
         ),
-        fix: "Add Redis (or equivalent) for hot reads; set TTLs per data volatility"
-            .to_string(),
+        fix: "Add Redis (or equivalent) for hot reads; set TTLs per data volatility".to_string(),
         validate: "Measure DB QPS before/after under load: origin QPS drops, \
 cache hit ratio >70% on hot keys, p95 improves; cache-miss path still correct."
             .to_string(),
@@ -666,8 +789,16 @@ mod tests {
     fn ts_fixture_unbounded_query_fired() {
         let dir = tempfile::tempdir().unwrap();
         let root = dir.path();
-        write(root, "package.json", r#"{"dependencies":{"@prisma/client":"*"}}"#);
-        write(root, "prisma/schema.prisma", "model User {}\nmodel Post {}\n");
+        write(
+            root,
+            "package.json",
+            r#"{"dependencies":{"@prisma/client":"*"}}"#,
+        );
+        write(
+            root,
+            "prisma/schema.prisma",
+            "model User {}\nmodel Post {}\n",
+        );
         write(
             root,
             "app/api/things/route.ts",
@@ -687,7 +818,11 @@ mod tests {
     fn rust_fixture_stack_not_covered() {
         let dir = tempfile::tempdir().unwrap();
         let root = dir.path();
-        write(root, "Cargo.toml", "[package]\nname = \"foo\"\nversion = \"0.1.0\"\n");
+        write(
+            root,
+            "Cargo.toml",
+            "[package]\nname = \"foo\"\nversion = \"0.1.0\"\n",
+        );
         write(root, "src/main.rs", "fn main() {}\n");
 
         let report = analyze(root).unwrap();
