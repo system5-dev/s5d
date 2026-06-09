@@ -1,0 +1,115 @@
+s5d: '1.0'
+id: decision.s5d-routing-philosophy
+version: 1.0.0
+product: s5d
+tier: decision
+allow_update: true
+meta:
+  title: s5d-routing-philosophy
+  authors: []
+  date: 2026-06-09
+  tickets: []
+  adrs: []
+  renames: []
+context: null
+workflow: null
+artifacts: null
+links: null
+contracts: []
+gates:
+- kind: review
+roc: null
+problem:
+  signal: How should S5D classify a request into tier/mode — LLM-semantic reading, the deterministic keyword router, or a hybrid?
+  constraints: []
+  targets: []
+  indicators: []
+  goodhart_guard: null
+  acceptance: The chosen approach must not regress non-English or "X and Y" multi-domain routing that the LLM currently handles correctly, and must keep a deterministic cross-check available.
+  blast_radius: null
+  reversibility: null
+  status: backlog
+hypotheses:
+- id: llm-primary-with-deterministic-cross-check
+  title: LLM-primary with deterministic cross-check
+  content: The agent reads the request semantically and routes (primary); s5d_route, the keyword classifier, runs as a cross-check. On disagreement — especially non-English or "X and Y" multi-domain — the agent trusts its semantic read and notes the divergence. Router output format (entry_stage) is aligned so the check is comparable.
+  scope: S5D Route stage — tier+mode classification
+  kind: system
+  layer: L1
+  r_eff: null
+  evidence:
+  - id: 20260609-internal-llm-primary-with-deterministic-cross-check
+    type: internal
+    content: 'Verified cross-check this session: agentic probe P4 routed the Russian request "добавить корзину покупок и оформление заказа" to high/prepare (checkout→payment), while the deterministic s5d_route returned lightweight/prepare (English-keyword-only). The 15-prompt router battery confirmed the same blind spot for "X and Y" multi-domain and for "config change for auth" (out-of-scope beats high). LLM-primary keeps the correct semantic routing; the blind spots are pinned in rust/tests/routing_behavior.rs::router_known_limitations and bounded by the SKILL.md cross-check note.'
+    verdict: pass
+    valid_until: 2026-09-07T10:09:47.471770+00:00
+    carrier_ref: null
+    formality: 3
+    claim_scope:
+    - routing-accuracy
+    - non-english
+    - multi-domain
+    congruence_level: null
+    reliability: 0.85
+    refine_kind: null
+  depends_on: []
+  rationale: null
+  spec_ref: feat.s5d.routing-cross-check__20260609.s5d.yaml
+  prompt: How should S5D classify a request into tier/mode?
+  next_move: build
+- id: improve-the-deterministic-router-then-lean-on-it
+  title: Improve the deterministic router, then lean on it
+  content: Extend router.rs with multilingual keywords, "X and Y" conjunction detection, and richer signals; then make s5d_route the source of truth the skill defers to. Determinism and reproducibility, at the cost of carrying a growing keyword/NLP surface in Rust.
+  scope: S5D Route stage — tier+mode classification
+  kind: system
+  layer: invalid
+  r_eff: null
+  evidence:
+  - id: 20260609-internal-improve-the-deterministic-router-then-lean-on-it
+    type: internal
+    content: Viable but deferred. Improving the router means carrying a multilingual + "X and Y" conjunction + semantic keyword surface in Rust, which drifts and needs maintenance. Under current evidence the LLM already routes these cases correctly (see h1 probe P4 + battery), so the maintenance cost is not justified now. Loses to h1 on cost/benefit; remains the documented fallback to promote if s5d_route ever becomes an authoritative consumer.
+    verdict: fail
+    valid_until: 2026-09-07T10:11:14.007393+00:00
+    carrier_ref: null
+    formality: 3
+    claim_scope:
+    - cost-benefit
+    - maintenance
+    congruence_level: null
+    reliability: 0.7
+    refine_kind: null
+  depends_on: []
+  rationale: null
+  spec_ref: null
+  prompt: How should S5D classify a request into tier/mode?
+  next_move: probe
+- id: full-extraction-skill-calls-s5d-route-only
+  title: Full extraction — skill calls s5d_route only
+  content: Remove prose routing from the skill; the agent always calls s5d_route and obeys it. One deterministic source, no LLM routing. Simplest contract, but inherits every keyword-classifier blind spot directly.
+  scope: S5D Route stage — tier+mode classification
+  kind: system
+  layer: invalid
+  r_eff: null
+  evidence:
+  - id: 20260609-internal-full-extraction-skill-calls-s5d-route-only
+    type: internal
+    content: Full extraction would force the skill to defer to s5d_route, which the battery proves returns lightweight for non-English and for "X and Y" multi-domain — a direct regression versus the LLM's correct semantic routing observed in the probes. Refutes full-extraction as the choice without first improving the router.
+    verdict: fail
+    valid_until: 2026-09-07T10:09:48.883554+00:00
+    carrier_ref: null
+    formality: 3
+    claim_scope:
+    - non-english
+    - regression-risk
+    congruence_level: null
+    reliability: 0.8
+    refine_kind: null
+  depends_on: []
+  rationale: null
+  spec_ref: null
+  prompt: How should S5D classify a request into tier/mode?
+  next_move: defer
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false
