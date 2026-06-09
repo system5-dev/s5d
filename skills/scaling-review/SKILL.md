@@ -1,13 +1,13 @@
 ---
 name: scaling-review
-description: "Review a repo's scalability & performance posture — stack-agnostic. Detects scaling dimensions (ORM/DB, API handlers, cache, queues, realtime, runtime, heavy libs) and reports anti-patterns: N+1 queries, unbounded findMany, heavy/sync work in the request path, missing outbound timeouts, local-fs writes that break statelessness, no cache layer, serverless connection-pool exhaustion. Every finding pairs a FIX with a VALIDATION method (load test / EXPLAIN / query log) to prove the fix holds. Read-only. Use for: 'scaling review', 'performance audit', 'will this scale', 'N+1 check', 'load readiness', 'аудит масштабируемости', 'выдержит ли нагрузку'."
-argument-hint: "[--save | --output PATH]"
+description: "Review a repo's scalability & performance posture. Detects scaling dimensions (ORM/DB, API handlers, cache, queues, realtime, runtime, heavy libs) and reports anti-patterns: N+1 queries, unbounded findMany, heavy/sync work in the request path, missing outbound timeouts, local-fs writes that break statelessness, no cache layer, serverless connection-pool exhaustion. Every finding pairs a FIX with a VALIDATION method (load test / EXPLAIN / query log) to prove the fix holds. Compiled analyzer (s5d binary), read-only, reports scanned-file counts and stack coverage honestly. Use for: 'scaling review', 'performance audit', 'will this scale', 'N+1 check', 'load readiness', 'аудит масштабируемости', 'выдержит ли нагрузку'."
+argument-hint: "[--root PATH]"
 ---
 
 # scaling-review
 
 Scalability & performance **posture** analyzer. Cluster pattern: `detect → analyze →
-report`. Read-only — it reads code for scaling anti-patterns, it changes nothing.
+flatten`. Read-only — it reads code for scaling anti-patterns, it changes nothing.
 
 **The differentiator — change + validation.** Every finding carries two fields: a
 `fix` (the change to make) and a `validate` (how to *prove* the fix actually holds
@@ -28,6 +28,11 @@ never emits one.
 | runtime | serverless vs long-running; local-fs writes that break statelessness |
 | heavy-libs | puppeteer/sharp/pdf that should run as jobs |
 
+Anti-pattern checks currently cover **TypeScript/JavaScript** codebases (dimension
+detection is partially polyglot — Go/Python handlers are counted). On other stacks
+the analyzer reports `stack-not-covered` explicitly — that is a coverage gap
+statement, never a clean verdict.
+
 ## Severity model
 
 `high` = breaks under real load or data growth (N+1, unbounded query, conn-pool
@@ -39,18 +44,20 @@ against expected load.
 ## Flow
 
 ```
-1. scripts/detect.sh   → JSON: which of 8 scaling dimensions apply + evidence
-2. scripts/analyze.sh  → JSON: findings [{dimension,kind,severity,path,detail,fix,validate}]
-3. scripts/report.sh   → markdown (stdout, or --save → test-reports/scaling/report.md)
+1. s5d skill scaling detect            → JSON: which of 8 scaling dimensions apply + evidence
+2. s5d skill scaling analyze           → JSON: findings [{dimension,kind,severity,path,detail,fix,validate}] + scanned_files + stacks + status
+3. s5d skill scaling analyze --flatten → anomalies-only markdown at a severity floor (default medium)
 ```
+
+The analyzer is compiled into the `s5d` binary — no shell/jq/python dependencies.
 
 ## Determinism boundary
 
-| Step | In script | In agent |
+| Step | Compiled (`s5d skill scaling`) | In agent |
 |---|---|---|
-| Dimension detection (orm/cache/queue/runtime) | ✓ `detect.sh` | — |
-| Anti-pattern findings + severity + fix + validate | ✓ `analyze.sh` | — |
-| Markdown rendering | ✓ `report.sh` | — |
+| Dimension detection (orm/cache/queue/runtime) | ✓ `detect` | — |
+| Anti-pattern findings + severity + fix + validate | ✓ `analyze` | — |
+| Anomaly distillation at a severity floor | ✓ `analyze --flatten` | — |
 | Confirming a heuristic lead is a real bottleneck | — | ✓ (run the `validate` method) |
 | Deciding the load target the fix must meet | — | ✓ |
 | Writing the load test / benchmark itself | — | ✓ |
@@ -59,11 +66,12 @@ against expected load.
 
 - **Every finding ships a `validate`.** No fix is emitted without a concrete way to
   prove it holds under scale. This is the skill's contract.
-- **Heuristic, not runtime truth.** Findings are grep-based `[INFERRED]` leads.
+- **Heuristic, not runtime truth.** Findings are pattern-scan `[INFERRED]` leads.
   Confirm each via its validation method before treating it as real — do not report
   a heuristic hit as `[OBSERVED]`.
-- **Read-only.** No source is modified. `report.sh --save` writes only to
-  `test-reports/scaling/`.
+- **`stack-not-covered` ≠ clean.** A report with zero scanned files is a coverage gap,
+  not an endorsement — say so explicitly.
+- **Read-only.** The analyzer never modifies the assessed repo.
 - **No gate.** scaling-review informs; it does not fail builds. Load expectations are the team's call.
 - **Stay in lane.** Security of these paths → `security-scan`; deploy/topology → `infra-scan`. A slow query is ours; a SQL-injection in it is not.
 
@@ -72,16 +80,18 @@ against expected load.
 ```
 ~/.agents/skills/scaling-review/
 ├── SKILL.md
-├── scripts/{detect.sh, analyze.sh, report.sh}   # read-only, JSON / markdown
-└── references/catalog.md                          # SoTA load/profiling tooling + last_verified
+├── agents/scaling-review-assess.md   # isolated assess agent (calls the s5d binary)
+└── references/catalog.md             # SoTA load/profiling tooling + last_verified
 ```
+
+Deterministic logic lives in the `s5d` binary (`rust/src/suite/scaling.rs`), not in scripts.
 
 ## Worked example
 
 ```bash
-bash ~/.agents/skills/scaling-review/scripts/detect.sh      # which dimensions apply
-bash ~/.agents/skills/scaling-review/scripts/analyze.sh     # findings JSON (fix + validate per item)
-bash ~/.agents/skills/scaling-review/scripts/report.sh --save   # → test-reports/scaling/report.md
+s5d skill scaling detect                 # which dimensions apply
+s5d skill scaling analyze                # findings JSON (fix + validate per item)
+s5d skill scaling analyze --flatten      # anomalies-only markdown (floor: medium)
 ```
 
 ## When NOT to use
