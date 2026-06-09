@@ -130,7 +130,7 @@ Run `s5d_init` if no `.s5d/` directory.
 
 Every claim carries a tag: `[VERIFIED]` (read from code/docs/tool), `[INFERRED]` (deduced from verified), `[SPECULATIVE]` (plausible, unconfirmed). Untagged = error.
 
-After writing both files, run `s5d discover sync` to rebuild the technical index (`.s5d/discovery/index.*`) so file-level evidence is linked. The two outputs are complementary: source-survey/architecture-map are agent-authored maps; `discover sync` is the deterministic file index.
+After writing both files, run `s5d discover sync` (or `s5d_discover_sync` over MCP) to rebuild the technical index (`.s5d/discovery/index.*`) so file-level evidence is linked. The two outputs are complementary: source-survey/architecture-map are agent-authored maps; `discover sync` is the deterministic file index.
 
 Do **not** produce a free-form prose summary in place of these tables. Narrative sections are allowed only as a header before each table or as a closing "Recommended S5D entry points" list.
 
