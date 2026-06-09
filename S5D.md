@@ -81,9 +81,9 @@ Every active spec has two mutable surfaces:
 | Add evidence | `s5d_add_evidence` | `s5d decision add-evidence` | Decision tier only. `formality` 1–5 on command surface. Legacy alias: `s5d add-evidence`. |
 | Validate | `s5d_validate` | `s5d verify validate` | Read-only. Must pass before preview. Legacy alias: `s5d validate`. |
 | Graph check | `s5d_graph_check` | `s5d verify graph-check` | Cycles/layering errors block preview. Legacy alias: `s5d graph-check`. |
-| Architecture check | — | `s5d verify check <spec>` | Read-only. Validates component paths and declared source dependencies for specs with architecture ownership. Legacy alias: `s5d check`. |
-| Codebase coverage | — | `s5d codebase sync` / `s5d codebase check` | Maintains `.s5d/codebase/*` from source files and component paths. Pre-commit checks it when the snapshot exists. |
-| Discovery graph | — | `s5d discover sync` / `s5d discover check` | Maintains `.s5d/discovery/*`: stack-agnostic file index, evidence JSONL, graph JSON, and metamodel projection. |
+| Architecture check | `s5d_check` | `s5d verify check <spec>` | Read-only. Validates component paths and declared source dependencies for specs with architecture ownership. Legacy alias: `s5d check`. |
+| Codebase coverage | `s5d_codebase_sync` / `s5d_codebase_check` | `s5d codebase sync` / `s5d codebase check` | Maintains `.s5d/codebase/*` from source files and component paths. Pre-commit checks it when the snapshot exists. |
+| Discovery graph | `s5d_discover_sync` / `s5d_discover_check` | `s5d discover sync` / `s5d discover check` | Maintains `.s5d/discovery/*`: stack-agnostic file index, evidence JSONL, graph JSON, and metamodel projection. |
 | Preview | `s5d_preview` | `s5d state preview` | Records `previewed_spec_sha256`. Stale after spec change. Legacy alias: `s5d preview`. |
 | Approve | `s5d_approve` | `s5d state approve --reviewer <name>` | Must be `previewed`. Binds `spec_sha256` + `diff_sha256`. Legacy alias: `s5d approve`. |
 | Run gates | `s5d_run_gates` | `s5d verify run-gates` | Runs effective gates. Failed gate blocks import. Legacy alias: `s5d run-gates`. |

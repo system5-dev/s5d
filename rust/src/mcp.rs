@@ -396,6 +396,31 @@ fn core_tools() -> Vec<Value> {
                 }
             }
         }),
+        json!({
+            "name": "s5d_codebase_sync",
+            "description": "Rebuild the .s5d/codebase coverage snapshot from source files and component paths",
+            "inputSchema": {"type": "object", "properties": {}}
+        }),
+        json!({
+            "name": "s5d_codebase_check",
+            "description": "Check whether the .s5d/codebase coverage snapshot is current (fails if stale)",
+            "inputSchema": {"type": "object", "properties": {}}
+        }),
+        json!({
+            "name": "s5d_discover_sync",
+            "description": "Rebuild .s5d/discovery — file index, evidence, graph, and metamodel projection",
+            "inputSchema": {"type": "object", "properties": {"path": {"type": "string", "description": "Target path to scan (defaults to project root)"}}}
+        }),
+        json!({
+            "name": "s5d_discover_check",
+            "description": "Check whether the .s5d/discovery snapshot is current (fails if stale)",
+            "inputSchema": {"type": "object", "properties": {"path": {"type": "string", "description": "Target path to scan (defaults to project root)"}}}
+        }),
+        json!({
+            "name": "s5d_check",
+            "description": "Architecture check — validate component paths and declared cross-domain source dependencies",
+            "inputSchema": {"type": "object", "required": ["spec"], "properties": {"spec": {"type": "string", "description": "Path to .s5d.yaml file"}}}
+        }),
     ]
 }
 
@@ -429,6 +454,11 @@ fn handle_tools_call(params: &Value) -> anyhow::Result<Value> {
         "s5d_drift_check" => tool_s5d_drift_check(args)?,
         "s5d_reconcile" => tool_s5d_reconcile(args)?,
         "s5d_note" => tool_s5d_note(args)?,
+        "s5d_codebase_sync" => tool_s5d_codebase_sync(args)?,
+        "s5d_codebase_check" => tool_s5d_codebase_check(args)?,
+        "s5d_discover_sync" => tool_s5d_discover_sync(args)?,
+        "s5d_discover_check" => tool_s5d_discover_check(args)?,
+        "s5d_check" => tool_s5d_check(args)?,
         _ => {
             return Ok(
                 json!({"content":[{"type":"text","text":format!("Error: unknown tool '{}'", name)}],"isError":true}),
@@ -437,6 +467,110 @@ fn handle_tools_call(params: &Value) -> anyhow::Result<Value> {
     };
 
     Ok(json!({"content":[{"type":"text","text":text}]}))
+}
+
+// ── Codebase / discovery / architecture (MCP parity with the CLI) ─────────────
+
+fn tool_s5d_codebase_sync(_args: &Value) -> anyhow::Result<String> {
+    let cwd = std::env::current_dir()?;
+    let project =
+        crate::S5dProject::find(&cwd).ok_or_else(|| anyhow::anyhow!("no .s5d/ found"))?;
+    let snapshot = crate::build_codebase_snapshot(&project)?;
+    crate::write_codebase_snapshot(&project, &snapshot)?;
+    let c = &snapshot.coverage;
+    Ok(format!(
+        ".s5d/codebase rebuilt ({} module(s): {} governed, {} partial, {} blind)",
+        c.total_modules, c.governed, c.partial, c.blind
+    ))
+}
+
+fn tool_s5d_codebase_check(_args: &Value) -> anyhow::Result<String> {
+    let cwd = std::env::current_dir()?;
+    let project =
+        crate::S5dProject::find(&cwd).ok_or_else(|| anyhow::anyhow!("no .s5d/ found"))?;
+    let expected = crate::build_codebase_snapshot(&project)?;
+    let Some(actual) = crate::load_codebase_snapshot(&project)? else {
+        anyhow::bail!(".s5d/codebase snapshot missing — run s5d_codebase_sync");
+    };
+    if actual == expected {
+        let c = &expected.coverage;
+        Ok(format!(
+            ".s5d/codebase is current ({} module(s): {} governed, {} partial, {} blind)",
+            c.total_modules, c.governed, c.partial, c.blind
+        ))
+    } else {
+        anyhow::bail!(".s5d/codebase is stale — run s5d_codebase_sync");
+    }
+}
+
+fn tool_s5d_discover_sync(args: &Value) -> anyhow::Result<String> {
+    let cwd = std::env::current_dir()?;
+    let project =
+        crate::S5dProject::find(&cwd).ok_or_else(|| anyhow::anyhow!("no .s5d/ found"))?;
+    let target = args["path"]
+        .as_str()
+        .map(std::path::PathBuf::from)
+        .unwrap_or_else(|| project.root.clone());
+    let out = project.root.join(".s5d/discovery");
+    let snapshot = crate::build_discovery_snapshot(&project, &target)?;
+    crate::write_discovery_snapshot(&project, &out, &snapshot)?;
+    let m = &snapshot.manifest;
+    Ok(format!(
+        ".s5d/discovery rebuilt ({} file(s), {} node(s), {} edge(s), {} evidence item(s))",
+        m.files, m.nodes, m.edges, m.evidence
+    ))
+}
+
+fn tool_s5d_discover_check(args: &Value) -> anyhow::Result<String> {
+    let cwd = std::env::current_dir()?;
+    let project =
+        crate::S5dProject::find(&cwd).ok_or_else(|| anyhow::anyhow!("no .s5d/ found"))?;
+    let target = args["path"]
+        .as_str()
+        .map(std::path::PathBuf::from)
+        .unwrap_or_else(|| project.root.clone());
+    let out_dir = project.root.join(".s5d/discovery");
+    let expected = crate::build_discovery_snapshot(&project, &target)?;
+    let Some(actual) = crate::read_discovery_snapshot(&out_dir)? else {
+        anyhow::bail!(".s5d/discovery snapshot missing — run s5d_discover_sync");
+    };
+    if actual == expected {
+        let m = &expected.manifest;
+        Ok(format!(
+            ".s5d/discovery is current ({} file(s), {} node(s), {} edge(s))",
+            m.files, m.nodes, m.edges
+        ))
+    } else {
+        anyhow::bail!(".s5d/discovery is stale — run s5d_discover_sync");
+    }
+}
+
+fn tool_s5d_check(args: &Value) -> anyhow::Result<String> {
+    let spec_arg = args["spec"]
+        .as_str()
+        .ok_or_else(|| anyhow::anyhow!("missing required argument: spec"))?;
+    let (project, _path, spec, _filename) = load_spec_context_mcp(spec_arg)?;
+    let report = crate::architecture_check(&spec, &project.root)?;
+    let mut out = format!(
+        "Architecture check: {}\n  components: {}  dependencies: {}  warnings: {}  errors: {}",
+        spec.id,
+        report.components.len(),
+        report.dependencies.len(),
+        report.warnings.len(),
+        report.errors.len()
+    );
+    for w in &report.warnings {
+        out.push_str(&format!("\n  warn: {w}"));
+    }
+    for e in &report.errors {
+        out.push_str(&format!("\n  error: {e}"));
+    }
+    if report.errors.is_empty() {
+        out.push_str("\n  ok: architecture ok");
+        Ok(out)
+    } else {
+        anyhow::bail!("{out}");
+    }
 }
 
 // ── S5D lifecycle helpers ─────────────────────────────────────────────────────
