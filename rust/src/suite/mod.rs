@@ -106,6 +106,9 @@ pub struct AnalysisReport {
     /// Number of files the checks actually inspected (0 when StackNotCovered).
     pub scanned_files: usize,
     pub stacks: Vec<String>,
+    /// True when the repo walk hit the file cap — coverage is partial.
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    pub truncated: bool,
     pub status: CoverageStatus,
     pub findings: Vec<Finding>,
     pub summary: Summary,
@@ -117,6 +120,9 @@ pub struct DetectReport {
     pub root: String,
     pub scanned_files: usize,
     pub stacks: Vec<String>,
+    /// True when the repo walk hit the file cap — coverage is partial.
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    pub truncated: bool,
     pub signals: Vec<DetectSignal>,
     pub summary: DetectSummary,
 }
