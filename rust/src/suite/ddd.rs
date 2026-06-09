@@ -44,6 +44,7 @@ pub fn detect(root: &Path) -> Result<DetectReport> {
         root: root_str,
         scanned_files: scanned,
         stacks,
+        truncated: scan.truncated,
         signals,
         summary: DetectSummary { present, signals_total: total },
     })
@@ -62,6 +63,7 @@ pub fn analyze(root: &Path) -> Result<AnalysisReport> {
             root: root_str,
             scanned_files: 0,
             stacks,
+            truncated: scan.truncated,
             status: CoverageStatus::StackNotCovered,
             findings: vec![],
             summary: Summary { high: 0, medium: 0, low: 0, total: 0 },
@@ -70,6 +72,21 @@ pub fn analyze(root: &Path) -> Result<AnalysisReport> {
 
     let ts_js_files: Vec<&Path> = scan.files_with_ext(&["ts", "tsx", "js", "jsx"]);
     let scanned_files = ts_js_files.len();
+
+    // A covered stack with zero matching files (e.g. package.json present for
+    // tooling in a Rust repo) still means nothing was inspected — report it as
+    // not covered, never as a clean scan.
+    if scanned_files == 0 {
+        return Ok(AnalysisReport {
+            root: root_str,
+            scanned_files: 0,
+            stacks,
+            truncated: scan.truncated,
+            status: CoverageStatus::StackNotCovered,
+            findings: vec![],
+            summary: Summary { high: 0, medium: 0, low: 0, total: 0 },
+        });
+    }
 
     let mut findings = Vec::new();
 
@@ -113,6 +130,7 @@ pub fn analyze(root: &Path) -> Result<AnalysisReport> {
         root: root_str,
         scanned_files,
         stacks,
+        truncated: scan.truncated,
         status: CoverageStatus::Scanned,
         findings,
         summary,

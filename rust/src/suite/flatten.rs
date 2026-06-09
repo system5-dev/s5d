@@ -16,6 +16,28 @@ use super::Severity;
 /// - `min`: floor severity; items below are excluded.
 pub fn flatten(json: &str, label: &str, min: Severity) -> anyhow::Result<String> {
     let v: Value = serde_json::from_str(json)?;
+
+    // A stack-not-covered report flattened to "0 anomaly(ies)" would read as a
+    // clean verdict — the status must survive every output path, including a
+    // bare `s5d skill flatten` over stdin.
+    if v.get("status").and_then(|s| s.as_str()) == Some("stack-not-covered") {
+        let detected = v
+            .get("stacks")
+            .and_then(|a| a.as_array())
+            .map(|a| {
+                a.iter()
+                    .filter_map(|s| s.as_str())
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            })
+            .filter(|s| !s.is_empty())
+            .unwrap_or_else(|| "none".to_string());
+        return Ok(format!(
+            "## {} — stack not covered by deterministic checks (detected: {})\n⚠ no files scanned — this is NOT a clean verdict",
+            label, detected
+        ));
+    }
+
     let items = normalize_items(&v);
 
     let kept: Vec<_> = items
@@ -172,7 +194,7 @@ fn normalize_items(v: &Value) -> Vec<Item> {
 }
 
 fn sarif_level_to_severity(level: &str) -> Severity {
-    match level {
+    match level.to_ascii_lowercase().as_str() {
         "error" => Severity::High,
         "warning" => Severity::Medium,
         "note" => Severity::Low,
@@ -232,6 +254,24 @@ mod tests {
 
         let out = flatten(json, "sarif-test", Severity::High).unwrap();
         assert!(out.contains("[HIGH]"), "SARIF error must map to HIGH: {}", out);
+    }
+
+    #[test]
+    fn stack_not_covered_survives_flatten() {
+        let json = r#"{"status":"stack-not-covered","stacks":["rust"],"findings":[]}"#;
+        let out = flatten(json, "ddd-refactor", Severity::Medium).unwrap();
+        assert!(out.contains("stack not covered"), "must carry verdict: {}", out);
+        assert!(out.contains("NOT a clean verdict"), "must warn: {}", out);
+        assert!(!out.contains("anomaly(ies) >="), "must not render as count: {}", out);
+    }
+
+    #[test]
+    fn sarif_uppercase_level_maps() {
+        let json = r#"{"runs":[{"results":[
+            {"ruleId":"r","level":"ERROR","locations":[{"physicalLocation":{"artifactLocation":{"uri":"x"}}}],"message":{"text":"m"}}
+        ]}]}"#;
+        let out = flatten(json, "s", Severity::High).unwrap();
+        assert!(out.contains("[HIGH]"), "uppercase SARIF level must map: {}", out);
     }
 
     #[test]
