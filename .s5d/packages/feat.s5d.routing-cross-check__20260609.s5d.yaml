@@ -11,13 +11,17 @@ meta:
   tickets: []
   adrs: []
   renames: []
-context: |
-  ## Problem
+context: '## Problem
+
 
   ## Goal
 
+
   ## Privacy
+
   Classification: Internal
+
+  '
 workflow:
   mode: plan
   target_architecture:
@@ -82,8 +86,15 @@ artifacts:
   - id: s5d
     name: s5d
     organization: null
-  domains: []
-  capabilities: []
+  domains:
+  - id: dom.s5d.routing
+    product: s5d
+    name: Request routing
+    classification: supporting
+  capabilities:
+  - id: cap.s5d.routing-cross-check
+    domain: dom.s5d.routing
+    name: Deterministic routing cross-check
   entities: []
   features:
   - id: feat.s5d.routing-cross-check
@@ -99,7 +110,10 @@ artifacts:
   metrics: []
   supersystems: []
   transports: []
-links: null
+links:
+  feature_to_domain:
+  - feature: feat.s5d.routing-cross-check
+    domain: dom.s5d.routing
 contracts: []
 gates:
 - kind: schema
