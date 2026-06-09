@@ -68,6 +68,8 @@ pub struct RepoScan {
     /// All non-pruned files found, relative to root.
     pub files: Vec<PathBuf>,
     pub stacks: Vec<Stack>,
+    /// True when the walk stopped at FILE_CAP — coverage is partial.
+    pub truncated: bool,
 }
 
 impl RepoScan {
@@ -76,6 +78,7 @@ impl RepoScan {
         let root = root.canonicalize().unwrap_or_else(|_| root.to_path_buf());
 
         let mut files: Vec<PathBuf> = Vec::new();
+        let mut truncated = false;
         let mut ts_count = 0usize;
         let mut js_count = 0usize;
         let mut rs_count = 0usize;
@@ -121,6 +124,7 @@ impl RepoScan {
 
             files.push(path);
             if files.len() >= FILE_CAP {
+                truncated = true;
                 break;
             }
         }
@@ -129,10 +133,12 @@ impl RepoScan {
         let has_manifest = |name: &str| root.join(name).exists();
 
         let mut stacks = Vec::new();
-        // TypeScript: ≥3 .ts/.tsx files OR tsconfig.json/package.json
+        // TypeScript: ≥3 .ts/.tsx files, or ≥1 with a TS/JS manifest present.
+        // A manifest alone (package.json for tooling in a Rust/Python repo) is
+        // NOT coverage — claiming TypeScript with zero .ts files would let
+        // analyze report "scanned" on a repo it cannot actually inspect.
         if ts_count >= 3
-            || has_manifest("tsconfig.json")
-            || has_manifest("package.json")
+            || (ts_count >= 1 && (has_manifest("tsconfig.json") || has_manifest("package.json")))
         {
             stacks.push(Stack::TypeScript);
         }
@@ -156,7 +162,7 @@ impl RepoScan {
             stacks.push(Stack::Go);
         }
 
-        Ok(Self { root, files, stacks })
+        Ok(Self { root, files, stacks, truncated })
     }
 
     /// All files whose extension matches any of `exts`.

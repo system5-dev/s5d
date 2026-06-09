@@ -45,7 +45,7 @@ against expected load.
 
 ```
 1. s5d skill scaling detect            → JSON: which of 8 scaling dimensions apply + evidence
-2. s5d skill scaling analyze           → JSON: findings [{dimension,kind,severity,path,detail,fix,validate}] + scanned_files + stacks + status
+2. s5d skill scaling analyze           → JSON: findings [{check,dimension,severity,path,detail,fix,validate}] + scanned_files + stacks + status
 3. s5d skill scaling analyze --flatten → anomalies-only markdown at a severity floor (default medium)
 ```
 

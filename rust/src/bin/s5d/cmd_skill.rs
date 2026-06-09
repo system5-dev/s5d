@@ -27,7 +27,10 @@ pub fn run_skill_ddd_analyze(
 
     let json = serde_json::to_string_pretty(&report)?;
     if do_flatten {
-        println!("{}", flatten_or_not_covered(&report, &json, "ddd-refactor", min_severity)?);
+        println!(
+            "{}",
+            s5d::suite::flatten::flatten(&json, "ddd-refactor", min_severity)?
+        );
     } else {
         println!("{}", json);
     }
@@ -59,35 +62,12 @@ pub fn run_skill_scaling_analyze(
     if do_flatten {
         println!(
             "{}",
-            flatten_or_not_covered(&report, &json, "scaling-review", min_severity)?
+            s5d::suite::flatten::flatten(&json, "scaling-review", min_severity)?
         );
     } else {
         println!("{}", json);
     }
     Ok(())
-}
-
-// A StackNotCovered report flattened to "0 anomaly(ies)" would recreate the
-// false-clean this port exists to kill — the verbatim flatten channel must
-// carry the not-covered verdict itself, not rely on a stderr note.
-fn flatten_or_not_covered(
-    report: &s5d::suite::AnalysisReport,
-    json: &str,
-    label: &str,
-    min_severity: s5d::suite::Severity,
-) -> anyhow::Result<String> {
-    if report.status == s5d::suite::CoverageStatus::StackNotCovered {
-        let stacks = if report.stacks.is_empty() {
-            "none".to_string()
-        } else {
-            report.stacks.join(", ")
-        };
-        return Ok(format!(
-            "## {} — stack not covered by deterministic checks (detected: {}; covered: typescript, javascript)\n⚠ no files scanned — this is NOT a clean verdict",
-            label, stacks
-        ));
-    }
-    s5d::suite::flatten::flatten(json, label, min_severity)
 }
 
 pub fn run_skill_flatten(label: &str, min_severity: s5d::suite::Severity) -> anyhow::Result<()> {
