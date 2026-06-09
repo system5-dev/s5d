@@ -409,12 +409,12 @@ fn core_tools() -> Vec<Value> {
         json!({
             "name": "s5d_discover_sync",
             "description": "Rebuild .s5d/discovery — file index, evidence, graph, and metamodel projection",
-            "inputSchema": {"type": "object", "properties": {"path": {"type": "string", "description": "Target path to scan (defaults to project root)"}}}
+            "inputSchema": {"type": "object", "properties": {"path": {"type": "string", "description": "Target path to scan (defaults to project root)"}, "out": {"type": "string", "description": "Snapshot output directory (defaults to .s5d/discovery; relative paths resolve against the project root)"}}}
         }),
         json!({
             "name": "s5d_discover_check",
             "description": "Check whether the .s5d/discovery snapshot is current (fails if stale)",
-            "inputSchema": {"type": "object", "properties": {"path": {"type": "string", "description": "Target path to scan (defaults to project root)"}}}
+            "inputSchema": {"type": "object", "properties": {"path": {"type": "string", "description": "Target path to scan (defaults to project root)"}, "out": {"type": "string", "description": "Snapshot output directory (defaults to .s5d/discovery; relative paths resolve against the project root)"}}}
         }),
         json!({
             "name": "s5d_check",
@@ -503,6 +503,20 @@ fn tool_s5d_codebase_check(_args: &Value) -> anyhow::Result<String> {
     }
 }
 
+fn discovery_out_dir(project: &crate::S5dProject, args: &Value) -> std::path::PathBuf {
+    match args["out"].as_str() {
+        Some(out) => {
+            let path = std::path::PathBuf::from(out);
+            if path.is_absolute() {
+                path
+            } else {
+                project.root.join(path)
+            }
+        }
+        None => project.root.join(".s5d/discovery"),
+    }
+}
+
 fn tool_s5d_discover_sync(args: &Value) -> anyhow::Result<String> {
     let cwd = std::env::current_dir()?;
     let project =
@@ -511,7 +525,7 @@ fn tool_s5d_discover_sync(args: &Value) -> anyhow::Result<String> {
         .as_str()
         .map(std::path::PathBuf::from)
         .unwrap_or_else(|| project.root.clone());
-    let out = project.root.join(".s5d/discovery");
+    let out = discovery_out_dir(&project, args);
     let snapshot = crate::build_discovery_snapshot(&project, &target)?;
     crate::write_discovery_snapshot(&project, &out, &snapshot)?;
     let m = &snapshot.manifest;
@@ -529,7 +543,7 @@ fn tool_s5d_discover_check(args: &Value) -> anyhow::Result<String> {
         .as_str()
         .map(std::path::PathBuf::from)
         .unwrap_or_else(|| project.root.clone());
-    let out_dir = project.root.join(".s5d/discovery");
+    let out_dir = discovery_out_dir(&project, args);
     let expected = crate::build_discovery_snapshot(&project, &target)?;
     let Some(actual) = crate::read_discovery_snapshot(&out_dir)? else {
         anyhow::bail!(".s5d/discovery snapshot missing — run s5d_discover_sync");
