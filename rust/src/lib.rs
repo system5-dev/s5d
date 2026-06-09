@@ -56,6 +56,7 @@ pub use trace::{
 pub use validate::validate_spec;
 
 pub mod infer;
+pub mod suite;
 
 /// Validate that an ID is safe for use in file paths.
 /// Rejects IDs containing path separators, `..`, null bytes, or empty strings.
