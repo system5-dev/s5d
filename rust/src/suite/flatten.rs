@@ -38,6 +38,9 @@ pub fn flatten(json: &str, label: &str, min: Severity) -> anyhow::Result<String>
         ));
     }
 
+    // Partial coverage must be visible on the human-readable path too.
+    let truncated = v.get("truncated").and_then(|t| t.as_bool()).unwrap_or(false);
+
     let items = normalize_items(&v);
 
     let kept: Vec<_> = items
@@ -59,6 +62,9 @@ pub fn flatten(json: &str, label: &str, min: Severity) -> anyhow::Result<String>
         kept.len(),
         min_str
     ));
+    if truncated {
+        out.push_str("⚠ scan truncated at the file cap — coverage is partial\n");
+    }
 
     if kept.is_empty() {
         out.push_str(&format!("✓ none at/above {}", min_str));
@@ -272,6 +278,15 @@ mod tests {
         ]}]}"#;
         let out = flatten(json, "s", Severity::High).unwrap();
         assert!(out.contains("[HIGH]"), "uppercase SARIF level must map: {}", out);
+    }
+
+    #[test]
+    fn truncated_flag_surfaces_in_markdown() {
+        let json = r#"{"truncated":true,"findings":[
+            {"check":"a","severity":"high","path":"x.ts","detail":"d","fix":"f"}
+        ]}"#;
+        let out = flatten(json, "t", Severity::Medium).unwrap();
+        assert!(out.contains("truncated at the file cap"), "must surface: {}", out);
     }
 
     #[test]
