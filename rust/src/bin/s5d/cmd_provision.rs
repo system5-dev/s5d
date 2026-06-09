@@ -215,7 +215,6 @@ fn unregister_mcp_toml(path: &std::path::Path) -> anyhow::Result<bool> {
     Ok(true)
 }
 
-
 // ── Update ───────────────────────────────────────────────────────────────────
 
 const S5D_SKILLS: &[&str] = &["s5d", "fpf"];
@@ -1019,4 +1018,3 @@ fn register_mcp_toml(path: &std::path::Path, binary: &str) -> anyhow::Result<boo
     std::fs::write(path, doc.to_string())?;
     Ok(true)
 }
-
