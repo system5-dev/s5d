@@ -46,7 +46,10 @@ pub fn detect(root: &Path) -> Result<DetectReport> {
         stacks,
         truncated: scan.truncated,
         signals,
-        summary: DetectSummary { present, signals_total: total },
+        summary: DetectSummary {
+            present,
+            signals_total: total,
+        },
     })
 }
 
@@ -66,7 +69,12 @@ pub fn analyze(root: &Path) -> Result<AnalysisReport> {
             truncated: scan.truncated,
             status: CoverageStatus::StackNotCovered,
             findings: vec![],
-            summary: Summary { high: 0, medium: 0, low: 0, total: 0 },
+            summary: Summary {
+                high: 0,
+                medium: 0,
+                low: 0,
+                total: 0,
+            },
         });
     }
 
@@ -84,7 +92,12 @@ pub fn analyze(root: &Path) -> Result<AnalysisReport> {
             truncated: scan.truncated,
             status: CoverageStatus::StackNotCovered,
             findings: vec![],
-            summary: Summary { high: 0, medium: 0, low: 0, total: 0 },
+            summary: Summary {
+                high: 0,
+                medium: 0,
+                low: 0,
+                total: 0,
+            },
         });
     }
 
@@ -145,12 +158,17 @@ fn detect_orm_entities(scan: &RepoScan) -> DetectSignal {
     let prisma_path = scan.root.join("prisma/schema.prisma");
     if prisma_path.exists() {
         if let Ok(content) = std::fs::read_to_string(&prisma_path) {
-            let n = content.lines().filter(|l| l.trim_start().starts_with("model ")).count();
+            let n = content
+                .lines()
+                .filter(|l| l.trim_start().starts_with("model "))
+                .count();
             evidence_parts.push(format!("prisma:{} models", n));
         }
     }
 
-    let re_orm = Regex::new(r"(?i)typeorm|sequelize|sqlalchemy|gorm\.io|jinzhu/gorm|diesel|sea-orm").unwrap();
+    let re_orm =
+        Regex::new(r"(?i)typeorm|sequelize|sqlalchemy|gorm\.io|jinzhu/gorm|diesel|sea-orm")
+            .unwrap();
     if scan.dep_seen(&re_orm) {
         evidence_parts.push("dep-orm".to_string());
     }
@@ -187,40 +205,57 @@ fn detect_domain_layer(scan: &RepoScan) -> DetectSignal {
     } else {
         "flat (logic likely in controllers/services)".to_string()
     };
-    DetectSignal { id: "domain-layer".to_string(), present, evidence }
+    DetectSignal {
+        id: "domain-layer".to_string(),
+        present,
+        evidence,
+    }
 }
 
 fn detect_controllers(scan: &RepoScan) -> DetectSignal {
-    let api_route_count = scan.files.iter().filter(|p| {
-        let name = p.file_name().and_then(|n| n.to_str()).unwrap_or("");
-        (name == "route.ts" || name == "route.js")
-            && p.to_string_lossy().contains("/api/")
-    }).count();
+    let api_route_count = scan
+        .files
+        .iter()
+        .filter(|p| {
+            let name = p.file_name().and_then(|n| n.to_str()).unwrap_or("");
+            (name == "route.ts" || name == "route.js") && p.to_string_lossy().contains("/api/")
+        })
+        .count();
 
     let re_go = Regex::new(r"http\.(HandleFunc|Handle)|chi\.|gin\.").unwrap();
     let go_files: Vec<&std::path::Path> = scan.files_with_ext(&["go"]);
-    let go_count = go_files.iter().filter(|p| {
-        let full = scan.root.join(p);
-        std::fs::read_to_string(&full)
-            .map(|c| re_go.is_match(&c))
-            .unwrap_or(false)
-    }).count();
+    let go_count = go_files
+        .iter()
+        .filter(|p| {
+            let full = scan.root.join(p);
+            std::fs::read_to_string(&full)
+                .map(|c| re_go.is_match(&c))
+                .unwrap_or(false)
+        })
+        .count();
 
     let re_py = Regex::new(r"@(app|router)\.(get|post|put|delete)").unwrap();
     let py_files: Vec<&std::path::Path> = scan.files_with_ext(&["py"]);
-    let py_count = py_files.iter().filter(|p| {
-        let full = scan.root.join(p);
-        std::fs::read_to_string(&full)
-            .map(|c| re_py.is_match(&c))
-            .unwrap_or(false)
-    }).count();
+    let py_count = py_files
+        .iter()
+        .filter(|p| {
+            let full = scan.root.join(p);
+            std::fs::read_to_string(&full)
+                .map(|c| re_py.is_match(&c))
+                .unwrap_or(false)
+        })
+        .count();
 
     let total = api_route_count + go_count + py_count;
     let present = total > 0;
     DetectSignal {
         id: "controllers".to_string(),
         present,
-        evidence: if present { format!("{} handlers", total) } else { String::new() },
+        evidence: if present {
+            format!("{} handlers", total)
+        } else {
+            String::new()
+        },
     }
 }
 
@@ -283,12 +318,20 @@ fn detect_events(scan: &RepoScan) -> DetectSignal {
 
     let present = has_dep || has_code;
     let mut parts = Vec::new();
-    if has_dep { parts.push("event-lib"); }
-    if has_code { parts.push("domain-events"); }
+    if has_dep {
+        parts.push("event-lib");
+    }
+    if has_code {
+        parts.push("domain-events");
+    }
     DetectSignal {
         id: "events".to_string(),
         present,
-        evidence: if present { parts.join(",") } else { "no explicit domain events".to_string() },
+        evidence: if present {
+            parts.join(",")
+        } else {
+            "no explicit domain events".to_string()
+        },
     }
 }
 
@@ -303,7 +346,11 @@ fn has_domain_layer(scan: &RepoScan) -> bool {
 fn prisma_model_count(scan: &RepoScan) -> usize {
     let p = scan.root.join("prisma/schema.prisma");
     std::fs::read_to_string(&p)
-        .map(|c| c.lines().filter(|l| l.trim_start().starts_with("model ")).count())
+        .map(|c| {
+            c.lines()
+                .filter(|l| l.trim_start().starts_with("model "))
+                .count()
+        })
         .unwrap_or(0)
 }
 
@@ -332,8 +379,7 @@ route handlers; invariants are unit-tested on the domain type, not the route."
 }
 
 fn check_transaction_script(scan: &RepoScan) -> Option<Finding> {
-    let re_handler =
-        Regex::new(r"export (async )?function (GET|POST|PUT|PATCH|DELETE)").unwrap();
+    let re_handler = Regex::new(r"export (async )?function (GET|POST|PUT|PATCH|DELETE)").unwrap();
 
     let api_files: Vec<&Path> = scan
         .files
@@ -362,7 +408,12 @@ fn check_transaction_script(scan: &RepoScan) -> Option<Finding> {
         return None;
     }
 
-    let sample = big.iter().take(4).map(|s| s.as_str()).collect::<Vec<_>>().join(", ");
+    let sample = big
+        .iter()
+        .take(4)
+        .map(|s| s.as_str())
+        .collect::<Vec<_>>()
+        .join(", ");
     Some(Finding {
         check: "transaction-script".to_string(),
         severity: Severity::High,
@@ -383,10 +434,8 @@ the extracted use case has unit tests; behavior unchanged (same e2e)."
 }
 
 fn check_domain_logic_in_controllers(scan: &RepoScan) -> Option<Finding> {
-    let re = Regex::new(
-        r"calculatePremium|computePrice|price|amount.*total|taxRate|refund",
-    )
-    .unwrap();
+    let re =
+        Regex::new(r"calculatePremium|computePrice|price|amount.*total|taxRate|refund").unwrap();
 
     let api_files: Vec<&Path> = scan
         .files
@@ -411,7 +460,12 @@ fn check_domain_logic_in_controllers(scan: &RepoScan) -> Option<Finding> {
         return None;
     }
 
-    let sample = hit_files.iter().take(4).cloned().collect::<Vec<_>>().join(", ");
+    let sample = hit_files
+        .iter()
+        .take(4)
+        .cloned()
+        .collect::<Vec<_>>()
+        .join(", ");
     Some(Finding {
         check: "domain-logic-in-controllers".to_string(),
         severity: Severity::High,
@@ -446,8 +500,7 @@ fn check_value_objects_as_primitives(scan: &RepoScan, has_vo: bool) -> Option<Fi
     if has_vo {
         return None;
     }
-    let re =
-        Regex::new(r"(amount|price|total|payout)[A-Za-z]*\s*:\s*number").unwrap();
+    let re = Regex::new(r"(amount|price|total|payout)[A-Za-z]*\s*:\s*number").unwrap();
     let ts_files: Vec<&Path> = scan.files_with_ext(&["ts", "tsx"]);
     let hits = scan.grep_files(&ts_files, &re);
     if hits.is_empty() {
@@ -458,7 +511,12 @@ fn check_value_objects_as_primitives(scan: &RepoScan, has_vo: bool) -> Option<Fi
     for h in &hits {
         hit_files.insert(h.path.to_string_lossy().to_string());
     }
-    let sample = hit_files.iter().take(3).cloned().collect::<Vec<_>>().join(", ");
+    let sample = hit_files
+        .iter()
+        .take(3)
+        .cloned()
+        .collect::<Vec<_>>()
+        .join(", ");
 
     Some(Finding {
         check: "value-objects-as-primitives".to_string(),
@@ -502,7 +560,9 @@ fn check_missing_acl(scan: &RepoScan) -> Vec<Finding> {
             .iter()
             .filter(|p| {
                 let s = p.to_string_lossy();
-                !s.contains("/adapter") && !s.contains("/acl/") && !s.contains(&format!("/lib/{}/", vendor_name))
+                !s.contains("/adapter")
+                    && !s.contains("/acl/")
+                    && !s.contains(&format!("/lib/{}/", vendor_name))
             })
             .filter(|p| {
                 let full = scan.root.join(p);
@@ -624,7 +684,12 @@ fn check_aggregate_boundary_leak(scan: &RepoScan) -> Option<Finding> {
         return None;
     }
 
-    let sample = leaky.iter().take(4).map(|s| s.as_str()).collect::<Vec<_>>().join(", ");
+    let sample = leaky
+        .iter()
+        .take(4)
+        .map(|s| s.as_str())
+        .collect::<Vec<_>>()
+        .join(", ");
     Some(Finding {
         check: "aggregate-boundary-leak".to_string(),
         severity: Severity::Medium,
@@ -664,8 +729,16 @@ mod tests {
     fn ts_fixture_orm_entities_detected() {
         let dir = tempfile::tempdir().unwrap();
         let root = dir.path();
-        write(root, "package.json", r#"{"dependencies":{"@prisma/client":"*"}}"#);
-        write(root, "prisma/schema.prisma", "model User {}\nmodel Post {}\n");
+        write(
+            root,
+            "package.json",
+            r#"{"dependencies":{"@prisma/client":"*"}}"#,
+        );
+        write(
+            root,
+            "prisma/schema.prisma",
+            "model User {}\nmodel Post {}\n",
+        );
         write(
             root,
             "app/api/things/route.ts",
@@ -673,7 +746,11 @@ mod tests {
         );
 
         let report = detect(root).unwrap();
-        let orm = report.signals.iter().find(|s| s.id == "orm-entities").unwrap();
+        let orm = report
+            .signals
+            .iter()
+            .find(|s| s.id == "orm-entities")
+            .unwrap();
         assert!(orm.present, "orm-entities should be present");
         assert!(orm.evidence.contains("prisma:2 models"));
     }
@@ -682,8 +759,16 @@ mod tests {
     fn ts_fixture_anemic_domain_fired() {
         let dir = tempfile::tempdir().unwrap();
         let root = dir.path();
-        write(root, "package.json", r#"{"dependencies":{"@prisma/client":"*"}}"#);
-        write(root, "prisma/schema.prisma", "model User {}\nmodel Post {}\n");
+        write(
+            root,
+            "package.json",
+            r#"{"dependencies":{"@prisma/client":"*"}}"#,
+        );
+        write(
+            root,
+            "prisma/schema.prisma",
+            "model User {}\nmodel Post {}\n",
+        );
         write(
             root,
             "app/api/things/route.ts",
@@ -703,7 +788,11 @@ mod tests {
     fn rust_fixture_stack_not_covered() {
         let dir = tempfile::tempdir().unwrap();
         let root = dir.path();
-        write(root, "Cargo.toml", "[package]\nname = \"foo\"\nversion = \"0.1.0\"\n");
+        write(
+            root,
+            "Cargo.toml",
+            "[package]\nname = \"foo\"\nversion = \"0.1.0\"\n",
+        );
         write(root, "src/main.rs", "fn main() {}\n");
 
         let report = analyze(root).unwrap();

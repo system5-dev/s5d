@@ -473,8 +473,7 @@ fn handle_tools_call(params: &Value) -> anyhow::Result<Value> {
 
 fn tool_s5d_codebase_sync(_args: &Value) -> anyhow::Result<String> {
     let cwd = std::env::current_dir()?;
-    let project =
-        crate::S5dProject::find(&cwd).ok_or_else(|| anyhow::anyhow!("no .s5d/ found"))?;
+    let project = crate::S5dProject::find(&cwd).ok_or_else(|| anyhow::anyhow!("no .s5d/ found"))?;
     let snapshot = crate::build_codebase_snapshot(&project)?;
     crate::write_codebase_snapshot(&project, &snapshot)?;
     let c = &snapshot.coverage;
@@ -486,8 +485,7 @@ fn tool_s5d_codebase_sync(_args: &Value) -> anyhow::Result<String> {
 
 fn tool_s5d_codebase_check(_args: &Value) -> anyhow::Result<String> {
     let cwd = std::env::current_dir()?;
-    let project =
-        crate::S5dProject::find(&cwd).ok_or_else(|| anyhow::anyhow!("no .s5d/ found"))?;
+    let project = crate::S5dProject::find(&cwd).ok_or_else(|| anyhow::anyhow!("no .s5d/ found"))?;
     let expected = crate::build_codebase_snapshot(&project)?;
     let Some(actual) = crate::load_codebase_snapshot(&project)? else {
         anyhow::bail!(".s5d/codebase snapshot missing — run s5d_codebase_sync");
@@ -519,8 +517,7 @@ fn discovery_out_dir(project: &crate::S5dProject, args: &Value) -> std::path::Pa
 
 fn tool_s5d_discover_sync(args: &Value) -> anyhow::Result<String> {
     let cwd = std::env::current_dir()?;
-    let project =
-        crate::S5dProject::find(&cwd).ok_or_else(|| anyhow::anyhow!("no .s5d/ found"))?;
+    let project = crate::S5dProject::find(&cwd).ok_or_else(|| anyhow::anyhow!("no .s5d/ found"))?;
     let target = args["path"]
         .as_str()
         .map(std::path::PathBuf::from)
@@ -537,8 +534,7 @@ fn tool_s5d_discover_sync(args: &Value) -> anyhow::Result<String> {
 
 fn tool_s5d_discover_check(args: &Value) -> anyhow::Result<String> {
     let cwd = std::env::current_dir()?;
-    let project =
-        crate::S5dProject::find(&cwd).ok_or_else(|| anyhow::anyhow!("no .s5d/ found"))?;
+    let project = crate::S5dProject::find(&cwd).ok_or_else(|| anyhow::anyhow!("no .s5d/ found"))?;
     let target = args["path"]
         .as_str()
         .map(std::path::PathBuf::from)

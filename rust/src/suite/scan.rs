@@ -151,10 +151,7 @@ impl RepoScan {
             stacks.push(Stack::Rust);
         }
         // Python: ≥3 .py files OR pyproject.toml / requirements.txt
-        if py_count >= 3
-            || has_manifest("pyproject.toml")
-            || has_manifest("requirements.txt")
-        {
+        if py_count >= 3 || has_manifest("pyproject.toml") || has_manifest("requirements.txt") {
             stacks.push(Stack::Python);
         }
         // Go: ≥3 .go files OR go.mod
@@ -162,7 +159,12 @@ impl RepoScan {
             stacks.push(Stack::Go);
         }
 
-        Ok(Self { root, files, stacks, truncated })
+        Ok(Self {
+            root,
+            files,
+            stacks,
+            truncated,
+        })
     }
 
     /// All files whose extension matches any of `exts`.
