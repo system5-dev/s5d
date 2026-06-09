@@ -1,0 +1,112 @@
+s5d: '1.0'
+id: feat.s5d.routing-cross-check
+version: 1.0.0
+product: s5d
+tier: lightweight
+allow_update: true
+meta:
+  title: routing-cross-check
+  authors: []
+  date: 2026-06-09
+  tickets: []
+  adrs: []
+  renames: []
+context: |
+  ## Problem
+
+  ## Goal
+
+  ## Privacy
+  Classification: Internal
+workflow:
+  mode: plan
+  target_architecture:
+    summary: Describe the steady-state design this change should reach
+    invariants: []
+  delivery_strategy:
+    summary: Describe how this change moves current code toward the target architecture
+    rationale: null
+  resources: null
+  role_map:
+    verifier: reviewer
+    owner: human
+    reviewer: reviewer
+    implementer: coder
+  review_policy:
+    cross_model_required: false
+    required_on: []
+  structure_outline: null
+  execution_mode:
+    engine: manual
+    max_iterations: null
+    stop_conditions:
+    - Phase acceptance reached
+    - Approved scope exhausted
+    - New decision required
+  phases:
+  - id: prototype
+    title: Prototype
+    scope: Reduce unknowns before committed implementation
+    roles:
+    - owner
+    - implementer
+    acceptance:
+    - Critical feasibility questions answered
+    - Telemetry approach identified
+    rollback:
+    - Discard spike output if assumptions fail
+  - id: build
+    title: Build
+    scope: Implement approved scope and pass local gates
+    roles:
+    - implementer
+    - reviewer
+    acceptance:
+    - Declared gates pass
+    - Change matches approved scope
+    rollback:
+    - Revert or reconcile if gates or review fail
+  - id: measure
+    title: Measure
+    scope: Collect telemetry and close the loop with an explicit verdict
+    roles:
+    - owner
+    - verifier
+    acceptance:
+    - Telemetry collected against success criteria
+    - Outcome verdict recorded
+    rollback:
+    - Iterate or kill if evidence stays weak
+artifacts:
+  products:
+  - id: s5d
+    name: s5d
+    organization: null
+  domains: []
+  capabilities: []
+  entities: []
+  features:
+  - id: feat.s5d.routing-cross-check
+    product: s5d
+    name: routing-cross-check
+    description: null
+  use_cases: []
+  systems: []
+  containers: []
+  components: []
+  roles: []
+  concerns: []
+  metrics: []
+  supersystems: []
+  transports: []
+links: null
+contracts: []
+gates:
+- kind: schema
+roc: null
+problem: null
+hypotheses: []
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false

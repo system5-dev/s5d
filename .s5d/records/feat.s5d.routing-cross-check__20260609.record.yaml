@@ -1,0 +1,17 @@
+spec_ref: feat.s5d.routing-cross-check__20260609.s5d.yaml
+spec_sha256: sha256:c5918e935cb702ce0c6d669659bfe25ab816aafa458fefcdc7cf2426cda2d7ba
+status: proposed
+sync_status: unknown
+status_history:
+- status: proposed
+  timestamp: 2026-06-09T11:25:32.568559+00:00
+active_phase: null
+phase_history: []
+phase_runs: []
+approvals: []
+preview: null
+reflection: null
+gate_results: []
+decision: null
+verified_by: null
+drift_tolerance: null

@@ -1,0 +1,43 @@
+spec_ref: decision.s5d-routing-philosophy__20260609.s5d.yaml
+spec_sha256: sha256:c1c147e3d22210dd759c71d29b63e62c2b30a2cd1a72403a363df05aabf9ff09
+status: proposed
+sync_status: unknown
+status_history:
+- status: proposed
+  timestamp: 2026-06-09T10:08:49.265144+00:00
+active_phase: null
+phase_history: []
+phase_runs: []
+approvals: []
+preview: null
+reflection: null
+gate_results: []
+decision:
+  title: Route LLM-primary with s5d_route as deterministic cross-check
+  winner_id: llm-primary-with-deterministic-cross-check
+  rejected_ids:
+  - improve-the-deterministic-router-then-lean-on-it
+  - full-extraction-skill-calls-s5d-route-only
+  context: Routing a request into tier/mode can be LLM-semantic, deterministic-keyword, or hybrid. A verified 15-prompt router battery + 6 agentic probes showed the reasoning agent routes non-English (Russian "checkout"→payment→high) and "X and Y" multi-domain correctly, while the deterministic keyword router does not.
+  decision: Keep LLM-semantic routing primary; run s5d_route as a cross-check with aligned output format (entry_stage = Target/Spec). On disagreement, the agent trusts its semantic read and notes the divergence.
+  rationale: 'Preserves the LLM''s correct non-English/semantic routing (zero regression) while keeping a cheap deterministic sanity check. Improving the router (h2) is deferred on cost/benefit. Full extraction (h3) is refuted: deferring to the keyword router regresses non-English and multi-domain, proven by the battery.'
+  consequences: The router stays English-keyword-only by design, documented as a cross-check rather than source of truth. Its blind spots (non-English, "X and Y" conjunction, out-of-scope-beats-high for auth config) are pinned as regression tests in routing_behavior.rs. If any automation later consumes s5d_route as authoritative, those gaps must be revisited (likely promoting h2).
+  decided_at: 2026-06-09T11:26:08.258093+00:00
+  confirmed_by: Roman
+  expires_at: 2026-09-07
+  do_list: []
+  dont_list: []
+  challenge:
+    mode: standard
+    passed: true
+    summary: '5-probe adversarial set (P1–P6) + 15-prompt router battery, all run this session. P4 (Russian checkout) plus the conjunction and auth-config cases refuted full-extraction (h3) by exposing the router''s blind spots. h2 (improve router) was deferred on cost/benefit. h1 survived: it keeps the LLM''s correct routing while retaining a deterministic cross-check. Tribunal (Codex+Gemini) raised no blocker on the routing change.'
+    checks: []
+  decision_subject: null
+  decision_subject_granularity: null
+  evaluative_surface: null
+  belief_state: null
+  outcome_model: null
+  pareto_set: []
+  choice_rule: null
+verified_by: null
+drift_tolerance: null
