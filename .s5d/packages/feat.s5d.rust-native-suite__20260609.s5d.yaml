@@ -1,0 +1,251 @@
+s5d: '1.0'
+id: feat.s5d.rust-native-suite
+version: 1.0.0
+product: s5d
+tier: standard
+allow_update: true
+meta:
+  title: Rust-native skill suite — eliminate shell scripts
+  authors:
+  - Roman
+  - Diana
+  date: 2026-06-09
+  tickets: []
+  adrs: []
+  renames: []
+context: '## Problem
+
+
+  The skill-suite deterministic layer is 48 bash scripts (~7100 lines). Two are
+
+  provably broken in kind: ddd-refactor and scaling-review analyze/detect were
+
+  ported from a specific TS/Prisma project (gigsure) with its vocabulary and even
+
+  its repo paths hardcoded (gigg-insurance-master, tmhcc, premium). On any
+
+  non-TS repo they silently return zero findings — the assess agents then report
+
+  "0 anomalies", a false-clean that is worse than an honest refusal. The shell
+
+  layer also drags runtime deps (bash, jq, python3) and has no tests.
+
+
+  ## Goal
+
+
+  Target state (Roman, 2026-06-09): zero shell scripts in the repo. All
+
+  deterministic skill logic lives in the s5d Rust binary, compiled and tested,
+
+  exposed as `s5d skill <name> <verb>`. Every analyzer reports what it actually
+
+  scanned (file counts, stacks) so "no findings" and "nothing scanned" are
+
+  distinguishable by contract.
+
+
+  ## Privacy
+
+  Classification: Internal
+
+  '
+workflow:
+  mode: plan
+  target_architecture:
+    summary: All deterministic skill-suite logic compiled into the s5d binary under a `s5d skill <name>
+      <verb>` namespace (rust/src/suite/). A shared scan core (walkdir + prune set + stack detection over
+      file extensions and manifests) feeds per-skill analyzers. Every report carries scanned_files and
+      stacks; a flatten subcommand replaces flatten.sh for ported consumers. Shell scripts are deleted
+      skill-by-skill as ports land; end state has none.
+    invariants:
+    - Analyzer output distinguishes 'scanned N files, 0 findings' from 'stack not covered, 0 files scanned'
+    - Suite analyzers are read-only with respect to the assessed repo
+    - One prune set shared by all suite scanners (node_modules, .git, vendor, target, build, dist, .next,
+      .venv, __pycache__, .claude, .codex, .agents, test-reports)
+  delivery_strategy:
+    summary: 'Vertical slices by skill: port the two broken skills first (ddd-refactor, scaling-review)
+      together with the suite framework and flatten, wire their assess agents to the binary, delete their
+      scripts. Remaining skills follow the proven pattern in later phases.'
+    rationale: The broken skills are the active harm (false-clean); the framework built for them is the
+      reusable brick for the other eleven.
+  resources: null
+  role_map:
+    implementer: coder
+    owner: human
+    reviewer: reviewer
+    verifier: reviewer
+  review_policy:
+    cross_model_required: false
+    required_on: []
+  structure_outline:
+    summary: New lib module rust/src/suite/ with shared scan core and per-skill analyzers; bin grows a
+      `skill` subcommand group dispatching to suite functions; flatten ported from jq to Rust over the
+      same findings JSON contract.
+    signatures:
+    - 'pub fn scan_repo(root: &Path) -> RepoScan  // walkdir + prune + stack detection'
+    - 'pub fn ddd_detect(scan: &RepoScan) -> DetectReport'
+    - 'pub fn ddd_analyze(scan: &RepoScan) -> AnalysisReport'
+    - 'pub fn scaling_detect(scan: &RepoScan) -> DetectReport'
+    - 'pub fn scaling_analyze(scan: &RepoScan) -> AnalysisReport'
+    - 'pub fn flatten(report_json: &str, label: &str, min_severity: Severity) -> Result<String>'
+    types:
+    - 'struct RepoScan { root, files: Vec<PathBuf>, by_ext: HashMap<String, Vec<PathBuf>>, stacks: Vec<Stack>,
+      manifests: Vec<PathBuf> }'
+    - enum Stack { TypeScript, JavaScript, Rust, Python, Go }
+    - enum Severity { High, Medium, Low } (ordered)
+    - 'struct Finding { check, severity, path, detail, fix, validate, dimension: Option<String> }'
+    - 'struct AnalysisReport { root, scanned_files: usize, stacks: Vec<String>, status: CoverageStatus,
+      findings: Vec<Finding>, summary: Summary }'
+    - enum CoverageStatus { Scanned, StackNotCovered }
+  execution_mode:
+    engine: manual
+    max_iterations: null
+    stop_conditions:
+    - Phase acceptance reached
+    - Approved scope exhausted
+    - New decision required
+  phases:
+  - id: suite-core
+    title: Suite framework + ddd + scaling ports
+    scope: rust/src/suite/ (scan core, ddd, scaling, flatten), bin `skill` subcommand group, tests; update
+      both assess agents and both SKILL.md files; delete the six ported .sh files
+    roles:
+    - implementer
+    - reviewer
+    acceptance:
+    - 'cargo test passes including suite tests (false-clean fixture: Rust repo yields StackNotCovered
+      for TS-only checks; TS fixture yields the known findings)'
+    - s5d skill ddd analyze on this repo reports scanned_files > 0 and an explicit coverage status
+    - skills/ddd-refactor/scripts and skills/scaling-review/scripts contain no .sh
+    rollback:
+    - Revert the commit; .sh files restore from git history
+  - id: assess-family
+    title: Port remaining assess skills
+    scope: ai-technical-writer, domain-refactor, infra-scan, security-scan deterministic scripts -> suite
+      modules
+    roles:
+    - implementer
+    - reviewer
+    acceptance:
+    - Same contract as suite-core for each ported skill
+    - flatten.sh consumers fully migrated, flatten.sh deleted
+    rollback:
+    - Per-skill revert
+  - id: exec-family
+    title: Port test/exec skills and generators
+    scope: unit-tests, e2e-tests, code-quality, scenario-mine, system-design scripts -> suite modules
+      or s5d subcommands
+    roles:
+    - implementer
+    - reviewer
+    acceptance:
+    - No .sh remains under skills/
+    rollback:
+    - Per-skill revert
+  - id: bootstrap
+    title: Hooks + installer
+    scope: hooks/*.sh replaced by direct s5d invocations; install.sh replaced by documented cargo path
+      or prebuilt binary flow
+    roles:
+    - implementer
+    - owner
+    acceptance:
+    - Zero .sh files in the repository
+    - Fresh-clone install documented and verified without bash scripts
+    rollback:
+    - Keep install.sh until the replacement is verified on a clean machine
+artifacts:
+  products:
+  - id: s5d
+    name: s5d
+    organization: null
+  domains:
+  - id: dom.s5d.skill-suite
+    product: s5d
+    name: Skill suite deterministic layer
+    classification: supporting
+  capabilities:
+  - id: cap.s5d.deterministic-assess
+    domain: dom.s5d.skill-suite
+    name: Compiled stack-aware repo assessment
+  entities: []
+  features:
+  - id: feat.s5d.rust-native-suite
+    product: s5d
+    name: rust-native-suite
+    description: null
+  use_cases: []
+  systems:
+  - id: sys.s5d.cli
+    product: s5d
+    name: S5D CLI
+  containers:
+  - id: ctr.s5d.rust-cli
+    system: sys.s5d.cli
+    name: s5d Rust binary
+  components:
+  - id: comp.s5d.suite
+    feature: feat.s5d.rust-native-suite
+    domain: dom.s5d.skill-suite
+    container: ctr.s5d.rust-cli
+    name: Suite analyzers (scan core, ddd, scaling, flatten)
+    paths:
+    - rust/src/suite/
+  roles: []
+  concerns: []
+  metrics: []
+  supersystems: []
+  transports: []
+links:
+  feature_to_domain:
+  - feature: feat.s5d.rust-native-suite
+    domain: dom.s5d.skill-suite
+  use_case_to_capability: []
+  use_case_to_entity: []
+  component_to_capability:
+  - component: comp.s5d.suite
+    capability: cap.s5d.deterministic-assess
+  component_to_entity: []
+  container_to_capability: []
+  concern_to_metric: []
+  component_to_container: []
+  edges: []
+  depends_on: []
+  entity_relations: []
+  capability_to_entity: []
+  capability_to_concern: []
+contracts: []
+gates:
+- kind: schema
+- kind: graph
+roc: null
+problem:
+  signal: ddd-refactor assess returned '0 anomalies' on a Rust repo because its analyze.sh only greps
+    *.ts/*.tsx with gigsure-specific vocabulary — false-clean, discovered during skill situational testing
+  constraints:
+  - Zero shell scripts in the end state — all deterministic logic compiled Rust (Roman directive)
+  - Assess output contract — analyzers must emit scanned-file counts and detected stacks; zero findings
+    with zero scanned files must surface as stack-not-covered, never as a clean verdict
+  - JSON output shapes stay flatten-compatible (findings[]/summary) so unported consumers keep working
+    during the transition
+  - Read-only — skill analyzers never write to the assessed repo
+  targets:
+  - Replace bash+jq+python3 runtime deps with the single s5d binary for ported skills
+  - Honest verdicts — eliminate the false-clean class
+  indicators:
+  - Count of remaining .sh files in the repo (48 at start)
+  goodhart_guard: The .sh count is an observation indicator, not a target to game — deleting a script
+    without a compiled replacement of equal coverage is a regression, not progress.
+  acceptance: 'Phase 1: `s5d skill ddd|scaling detect|analyze` run compiled, report scanned/stacks honestly,
+    the six ddd-refactor/scaling-review .sh files are deleted, and both assess agents call the binary.
+    Later phases extend to the rest of the suite, hooks, and install.'
+  blast_radius: Skill suite consumers (assess agents, SKILL.md instructions); no runtime impact on the
+    core spec state machine
+  reversibility: moderate
+  status: in_progress
+hypotheses: []
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false

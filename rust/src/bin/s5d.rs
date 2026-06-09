@@ -10,6 +10,9 @@ mod cmd_harness;
 #[path = "s5d/cmd_provision.rs"]
 mod cmd_provision;
 
+#[path = "s5d/cmd_skill.rs"]
+mod cmd_skill;
+
 #[derive(Parser)]
 #[command(name = "s5d", about = "S5D — control plane for agentic repo changes")]
 struct Cli {
@@ -234,6 +237,11 @@ enum S5dCommand {
     /// Print environment fingerprint (tool versions hash)
     #[command(hide = true)]
     Cg,
+    /// DDD modeling and scaling anti-pattern analyzers
+    Skill {
+        #[command(subcommand)]
+        command: SkillCommand,
+    },
     /// Start stdio MCP server (for Claude Code integration)
     #[command(hide = true)]
     Mcp,
@@ -341,6 +349,75 @@ enum AdminCommand {
     Update {
         #[command(subcommand)]
         command: UpdateCommand,
+    },
+}
+
+// ── Skill subcommand tree ─────────────────────────────────────────────────────
+
+#[derive(Subcommand)]
+enum SkillCommand {
+    /// DDD modeling analyzer
+    Ddd {
+        #[command(subcommand)]
+        command: SkillDddCommand,
+    },
+    /// Scaling anti-pattern analyzer
+    Scaling {
+        #[command(subcommand)]
+        command: SkillScalingCommand,
+    },
+    /// Flatten analyze JSON from stdin into markdown anomaly bullets
+    Flatten {
+        /// Section label (default: "findings")
+        #[arg(long, default_value = "findings")]
+        label: String,
+        /// Minimum severity to include: info|low|medium|high|critical
+        #[arg(long, default_value = "medium")]
+        min_severity: String,
+    },
+}
+
+#[derive(Subcommand)]
+enum SkillDddCommand {
+    /// Detect DDD-relevant structure in repo
+    Detect {
+        /// Root path to analyze (default: current dir)
+        #[arg(long)]
+        root: Option<String>,
+    },
+    /// Run DDD modeling checks
+    Analyze {
+        /// Root path to analyze (default: current dir)
+        #[arg(long)]
+        root: Option<String>,
+        /// Flatten JSON output to markdown anomaly bullets
+        #[arg(long)]
+        flatten: bool,
+        /// Minimum severity for flatten output: info|low|medium|high|critical
+        #[arg(long, default_value = "medium")]
+        min_severity: String,
+    },
+}
+
+#[derive(Subcommand)]
+enum SkillScalingCommand {
+    /// Detect scaling-relevant dimensions in repo
+    Detect {
+        /// Root path to analyze (default: current dir)
+        #[arg(long)]
+        root: Option<String>,
+    },
+    /// Run scaling anti-pattern checks
+    Analyze {
+        /// Root path to analyze (default: current dir)
+        #[arg(long)]
+        root: Option<String>,
+        /// Flatten JSON output to markdown anomaly bullets
+        #[arg(long)]
+        flatten: bool,
+        /// Minimum severity for flatten output: info|low|medium|high|critical
+        #[arg(long, default_value = "medium")]
+        min_severity: String,
     },
 }
 
@@ -919,6 +996,7 @@ fn main() -> anyhow::Result<()> {
         S5dCommand::Lsp => s5d::lsp::run(),
         S5dCommand::Install(args) => run_install_command(args),
         S5dCommand::Gate { command } => run_gate(command),
+        S5dCommand::Skill { command } => run_skill_command(command),
     }
 }
 
@@ -927,6 +1005,49 @@ fn run_decision_command(command: DecisionCommand) -> anyhow::Result<()> {
         DecisionCommand::AddHypothesis(args) => run_add_hypothesis_command(args),
         DecisionCommand::AddEvidence(args) => run_add_evidence_command(args),
         DecisionCommand::Decide(args) => run_decide_command(*args),
+    }
+}
+
+fn run_skill_command(command: SkillCommand) -> anyhow::Result<()> {
+    let resolve_root = |root: Option<String>| -> anyhow::Result<std::path::PathBuf> {
+        match root {
+            Some(r) => Ok(std::path::PathBuf::from(r)),
+            None => Ok(std::env::current_dir()?),
+        }
+    };
+    match command {
+        SkillCommand::Ddd { command } => match command {
+            SkillDddCommand::Detect { root } => {
+                cmd_skill::run_skill_ddd_detect(&resolve_root(root)?)
+            }
+            SkillDddCommand::Analyze {
+                root,
+                flatten,
+                min_severity,
+            } => cmd_skill::run_skill_ddd_analyze(
+                &resolve_root(root)?,
+                flatten,
+                cmd_skill::parse_severity(&min_severity),
+            ),
+        },
+        SkillCommand::Scaling { command } => match command {
+            SkillScalingCommand::Detect { root } => {
+                cmd_skill::run_skill_scaling_detect(&resolve_root(root)?)
+            }
+            SkillScalingCommand::Analyze {
+                root,
+                flatten,
+                min_severity,
+            } => cmd_skill::run_skill_scaling_analyze(
+                &resolve_root(root)?,
+                flatten,
+                cmd_skill::parse_severity(&min_severity),
+            ),
+        },
+        SkillCommand::Flatten {
+            label,
+            min_severity,
+        } => cmd_skill::run_skill_flatten(&label, cmd_skill::parse_severity(&min_severity)),
     }
 }
 

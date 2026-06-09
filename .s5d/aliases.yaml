@@ -77,6 +77,12 @@ global:
   package_id: null
   owning_package: feat.s5d.skill-suite-integration
   deprecated: false
+- uuid: a56a527a-32bd-4d41-aba8-1024c63a43fc
+  artifact_id: dom.s5d.skill-suite
+  artifact_type: Domain
+  package_id: null
+  owning_package: feat.s5d.rust-native-suite
+  deprecated: false
 packages:
 - uuid: 0d3f4abc-8b28-422f-ba12-3bdb515b33ac
   artifact_id: cap.LogError
@@ -454,5 +460,23 @@ packages:
   artifact_id: feat.s5d.cluster-agent-decomposition
   artifact_type: Feature
   package_id: feat.s5d.cluster-agent-decomposition
+  owning_package: null
+  deprecated: false
+- uuid: 6fa6edae-ea90-4f9d-8947-abb028253cc5
+  artifact_id: cap.s5d.deterministic-assess
+  artifact_type: Capability
+  package_id: feat.s5d.rust-native-suite
+  owning_package: null
+  deprecated: false
+- uuid: 279399eb-3a8a-4e76-bfd3-cd87eb33507b
+  artifact_id: feat.s5d.rust-native-suite
+  artifact_type: Feature
+  package_id: feat.s5d.rust-native-suite
+  owning_package: null
+  deprecated: false
+- uuid: c7427e8b-414c-4fb8-a546-d47e7684795c
+  artifact_id: comp.s5d.suite
+  artifact_type: Component
+  package_id: feat.s5d.rust-native-suite
   owning_package: null
   deprecated: false
