@@ -873,6 +873,9 @@ justification when you use it. When in doubt, run `s5d_route` to classify the re
 → run/implement → `s5d_run_gates` → `s5d_import` → `s5d_drift_check`.\n\n\
 **MCP tools** (prefer over shell CLI when available):\n\
 - `s5d_route` — classify a request into tier/mode/entry\n\
+- `s5d_codebase_sync` / `s5d_codebase_check` — codebase coverage snapshot\n\
+- `s5d_discover_sync` / `s5d_discover_check` — discovery graph snapshot\n\
+- `s5d_check` — architecture check (components vs. source paths)\n\
 - `s5d_new` / `s5d_note` — create spec / quick note\n\
 - `s5d_validate` / `s5d_preview` — dry-run checks before approval\n\
 - `s5d_approve` / `s5d_import` — commit decision, bind SHA256 chain\n\
