@@ -635,10 +635,15 @@ mod tests {
                 description: None,
                 since: None,
             });
+            a.systems.push(SoftwareSystem {
+                id: "sys.test".into(),
+                product: "test".into(),
+                name: "Test system".into(),
+            });
             a.containers.push(Container {
                 id: "ctr.api".into(),
                 name: "API Server".into(),
-                system: String::new(),
+                system: "sys.test".into(),
                 technology: None,
             });
             a.components.push(Component {
@@ -1394,7 +1399,7 @@ mod tests {
             .capabilities
             .push(Capability {
                 id: "cap.prototype-loop".into(),
-                domain: "dom.workflow".into(),
+                domain: "dom.Prod.core".into(),
                 name: "PrototypeLoop".into(),
                 description: None,
                 since: None,

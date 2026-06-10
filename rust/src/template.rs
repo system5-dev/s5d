@@ -4,11 +4,33 @@ use crate::models::*;
 
 pub fn generate_spec(id: &str, tier: Tier, product: &str) -> Spec {
     let today = Utc::now().format("%Y-%m-%d").to_string();
-    let links = if matches!(tier, Tier::Lightweight) {
-        None
-    } else {
-        Some(Links::default())
+
+    // The scaffold must validate out of the box for its tier: a cold user
+    // edits obvious placeholders instead of authoring the artifact chain
+    // against one missing-field error per attempt (measured: 6 validate
+    // round-trips to first green before this). Ids derive from the real
+    // product/feature; only `paths` carries an explicit TODO.
+    let feature_name = id.rsplit('.').next().unwrap_or(id).to_string();
+    let domain_id = format!("dom.{}.core", product);
+    let capability_id = format!("cap.{}", feature_name);
+    let system_id = format!("sys.{}", product);
+    let container_id = format!("ctr.{}.app", product);
+    let component_id = format!("comp.{}", feature_name);
+
+    let binding = |pairs: &[(&str, &str)]| Binding {
+        fields: pairs
+            .iter()
+            .map(|(k, v)| (k.to_string(), v.to_string()))
+            .collect(),
     };
+    let links = Some(Links {
+        feature_to_domain: vec![binding(&[("feature", id), ("domain", &domain_id)])],
+        component_to_capability: vec![binding(&[
+            ("component", &component_id),
+            ("capability", &capability_id),
+        ])],
+        ..Default::default()
+    });
     let gates = crate::gates::default_gates_for_tier(&tier);
     Spec {
         s5d: "1.0".into(),
@@ -104,8 +126,45 @@ pub fn generate_spec(id: &str, tier: Tier, product: &str) -> Spec {
             features: vec![Feature {
                 id: id.into(),
                 product: product.into(),
-                name: id.rsplit('.').next().unwrap_or(id).into(),
+                name: feature_name.clone(),
                 description: None,
+            }],
+            domains: vec![Domain {
+                id: domain_id.clone(),
+                product: product.into(),
+                name: format!("{} core domain", product),
+                classification: Some("supporting".into()),
+                description: Some(
+                    "Scaffold default — rename or split into real bounded contexts".into(),
+                ),
+                team: None,
+                maturity_level: None,
+            }],
+            capabilities: vec![Capability {
+                id: capability_id.clone(),
+                domain: domain_id.clone(),
+                name: feature_name.replace('-', " "),
+                description: None,
+                since: None,
+            }],
+            systems: vec![SoftwareSystem {
+                id: system_id.clone(),
+                product: product.into(),
+                name: product.into(),
+            }],
+            containers: vec![Container {
+                id: container_id.clone(),
+                system: system_id,
+                name: format!("{} app", product),
+                technology: None,
+            }],
+            components: vec![Component {
+                id: component_id,
+                feature: id.into(),
+                domain: domain_id,
+                container: container_id,
+                name: format!("{} component", feature_name.replace('-', " ")),
+                paths: vec!["TODO-set-source-paths/".into()],
             }],
             ..Default::default()
         }),

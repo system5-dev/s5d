@@ -54,6 +54,12 @@ pub fn analyze(root: &Path) -> Result<AnalysisReport> {
     let scan = RepoScan::build(root)?;
     let root_str = root.to_string_lossy().to_string();
     let stacks: Vec<String> = scan.stacks.iter().map(|s| s.as_str().to_string()).collect();
+    let uncovered_stacks: Vec<String> = scan
+        .stacks
+        .iter()
+        .filter(|s| !COVERED.contains(s))
+        .map(|s| s.as_str().to_string())
+        .collect();
 
     let covered = scan.stacks.iter().any(|s| COVERED.contains(s));
     if !covered {
@@ -61,6 +67,7 @@ pub fn analyze(root: &Path) -> Result<AnalysisReport> {
             root: root_str,
             scanned_files: 0,
             stacks,
+            uncovered_stacks: uncovered_stacks.clone(),
             truncated: scan.truncated,
             status: CoverageStatus::StackNotCovered,
             findings: vec![],
@@ -84,6 +91,7 @@ pub fn analyze(root: &Path) -> Result<AnalysisReport> {
             root: root_str,
             scanned_files: 0,
             stacks,
+            uncovered_stacks: uncovered_stacks.clone(),
             truncated: scan.truncated,
             status: CoverageStatus::StackNotCovered,
             findings: vec![],
@@ -126,6 +134,7 @@ pub fn analyze(root: &Path) -> Result<AnalysisReport> {
         root: root_str,
         scanned_files,
         stacks,
+        uncovered_stacks,
         truncated: scan.truncated,
         status: CoverageStatus::Scanned,
         findings,
