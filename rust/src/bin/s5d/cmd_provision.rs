@@ -490,18 +490,22 @@ fn install_binary_from_repo(
     // Build from the checked-out source first: it always matches the repo
     // revision. The tracked prebuilt is refreshed only at release time and
     // has shipped stale binaries silently (alpha.7 → alpha.8 both lagged) —
-    // it is a fallback for hosts without a Rust toolchain, never the default.
+    // it is a fallback ONLY for hosts without a Rust toolchain. A failed
+    // build on a host that HAS cargo is an error, not a fallback: silently
+    // installing a lagging prebuilt over broken source recreates the very
+    // divergence this path exists to prevent. The explicit --target-dir
+    // pins the output location regardless of CARGO_TARGET_DIR/config.
     let cargo_build = std::process::Command::new("cargo")
-        .args(["build", "--release"])
+        .args(["build", "--release", "--target-dir", "target"])
         .current_dir(repo_root.join("rust"))
         .status();
     let source = match cargo_build {
         Ok(status) if status.success() => repo_root.join("rust/target/release/s5d"),
-        outcome => {
-            let reason = match outcome {
-                Ok(status) => format!("cargo build --release failed ({status})"),
-                Err(e) => format!("cargo unavailable ({e})"),
-            };
+        Ok(status) => anyhow::bail!(
+            "cargo build --release failed ({status}) — fix the build; refusing to install a prebuilt over broken source"
+        ),
+        Err(e) => {
+            let reason = format!("cargo unavailable ({e})");
             match prebuilt_binary(repo_root) {
                 Some(prebuilt) => {
                     eprintln!(
