@@ -1333,9 +1333,9 @@ fn tool_s5d_add_hypothesis(args: &Value) -> anyhow::Result<String> {
 
     let (path, mut spec) = load_spec_yaml_mcp(spec_path)?;
 
-    if !matches!(spec.tier, crate::Tier::Decision) {
+    if !matches!(spec.tier, crate::Tier::Decision | crate::Tier::High) {
         anyhow::bail!(
-            "add_hypothesis only works on decision-tier specs (this spec is {})",
+            "add_hypothesis only works on decision- or high-tier specs (this spec is {})",
             spec.tier
         );
     }
@@ -1425,9 +1425,9 @@ fn tool_s5d_add_evidence(args: &Value) -> anyhow::Result<String> {
 
     let (path, mut spec) = load_spec_yaml_mcp(spec_path)?;
 
-    if !matches!(spec.tier, crate::Tier::Decision) {
+    if !matches!(spec.tier, crate::Tier::Decision | crate::Tier::High) {
         anyhow::bail!(
-            "add_evidence only works on decision-tier specs (this spec is {})",
+            "add_evidence only works on decision- or high-tier specs (this spec is {})",
             spec.tier
         );
     }

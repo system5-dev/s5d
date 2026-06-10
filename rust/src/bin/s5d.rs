@@ -3589,6 +3589,7 @@ fn run_reconcile(spec_arg: Option<&str>) -> anyhow::Result<()> {
 
         let specs = project.discover_specs()?;
         let mut reconciled = 0usize;
+        let mut failed = 0usize;
 
         for (path, spec) in &specs {
             let filename = path.file_name().unwrap().to_string_lossy();
@@ -3627,11 +3628,15 @@ fn run_reconcile(spec_arg: Option<&str>) -> anyhow::Result<()> {
                         spec.id,
                         e
                     );
+                    failed += 1;
                 }
             }
         }
 
-        println!("\n  {} spec(s) reconciled", reconciled);
+        println!("\n  {} spec(s) reconciled, {} failed", reconciled, failed);
+        if failed > 0 {
+            anyhow::bail!("{} spec(s) failed to reconcile", failed);
+        }
     }
     Ok(())
 }
@@ -3888,9 +3893,9 @@ fn run_add_hypothesis(
     }
     let (path, mut spec) = load_spec_yaml(spec_path)?;
 
-    if !matches!(spec.tier, s5d::Tier::Decision) {
+    if !matches!(spec.tier, s5d::Tier::Decision | s5d::Tier::High) {
         anyhow::bail!(
-            "add-hypothesis only works on decision-tier specs (this spec is {})",
+            "add-hypothesis only works on decision- or high-tier specs (this spec is {})",
             spec.tier
         );
     }
@@ -3986,9 +3991,9 @@ fn run_add_evidence(
     s5d::sanitize_id(evidence_type)?;
     let (path, mut spec) = load_spec_yaml(spec_path)?;
 
-    if !matches!(spec.tier, s5d::Tier::Decision) {
+    if !matches!(spec.tier, s5d::Tier::Decision | s5d::Tier::High) {
         anyhow::bail!(
-            "add-evidence only works on decision-tier specs (this spec is {})",
+            "add-evidence only works on decision- or high-tier specs (this spec is {})",
             spec.tier
         );
     }

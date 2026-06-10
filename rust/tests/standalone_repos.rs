@@ -1824,6 +1824,52 @@ fn init_is_idempotent() {
 }
 
 #[test]
+fn init_recovers_missing_core_files_without_touching_corrupted_ones() {
+    // Scenario #14 (partial corruption): deleting config/ledger/index must
+    // not brick the project — re-running init restores the missing files.
+    // Corrupted (present but unparseable) files are NOT overwritten:
+    // repairing those is a data-loss decision that stays with the user.
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+    let s5d_dir = repo.path().join(".s5d");
+
+    for f in ["config.yaml", "ledger.yaml", "index.yaml"] {
+        fs::remove_file(s5d_dir.join(f)).unwrap();
+    }
+
+    let recovered = run_ok(repo.path(), ["init"]);
+    for f in ["config.yaml", "ledger.yaml", "index.yaml"] {
+        assert!(
+            s5d_dir.join(f).exists(),
+            "init must restore missing {f}:\n{}",
+            recovered.summary()
+        );
+        assert!(
+            recovered.stdout.contains(f),
+            "restored {f} must be reported in init output:\n{}",
+            recovered.summary()
+        );
+    }
+
+    // Restored ledger is functional: a spec can run the full lifecycle.
+    let spec_str = setup_standard_spec(&repo, "feat.recovery");
+    run_ok(repo.path(), ["preview", &spec_str]);
+    run_ok(repo.path(), ["approve", &spec_str, "--reviewer", "R"]);
+    run_ok(repo.path(), ["run-gates", &spec_str]);
+    run_ok(repo.path(), ["import", &spec_str, "--verified-by", "V"]);
+
+    // Corrupted file: init must leave the bytes exactly as found.
+    let corrupted = "{{{{ not yaml at all";
+    fs::write(s5d_dir.join("config.yaml"), corrupted).unwrap();
+    run_ok(repo.path(), ["init"]);
+    assert_eq!(
+        fs::read_to_string(s5d_dir.join("config.yaml")).unwrap(),
+        corrupted,
+        "init must never overwrite an existing (even corrupted) core file"
+    );
+}
+
+#[test]
 fn decision_has_expiry_and_do_dont() {
     let repo = StandaloneRepo::new();
     seed_searchable_rust_repo(&repo);
@@ -3610,6 +3656,283 @@ fn contract_decision_requires_confirmed_by() {
     );
 }
 
+#[test]
+fn high_tier_full_flow_with_configured_test_and_contract_gates() {
+    // Scenario #4: a high-assurance spec passes the WHOLE flow — declared
+    // test/contract gates run real commands, the built-in review gate is
+    // satisfied by recorded review evidence, and import needs no --force.
+    let repo = StandaloneRepo::new();
+    seed_searchable_rust_repo(&repo);
+    run_ok(repo.path(), ["init"]);
+    for gate in ["test", "contract"] {
+        configure_gate_command(
+            &repo,
+            gate,
+            vec![
+                s5d_bin().to_string(),
+                "validate".to_string(),
+                "{package}".to_string(),
+            ],
+        );
+    }
+
+    run_ok(
+        repo.path(),
+        [
+            "new",
+            "feat.demo.payments",
+            "--tier",
+            "high",
+            "--product",
+            "demo",
+        ],
+    );
+    let spec_path = only_spec_path(&repo);
+    let spec_str = spec_path.to_str().unwrap().to_string();
+
+    {
+        let mut spec: s5d::Spec = load_yaml(&spec_path);
+        materialize_scaffold_paths(&mut spec);
+        // High scaffold ships schema+graph+review; declare the configured
+        // command gates on top.
+        spec.gates.push(s5d::Gate {
+            kind: "test".into(),
+        });
+        spec.gates.push(s5d::Gate {
+            kind: "contract".into(),
+        });
+        fs::write(&spec_path, serde_yaml::to_string(&spec).unwrap()).unwrap();
+    }
+
+    // The built-in review gate requires recorded review evidence on a
+    // hypothesis — model the implementation approach and review it.
+    run_ok(
+        repo.path(),
+        [
+            "add-hypothesis",
+            &spec_str,
+            "--title",
+            "Charge via provider tokens",
+            "--content",
+            "Tokenized charges, no PAN storage",
+            "--scope",
+            "payments",
+        ],
+    );
+    run_ok(
+        repo.path(),
+        [
+            "add-evidence",
+            &spec_str,
+            "--hypothesis-id",
+            "charge-via-provider-tokens",
+            "--evidence-type",
+            "gate:review",
+            "--content",
+            "cross-review: token flow audited, no PAN at rest",
+            "--verdict",
+            "pass",
+        ],
+    );
+
+    run_ok(repo.path(), ["preview", &spec_str]);
+    run_ok(
+        repo.path(),
+        ["approve", &spec_str, "--reviewer", "TestReviewer"],
+    );
+    let gates = run_ok(repo.path(), ["run-gates", &spec_str]);
+    assert!(
+        gates.stdout.contains("passed: 5"),
+        "schema+graph+review+test+contract must all pass:\n{}",
+        gates.summary()
+    );
+    run_ok(
+        repo.path(),
+        ["import", &spec_str, "--verified-by", "TestVerifier"],
+    );
+
+    // Scenario #11 (show smoke): the imported spec renders.
+    let shown = run_ok(repo.path(), ["show", &spec_str]);
+    assert!(
+        shown.stdout.contains("feat.demo.payments"),
+        "show must render the imported high spec:\n{}",
+        shown.summary()
+    );
+
+    let drift = run_ok(repo.path(), ["drift-check", &spec_str]);
+    assert!(
+        drift.stdout.contains("synced"),
+        "fresh import must be synced:\n{}",
+        drift.summary()
+    );
+}
+
+#[test]
+fn decision_tier_clean_end_to_end_without_force() {
+    // Scenario #5: the full decision lifecycle must be passable WITHOUT
+    // --force. The methodological prerequisites (≥3 hypotheses, evidence on
+    // each, acceptance criteria on the problem card, challenge summary,
+    // gate:review evidence) define the canonical clean path — if this test
+    // ever needs --force, the framework's own happy path is broken.
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+
+    run_ok(
+        repo.path(),
+        [
+            "new",
+            "decision.demo.store",
+            "--tier",
+            "decision",
+            "--question",
+            "Which store backs the tracker?",
+            "--product",
+            "demo",
+        ],
+    );
+    let spec_path = only_spec_path(&repo);
+    let spec_str = spec_path.to_str().unwrap().to_string();
+
+    // Acceptance criteria on the problem card (required before deciding).
+    {
+        let mut spec: s5d::Spec = load_yaml(&spec_path);
+        if let Some(s5d::ProblemField::Card(ref mut card)) = spec.problem {
+            card.acceptance = Some("Store survives 10k events/day with zero data loss".into());
+        } else {
+            panic!("decision scaffold must carry a problem card");
+        }
+        fs::write(&spec_path, serde_yaml::to_string(&spec).unwrap()).unwrap();
+    }
+
+    // Three genuinely distinct hypotheses.
+    for (title, content) in [
+        ("SQLite", "Single-file embedded store"),
+        ("Postgres", "Dedicated relational server"),
+        ("JSONL", "Append-only log files"),
+    ] {
+        run_ok(
+            repo.path(),
+            [
+                "add-hypothesis",
+                &spec_str,
+                "--title",
+                title,
+                "--content",
+                content,
+                "--scope",
+                "tracker storage",
+            ],
+        );
+    }
+
+    // Evidence on every hypothesis; the winner carries a gate:review pass.
+    run_ok(
+        repo.path(),
+        [
+            "add-evidence",
+            &spec_str,
+            "--hypothesis-id",
+            "sqlite",
+            "--evidence-type",
+            "gate:review",
+            "--content",
+            "cross-review: fits constraints, single-writer acceptable",
+            "--verdict",
+            "pass",
+        ],
+    );
+    for loser in ["postgres", "jsonl"] {
+        run_ok(
+            repo.path(),
+            [
+                "add-evidence",
+                &spec_str,
+                "--hypothesis-id",
+                loser,
+                "--evidence-type",
+                "internal",
+                "--content",
+                "probe: operational cost exceeds budget",
+                "--verdict",
+                "fail",
+            ],
+        );
+    }
+
+    // The winner needs a spec_ref: model the implementation as a feature
+    // spec auto-linked to the hypothesis (decision without decomposition
+    // is rejected — that's the decide_rejects_winner_without_spec_ref rule).
+    run_ok(
+        repo.path(),
+        [
+            "new",
+            "feat.demo.store-sqlite",
+            "--tier",
+            "standard",
+            "--product",
+            "demo",
+            "--hypothesis-id",
+            "sqlite",
+        ],
+    );
+
+    // Decide cleanly — no --force.
+    let decided = run_ok(
+        repo.path(),
+        [
+            "decide",
+            &spec_str,
+            "--title",
+            "Pick tracker store",
+            "--winner",
+            "sqlite",
+            "--confirmed-by",
+            "TestOwner",
+            "--context",
+            "tracker storage",
+            "--decision",
+            "SQLite file",
+            "--rationale",
+            "simplest fit for single-writer load",
+            "--consequences",
+            "no concurrent writers",
+            "--challenge-summary",
+            "tactical challenge run: decision survives",
+            "--challenge-mode",
+            "tactical",
+        ],
+    );
+    assert!(
+        !decided.stdout.contains("--force") && !decided.stderr.contains("--force"),
+        "clean decide must not mention force:\n{}",
+        decided.summary()
+    );
+
+    // Full chain to import — still no --force anywhere.
+    run_ok(repo.path(), ["preview", &spec_str]);
+    run_ok(
+        repo.path(),
+        ["approve", &spec_str, "--reviewer", "TestReviewer"],
+    );
+    let gates = run_ok(repo.path(), ["run-gates", &spec_str]);
+    assert!(
+        gates.stdout.contains("passed: 1"),
+        "gate:review must pass on review evidence:\n{}",
+        gates.summary()
+    );
+    run_ok(
+        repo.path(),
+        ["import", &spec_str, "--verified-by", "TestVerifier"],
+    );
+
+    let shown = run_ok(repo.path(), ["show", &spec_str]);
+    assert!(
+        shown.stdout.contains("sqlite") || shown.stdout.contains("Pick tracker store"),
+        "show must render the recorded decision:\n{}",
+        shown.summary()
+    );
+}
+
 // ── Test 10: Shared kernel edge does NOT trigger cycle detection ──
 
 #[test]
@@ -4302,6 +4625,143 @@ fn reconcile_fails_closed_on_deleted_alias() {
         result.stderr.contains("cannot be restored") || result.stderr.contains("Re-run"),
         "reconcile should fail closed on deleted alias:\n{}",
         result.summary()
+    );
+}
+
+#[test]
+fn reconcile_failure_does_not_rebaseline_or_stamp_ledger() {
+    // Scenario #9: the historical fear was that reconcile would silently
+    // accept drifted state as the new baseline. Pin the opposite: a failed
+    // reconcile leaves no ledger entry, and the drift stays visible.
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+    let spec_str = setup_standard_spec(&repo, "feat.rec3");
+
+    run_ok(repo.path(), ["preview", &spec_str]);
+    run_ok(
+        repo.path(),
+        ["approve", &spec_str, "--reviewer", "TestReviewer"],
+    );
+    run_ok(repo.path(), ["run-gates", &spec_str]);
+    run_ok(
+        repo.path(),
+        ["import", &spec_str, "--verified-by", "TestVerifier"],
+    );
+
+    // Drift the recorded state: rename an alias artifact_id (UUID intact,
+    // but the fingerprint no longer matches the imported baseline).
+    let s5d_dir = repo.path().join(".s5d");
+    let mut aliases = s5d::AliasTable::load(&s5d_dir).unwrap();
+    let entry = aliases
+        .packages
+        .iter_mut()
+        .find(|e| e.artifact_type == "Component")
+        .expect("imported spec has a component alias");
+    entry.artifact_id = format!("{}-drifted", entry.artifact_id);
+    aliases.save(&s5d_dir).unwrap();
+
+    let drifted = run_fail(repo.path(), ["drift-check", &spec_str]);
+    assert!(
+        drifted.stdout.contains("drift") || drifted.stderr.contains("drift"),
+        "drift must be visible before reconcile:\n{}",
+        drifted.summary()
+    );
+
+    run_fail(repo.path(), ["reconcile", &spec_str]);
+
+    // No re-baseline: the ledger must NOT contain a reconcile entry...
+    let ledger = fs::read_to_string(s5d_dir.join("ledger.yaml")).unwrap();
+    assert!(
+        !ledger.contains("action: reconcile"),
+        "failed reconcile must not stamp the ledger:\n{}",
+        ledger
+    );
+    // ...and the drift must still be visible afterwards.
+    let still_drifted = run_fail(repo.path(), ["drift-check", &spec_str]);
+    assert!(
+        still_drifted.stdout.contains("drift") || still_drifted.stderr.contains("drift"),
+        "drift must survive a failed reconcile:\n{}",
+        still_drifted.summary()
+    );
+}
+
+#[test]
+fn bulk_reconcile_reports_failure_in_exit_code() {
+    // `s5d reconcile` without a spec walks all applied specs. A spec that
+    // fails to reconcile must surface in the exit code — an agent running
+    // the bulk form must not read "success" while drift persists.
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+    let spec_str = setup_standard_spec(&repo, "feat.rec4");
+
+    run_ok(repo.path(), ["preview", &spec_str]);
+    run_ok(
+        repo.path(),
+        ["approve", &spec_str, "--reviewer", "TestReviewer"],
+    );
+    run_ok(repo.path(), ["run-gates", &spec_str]);
+    run_ok(
+        repo.path(),
+        ["import", &spec_str, "--verified-by", "TestVerifier"],
+    );
+
+    // Unrecoverable drift: corrupt the component alias UUID.
+    let s5d_dir = repo.path().join(".s5d");
+    let mut aliases = s5d::AliasTable::load(&s5d_dir).unwrap();
+    let entry = aliases
+        .packages
+        .iter_mut()
+        .find(|e| e.artifact_type == "Component")
+        .expect("imported spec has a component alias");
+    entry.uuid = "00000000-0000-0000-0000-000000000000".into();
+    aliases.save(&s5d_dir).unwrap();
+
+    let outcome = run_fail(repo.path(), ["reconcile"]);
+    assert!(
+        outcome.stdout.contains("failed") || outcome.stderr.contains("failed"),
+        "bulk reconcile must report the failure:\n{}",
+        outcome.summary()
+    );
+}
+
+#[test]
+fn owning_package_corruption_is_invisible_to_drift_check() {
+    // KNOWN LIMITATION (scenario #13 family): compute_state_fingerprint
+    // hashes global aliases as type:id:uuid — owning_package is not part
+    // of the fingerprint, so its corruption is undetectable by drift-check
+    // even though rollback semantics depend on it. This test documents the
+    // current blind spot; if it starts failing, the fingerprint now covers
+    // ownership and this test should assert drift instead.
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+    let spec_str = setup_standard_spec(&repo, "feat.rec5");
+
+    run_ok(repo.path(), ["preview", &spec_str]);
+    run_ok(
+        repo.path(),
+        ["approve", &spec_str, "--reviewer", "TestReviewer"],
+    );
+    run_ok(repo.path(), ["run-gates", &spec_str]);
+    run_ok(
+        repo.path(),
+        ["import", &spec_str, "--verified-by", "TestVerifier"],
+    );
+
+    let s5d_dir = repo.path().join(".s5d");
+    let mut aliases = s5d::AliasTable::load(&s5d_dir).unwrap();
+    let entry = aliases
+        .global
+        .iter_mut()
+        .find(|e| e.owning_package.is_some())
+        .expect("imported spec owns at least one global alias");
+    entry.owning_package = Some("feat.someone.else".into());
+    aliases.save(&s5d_dir).unwrap();
+
+    let outcome = run_ok(repo.path(), ["drift-check", &spec_str]);
+    assert!(
+        outcome.stdout.contains("synced"),
+        "documents the blind spot — ownership is outside the fingerprint:\n{}",
+        outcome.summary()
     );
 }
 

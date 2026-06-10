@@ -43,72 +43,81 @@ impl S5dProject {
 
     pub fn init(at: &Path) -> anyhow::Result<(Self, InitReport)> {
         let s5d = at.join(".s5d");
-        if s5d.exists() {
-            // Idempotent: repair missing subdirs, return existing project
-            let project = Self {
-                root: at.to_path_buf(),
-            };
-            project.ensure_dirs()?;
-            let report = InitReport {
-                root: at.to_path_buf(),
-                dirs_created: vec![],
-                files_created: vec![],
-            };
-            return Ok((project, report));
-        }
-
+        let fresh = !s5d.exists();
+        let project = Self {
+            root: at.to_path_buf(),
+        };
         let mut report = InitReport {
             root: at.to_path_buf(),
             dirs_created: vec![],
             files_created: vec![],
         };
 
-        for dir in &[
-            "packages",
-            "records",
-            "tasks",
-            "harness",
-            "discovery",
-            ".locks",
-        ] {
-            let path = s5d.join(dir);
-            fs::create_dir_all(&path)?;
-            report.dirs_created.push(path);
+        if fresh {
+            for dir in &[
+                "packages",
+                "records",
+                "tasks",
+                "harness",
+                "discovery",
+                ".locks",
+            ] {
+                let path = s5d.join(dir);
+                fs::create_dir_all(&path)?;
+                report.dirs_created.push(path);
+            }
+        } else {
+            // Idempotent: repair missing subdirs on an existing project
+            project.ensure_dirs()?;
         }
 
-        let config = S5dConfig {
-            schema: "1.0".into(),
-            gate_commands: Default::default(),
-            engines: Default::default(),
-            gate_runner: None,
-            defaults: Some(Defaults {
-                tier: Some("standard".into()),
-                evidence_retention_days: Some(90),
-            }),
-        };
+        // Core files are restored in both branches: a deleted config,
+        // ledger, or index must not brick the project — re-running init
+        // recreates the missing file with defaults. Existing files (even
+        // corrupted ones) are never overwritten; repairing those is a
+        // data-loss decision that stays with the user.
+        project.ensure_core_files(&mut report)?;
+
+        Ok((project, report))
+    }
+
+    fn ensure_core_files(&self, report: &mut InitReport) -> anyhow::Result<()> {
+        let s5d = self.s5d_dir();
+
         let config_path = s5d.join("config.yaml");
-        fs::write(&config_path, serde_yaml::to_string(&config)?)?;
-        report.files_created.push(config_path);
+        if !config_path.exists() {
+            let config = S5dConfig {
+                schema: "1.0".into(),
+                gate_commands: Default::default(),
+                engines: Default::default(),
+                gate_runner: None,
+                defaults: Some(Defaults {
+                    tier: Some("standard".into()),
+                    evidence_retention_days: Some(90),
+                }),
+            };
+            fs::write(&config_path, serde_yaml::to_string(&config)?)?;
+            report.files_created.push(config_path);
+        }
 
-        let ledger = Ledger {
-            schema: "1.0".into(),
-            entries: vec![],
-        };
         let ledger_path = s5d.join("ledger.yaml");
-        fs::write(&ledger_path, serde_yaml::to_string(&ledger)?)?;
-        report.files_created.push(ledger_path);
+        if !ledger_path.exists() {
+            let ledger = Ledger {
+                schema: "1.0".into(),
+                entries: vec![],
+            };
+            fs::write(&ledger_path, serde_yaml::to_string(&ledger)?)?;
+            report.files_created.push(ledger_path);
+        }
 
-        let index = Index { features: vec![] };
         let index_path = s5d.join("index.yaml");
-        fs::write(&index_path, serde_yaml::to_string(&index)?)?;
-        report.files_created.push(index_path);
+        if !index_path.exists() {
+            let index = Index { features: vec![] };
+            fs::write(&index_path, serde_yaml::to_string(&index)?)?;
+            report.files_created.push(index_path);
+        }
 
-        Ok((
-            Self {
-                root: at.to_path_buf(),
-            },
-            report,
-        ))
+        Ok(())
     }
 
     pub fn s5d_dir(&self) -> PathBuf {
