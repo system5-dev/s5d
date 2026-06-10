@@ -77,8 +77,8 @@ Every active spec has two mutable surfaces:
 | Self-update apply | — | `s5d admin update apply` | Fast-forwards the S5D checkout, relinks skills, replaces installed binary. Legacy alias: `s5d update apply`. |
 | Create scaffold | `s5d_new` | `s5d new` | Scaffold only — does not populate problem/artifacts. CLI `--hypothesis-id` auto-links `spec_ref`. |
 | Quick note | `s5d_note` | `s5d new note.<slug> --tier note` | Hidden shorthand alias: `s5d note`. |
-| Add hypothesis | `s5d_add_hypothesis` | `s5d decision add-hypothesis` | Decision tier only. Duplicate IDs rejected. Legacy alias: `s5d add-hypothesis`. |
-| Add evidence | `s5d_add_evidence` | `s5d decision add-evidence` | Decision tier only. `formality` 1–5 on command surface. Legacy alias: `s5d add-evidence`. |
+| Add hypothesis | `s5d_add_hypothesis` | `s5d decision add-hypothesis` | Decision or high tier. Duplicate IDs rejected. Legacy alias: `s5d add-hypothesis`. |
+| Add evidence | `s5d_add_evidence` | `s5d decision add-evidence` | Decision or high tier. `formality` 1–5 on command surface. Legacy alias: `s5d add-evidence`. |
 | Validate | `s5d_validate` | `s5d verify validate` | Read-only. Must pass before preview. Legacy alias: `s5d validate`. |
 | Graph check | `s5d_graph_check` | `s5d verify graph-check` | Cycles/layering errors block preview. Legacy alias: `s5d graph-check`. |
 | Architecture check | `s5d_check` | `s5d verify check <spec>` | Read-only. Validates component paths and declared source dependencies for specs with architecture ownership. Legacy alias: `s5d check`. |
