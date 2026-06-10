@@ -14,7 +14,11 @@ mod cmd_provision;
 mod cmd_skill;
 
 #[derive(Parser)]
-#[command(name = "s5d", about = "S5D — control plane for agentic repo changes")]
+#[command(
+    name = "s5d",
+    version,
+    about = "S5D — control plane for agentic repo changes"
+)]
 struct Cli {
     #[command(subcommand)]
     command: S5dCommand,
