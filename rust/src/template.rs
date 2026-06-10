@@ -283,3 +283,18 @@ pub fn generate_record(spec_filename: &str, spec_sha256: &str) -> Record {
         drift_tolerance: None,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn scaffold_placeholder_paths_detected_until_replaced() {
+        let mut spec = generate_spec("feat.test.thing", Tier::Standard, "Prod");
+        let flagged = crate::validate::placeholder_path_components(&spec);
+        assert_eq!(flagged, vec!["comp.thing".to_string()]);
+
+        spec.artifacts.as_mut().unwrap().components[0].paths = vec!["src/real/".into()];
+        assert!(crate::validate::placeholder_path_components(&spec).is_empty());
+    }
+}
