@@ -2128,6 +2128,18 @@ fn run_new(
         s5d::generate_spec(id, tier, product_name)
     };
 
+    // The scaffold must be valid out of the box. The only way generation can
+    // produce an invalid spec is pathological input (e.g. an id long enough
+    // that derived artifact ids overflow the 64-char cap) — fail loud before
+    // writing instead of handing the user a broken file.
+    let scaffold_errors = s5d::validate_spec(&spec);
+    if !scaffold_errors.is_empty() {
+        anyhow::bail!(
+            "generated scaffold would not validate (likely the feature/product id is too long for derived artifact ids):\n  {}",
+            scaffold_errors.join("\n  ")
+        );
+    }
+
     let yaml = serde_yaml::to_string(&spec)?;
     std::fs::write(&spec_path, &yaml)?;
 
@@ -3075,6 +3087,19 @@ fn run_import(spec_arg: &str, verified_by: &str, force: bool) -> anyhow::Result<
         eprintln!("    approved: {}", approval.spec_sha256);
         eprintln!("    current:  {}", current_sha);
         std::process::exit(4);
+    }
+
+    // Scaffold placeholders must not become recorded architecture: the default
+    // standard/high gate set (schema+graph) does not inspect source paths.
+    let placeholders = s5d::validate::placeholder_path_components(&spec);
+    if !placeholders.is_empty() {
+        eprintln!(
+            "  {} component(s) still carry scaffold placeholder paths ({}): {} — set real source paths before import",
+            "error:".red(),
+            s5d::validate::SCAFFOLD_PATH_TODO,
+            placeholders.join(", ")
+        );
+        std::process::exit(8);
     }
 
     // Recompute diff and verify diff_sha256 (materialize to match preview)

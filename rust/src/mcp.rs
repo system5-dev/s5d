@@ -1138,6 +1138,15 @@ fn tool_s5d_import(args: &Value) -> anyhow::Result<String> {
         );
     }
 
+    let placeholders = crate::validate::placeholder_path_components(&spec);
+    if !placeholders.is_empty() {
+        anyhow::bail!(
+            "component(s) still carry scaffold placeholder paths ({}): {} — set real source paths before import",
+            crate::validate::SCAFFOLD_PATH_TODO,
+            placeholders.join(", ")
+        );
+    }
+
     let s5d_dir = project.s5d_dir();
     let materialized = crate::infer::materialize_spec(&spec);
     let mut aliases_check = crate::AliasTable::load(&s5d_dir)?;

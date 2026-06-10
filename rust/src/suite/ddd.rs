@@ -44,6 +44,12 @@ pub fn detect(root: &Path) -> Result<DetectReport> {
         root: root_str,
         scanned_files: scanned,
         stacks,
+        uncovered_stacks: scan
+            .stacks
+            .iter()
+            .filter(|s| !COVERED.contains(s))
+            .map(|s| s.as_str().to_string())
+            .collect(),
         truncated: scan.truncated,
         signals,
         summary: DetectSummary {

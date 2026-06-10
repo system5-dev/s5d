@@ -164,7 +164,7 @@ pub fn generate_spec(id: &str, tier: Tier, product: &str) -> Spec {
                 domain: domain_id,
                 container: container_id,
                 name: format!("{} component", feature_name.replace('-', " ")),
-                paths: vec!["TODO-set-source-paths/".into()],
+                paths: vec![crate::validate::SCAFFOLD_PATH_TODO.into()],
             }],
             ..Default::default()
         }),
