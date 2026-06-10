@@ -4726,12 +4726,13 @@ fn bulk_reconcile_reports_failure_in_exit_code() {
 
 #[test]
 fn owning_package_corruption_is_invisible_to_drift_check() {
-    // KNOWN LIMITATION (scenario #13 family): compute_state_fingerprint
-    // hashes global aliases as type:id:uuid — owning_package is not part
-    // of the fingerprint, so its corruption is undetectable by drift-check
-    // even though rollback semantics depend on it. This test documents the
-    // current blind spot; if it starts failing, the fingerprint now covers
-    // ownership and this test should assert drift instead.
+    // KNOWN LIMITATION — tracked as RAN-491 (scenario #13 family):
+    // compute_state_fingerprint hashes global aliases as type:id:uuid —
+    // owning_package is not part of the fingerprint, so its corruption is
+    // undetectable by drift-check even though rollback semantics depend on
+    // it. Fixing requires a fingerprint migration (all baselines drift).
+    // This test documents the current blind spot; when RAN-491 lands it
+    // must be flipped to assert drift instead.
     let repo = StandaloneRepo::new();
     run_ok(repo.path(), ["init"]);
     let spec_str = setup_standard_spec(&repo, "feat.rec5");
