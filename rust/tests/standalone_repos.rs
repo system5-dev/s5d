@@ -215,6 +215,19 @@ fn load_yaml<T: serde::de::DeserializeOwned>(path: &Path) -> T {
     serde_yaml::from_str(&fs::read_to_string(path).unwrap()).unwrap()
 }
 
+/// Replace the scaffold's TODO path placeholder with a real path. Import
+/// (correctly) refuses placeholder paths; tests that exercise the lifecycle
+/// must materialize them like a user would.
+fn materialize_scaffold_paths(spec: &mut s5d::Spec) {
+    if let Some(ref mut a) = spec.artifacts {
+        for c in &mut a.components {
+            if c.paths.iter().any(|p| p.contains("TODO-set-source-paths")) {
+                c.paths = vec!["src/".into()];
+            }
+        }
+    }
+}
+
 fn configure_gate_command(repo: &StandaloneRepo, gate: &str, command: Vec<String>) {
     let config_path = repo.path().join(".s5d").join("config.yaml");
     let mut config: s5d::S5dConfig = load_yaml(&config_path);
@@ -1053,6 +1066,7 @@ fn verify_and_apply_groups_preserve_legacy_aliases() {
     let spec_str = spec_path.to_str().unwrap();
     {
         let mut spec: s5d::Spec = load_yaml(&spec_path);
+        materialize_scaffold_paths(&mut spec);
         if let Some(ref mut artifacts) = spec.artifacts {
             artifacts.capabilities.push(s5d::Capability {
                 id: "cap.GroupedApplyFlow".into(),
@@ -1127,6 +1141,7 @@ fn lightweight_feature_flow_passes_with_configured_schema_gate() {
     // Add capability so lightweight validate passes
     {
         let mut spec: s5d::Spec = load_yaml(&spec_path);
+        materialize_scaffold_paths(&mut spec);
         if let Some(ref mut a) = spec.artifacts {
             a.capabilities.push(s5d::Capability {
                 id: "cap.CalculateRatio".into(),
@@ -1206,6 +1221,7 @@ fn workflow_phase_lifecycle_emits_ralph_task_package_and_records_outcome() {
 
     {
         let mut spec: s5d::Spec = load_yaml(&spec_path);
+        materialize_scaffold_paths(&mut spec);
         if let Some(ref mut artifacts) = spec.artifacts {
             artifacts.capabilities.push(s5d::Capability {
                 id: "cap.RunOperatorLoop".into(),
@@ -1424,6 +1440,7 @@ fn workflow_phase_run_records_external_engine_artifact() {
     let spec_str = spec_path.to_str().unwrap();
     {
         let mut spec: s5d::Spec = load_yaml(&spec_path);
+        materialize_scaffold_paths(&mut spec);
         if let Some(ref mut artifacts) = spec.artifacts {
             artifacts.capabilities.push(s5d::Capability {
                 id: "cap.RunExternalEngine".into(),
@@ -1545,6 +1562,7 @@ fn operational_harness_creates_worktree_and_journals_commands() {
     let spec_str = spec_path.to_str().unwrap();
     {
         let mut spec: s5d::Spec = load_yaml(&spec_path);
+        materialize_scaffold_paths(&mut spec);
         if let Some(ref mut artifacts) = spec.artifacts {
             artifacts.capabilities.push(s5d::Capability {
                 id: "cap.OperationalHarness".into(),
@@ -1689,6 +1707,7 @@ fn import_stays_blocked_when_declared_gate_only_skips() {
     // Add a custom gate kind that has no built-in handler and no configured command.
     // Schema/graph now run built-in validation, so we need a different kind to test skip behavior.
     let mut spec: s5d::Spec = load_yaml(&spec_path);
+    materialize_scaffold_paths(&mut spec);
     spec.gates = vec![s5d::Gate {
         kind: "custom_check".to_string(),
     }];
@@ -1742,6 +1761,7 @@ fn timeout_gate_is_recorded_and_blocks_import() {
     let spec_str = spec_path.to_str().unwrap();
 
     let mut spec: s5d::Spec = load_yaml(&spec_path);
+    materialize_scaffold_paths(&mut spec);
     if let Some(ref mut artifacts) = spec.artifacts {
         artifacts.capabilities.push(s5d::Capability {
             id: "cap.TimeoutGate".into(),
@@ -2289,6 +2309,7 @@ fn architecture_check_blocks_component_path_escape() {
 
     let spec_path = write_architecture_lint_spec(&repo, true);
     let mut spec: s5d::Spec = load_yaml(&spec_path);
+    materialize_scaffold_paths(&mut spec);
     let artifacts = spec.artifacts.as_mut().unwrap();
     let billing = artifacts
         .components
@@ -2314,6 +2335,7 @@ fn validate_blocks_component_without_capability_binding() {
 
     let spec_path = write_architecture_lint_spec(&repo, true);
     let mut spec: s5d::Spec = load_yaml(&spec_path);
+    materialize_scaffold_paths(&mut spec);
     spec.links
         .as_mut()
         .unwrap()
@@ -2946,6 +2968,7 @@ fn contract_full_lifecycle_end_to_end() {
 
     // Write metamodel into the spec so validate passes
     let mut spec: s5d::Spec = load_yaml(&spec_path);
+    materialize_scaffold_paths(&mut spec);
     let artifacts = spec.artifacts.as_mut().expect("should have artifacts");
     artifacts.domains.push(s5d::Domain {
         id: "dom.shop.orders".into(),
@@ -3449,6 +3472,7 @@ fn populate_minishop_feature_spec(
     paths: Vec<&str>,
 ) {
     let mut spec: s5d::Spec = load_yaml(spec_path);
+    materialize_scaffold_paths(&mut spec);
     let artifacts = spec
         .artifacts
         .as_mut()
@@ -3938,6 +3962,7 @@ fn setup_standard_spec(repo: &StandaloneRepo, feature_id: &str) -> String {
     );
     let spec_path = only_spec_path(repo);
     let mut spec: s5d::Spec = load_yaml(&spec_path);
+    materialize_scaffold_paths(&mut spec);
     let artifacts = spec.artifacts.as_mut().unwrap();
     artifacts.domains.push(s5d::Domain {
         id: "dom.core".into(),
@@ -3997,6 +4022,7 @@ fn approve_rejects_spec_modified_since_preview() {
     // Modify spec after preview (add a description to change the SHA)
     let spec_path = only_spec_path(&repo);
     let mut spec: s5d::Spec = load_yaml(&spec_path);
+    materialize_scaffold_paths(&mut spec);
     spec.context = Some("modified after preview".into());
     fs::write(&spec_path, serde_yaml::to_string(&spec).unwrap()).unwrap();
 
@@ -4031,6 +4057,7 @@ fn import_rejects_spec_modified_since_approval() {
     // Modify spec after approval
     let spec_path = only_spec_path(&repo);
     let mut spec: s5d::Spec = load_yaml(&spec_path);
+    materialize_scaffold_paths(&mut spec);
     spec.context = Some("modified after approval".into());
     fs::write(&spec_path, serde_yaml::to_string(&spec).unwrap()).unwrap();
 
@@ -4344,6 +4371,7 @@ fn rollback_of_first_spec_does_not_break_second_spec_sharing_global_artifact() {
     let spec1_str = spec1_path.to_str().unwrap().to_string();
     {
         let mut spec: s5d::Spec = load_yaml(&spec1_path);
+        materialize_scaffold_paths(&mut spec);
         let arts = spec.artifacts.as_mut().unwrap();
         arts.capabilities.push(s5d::Capability {
             id: "cap.A".into(),
@@ -4382,6 +4410,7 @@ fn rollback_of_first_spec_does_not_break_second_spec_sharing_global_artifact() {
     let spec2_str = spec2_path.to_str().unwrap().to_string();
     {
         let mut spec: s5d::Spec = load_yaml(&spec2_path);
+        materialize_scaffold_paths(&mut spec);
         let arts = spec.artifacts.as_mut().unwrap();
         arts.capabilities.push(s5d::Capability {
             id: "cap.B".into(),
@@ -4449,6 +4478,7 @@ fn shared_global_drift_visible_for_non_owner_spec() {
     let spec1_str = spec1_path.to_str().unwrap().to_string();
     {
         let mut spec: s5d::Spec = load_yaml(&spec1_path);
+        materialize_scaffold_paths(&mut spec);
         let arts = spec.artifacts.as_mut().unwrap();
         arts.capabilities.push(s5d::Capability {
             id: "cap.A".into(),
@@ -4486,6 +4516,7 @@ fn shared_global_drift_visible_for_non_owner_spec() {
     let spec2_str = spec2_path.to_str().unwrap().to_string();
     {
         let mut spec: s5d::Spec = load_yaml(&spec2_path);
+        materialize_scaffold_paths(&mut spec);
         let arts = spec.artifacts.as_mut().unwrap();
         arts.capabilities.push(s5d::Capability {
             id: "cap.B".into(),
@@ -4639,5 +4670,34 @@ auto_noted: false
         result.stderr.contains("binds_to"),
         "should catch empty binds_to:\n{}",
         result.summary()
+    );
+}
+
+#[test]
+fn import_rejects_scaffold_placeholder_paths() {
+    let repo = StandaloneRepo::new();
+    seed_searchable_rust_repo(&repo);
+    run_ok(repo.path(), ["init"]);
+    run_ok(
+        repo.path(),
+        [
+            "new",
+            "feat.shop.todo",
+            "--tier",
+            "standard",
+            "--product",
+            "shop",
+        ],
+    );
+    let spec_path = only_spec_path(&repo);
+    let spec_str = spec_path.to_str().unwrap();
+    run_ok(repo.path(), ["preview", spec_str]);
+    run_ok(repo.path(), ["approve", spec_str, "--reviewer", "R"]);
+    run_ok(repo.path(), ["run-gates", spec_str]);
+    let denied = run_fail(repo.path(), ["import", spec_str, "--verified-by", "V"]);
+    assert!(
+        denied.stderr.contains("scaffold placeholder paths"),
+        "import must refuse the TODO scaffold path: {}",
+        denied.summary()
     );
 }

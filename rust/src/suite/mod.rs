@@ -131,6 +131,9 @@ pub struct DetectReport {
     pub root: String,
     pub scanned_files: usize,
     pub stacks: Vec<String>,
+    /// Detected stacks this skill's checks do NOT cover (mixed-repo disclosure).
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub uncovered_stacks: Vec<String>,
     /// True when the repo walk hit the file cap — coverage is partial.
     #[serde(skip_serializing_if = "std::ops::Not::not")]
     pub truncated: bool,

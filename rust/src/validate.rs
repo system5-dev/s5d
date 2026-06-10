@@ -1,6 +1,25 @@
 use crate::models::*;
 use std::path::{Component as PathComponent, Path};
 
+/// Scaffold placeholder for component source paths. `s5d new` emits it so a
+/// fresh spec validates; import refuses it so the placeholder cannot become
+/// recorded architecture on the default (non-architecture-gated) path.
+pub const SCAFFOLD_PATH_TODO: &str = "TODO-set-source-paths/";
+
+/// Components whose paths still carry the scaffold placeholder.
+pub fn placeholder_path_components(spec: &crate::models::Spec) -> Vec<String> {
+    spec.artifacts
+        .as_ref()
+        .map(|a| {
+            a.components
+                .iter()
+                .filter(|c| c.paths.iter().any(|p| p.contains("TODO-set-source-paths")))
+                .map(|c| c.id.clone())
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
 pub fn validate_spec(spec: &Spec) -> Vec<String> {
     let mut errors = Vec::new();
 
