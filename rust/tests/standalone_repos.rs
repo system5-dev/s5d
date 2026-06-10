@@ -1056,7 +1056,7 @@ fn verify_and_apply_groups_preserve_legacy_aliases() {
         if let Some(ref mut artifacts) = spec.artifacts {
             artifacts.capabilities.push(s5d::Capability {
                 id: "cap.GroupedApplyFlow".into(),
-                domain: "cli".into(),
+                domain: "dom.s5d.core".into(),
                 name: "GroupedApplyFlow".into(),
                 description: Some("Exercise grouped verify/apply CLI".into()),
                 since: None,
@@ -1130,7 +1130,7 @@ fn lightweight_feature_flow_passes_with_configured_schema_gate() {
         if let Some(ref mut a) = spec.artifacts {
             a.capabilities.push(s5d::Capability {
                 id: "cap.CalculateRatio".into(),
-                domain: "billing".into(),
+                domain: "dom.Billing.core".into(),
                 name: "CalculateRatio".into(),
                 description: None,
                 since: None,
@@ -1209,7 +1209,7 @@ fn workflow_phase_lifecycle_emits_ralph_task_package_and_records_outcome() {
         if let Some(ref mut artifacts) = spec.artifacts {
             artifacts.capabilities.push(s5d::Capability {
                 id: "cap.RunOperatorLoop".into(),
-                domain: "billing".into(),
+                domain: "dom.Billing.core".into(),
                 name: "RunOperatorLoop".into(),
                 description: Some("Emit bounded Ralph task packages".into()),
                 since: None,
@@ -1427,7 +1427,7 @@ fn workflow_phase_run_records_external_engine_artifact() {
         if let Some(ref mut artifacts) = spec.artifacts {
             artifacts.capabilities.push(s5d::Capability {
                 id: "cap.RunExternalEngine".into(),
-                domain: "billing".into(),
+                domain: "dom.Billing.core".into(),
                 name: "RunExternalEngine".into(),
                 description: Some("Record external engine phase artifacts".into()),
                 since: None,
@@ -1548,7 +1548,7 @@ fn operational_harness_creates_worktree_and_journals_commands() {
         if let Some(ref mut artifacts) = spec.artifacts {
             artifacts.capabilities.push(s5d::Capability {
                 id: "cap.OperationalHarness".into(),
-                domain: "billing".into(),
+                domain: "dom.Billing.core".into(),
                 name: "OperationalHarness".into(),
                 description: Some("Harness worktree and command journal".into()),
                 since: None,
@@ -1745,7 +1745,7 @@ fn timeout_gate_is_recorded_and_blocks_import() {
     if let Some(ref mut artifacts) = spec.artifacts {
         artifacts.capabilities.push(s5d::Capability {
             id: "cap.TimeoutGate".into(),
-            domain: "billing".into(),
+            domain: "dom.Billing.core".into(),
             name: "TimeoutGate".into(),
             description: None,
             since: None,
@@ -2963,10 +2963,15 @@ fn contract_full_lifecycle_end_to_end() {
         description: None,
         since: None,
     });
+    artifacts.systems.push(s5d::SoftwareSystem {
+        id: "sys.test".into(),
+        product: "shop".into(),
+        name: "Test system".into(),
+    });
     artifacts.containers.push(s5d::Container {
         id: "ctr.api".into(),
         name: "API".into(),
-        system: String::new(),
+        system: "sys.test".into(),
         technology: None,
     });
     artifacts.components.push(s5d::Component {
@@ -3444,6 +3449,22 @@ fn populate_minishop_feature_spec(
     paths: Vec<&str>,
 ) {
     let mut spec: s5d::Spec = load_yaml(spec_path);
+    let artifacts = spec
+        .artifacts
+        .as_mut()
+        .expect("feature should have artifacts");
+    // Replace the scaffold's placeholder chain — this test composes its own
+    // architecture, and the TODO-paths scaffold component would (correctly)
+    // fail the architecture check.
+    artifacts.domains.clear();
+    artifacts.capabilities.clear();
+    artifacts.systems.clear();
+    artifacts.containers.clear();
+    artifacts.components.clear();
+    if let Some(ref mut links) = spec.links {
+        links.feature_to_domain.clear();
+        links.component_to_capability.clear();
+    }
     let artifacts = spec
         .artifacts
         .as_mut()
@@ -3934,10 +3955,15 @@ fn setup_standard_spec(repo: &StandaloneRepo, feature_id: &str) -> String {
         description: None,
         since: None,
     });
+    artifacts.systems.push(s5d::SoftwareSystem {
+        id: "sys.test".into(),
+        product: "shop".into(),
+        name: "Test system".into(),
+    });
     artifacts.containers.push(s5d::Container {
         id: "ctr.api".into(),
         name: "API".into(),
-        system: String::new(),
+        system: "sys.test".into(),
         technology: None,
     });
     artifacts.components.push(s5d::Component {
@@ -4321,7 +4347,7 @@ fn rollback_of_first_spec_does_not_break_second_spec_sharing_global_artifact() {
         let arts = spec.artifacts.as_mut().unwrap();
         arts.capabilities.push(s5d::Capability {
             id: "cap.A".into(),
-            domain: "".into(),
+            domain: "dom.shop.core".into(),
             name: "CapA".into(),
             description: None,
             since: None,
@@ -4359,7 +4385,7 @@ fn rollback_of_first_spec_does_not_break_second_spec_sharing_global_artifact() {
         let arts = spec.artifacts.as_mut().unwrap();
         arts.capabilities.push(s5d::Capability {
             id: "cap.B".into(),
-            domain: "".into(),
+            domain: "dom.shop.core".into(),
             name: "CapB".into(),
             description: None,
             since: None,
@@ -4426,7 +4452,7 @@ fn shared_global_drift_visible_for_non_owner_spec() {
         let arts = spec.artifacts.as_mut().unwrap();
         arts.capabilities.push(s5d::Capability {
             id: "cap.A".into(),
-            domain: "".into(),
+            domain: "dom.shared.core".into(),
             name: "A".into(),
             description: None,
             since: None,
@@ -4463,7 +4489,7 @@ fn shared_global_drift_visible_for_non_owner_spec() {
         let arts = spec.artifacts.as_mut().unwrap();
         arts.capabilities.push(s5d::Capability {
             id: "cap.B".into(),
-            domain: "".into(),
+            domain: "dom.shared.core".into(),
             name: "B".into(),
             description: None,
             since: None,

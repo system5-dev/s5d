@@ -113,6 +113,10 @@ pub struct AnalysisReport {
     /// Number of files the checks actually inspected (0 when StackNotCovered).
     pub scanned_files: usize,
     pub stacks: Vec<String>,
+    /// Detected stacks this skill's checks do NOT cover — files in these
+    /// stacks were present but not inspected (mixed-repo partial coverage).
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub uncovered_stacks: Vec<String>,
     /// True when the repo walk hit the file cap — coverage is partial.
     #[serde(skip_serializing_if = "std::ops::Not::not")]
     pub truncated: bool,

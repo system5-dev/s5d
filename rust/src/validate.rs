@@ -159,30 +159,32 @@ pub fn validate_spec(spec: &Spec) -> Vec<String> {
             validate_id(&ss.id, "supersystem", &mut errors);
         }
 
-        // Metamodel enforcement — always active, no draft bypass
+        // Metamodel enforcement — always active, no draft bypass.
+        // Each error carries the minimal shape so a cold user can fix it in
+        // one edit instead of discovering the field cascade one error at a time.
         match spec.tier {
             Tier::Standard | Tier::High => {
                 if artifacts.domains.is_empty() {
                     errors.push(
-                        "metamodel: spec has no domains — required for standard/high tier".into(),
+                        "metamodel: spec has no domains — required for standard/high tier\n    shape: domains: [{id, product, name, classification: core|supporting|generic}]".into(),
                     );
                 }
                 if artifacts.capabilities.is_empty() {
                     errors.push(
-                        "metamodel: spec has no capabilities — required for standard/high tier"
+                        "metamodel: spec has no capabilities — required for standard/high tier\n    shape: capabilities: [{id, domain, name}]"
                             .into(),
                     );
                 }
                 if artifacts.components.is_empty() {
                     errors.push(
-                        "metamodel: spec has no components — required for standard/high tier"
+                        "metamodel: spec has no components — required for standard/high tier\n    shape: components: [{id, feature, domain, container, name, paths: [..]}] (container needs systems/containers entries: {id, product, name} / {id, system, name})"
                             .into(),
                     );
                 }
             }
             Tier::Lightweight if artifacts.capabilities.is_empty() => {
                 errors.push(
-                    "metamodel: spec has no capabilities — required for lightweight tier".into(),
+                    "metamodel: spec has no capabilities — required for lightweight tier\n    shape: capabilities: [{id, domain, name}] (plus a matching domains entry: {id, product, name, classification})".into(),
                 );
             }
             _ => {}

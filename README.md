@@ -40,7 +40,13 @@ s5d init
 s5d admin update check
 s5d admin update apply
 
-# Create a spec
+# Optional, recommended on a repo S5D hasn't seen: build the discovery index
+# (file index, evidence, dependency graph under .s5d/discovery/) so specs and
+# trace queries can link to real code. Agent flows run a fuller Discover stage.
+s5d discover sync
+
+# Create a spec — the scaffold validates out of the box; edit the generated
+# placeholder architecture (domain/capability/component, TODO paths) to match reality
 s5d new feat.my-feature --product myapp
 
 # Edit the spec YAML, then:

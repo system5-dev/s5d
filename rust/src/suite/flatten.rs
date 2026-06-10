@@ -43,6 +43,11 @@ pub fn flatten(json: &str, label: &str, min: Severity) -> anyhow::Result<String>
         .get("truncated")
         .and_then(|t| t.as_bool())
         .unwrap_or(false);
+    let uncovered: Vec<&str> = v
+        .get("uncovered_stacks")
+        .and_then(|a| a.as_array())
+        .map(|a| a.iter().filter_map(|s| s.as_str()).collect())
+        .unwrap_or_default();
 
     let items = normalize_items(&v);
 
@@ -64,6 +69,12 @@ pub fn flatten(json: &str, label: &str, min: Severity) -> anyhow::Result<String>
     ));
     if truncated {
         out.push_str("⚠ scan truncated at the file cap — coverage is partial\n");
+    }
+    if !uncovered.is_empty() {
+        out.push_str(&format!(
+            "⚠ detected but not covered by these checks: {}\n",
+            uncovered.join(", ")
+        ));
     }
 
     if kept.is_empty() {
@@ -327,6 +338,19 @@ mod tests {
         assert!(
             out.contains("truncated at the file cap"),
             "must surface: {}",
+            out
+        );
+    }
+
+    #[test]
+    fn uncovered_stacks_surface_in_markdown() {
+        let json = r#"{"uncovered_stacks":["python"],"findings":[
+            {"check":"a","severity":"high","path":"x.ts","detail":"d","fix":"f"}
+        ]}"#;
+        let out = flatten(json, "t", Severity::Medium).unwrap();
+        assert!(
+            out.contains("not covered by these checks: python"),
+            "must disclose: {}",
             out
         );
     }
