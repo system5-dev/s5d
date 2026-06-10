@@ -487,17 +487,33 @@ fn install_binary_from_repo(
     repo_root: &std::path::Path,
     destination: &std::path::Path,
 ) -> anyhow::Result<()> {
-    let source = if let Some(prebuilt) = prebuilt_binary(repo_root) {
-        prebuilt
-    } else {
-        let status = std::process::Command::new("cargo")
-            .args(["build", "--release"])
-            .current_dir(repo_root.join("rust"))
-            .status()?;
-        if !status.success() {
-            anyhow::bail!("cargo build --release failed");
+    // Build from the checked-out source first: it always matches the repo
+    // revision. The tracked prebuilt is refreshed only at release time and
+    // has shipped stale binaries silently (alpha.7 → alpha.8 both lagged) —
+    // it is a fallback for hosts without a Rust toolchain, never the default.
+    let cargo_build = std::process::Command::new("cargo")
+        .args(["build", "--release"])
+        .current_dir(repo_root.join("rust"))
+        .status();
+    let source = match cargo_build {
+        Ok(status) if status.success() => repo_root.join("rust/target/release/s5d"),
+        outcome => {
+            let reason = match outcome {
+                Ok(status) => format!("cargo build --release failed ({status})"),
+                Err(e) => format!("cargo unavailable ({e})"),
+            };
+            match prebuilt_binary(repo_root) {
+                Some(prebuilt) => {
+                    eprintln!(
+                        "  warn: {} — installing tracked prebuilt {} (may lag the repo revision)",
+                        reason,
+                        prebuilt.display()
+                    );
+                    prebuilt
+                }
+                None => anyhow::bail!("{} and no tracked prebuilt for this platform", reason),
+            }
         }
-        repo_root.join("rust/target/release/s5d")
     };
 
     if let Some(parent) = destination.parent() {
