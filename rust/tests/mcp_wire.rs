@@ -74,6 +74,23 @@ impl McpServer {
         self.request("tools/call", json!({"name": name, "arguments": arguments}))
     }
 
+    /// Like call_tool, but asserts the call succeeded (no JSON-RPC error,
+    /// no in-band isError). Chain steps must fail AT the step, not three
+    /// calls later with a misleading symptom.
+    fn call_tool_ok(&mut self, name: &str, arguments: Value) -> Value {
+        let resp = self.call_tool(name, arguments);
+        assert!(
+            resp.get("error").is_none(),
+            "{name} returned a JSON-RPC error: {resp}"
+        );
+        assert_ne!(
+            resp["result"]["isError"],
+            json!(true),
+            "{name} returned an in-band tool error: {resp}"
+        );
+        resp
+    }
+
     /// Close stdin and wait for the process to exit.
     fn shutdown(mut self) -> std::process::ExitStatus {
         drop(self.stdin.take());
@@ -163,10 +180,9 @@ fn mcp_wire_full_lifecycle_with_import_guard_parity() {
     let mut server = McpServer::spawn(root);
     server.request("initialize", json!({}));
 
-    let init = server.call_tool("s5d_init", json!({}));
-    assert!(init["result"].is_object(), "s5d_init failed: {init}");
+    server.call_tool_ok("s5d_init", json!({}));
 
-    let created = server.call_tool(
+    let created = server.call_tool_ok(
         "s5d_new",
         json!({"id": "feat.demo.wire", "tier": "standard", "product": "demo"}),
     );
@@ -181,12 +197,12 @@ fn mcp_wire_full_lifecycle_with_import_guard_parity() {
         .map(|n| format!(".s5d/packages/{n}"))
         .expect("spec file created");
 
-    server.call_tool("s5d_preview", json!({"spec": spec_rel}));
-    server.call_tool(
+    server.call_tool_ok("s5d_preview", json!({"spec": spec_rel}));
+    server.call_tool_ok(
         "s5d_approve",
         json!({"spec": spec_rel, "reviewer": "roman"}),
     );
-    server.call_tool("s5d_run_gates", json!({"spec": spec_rel}));
+    server.call_tool_ok("s5d_run_gates", json!({"spec": spec_rel}));
 
     // The scaffold still carries TODO-set-source-paths/ — the MCP import
     // path must refuse it just like the CLI does (guard parity).
@@ -211,13 +227,13 @@ fn mcp_wire_full_lifecycle_with_import_guard_parity() {
     )
     .unwrap();
 
-    server.call_tool("s5d_preview", json!({"spec": spec_rel}));
-    server.call_tool(
+    server.call_tool_ok("s5d_preview", json!({"spec": spec_rel}));
+    server.call_tool_ok(
         "s5d_approve",
         json!({"spec": spec_rel, "reviewer": "roman"}),
     );
-    server.call_tool("s5d_run_gates", json!({"spec": spec_rel}));
-    let imported = server.call_tool(
+    server.call_tool_ok("s5d_run_gates", json!({"spec": spec_rel}));
+    let imported = server.call_tool_ok(
         "s5d_import",
         json!({"spec": spec_rel, "verified_by": "diana"}),
     );
@@ -226,7 +242,7 @@ fn mcp_wire_full_lifecycle_with_import_guard_parity() {
         "import after materializing paths must succeed: {imported}"
     );
 
-    let status = server.call_tool("s5d_status", json!({}));
+    let status = server.call_tool_ok("s5d_status", json!({}));
     assert!(
         tool_text(&status).contains("feat.demo.wire"),
         "status must show the imported spec: {status}"

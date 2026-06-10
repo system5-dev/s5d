@@ -36,13 +36,13 @@ Applies only to work grounded in an existing repository.
 - **`structure_outline` is an object:** `{ summary: string, signatures: [string], types: [string] }`.
 - **Edit-after-approve invalidates approval.** Any spec change after `s5d state approve` changes its sha256. Recovery: preview → approve → import again.
 - **`verified-by` ≠ `reviewer`.** Import requires a verifier different from the approver. Conventional split: human approves, Diana verifies.
-- **gate:review on standard/high tier** closes via `s5d_waiver` (MCP-only), not evidence.
+- **gate:review on decision/high tier** closes via review evidence: `s5d decision add-evidence <spec> --hypothesis-id <id> --evidence-type gate:review --verdict pass`. Hypothesis/evidence commands accept decision- and high-tier specs.
 - **Decide requires ≥3 hypotheses.** Two-hypothesis decisions are blocked without `--force`.
 - **Discovery output = tables, not prose.** "Discover this project" / "дискавери" produces Init Source Survey + Architecture Map in `.s5d/discovery/`, with `[VERIFIED]/[INFERRED]/[SPECULATIVE]` tags per claim. See §Discover.
 
 ### MCP-only operations
 
-- `s5d_waiver` — waive a gate (only path for gate:review on standard/high tier specs)
+- `s5d_waiver` — record an expiring gate waiver (FPF B.3.4:5). Doctrine: assurance gates (schema, graph, review) close via fixes/evidence, not waivers — see the High-tier note below.
 
 ---
 

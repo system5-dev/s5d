@@ -212,7 +212,7 @@ fn core_tools() -> Vec<Value> {
         }),
         json!({
             "name": "s5d_add_hypothesis",
-            "description": "Add a hypothesis to a decision-tier spec",
+            "description": "Add a hypothesis to a decision- or high-tier spec",
             "inputSchema": {
                 "type": "object",
                 "required": ["spec", "title", "content", "scope"],
@@ -229,7 +229,7 @@ fn core_tools() -> Vec<Value> {
         }),
         json!({
             "name": "s5d_add_evidence",
-            "description": "Add evidence to a hypothesis in a decision-tier spec",
+            "description": "Add evidence to a hypothesis in a decision- or high-tier spec",
             "inputSchema": {
                 "type": "object",
                 "required": ["spec", "hypothesis_id", "evidence_type", "content", "verdict"],
