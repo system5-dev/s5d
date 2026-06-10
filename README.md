@@ -122,10 +122,12 @@ Available as a plugin for Claude Code, Gemini CLI, and Codex.
 | Tier | When | Default gates |
 |------|------|---------------|
 | Note | Capture context | None |
-| Decision | Compare alternatives | None |
+| Decision | Compare alternatives | Review |
 | Lightweight | Simple feature | Schema |
 | Standard | Regular feature | Schema + Graph |
-| High | Auth / payment / PII | Schema + Graph |
+| High | Auth / payment / PII | Schema + Graph + Review |
+
+The review gate is satisfied by recorded review evidence: `s5d decision add-evidence <spec> --hypothesis-id <id> --evidence-type gate:review --verdict pass ...` (works on decision- and high-tier specs).
 
 Schema, graph, and architecture gates run built-in validation. Add `architecture` to a spec to check component paths and declared source dependencies. Use `s5d codebase sync/check` when you track `.s5d/codebase/*` coverage snapshots, and `s5d discover sync/check` when you track `.s5d/discovery/*` discovery artifacts. Add `lint`, `test`, `contract` gates to your spec when you've configured commands for them in `.s5d/config.yaml`.
 
