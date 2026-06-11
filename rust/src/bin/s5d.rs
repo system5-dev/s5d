@@ -810,6 +810,9 @@ enum UpdateCommand {
         /// Show what would be updated without writing files
         #[arg(long)]
         dry_run: bool,
+        /// Re-verify auto-update guards under the update lock; skip gracefully if unsafe
+        #[arg(long, hide = true)]
+        if_safe: bool,
     },
     /// Session-start self-update: apply in the background when safe, else prompt
     Auto,
@@ -993,7 +996,9 @@ fn main() -> anyhow::Result<()> {
         },
         S5dCommand::Update { command } => match command {
             UpdateCommand::Check { hook, json } => cmd_provision::run_update_check(hook, json),
-            UpdateCommand::Apply { dry_run } => cmd_provision::run_update_apply(dry_run),
+            UpdateCommand::Apply { dry_run, if_safe } => {
+                cmd_provision::run_update_apply(dry_run, if_safe)
+            }
             UpdateCommand::Auto => cmd_provision::run_update_auto(),
         },
         S5dCommand::Admin { command } => run_admin_command(command),
@@ -1143,7 +1148,9 @@ fn run_admin_command(command: AdminCommand) -> anyhow::Result<()> {
 fn run_update_command(command: UpdateCommand) -> anyhow::Result<()> {
     match command {
         UpdateCommand::Check { hook, json } => cmd_provision::run_update_check(hook, json),
-        UpdateCommand::Apply { dry_run } => cmd_provision::run_update_apply(dry_run),
+        UpdateCommand::Apply { dry_run, if_safe } => {
+            cmd_provision::run_update_apply(dry_run, if_safe)
+        }
         UpdateCommand::Auto => cmd_provision::run_update_auto(),
     }
 }
