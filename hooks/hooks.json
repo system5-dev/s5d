@@ -7,7 +7,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "if command -v s5d >/dev/null 2>&1; then s5d update check --hook; else echo 's5d binary not installed — clone https://github.com/system5-dev/s5d and run ./install.sh'; fi",
+            "command": "if command -v s5d >/dev/null 2>&1; then s5d update auto; else echo 's5d binary not installed — clone https://github.com/system5-dev/s5d and run ./install.sh'; fi",
             "timeout": 10000
           }
         ]

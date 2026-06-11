@@ -811,6 +811,8 @@ enum UpdateCommand {
         #[arg(long)]
         dry_run: bool,
     },
+    /// Session-start self-update: apply in the background when safe, else prompt
+    Auto,
 }
 
 #[derive(Subcommand)]
@@ -992,6 +994,7 @@ fn main() -> anyhow::Result<()> {
         S5dCommand::Update { command } => match command {
             UpdateCommand::Check { hook, json } => cmd_provision::run_update_check(hook, json),
             UpdateCommand::Apply { dry_run } => cmd_provision::run_update_apply(dry_run),
+            UpdateCommand::Auto => cmd_provision::run_update_auto(),
         },
         S5dCommand::Admin { command } => run_admin_command(command),
         S5dCommand::Bootstrap { manifest } => run_bootstrap(&manifest),
@@ -1141,6 +1144,7 @@ fn run_update_command(command: UpdateCommand) -> anyhow::Result<()> {
     match command {
         UpdateCommand::Check { hook, json } => cmd_provision::run_update_check(hook, json),
         UpdateCommand::Apply { dry_run } => cmd_provision::run_update_apply(dry_run),
+        UpdateCommand::Auto => cmd_provision::run_update_auto(),
     }
 }
 

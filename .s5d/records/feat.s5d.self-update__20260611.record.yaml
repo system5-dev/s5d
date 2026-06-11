@@ -1,0 +1,69 @@
+spec_ref: feat.s5d.self-update__20260611.s5d.yaml
+spec_sha256: sha256:0cec95be67213834e6512a90e464b5b66cbd95ccc7fb54fb6d9ab836ed54011d
+status: applied
+sync_status: synced
+status_history:
+- status: proposed
+  timestamp: 2026-06-11T13:10:25.240973+00:00
+- status: previewed
+  timestamp: 2026-06-11T13:10:25.334461+00:00
+- status: approved
+  timestamp: 2026-06-11T13:10:25.351040+00:00
+- status: applied
+  timestamp: 2026-06-11T13:18:34.292507+00:00
+active_phase: null
+phase_history:
+- phase_id: build
+  status: active
+  timestamp: 2026-06-11T13:18:34.321437+00:00
+  reviewer: null
+  engine: manual
+  notes: Started work state 'Build'
+- phase_id: build
+  status: accepted
+  timestamp: 2026-06-11T13:18:34.338543+00:00
+  reviewer: roman
+  engine: null
+  notes: Human run evidence acceptance
+phase_runs: []
+approvals:
+- reviewer: roman
+  date: 2026-06-11T13:10:25.351034+00:00
+  spec_sha256: sha256:af091dc7d3b2dfbdb7286b049a2e93447f26eae783f734b810ee9d64b990bfd1
+  diff_sha256: sha256:eb1e3080540d8c20d2252e96360fc57a21136b9cf0eba8844f5c0334b9ebb6b9
+preview:
+  diff_sha256: sha256:eb1e3080540d8c20d2252e96360fc57a21136b9cf0eba8844f5c0334b9ebb6b9
+  previewed_spec_sha256: sha256:af091dc7d3b2dfbdb7286b049a2e93447f26eae783f734b810ee9d64b990bfd1
+  actions:
+    create: 3
+    link: 3
+    update: 4
+    delete: 0
+  log: null
+reflection: null
+gate_results:
+- kind: schema
+  status: passed
+  attempt: 1
+  timestamp: 2026-06-11T13:18:34.230488+00:00
+  log: schema validation passed (built-in)
+  exit_code: null
+  evidence_path: evidence/feat.s5d.self-update/schema_1.log
+  command: null
+  duration_ms: 0
+  waiver_expires_at: null
+  kind_class: null
+- kind: graph
+  status: passed
+  attempt: 1
+  timestamp: 2026-06-11T13:18:34.230946+00:00
+  log: graph check passed (built-in)
+  exit_code: null
+  evidence_path: evidence/feat.s5d.self-update/graph_1.log
+  command: null
+  duration_ms: 0
+  waiver_expires_at: null
+  kind_class: null
+decision: null
+verified_by: diana
+drift_tolerance: null
