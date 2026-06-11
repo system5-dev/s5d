@@ -299,8 +299,15 @@ pub fn run_update_check(hook: bool, json: bool) -> anyhow::Result<()> {
 
 /// Session-start self-update. Applies in a DETACHED background process when
 /// every safety guard passes; otherwise degrades to the visible prompt of
-/// `update check --hook`. Never fails the hosting hook.
+/// `update check --hook`. Never fails the hosting hook: every error path in
+/// the inner body is swallowed here — a broken log file or spawn failure must
+/// not turn a session start into a hook error.
 pub fn run_update_auto() -> anyhow::Result<()> {
+    let _ = run_update_auto_inner();
+    Ok(())
+}
+
+fn run_update_auto_inner() -> anyhow::Result<()> {
     if std::env::var("S5D_AUTO_UPDATE").as_deref() == Ok("0") {
         return run_update_check(true, false);
     }
@@ -325,8 +332,10 @@ pub fn run_update_auto() -> anyhow::Result<()> {
                 .append(true)
                 .open(&log_path)?;
             let exe = std::env::current_exe()?;
+            // --if-safe makes the child re-verify guards AFTER taking the
+            // update lock: the pre-spawn check above is advisory only.
             std::process::Command::new(exe)
-                .args(["admin", "update", "apply"])
+                .args(["admin", "update", "apply", "--if-safe"])
                 .stdin(std::process::Stdio::null())
                 .stdout(log.try_clone()?)
                 .stderr(log)
@@ -373,17 +382,21 @@ fn auto_update_safety(repo_root: &std::path::Path) -> Option<String> {
         Ok(b) => b,
         Err(e) => return Some(format!("cannot resolve branch: {e}")),
     };
-    let default_branch = git_output(repo_root, &["symbolic-ref", "refs/remotes/origin/HEAD"])
+    // Fail closed when the default branch cannot be determined — guessing
+    // "main" would auto-apply on the wrong branch for master/trunk repos.
+    let Some(default_branch) = git_output(repo_root, &["symbolic-ref", "refs/remotes/origin/HEAD"])
         .ok()
         .and_then(|r| r.rsplit('/').next().map(str::to_string))
-        .unwrap_or_else(|| "main".to_string());
+    else {
+        return Some("cannot determine the default branch (origin/HEAD unset)".into());
+    };
     if branch != default_branch {
         return Some(format!("checkout is on '{branch}', not '{default_branch}'"));
     }
     None
 }
 
-pub fn run_update_apply(dry_run: bool) -> anyhow::Result<()> {
+pub fn run_update_apply(dry_run: bool, if_safe: bool) -> anyhow::Result<()> {
     let repo_root = locate_s5d_repo_root().ok_or_else(|| {
         anyhow::anyhow!("cannot locate S5D checkout. Re-run install.sh from a cloned s5d repo.")
     })?;
@@ -398,12 +411,74 @@ pub fn run_update_apply(dry_run: bool) -> anyhow::Result<()> {
         return Ok(());
     }
 
+    // One update at a time: concurrent session starts may each spawn an
+    // apply; the loser exits gracefully instead of racing pull/build/install.
+    let Some(_lock) = UpdateLock::acquire(&repo_root)? else {
+        println!("another s5d update is already in progress — skipping");
+        return Ok(());
+    };
+
+    // Auto mode re-verifies guards AFTER taking the lock: the spawner's
+    // pre-check is advisory and the tree may have changed since.
+    if if_safe {
+        if let Some(reason) = auto_update_safety(&repo_root) {
+            println!("auto-update skipped: {}", reason);
+            return Ok(());
+        }
+    }
+
     run_git_command(&repo_root, &["fetch", "--tags", "--prune"])?;
     run_git_command(&repo_root, &["pull", "--ff-only"])?;
     install_skills_from_repo(&repo_root)?;
     install_binary_from_repo(&repo_root, &destination)?;
     println!("{} S5D updated", "ok".green());
     Ok(())
+}
+
+/// Advisory cross-process lock for update apply. Lives in .git/ (always
+/// present in a checkout, never committed). Stale locks (>30 min — far past
+/// any release build) are broken and retaken once.
+struct UpdateLock {
+    path: std::path::PathBuf,
+}
+
+impl UpdateLock {
+    fn acquire(repo_root: &std::path::Path) -> anyhow::Result<Option<Self>> {
+        let path = repo_root.join(".git").join("s5d-update.lock");
+        for attempt in 0..2 {
+            match std::fs::OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .open(&path)
+            {
+                Ok(mut f) => {
+                    use std::io::Write;
+                    let _ = writeln!(f, "{}", std::process::id());
+                    return Ok(Some(Self { path }));
+                }
+                Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {
+                    let stale = std::fs::metadata(&path)
+                        .and_then(|m| m.modified())
+                        .ok()
+                        .and_then(|t| t.elapsed().ok())
+                        .is_some_and(|age| age.as_secs() > 30 * 60);
+                    if stale && attempt == 0 {
+                        let _ = std::fs::remove_file(&path);
+                        continue;
+                    }
+                    return Ok(None);
+                }
+                Err(e) => return Err(e.into()),
+            }
+        }
+        Ok(None)
+    }
+}
+
+impl Drop for UpdateLock {
+    fn drop(&mut self) {
+        let _ = std::fs::remove_file(&self.path);
+    }
 }
 
 fn check_for_update() -> anyhow::Result<UpdateCheck> {
@@ -609,7 +684,7 @@ fn install_binary_from_repo(
     if let Some(parent) = destination.parent() {
         std::fs::create_dir_all(parent)?;
     }
-    let tmp = destination.with_extension("s5d-update-tmp");
+    let tmp = destination.with_extension(format!("s5d-update-tmp.{}", std::process::id()));
     std::fs::copy(&source, &tmp)?;
     make_executable(&tmp)?;
     std::fs::rename(&tmp, destination)?;
@@ -1148,7 +1223,31 @@ mod tests {
         std::fs::write(dir.path().join("a.txt"), "a").unwrap();
         git(dir.path(), &["add", "."]);
         git(dir.path(), &["commit", "-q", "-m", "init"]);
+        // Self-remote so origin/HEAD resolves — the guard fails closed without it.
+        git(dir.path(), &["remote", "add", "origin", "."]);
+        git(dir.path(), &["fetch", "-q", "origin"]);
+        git(
+            dir.path(),
+            &[
+                "symbolic-ref",
+                "refs/remotes/origin/HEAD",
+                "refs/remotes/origin/main",
+            ],
+        );
         dir
+    }
+
+    #[test]
+    fn auto_update_fails_closed_without_origin_head() {
+        let dir = tempfile::TempDir::new().unwrap();
+        git(dir.path(), &["init", "-q", "-b", "main"]);
+        git(dir.path(), &["config", "user.email", "t@example.test"]);
+        git(dir.path(), &["config", "user.name", "T"]);
+        std::fs::write(dir.path().join("a.txt"), "a").unwrap();
+        git(dir.path(), &["add", "."]);
+        git(dir.path(), &["commit", "-q", "-m", "init"]);
+        let reason = auto_update_safety(dir.path()).expect("no origin/HEAD must skip");
+        assert!(reason.contains("default branch"), "{reason}");
     }
 
     #[test]
@@ -1164,6 +1263,41 @@ mod tests {
         std::fs::write(repo.path().join("b.txt"), "dirty").unwrap();
         let reason = auto_update_safety(repo.path()).expect("dirty tree must skip");
         assert!(reason.contains("local changes"), "{reason}");
+    }
+
+    #[test]
+    fn update_lock_is_exclusive_and_released_on_drop() {
+        let repo = seeded_repo();
+        let first = super::UpdateLock::acquire(repo.path()).unwrap();
+        assert!(first.is_some(), "first acquire must succeed");
+        assert!(
+            super::UpdateLock::acquire(repo.path()).unwrap().is_none(),
+            "second concurrent acquire must be refused"
+        );
+        drop(first);
+        assert!(
+            super::UpdateLock::acquire(repo.path()).unwrap().is_some(),
+            "lock must be released on drop"
+        );
+    }
+
+    #[test]
+    fn update_lock_breaks_stale_lock() {
+        let repo = seeded_repo();
+        let lock_path = repo.path().join(".git").join("s5d-update.lock");
+        std::fs::write(&lock_path, "999999").unwrap();
+        // Backdate far past the 30-minute staleness threshold.
+        let old = std::time::SystemTime::now() - std::time::Duration::from_secs(3600);
+        let f = std::fs::OpenOptions::new()
+            .write(true)
+            .open(&lock_path)
+            .unwrap();
+        f.set_modified(old).unwrap();
+        drop(f);
+        assert!(
+            super::UpdateLock::acquire(repo.path()).unwrap().is_some(),
+            "stale lock must be broken and retaken"
+        );
     }
 
     #[test]
