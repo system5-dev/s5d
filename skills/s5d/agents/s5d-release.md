@@ -105,6 +105,18 @@ Default policy:
 - Material new mode / breaking change in skill contract → minor bump: `v0.11.0` (drops alpha).
 - Ask if unclear; suggest both options.
 
+Version touchpoints — ALL FOUR must match the tag (stale manifests shipped
+as 0.3.0 for months while the binary was at 0.11.x):
+
+```bash
+# rust/Cargo.toml `version`, then rebuild so Cargo.lock follows
+# .claude-plugin/plugin.json  "version"
+# .codex-plugin/plugin.json   "version"
+# gemini-extension.json       "version"
+grep -r '"version"' .claude-plugin/plugin.json .codex-plugin/plugin.json gemini-extension.json
+# also refresh the tracked prebuilt: cargo build --release && cp rust/target/release/s5d bin/s5d-darwin-arm64
+```
+
 Annotated tag:
 
 ```bash
