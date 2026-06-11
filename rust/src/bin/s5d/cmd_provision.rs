@@ -436,15 +436,29 @@ pub fn run_update_apply(dry_run: bool, if_safe: bool) -> anyhow::Result<()> {
 }
 
 /// Advisory cross-process lock for update apply. Lives in .git/ (always
-/// present in a checkout, never committed). Stale locks (>30 min — far past
-/// any release build) are broken and retaken once.
+/// present in a checkout, never committed).
+///
+/// Owner-aware by token: Drop removes the file only while it still holds OUR
+/// token, so a successor that legitimately broke a stale lock is never
+/// unlocked by the previous holder exiting late (the A-breaks/B-takes/A-drops
+/// TOCTOU a tribunal round caught). Staleness = holder process provably dead
+/// (kill -0), with an mtime fallback only when liveness cannot be determined.
 struct UpdateLock {
     path: std::path::PathBuf,
+    token: String,
 }
 
 impl UpdateLock {
     fn acquire(repo_root: &std::path::Path) -> anyhow::Result<Option<Self>> {
         let path = repo_root.join(".git").join("s5d-update.lock");
+        let token = format!(
+            "{}:{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        );
         for attempt in 0..2 {
             match std::fs::OpenOptions::new()
                 .write(true)
@@ -453,16 +467,11 @@ impl UpdateLock {
             {
                 Ok(mut f) => {
                     use std::io::Write;
-                    let _ = writeln!(f, "{}", std::process::id());
-                    return Ok(Some(Self { path }));
+                    let _ = write!(f, "{token}");
+                    return Ok(Some(Self { path, token }));
                 }
                 Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {
-                    let stale = std::fs::metadata(&path)
-                        .and_then(|m| m.modified())
-                        .ok()
-                        .and_then(|t| t.elapsed().ok())
-                        .is_some_and(|age| age.as_secs() > 30 * 60);
-                    if stale && attempt == 0 {
+                    if attempt == 0 && Self::holder_is_stale(&path) {
                         let _ = std::fs::remove_file(&path);
                         continue;
                     }
@@ -473,11 +482,50 @@ impl UpdateLock {
         }
         Ok(None)
     }
+
+    fn holder_is_stale(path: &std::path::Path) -> bool {
+        match Self::holder_alive(path) {
+            // Provably dead holder → stale regardless of age.
+            Some(false) => true,
+            // Provably alive holder → never stale (long release builds are legit).
+            Some(true) => false,
+            // Liveness unknown → conservative mtime fallback.
+            None => std::fs::metadata(path)
+                .and_then(|m| m.modified())
+                .ok()
+                .and_then(|t| t.elapsed().ok())
+                .is_some_and(|age| age.as_secs() > 30 * 60),
+        }
+    }
+
+    #[cfg(unix)]
+    fn holder_alive(path: &std::path::Path) -> Option<bool> {
+        let token = std::fs::read_to_string(path).ok()?;
+        let pid: u32 = token.split(':').next()?.trim().parse().ok()?;
+        let status = std::process::Command::new("kill")
+            .args(["-0", &pid.to_string()])
+            .output()
+            .ok()?
+            .status;
+        Some(status.success())
+    }
+
+    #[cfg(not(unix))]
+    fn holder_alive(_path: &std::path::Path) -> Option<bool> {
+        None
+    }
 }
 
 impl Drop for UpdateLock {
     fn drop(&mut self) {
-        let _ = std::fs::remove_file(&self.path);
+        // Remove only OUR lock: if the file no longer holds our token, a
+        // successor owns it and must keep running locked.
+        if std::fs::read_to_string(&self.path)
+            .map(|c| c == self.token)
+            .unwrap_or(false)
+        {
+            let _ = std::fs::remove_file(&self.path);
+        }
     }
 }
 
@@ -1282,21 +1330,29 @@ mod tests {
     }
 
     #[test]
-    fn update_lock_breaks_stale_lock() {
+    fn update_lock_breaks_lock_of_dead_holder() {
         let repo = seeded_repo();
         let lock_path = repo.path().join(".git").join("s5d-update.lock");
-        std::fs::write(&lock_path, "999999").unwrap();
-        // Backdate far past the 30-minute staleness threshold.
-        let old = std::time::SystemTime::now() - std::time::Duration::from_secs(3600);
-        let f = std::fs::OpenOptions::new()
-            .write(true)
-            .open(&lock_path)
-            .unwrap();
-        f.set_modified(old).unwrap();
-        drop(f);
+        // PID 999999 is far above macOS/Linux defaults — provably dead,
+        // so the lock is stale regardless of its age.
+        std::fs::write(&lock_path, "999999:0").unwrap();
         assert!(
             super::UpdateLock::acquire(repo.path()).unwrap().is_some(),
-            "stale lock must be broken and retaken"
+            "lock of a dead holder must be broken and retaken"
+        );
+    }
+
+    #[test]
+    fn update_lock_drop_spares_successor_lock() {
+        let repo = seeded_repo();
+        let lock_path = repo.path().join(".git").join("s5d-update.lock");
+        let ours = super::UpdateLock::acquire(repo.path()).unwrap().unwrap();
+        // A successor (simulated) broke and retook the lock with its token.
+        std::fs::write(&lock_path, format!("{}:42", std::process::id())).unwrap();
+        drop(ours);
+        assert!(
+            lock_path.exists(),
+            "dropping a superseded lock must not unlock the successor"
         );
     }
 
