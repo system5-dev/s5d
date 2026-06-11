@@ -5303,3 +5303,74 @@ fn ci_check_reports_stale_template() {
         outcome.summary()
     );
 }
+
+#[test]
+fn ci_init_rewires_managed_stub_and_check_flags_unwired_gitlab() {
+    // Managed root stub regenerates on re-init (tribunal: a stale managed
+    // stub was un-fixable); a user-owned .gitlab-ci.yml without the include
+    // is a silent enforcement gap that ci check must fail on.
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+
+    // Managed stub: downgrade its marker, re-init must restore it.
+    run_ok(repo.path(), ["ci", "init", "--gitlab"]);
+    let root_ci = repo.path().join(".gitlab-ci.yml");
+    let stub = fs::read_to_string(&root_ci).unwrap();
+    let downgraded = stub.replace("# s5d-ci-template: v", "# s5d-ci-template: v0-was-");
+    fs::write(
+        &root_ci,
+        stub.replacen(
+            &stub.lines().next().unwrap().to_string(),
+            "# s5d-ci-template: v0 (old)",
+            1,
+        ),
+    )
+    .unwrap();
+    let _ = downgraded;
+    run_ok(repo.path(), ["ci", "init", "--gitlab"]);
+    assert!(
+        fs::read_to_string(&root_ci)
+            .unwrap()
+            .starts_with(&format!("# s5d-ci-template: v{}", 1)),
+        "managed stub must be regenerated to the current template version"
+    );
+
+    // User-owned root pipeline without the include → fragment generated but
+    // never wired: ci check must fail loudly.
+    fs::write(&root_ci, "stages: [test]\n").unwrap();
+    let unwired = run_fail(repo.path(), ["ci", "check"]);
+    assert!(
+        unwired.stdout.contains("does not include") || unwired.stderr.contains("does not include"),
+        "unwired GitLab fragment must fail ci check:\n{}",
+        unwired.summary()
+    );
+
+    // User-owned root stays untouched on re-init; the include note is the
+    // only output (root stub is skip-and-note, not bail — bail is the
+    // contract for the fragment/workflow files).
+    let user_owned = "## docs mention s5d-ci-template: here\ninclude: []\n";
+    fs::write(&root_ci, user_owned).unwrap();
+    let noted = run_ok(repo.path(), ["ci", "init", "--gitlab"]);
+    assert_eq!(
+        fs::read_to_string(&root_ci).unwrap(),
+        user_owned,
+        "user-owned root .gitlab-ci.yml must never be modified"
+    );
+    assert!(
+        noted.stdout.contains("add this include"),
+        "init must print the include instruction for user-owned root:\n{}",
+        noted.summary()
+    );
+
+    // Tightened ownership on managed files: a first line merely MENTIONING
+    // the marker text mid-line is user-owned — workflow init must refuse.
+    let gh = repo.path().join(".github/workflows/s5d.yml");
+    fs::create_dir_all(gh.parent().unwrap()).unwrap();
+    fs::write(&gh, "## docs mention s5d-ci-template: here\nname: mine\n").unwrap();
+    let denied = run_fail(repo.path(), ["ci", "init", "--github"]);
+    assert!(
+        denied.stderr.contains("user-owned"),
+        "mid-line marker mention must not count as managed:\n{}",
+        denied.summary()
+    );
+}

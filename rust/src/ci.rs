@@ -61,21 +61,25 @@ pub fn ci_init(root: &Path, targets: &[CiTarget], force: bool) -> anyhow::Result
                 write_managed_file(&fragment_dest, gitlab_fragment(), force)?;
                 written.push(fragment_dest);
 
-                // Create a stub .gitlab-ci.yml only when it doesn't exist yet.
-                // If it already exists we return the path in written so the
-                // caller can print a note — but we do NOT overwrite it.
+                // Root .gitlab-ci.yml: create when absent, regenerate when it
+                // is OUR managed stub (marker), and never touch a user-owned
+                // pipeline file — the caller prints the include instruction
+                // for that case instead.
                 let root_ci = root.join(".gitlab-ci.yml");
+                let pkg_version = env!("CARGO_PKG_VERSION");
+                let stub = format!(
+                    "{}\ninclude:\n  - local: .s5d/ci/s5d.gitlab-ci.yml\n",
+                    marker_line(pkg_version)
+                );
                 if !root_ci.exists() {
-                    let pkg_version = env!("CARGO_PKG_VERSION");
-                    let marker = marker_line(pkg_version);
-                    let stub = format!(
-                        "{}\ninclude:\n  - local: .s5d/ci/s5d.gitlab-ci.yml\n",
-                        marker
-                    );
                     std::fs::write(&root_ci, stub)?;
                     written.push(root_ci);
+                } else if is_managed(&std::fs::read_to_string(&root_ci)?) {
+                    write_managed_file(&root_ci, stub, force)?;
+                    written.push(root_ci);
                 }
-                // else: caller checks written to know whether the stub was created
+                // else: user-owned — caller sees it missing from `written`
+                // and prints the manual include instruction
             }
         }
     }
@@ -83,15 +87,21 @@ pub fn ci_init(root: &Path, targets: &[CiTarget], force: bool) -> anyhow::Result
     Ok(written)
 }
 
+/// A file is managed iff its FIRST line starts with the exact marker prefix —
+/// same contract parse_marker_version uses. `contains` would let a user-owned
+/// file mentioning the marker in a comment be overwritten without --force.
+fn is_managed(content: &str) -> bool {
+    content
+        .lines()
+        .next()
+        .unwrap_or("")
+        .starts_with("# s5d-ci-template:")
+}
+
 fn write_managed_file(dest: &Path, content: String, force: bool) -> anyhow::Result<()> {
     if dest.exists() {
         let existing = std::fs::read_to_string(dest)?;
-        let managed = existing
-            .lines()
-            .next()
-            .unwrap_or("")
-            .contains("s5d-ci-template:");
-        if !managed && !force {
+        if !is_managed(&existing) && !force {
             anyhow::bail!(
                 "user-owned file (no s5d-ci-template marker): {} — re-run with --force to overwrite",
                 dest.display()
@@ -126,7 +136,7 @@ pub fn ci_check(root: &Path) -> anyhow::Result<CiCheckReport> {
         let content = std::fs::read_to_string(path)?;
         let first_line = content.lines().next().unwrap_or("");
 
-        if !first_line.contains("s5d-ci-template:") {
+        if !is_managed(&content) {
             findings.push(format!(
                 "{}: unmanaged (no s5d-ci-template marker)",
                 path.display()
@@ -153,6 +163,22 @@ pub fn ci_check(root: &Path) -> anyhow::Result<CiCheckReport> {
                 path.display()
             ));
             any_found = true;
+        }
+    }
+
+    // Wiring check: a generated GitLab fragment that no root .gitlab-ci.yml
+    // includes never runs — that is a silent enforcement gap, not cosmetics.
+    let fragment = root.join(".s5d").join("ci").join("s5d.gitlab-ci.yml");
+    if fragment.exists() {
+        let root_ci = root.join(".gitlab-ci.yml");
+        let wired = root_ci.exists()
+            && std::fs::read_to_string(&root_ci)?.contains(".s5d/ci/s5d.gitlab-ci.yml");
+        if !wired {
+            findings.push(
+                ".gitlab-ci.yml does not include .s5d/ci/s5d.gitlab-ci.yml — the generated GitLab job never runs; add:\n  include:\n    - local: .s5d/ci/s5d.gitlab-ci.yml"
+                    .to_string(),
+            );
+            stale = true;
         }
     }
 

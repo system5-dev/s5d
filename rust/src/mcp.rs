@@ -549,15 +549,26 @@ fn tool_s5d_ci_init(args: &Value) -> anyhow::Result<String> {
     if gitlab || all {
         targets.push(crate::ci::CiTarget::Gitlab);
     }
+    let gitlab_requested = gitlab || all;
     let written = crate::ci::ci_init(&root, &targets, force)?;
-    Ok(format!(
+    let mut out = format!(
         "CI config generated: {}",
         written
             .iter()
             .map(|p| p.display().to_string())
             .collect::<Vec<_>>()
             .join(", ")
-    ))
+    );
+    // Parity with the CLI note: when the user owns .gitlab-ci.yml we must not
+    // touch it, but reporting plain success would hide that the generated
+    // GitLab job is not wired in yet.
+    let root_ci = root.join(".gitlab-ci.yml");
+    if gitlab_requested && !written.contains(&root_ci) {
+        out.push_str(
+            "\nNOTE: .gitlab-ci.yml is user-owned — add this include or the generated job never runs:\n  include:\n    - local: .s5d/ci/s5d.gitlab-ci.yml",
+        );
+    }
+    Ok(out)
 }
 
 fn tool_s5d_ci_check(_args: &Value) -> anyhow::Result<String> {
