@@ -1,0 +1,69 @@
+spec_ref: feat.s5d.ci-init__20260611.s5d.yaml
+spec_sha256: sha256:5fdf0f97d489ede0e679ca9272bf140ee5c601040e07667b3651c02f15d3572f
+status: applied
+sync_status: synced
+status_history:
+- status: proposed
+  timestamp: 2026-06-11T06:38:46.009314+00:00
+- status: previewed
+  timestamp: 2026-06-11T06:39:34.888482+00:00
+- status: approved
+  timestamp: 2026-06-11T06:39:34.911814+00:00
+- status: applied
+  timestamp: 2026-06-11T06:55:03.574601+00:00
+active_phase: null
+phase_history:
+- phase_id: build
+  status: active
+  timestamp: 2026-06-11T06:39:34.931130+00:00
+  reviewer: null
+  engine: manual
+  notes: Started work state 'Build'
+- phase_id: build
+  status: accepted
+  timestamp: 2026-06-11T06:55:03.600514+00:00
+  reviewer: roman
+  engine: null
+  notes: Human run evidence acceptance
+phase_runs: []
+approvals:
+- reviewer: roman
+  date: 2026-06-11T06:39:34.911810+00:00
+  spec_sha256: sha256:57b03e95da125a157e7199e0780cc8ee95b92c2fc0500db17c0afae684db3835
+  diff_sha256: sha256:e0a8d28f4b24925f3026c894da460332e5ca9329c8f540cf5789dfef9c8e2f17
+preview:
+  diff_sha256: sha256:e0a8d28f4b24925f3026c894da460332e5ca9329c8f540cf5789dfef9c8e2f17
+  previewed_spec_sha256: sha256:57b03e95da125a157e7199e0780cc8ee95b92c2fc0500db17c0afae684db3835
+  actions:
+    create: 6
+    link: 3
+    update: 1
+    delete: 0
+  log: null
+reflection: null
+gate_results:
+- kind: schema
+  status: passed
+  attempt: 1
+  timestamp: 2026-06-11T06:55:03.523394+00:00
+  log: schema validation passed (built-in)
+  exit_code: null
+  evidence_path: evidence/feat.s5d.ci-init/schema_1.log
+  command: null
+  duration_ms: 0
+  waiver_expires_at: null
+  kind_class: null
+- kind: graph
+  status: passed
+  attempt: 1
+  timestamp: 2026-06-11T06:55:03.523501+00:00
+  log: graph check passed (built-in)
+  exit_code: null
+  evidence_path: evidence/feat.s5d.ci-init/graph_1.log
+  command: null
+  duration_ms: 0
+  waiver_expires_at: null
+  kind_class: null
+decision: null
+verified_by: diana
+drift_tolerance: null

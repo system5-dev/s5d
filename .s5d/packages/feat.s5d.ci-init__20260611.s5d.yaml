@@ -1,0 +1,189 @@
+s5d: '1.0'
+id: feat.s5d.ci-init
+version: 1.0.0
+product: s5d
+tier: standard
+allow_update: true
+meta:
+  title: ci-init
+  authors: []
+  date: 2026-06-11
+  tickets: []
+  adrs: []
+  renames: []
+context: '## Problem
+
+  All S5D enforcement is local (pre-commit hook, CLI/MCP gates); `git push` bypasses
+  it. PRs can merge with invalid specs, undeclared architecture edges, or drifted
+  state.
+
+
+  ## Goal
+
+  `s5d ci init` generates a self-contained PR pipeline (GitHub Actions / GitLab CI)
+  that installs the pinned release binary and runs `s5d ci exec` — built-in read-only
+  checks only (validate, architecture for declaring specs, drift-check). Decision:
+  decision.s5d.ci-injection (winner: generated-standalone-workflow).
+
+
+  ## Privacy
+
+  Classification: Internal
+
+  '
+workflow:
+  mode: plan
+  target_architecture:
+    summary: 'CI generation and execution live in the compiled binary: rust/src/ci.rs
+      holds templates (version-marked) and the built-in check orchestrator; thin CLI
+      group `s5d ci init|check|exec` plus MCP parity tools. Generated config never
+      embeds check logic — it installs a pinned binary and calls `s5d ci exec`, so
+      checks evolve with the binary, not the template. gate_commands are structurally
+      excluded from CI exec (trust boundary).'
+    invariants:
+    - Generated CI config contains no check logic beyond install + s5d ci exec
+    - ci exec never executes config-defined gate_commands
+    - Generated files carry a template-version marker; ci check detects staleness
+      and user modification
+    - ci init is idempotent; refuses to overwrite marker-less (user-owned) files without
+      --force
+  delivery_strategy:
+    summary: 'Single slice: ci.rs module + CLI/MCP wiring + integration tests + docs;
+      measure by running ci init on the s5d repo itself and a sandbox repo with a
+      failing spec.'
+    rationale: null
+  resources: null
+  role_map:
+    reviewer: reviewer
+    implementer: coder
+    owner: human
+    verifier: reviewer
+  review_policy:
+    cross_model_required: false
+    required_on: []
+  structure_outline: null
+  execution_mode:
+    engine: manual
+    max_iterations: null
+    stop_conditions:
+    - Phase acceptance reached
+    - Approved scope exhausted
+    - New decision required
+  phases:
+  - id: prototype
+    title: Prototype
+    scope: Reduce unknowns before committed implementation
+    roles:
+    - owner
+    - implementer
+    acceptance:
+    - Critical feasibility questions answered
+    - Telemetry approach identified
+    rollback:
+    - Discard spike output if assumptions fail
+  - id: build
+    title: Build
+    scope: Implement ci.rs (templates + exec orchestrator), CLI group, MCP parity,
+      integration tests, docs
+    roles:
+    - implementer
+    - reviewer
+    acceptance:
+    - ci init writes GitHub workflow / GitLab fragment with version marker; idempotent
+      re-run
+    - ci exec fails non-zero on invalid spec, architecture violation, or drift; green
+      on clean repo
+    - ci check reports stale/modified templates
+    - cargo test green incl. new integration tests; fmt/clippy clean
+    rollback:
+    - Revert or reconcile if gates or review fail
+  - id: measure
+    title: Measure
+    scope: 'Dogfood: run ci init in sandbox + against s5d repo; verify PR-blocking
+      behavior end-to-end'
+    roles:
+    - owner
+    - verifier
+    acceptance:
+    - 'Sandbox: broken spec → ci exec exit != 0; fixed → 0'
+    - Generated workflow runs green on a real GitHub PR
+    rollback:
+    - Iterate or kill if evidence stays weak
+artifacts:
+  products:
+  - id: s5d
+    name: s5d
+    organization: null
+  domains:
+  - id: dom.s5d.core
+    product: s5d
+    name: s5d core domain
+    classification: supporting
+    description: Scaffold default — rename or split into real bounded contexts
+    team: null
+    maturity_level: null
+  capabilities:
+  - id: cap.ci-init
+    domain: dom.s5d.core
+    name: CI enforcement injection
+    description: null
+    since: null
+  entities: []
+  features:
+  - id: feat.s5d.ci-init
+    product: s5d
+    name: ci-init
+    description: null
+  use_cases: []
+  systems:
+  - id: sys.s5d
+    product: s5d
+    name: s5d
+  containers:
+  - id: ctr.s5d.app
+    system: sys.s5d
+    name: s5d app
+    technology: null
+  components:
+  - id: comp.ci-init
+    feature: feat.s5d.ci-init
+    domain: dom.s5d.core
+    container: ctr.s5d.app
+    name: ci init/check/exec
+    paths:
+    - rust/src/ci.rs
+    - rust/src/bin/s5d/cmd_ci.rs
+  roles: []
+  concerns: []
+  metrics: []
+  supersystems: []
+  transports: []
+links:
+  feature_to_domain:
+  - domain: dom.s5d.core
+    feature: feat.s5d.ci-init
+  use_case_to_capability: []
+  use_case_to_entity: []
+  component_to_capability:
+  - capability: cap.ci-init
+    component: comp.ci-init
+  component_to_entity: []
+  container_to_capability: []
+  concern_to_metric: []
+  component_to_container: []
+  edges: []
+  depends_on: []
+  entity_relations: []
+  capability_to_entity: []
+  capability_to_concern: []
+contracts: []
+gates:
+- kind: schema
+- kind: graph
+roc: null
+problem: null
+hypotheses: []
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false

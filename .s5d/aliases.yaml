@@ -83,6 +83,24 @@ global:
   package_id: null
   owning_package: feat.s5d.rust-native-suite
   deprecated: false
+- uuid: cc9758f6-656c-4ea5-bc6a-abf360f01eee
+  artifact_id: dom.s5d.core
+  artifact_type: Domain
+  package_id: null
+  owning_package: feat.s5d.ci-init
+  deprecated: false
+- uuid: b149bc2f-bdd7-4e72-900e-8d779dbdecd7
+  artifact_id: sys.s5d
+  artifact_type: SoftwareSystem
+  package_id: null
+  owning_package: feat.s5d.ci-init
+  deprecated: false
+- uuid: 0c5aa45b-306e-47c4-ae7f-7b167695af14
+  artifact_id: ctr.s5d.app
+  artifact_type: Container
+  package_id: null
+  owning_package: feat.s5d.ci-init
+  deprecated: false
 packages:
 - uuid: 0d3f4abc-8b28-422f-ba12-3bdb515b33ac
   artifact_id: cap.LogError
@@ -478,5 +496,23 @@ packages:
   artifact_id: comp.s5d.suite
   artifact_type: Component
   package_id: feat.s5d.rust-native-suite
+  owning_package: null
+  deprecated: false
+- uuid: d1a59ab0-ad53-4698-968d-592d87f56e7f
+  artifact_id: cap.ci-init
+  artifact_type: Capability
+  package_id: feat.s5d.ci-init
+  owning_package: null
+  deprecated: false
+- uuid: 5e570f34-a9cc-4544-8877-5d7e66169d47
+  artifact_id: feat.s5d.ci-init
+  artifact_type: Feature
+  package_id: feat.s5d.ci-init
+  owning_package: null
+  deprecated: false
+- uuid: 4b6ef70f-6a9b-4be1-adbc-d3337ee0c789
+  artifact_id: comp.ci-init
+  artifact_type: Component
+  package_id: feat.s5d.ci-init
   owning_package: null
   deprecated: false
