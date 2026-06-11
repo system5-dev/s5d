@@ -104,3 +104,8 @@ features:
   status: applied
   product: s5d
   version: 1.0.0
+- id: feat.s5d.self-update
+  spec_path: packages/feat.s5d.self-update__20260611.s5d.yaml
+  status: applied
+  product: s5d
+  version: 1.0.0

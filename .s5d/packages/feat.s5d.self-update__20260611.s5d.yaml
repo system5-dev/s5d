@@ -1,0 +1,185 @@
+s5d: '1.0'
+id: feat.s5d.self-update
+version: 1.0.0
+product: s5d
+tier: standard
+allow_update: true
+meta:
+  title: self-update
+  authors: []
+  date: 2026-06-11
+  tickets: []
+  adrs: []
+  renames: []
+context: '## Problem
+
+  Session-start hook only REPORTS update availability; applying requires a manual
+  `s5d admin update apply`. Machines drift (Silaya stayed on alpha.7 until manually
+  updated). Roman''s requirement: the skill must self-update.
+
+
+  ## Goal
+
+  `s5d update auto` (new hook entrypoint): when an update is available AND the checkout
+  is safe to fast-forward (clean tree, on default branch, opt-out not set), spawn
+  `update apply` DETACHED in the background (hook timeout is 10s; a cargo release
+  build is minutes) and print one line. In every unsafe case, degrade to today''s
+  prompt. Running sessions keep the old inode (tmp+rename install) and pick the new
+  binary next session.
+
+
+  ## Privacy
+
+  Classification: Internal
+
+  '
+workflow:
+  mode: plan
+  target_architecture:
+    summary: 'Self-update lives behind explicit safety guards in the compiled binary:
+      auto-apply fires only on (update_available && clean tree && default branch &&
+      S5D_AUTO_UPDATE != 0); anything else falls back to the visible prompt. The apply
+      itself stays the existing audited path (fetch + pull --ff-only + relink skills
+      + tmp+rename binary install). Detached spawn logs to ~/.s5d-update.log.'
+    invariants:
+    - Auto-apply never runs on a dirty tree or non-default branch — it degrades to
+      the prompt
+    - S5D_AUTO_UPDATE=0 disables auto-apply (prompt-only)
+    - 'Hook never blocks: apply is spawned detached, hook returns immediately'
+    - Apply path remains ff-only — local work is never rewritten
+  delivery_strategy:
+    summary: 'Single slice: guard fn + spawn in cmd_provision, CLI subcommand, hooks.json
+      swap, tests for guard decisions, live verify on this machine.'
+    rationale: null
+  resources: null
+  role_map:
+    owner: human
+    reviewer: reviewer
+    verifier: reviewer
+    implementer: coder
+  review_policy:
+    cross_model_required: false
+    required_on: []
+  structure_outline: null
+  execution_mode:
+    engine: manual
+    max_iterations: null
+    stop_conditions:
+    - Phase acceptance reached
+    - Approved scope exhausted
+    - New decision required
+  phases:
+  - id: prototype
+    title: Prototype
+    scope: Reduce unknowns before committed implementation
+    roles:
+    - owner
+    - implementer
+    acceptance:
+    - Critical feasibility questions answered
+    - Telemetry approach identified
+    rollback:
+    - Discard spike output if assumptions fail
+  - id: build
+    title: Build
+    scope: Implement approved scope and pass local gates
+    roles:
+    - implementer
+    - reviewer
+    acceptance:
+    - update auto with dirty tree / non-main branch / opt-out prints prompt, exits
+      0, spawns nothing
+    - update auto with clean+behind checkout spawns detached apply and returns under
+      hook timeout
+    - cargo test green, fmt/clippy clean
+    rollback:
+    - Revert or reconcile if gates or review fail
+  - id: measure
+    title: Measure
+    scope: Collect telemetry and close the loop with an explicit verdict
+    roles:
+    - owner
+    - verifier
+    acceptance:
+    - 'Live: machine behind a release self-updates on session start without blocking
+      the session'
+    rollback:
+    - Iterate or kill if evidence stays weak
+artifacts:
+  products:
+  - id: s5d
+    name: s5d
+    organization: null
+  domains:
+  - id: dom.s5d.core
+    product: s5d
+    name: s5d core domain
+    classification: supporting
+    description: Scaffold default — rename or split into real bounded contexts
+    team: null
+    maturity_level: null
+  capabilities:
+  - id: cap.self-update
+    domain: dom.s5d.core
+    name: Skill self-update
+    description: null
+    since: null
+  entities: []
+  features:
+  - id: feat.s5d.self-update
+    product: s5d
+    name: self-update
+    description: null
+  use_cases: []
+  systems:
+  - id: sys.s5d
+    product: s5d
+    name: s5d
+  containers:
+  - id: ctr.s5d.app
+    system: sys.s5d
+    name: s5d app
+    technology: null
+  components:
+  - id: comp.self-update
+    feature: feat.s5d.self-update
+    domain: dom.s5d.core
+    container: ctr.s5d.app
+    name: update auto
+    paths:
+    - rust/src/bin/s5d/cmd_provision.rs
+    - hooks/hooks.json
+  roles: []
+  concerns: []
+  metrics: []
+  supersystems: []
+  transports: []
+links:
+  feature_to_domain:
+  - domain: dom.s5d.core
+    feature: feat.s5d.self-update
+  use_case_to_capability: []
+  use_case_to_entity: []
+  component_to_capability:
+  - capability: cap.self-update
+    component: comp.self-update
+  component_to_entity: []
+  container_to_capability: []
+  concern_to_metric: []
+  component_to_container: []
+  edges: []
+  depends_on: []
+  entity_relations: []
+  capability_to_entity: []
+  capability_to_concern: []
+contracts: []
+gates:
+- kind: schema
+- kind: graph
+roc: null
+problem: null
+hypotheses: []
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false

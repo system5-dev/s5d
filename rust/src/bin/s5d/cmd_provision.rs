@@ -297,6 +297,92 @@ pub fn run_update_check(hook: bool, json: bool) -> anyhow::Result<()> {
     Ok(())
 }
 
+/// Session-start self-update. Applies in a DETACHED background process when
+/// every safety guard passes; otherwise degrades to the visible prompt of
+/// `update check --hook`. Never fails the hosting hook.
+pub fn run_update_auto() -> anyhow::Result<()> {
+    if std::env::var("S5D_AUTO_UPDATE").as_deref() == Ok("0") {
+        return run_update_check(true, false);
+    }
+    // No checkout / network trouble → behave exactly like the tolerant hook check.
+    let Ok(check) = check_for_update() else {
+        return Ok(());
+    };
+    if !check.update_available {
+        return Ok(());
+    }
+    let Some(root) = check.repo_root.as_deref().map(std::path::PathBuf::from) else {
+        return Ok(());
+    };
+
+    match auto_update_safety(&root) {
+        None => {
+            let log_path = home_dir()
+                .map(|h| h.join(".s5d-update.log"))
+                .unwrap_or_else(|| std::path::PathBuf::from("/tmp/s5d-update.log"));
+            let log = std::fs::OpenOptions::new()
+                .create(true)
+                .append(true)
+                .open(&log_path)?;
+            let exe = std::env::current_exe()?;
+            std::process::Command::new(exe)
+                .args(["admin", "update", "apply"])
+                .stdin(std::process::Stdio::null())
+                .stdout(log.try_clone()?)
+                .stderr(log)
+                .spawn()?;
+            // Version string only moves on releases; for commit-level updates
+            // show the short SHAs so the line says what actually changes.
+            let short = |c: &str| c[..8.min(c.len())].to_string();
+            let (from, to) = if check.latest_version.as_deref() == Some(&check.current_version) {
+                (
+                    check.current_commit.as_deref().map(short),
+                    check.remote_commit.as_deref().map(short),
+                )
+            } else {
+                (
+                    Some(check.current_version.clone()),
+                    check.latest_version.clone(),
+                )
+            };
+            println!(
+                "s5d: update available ({} -> {}) — applying in background (log: {})",
+                from.unwrap_or_else(|| "local".into()),
+                to.unwrap_or_else(|| "origin HEAD".into()),
+                log_path.display()
+            );
+        }
+        Some(reason) => {
+            println!("s5d: update available but auto-apply skipped: {}", reason);
+            println!("  run manually: s5d admin update apply");
+        }
+    }
+    Ok(())
+}
+
+/// Returns None when auto-apply is safe, otherwise the human-readable reason
+/// it was skipped. Safe = clean working tree on the default branch — the only
+/// state where `pull --ff-only` cannot collide with local work.
+fn auto_update_safety(repo_root: &std::path::Path) -> Option<String> {
+    match git_output(repo_root, &["status", "--porcelain"]) {
+        Ok(out) if out.is_empty() => {}
+        Ok(_) => return Some("working tree has local changes".into()),
+        Err(e) => return Some(format!("cannot inspect working tree: {e}")),
+    }
+    let branch = match git_output(repo_root, &["rev-parse", "--abbrev-ref", "HEAD"]) {
+        Ok(b) => b,
+        Err(e) => return Some(format!("cannot resolve branch: {e}")),
+    };
+    let default_branch = git_output(repo_root, &["symbolic-ref", "refs/remotes/origin/HEAD"])
+        .ok()
+        .and_then(|r| r.rsplit('/').next().map(str::to_string))
+        .unwrap_or_else(|| "main".to_string());
+    if branch != default_branch {
+        return Some(format!("checkout is on '{branch}', not '{default_branch}'"));
+    }
+    None
+}
+
 pub fn run_update_apply(dry_run: bool) -> anyhow::Result<()> {
     let repo_root = locate_s5d_repo_root().ok_or_else(|| {
         anyhow::anyhow!("cannot locate S5D checkout. Re-run install.sh from a cloned s5d repo.")
@@ -1037,4 +1123,54 @@ fn register_mcp_toml(path: &std::path::Path, binary: &str) -> anyhow::Result<boo
     }
     std::fs::write(path, doc.to_string())?;
     Ok(true)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::auto_update_safety;
+    use std::process::Command;
+
+    fn git(dir: &std::path::Path, args: &[&str]) {
+        assert!(Command::new("git")
+            .args(args)
+            .current_dir(dir)
+            .output()
+            .unwrap()
+            .status
+            .success());
+    }
+
+    fn seeded_repo() -> tempfile::TempDir {
+        let dir = tempfile::TempDir::new().unwrap();
+        git(dir.path(), &["init", "-q", "-b", "main"]);
+        git(dir.path(), &["config", "user.email", "t@example.test"]);
+        git(dir.path(), &["config", "user.name", "T"]);
+        std::fs::write(dir.path().join("a.txt"), "a").unwrap();
+        git(dir.path(), &["add", "."]);
+        git(dir.path(), &["commit", "-q", "-m", "init"]);
+        dir
+    }
+
+    #[test]
+    fn auto_update_safe_on_clean_default_branch() {
+        let repo = seeded_repo();
+        // No origin/HEAD symbolic ref in a local-only repo → falls back to "main".
+        assert_eq!(auto_update_safety(repo.path()), None);
+    }
+
+    #[test]
+    fn auto_update_skipped_on_dirty_tree() {
+        let repo = seeded_repo();
+        std::fs::write(repo.path().join("b.txt"), "dirty").unwrap();
+        let reason = auto_update_safety(repo.path()).expect("dirty tree must skip");
+        assert!(reason.contains("local changes"), "{reason}");
+    }
+
+    #[test]
+    fn auto_update_skipped_on_feature_branch() {
+        let repo = seeded_repo();
+        git(repo.path(), &["checkout", "-q", "-b", "feature/x"]);
+        let reason = auto_update_safety(repo.path()).expect("branch must skip");
+        assert!(reason.contains("feature/x"), "{reason}");
+    }
 }

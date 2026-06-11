@@ -39,6 +39,9 @@ s5d init
 # Check or apply S5D binary/skill updates
 s5d admin update check
 s5d admin update apply
+# Sessions self-update: the plugin's SessionStart hook runs `s5d update auto`,
+# which applies in the background when the checkout is clean and on the default
+# branch (otherwise it prints the prompt). Opt out with S5D_AUTO_UPDATE=0.
 
 # Optional, recommended on a repo S5D hasn't seen: build the discovery index
 # (file index, evidence, dependency graph under .s5d/discovery/) so specs and
