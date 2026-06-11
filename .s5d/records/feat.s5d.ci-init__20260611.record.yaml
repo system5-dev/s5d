@@ -25,6 +25,18 @@ phase_history:
   reviewer: roman
   engine: null
   notes: Human run evidence acceptance
+- phase_id: measure
+  status: active
+  timestamp: 2026-06-11T09:26:32.636804+00:00
+  reviewer: null
+  engine: manual
+  notes: Started work state 'Measure'
+- phase_id: measure
+  status: accepted
+  timestamp: 2026-06-11T09:26:32.685565+00:00
+  reviewer: roman
+  engine: null
+  notes: Human run evidence acceptance
 phase_runs: []
 approvals:
 - reviewer: roman
