@@ -122,15 +122,22 @@ mkdir -p "$BIN_DIR"
 ARCH="$(uname -s)-$(uname -m)"
 PREBUILT="$SCRIPT_DIR/bin/s5d-$(echo "$ARCH" | tr '[:upper:]' '[:lower:]')"
 
-if [ -f "$PREBUILT" ]; then
+# Build from the checked-out source first: it always matches this revision.
+# The tracked prebuilt refreshes only at release time and has shipped stale
+# binaries silently — it is a fallback for hosts without a Rust toolchain
+# (same priority as `s5d admin update apply`).
+if command -v cargo &> /dev/null; then
+    echo "Building from source..."
+    cd "$SCRIPT_DIR/rust" && cargo build --release
+    rm -f "$BIN_DIR/s5d"
+    cp "$SCRIPT_DIR/rust/target/release/s5d" "$BIN_DIR/s5d"
+    echo "✓ Binary built and installed"
+elif [ -f "$PREBUILT" ]; then
+    echo "⚠ No Rust toolchain — installing tracked prebuilt ($ARCH); it may lag this checkout"
+    rm -f "$BIN_DIR/s5d"
     cp "$PREBUILT" "$BIN_DIR/s5d"
     chmod +x "$BIN_DIR/s5d"
     echo "✓ Binary installed from prebuilt ($ARCH)"
-elif command -v cargo &> /dev/null; then
-    echo "No prebuilt for $ARCH, building from source..."
-    cd "$SCRIPT_DIR/rust" && cargo build --release
-    cp "$SCRIPT_DIR/rust/target/release/s5d" "$BIN_DIR/s5d"
-    echo "✓ Binary built and installed"
 else
     echo "⚠ No prebuilt binary for $ARCH and no Rust toolchain. Skills installed, CLI skipped."
     echo "  Install Rust (rustup.rs) and re-run. Skills are installed, CLI skipped."
