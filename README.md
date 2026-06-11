@@ -42,6 +42,8 @@ s5d admin update apply
 # Sessions self-update: the plugin's SessionStart hook runs `s5d update auto`,
 # which applies in the background when the checkout is clean and on the default
 # branch (otherwise it prints the prompt). Opt out with S5D_AUTO_UPDATE=0.
+# Trust note: self-update builds and installs whatever origin's default branch
+# serves (ff-only) — enable it only for checkouts whose origin you trust.
 
 # Optional, recommended on a repo S5D hasn't seen: build the discovery index
 # (file index, evidence, dependency graph under .s5d/discovery/) so specs and
