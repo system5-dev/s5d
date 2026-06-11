@@ -140,3 +140,10 @@ entries:
   status: success
   timestamp: 2026-06-11T06:55:03.687870+00:00
   record_ref: records/decision.s5d.ci-injection__20260611.record.yaml
+- spec_sha256: sha256:af091dc7d3b2dfbdb7286b049a2e93447f26eae783f734b810ee9d64b990bfd1
+  state_fingerprint: sha256:89d41cab3089fcf40891ab7896cebe9e1cee241c03db5ca4c28443054369632c
+  package_id: feat.s5d.self-update
+  action: import
+  status: success
+  timestamp: 2026-06-11T13:18:34.283184+00:00
+  record_ref: records/feat.s5d.self-update__20260611.record.yaml
