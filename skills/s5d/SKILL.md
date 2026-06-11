@@ -109,7 +109,7 @@ Reason: touches auth + payments, needs target-state framing
 
 Cross-check with `s5d_route` (deterministic keyword classifier) when unsure. On disagreement — especially non-English requests or "X and Y" multi-domain, where the classifier is weaker — trust your semantic read and note the divergence.
 
-Run `s5d_init` if no `.s5d/` directory.
+Run `s5d_init` if no `.s5d/` directory. Then check CI coverage: if the repo has CI (`.github/workflows/` or `.gitlab-ci.yml`) but no generated S5D pipeline, offer `s5d_ci_init` once — local hooks alone are bypassable by a plain `git push`. If generated config exists, `s5d_ci_check` must be clean (stale template → re-run `s5d ci init`).
 
 ---
 
@@ -177,7 +177,7 @@ After approval: optionally use `s5d run start` / `s5d run exec` for bounded engi
 
 Verify: tests → `s5d_import` (SHA256 chain). Import rejects on hash mismatch → re-preview, re-approve.
 
-Ship: push and deploy require explicit human permission per action.
+Ship: push and deploy require explicit human permission per action. Before the first push on a repo, ensure CI enforcement exists (`s5d_ci_init` — generates a PR pipeline running `s5d ci exec` built-in checks); on later ships run `s5d_ci_check` and refresh stale config.
 
 Learn: `s5d_reflect`. Update WAL. Record reusable heuristics.
 

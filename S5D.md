@@ -52,6 +52,8 @@ Route → Discover → Target → Decide → Spec → Run → Verify → Ship �
 
 **Metamodel** — enforced by `s5d verify validate` (legacy alias: `s5d validate`). Spec without domains/capabilities/components = validation error.
 
+**CI enforcement** — local hooks are bypassable by a plain `git push`. When the repo has CI (`.github/workflows/`, `.gitlab-ci.yml`) but no generated S5D pipeline, offer `s5d_ci_init` once; when generated config exists, keep `s5d_ci_check` clean. The generated pipeline runs `s5d ci exec` built-in checks only — command gates never execute on PR runners.
+
 ---
 
 ## Execution Surfaces
