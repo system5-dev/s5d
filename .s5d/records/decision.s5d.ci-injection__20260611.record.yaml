@@ -1,0 +1,74 @@
+spec_ref: decision.s5d.ci-injection__20260611.s5d.yaml
+spec_sha256: sha256:b02308786c022718fbfa4b410325fb16b673fde7c7bded331acb57b9e0a623c9
+status: applied
+sync_status: synced
+status_history:
+- status: proposed
+  timestamp: 2026-06-11T06:31:09.922432+00:00
+- status: previewed
+  timestamp: 2026-06-11T06:55:03.616401+00:00
+- status: approved
+  timestamp: 2026-06-11T06:55:03.631487+00:00
+- status: applied
+  timestamp: 2026-06-11T06:55:03.696811+00:00
+active_phase: null
+phase_history: []
+phase_runs: []
+approvals:
+- reviewer: roman
+  date: 2026-06-11T06:55:03.631481+00:00
+  spec_sha256: sha256:5468d7febd03d343d819140b96111c9174b55d4153fcd0c806bf7bba7d1e7e60
+  diff_sha256: sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+preview:
+  diff_sha256: sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+  previewed_spec_sha256: sha256:5468d7febd03d343d819140b96111c9174b55d4153fcd0c806bf7bba7d1e7e60
+  actions:
+    create: 0
+    link: 0
+    update: 0
+    delete: 0
+  log: null
+reflection: null
+gate_results:
+- kind: review
+  status: passed
+  attempt: 1
+  timestamp: 2026-06-11T06:55:03.647351+00:00
+  log: |-
+    review gate passed (built-in): 1 review-evidence with verdict=pass
+      - hypothesis=generated-standalone-workflow evidence_id=20260611-gate-review-generated-standalone-workflow formality=4
+  exit_code: null
+  evidence_path: evidence/decision.s5d.ci-injection/review_1.log
+  command: null
+  duration_ms: 0
+  waiver_expires_at: null
+  kind_class: null
+decision:
+  title: CI injection via generated self-contained pipeline
+  winner_id: generated-standalone-workflow
+  rejected_ids:
+  - composite-action-in-s5d-repo
+  - reusable-workflow-include-project
+  context: All S5D enforcement is local today; git push bypasses it. CI must block PRs that break spec validity, declared architecture, or drift.
+  decision: 's5d ci init generates self-contained CI config (GitHub workflow, GitLab fragment): install pinned release binary, call s5d ci exec. ci exec runs ONLY built-in read-only checks (validate all specs, architecture for declaring specs, drift-check) — gate_commands never execute in generated CI. Template carries a version marker; s5d ci check reports staleness.'
+  rationale: 'One generator covers both platforms; logic ships in the binary so the template cannot drift functionally; SHA-pinning erases the central-update benefit of the composite-action alternative; reusable workflow/Catalog requires publication (violates v1 constraint). Trust boundary handled structurally: untrusted PR context never runs repo-configured commands.'
+  consequences: 'Generated pipeline is enforcement floor, not full gate parity: test/lint/contract command gates stay local or in the repo''s own CI. Follow-ups: checksums published with release assets; trusted-context full-gates mode as opt-in later phase.'
+  decided_at: 2026-06-11T06:38:46.037341+00:00
+  confirmed_by: roman
+  expires_at: 2026-09-09
+  do_list: []
+  dont_list: []
+  challenge:
+    mode: tactical
+    passed: true
+    summary: 'Tactical adversarial probe (Codex): initial design BREAKS — full run-gates in PR context executes untrusted fork code via gate_commands. Refined (specialise) to built-in-only ci exec; re-probe against platform docs: survives.'
+    checks: []
+  decision_subject: null
+  decision_subject_granularity: null
+  evaluative_surface: null
+  belief_state: null
+  outcome_model: null
+  pareto_set: []
+  choice_rule: null
+verified_by: diana
+drift_tolerance: null

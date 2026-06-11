@@ -55,6 +55,7 @@ pub use trace::{
 };
 pub use validate::validate_spec;
 
+pub mod ci;
 pub mod infer;
 pub mod suite;
 

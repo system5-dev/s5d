@@ -1,0 +1,142 @@
+s5d: '1.0'
+id: decision.s5d.ci-injection
+version: 1.0.0
+product: s5d
+tier: decision
+allow_update: true
+meta:
+  title: ci-injection
+  authors: []
+  date: 2026-06-11
+  tickets: []
+  adrs: []
+  renames: []
+context: null
+workflow: null
+artifacts: null
+links: null
+contracts: []
+gates:
+- kind: review
+roc: null
+problem:
+  signal: How should s5d inject PR-time enforcement (validate, run-gates, drift-check) into CI systems (GitHub Actions, GitLab CI)?
+  constraints:
+  - No shell scripts — generation and templates compiled into the Rust binary (rust-native-suite constraint)
+  - Pinned binary install from release assets (3 platforms already published per release)
+  - Must not require a separate published marketplace action/repo in v1
+  - Re-running ci init must be idempotent; existing user-modified config must not be silently overwritten
+  targets: []
+  indicators: []
+  goodhart_guard: null
+  acceptance: 'A repo that ran `s5d ci init` gets a PR pipeline that blocks merge when: a changed spec fails validate, a spec with declared gates fails run-gates, or drift-check detects divergence. Works on GitHub Actions and GitLab CI; binary install is pinned and reproducible; generated config is idempotent to re-run and detectable as stale.'
+  blast_radius: null
+  reversibility: null
+  status: backlog
+hypotheses:
+- id: generated-standalone-workflow
+  title: Generated standalone workflow
+  content: 's5d ci init writes a complete, self-contained workflow file (GitHub: .github/workflows/s5d.yml; GitLab: .gitlab-ci.yml fragment) that downloads the pinned release binary and runs validate/run-gates/drift-check. No external references; user repo fully self-contained.'
+  scope: ci injection
+  kind: system
+  layer: L2
+  r_eff: null
+  evidence:
+  - id: 20260611-external-generated-standalone-workflow
+    type: external
+    content: 'Trunk.io/pre-commit precedent: generated local config + thin shim workflow; pros visibility and local-CI parity; main con = template drift, mitigable by version marker + a ''s5d ci check'' staleness command (same pattern as codebase sync/check). Works identically for GitHub and GitLab from one generator. Drift killed at root if template only installs pinned binary and calls ''s5d ci exec'' — check logic ships with the binary, not the template.'
+    verdict: pass
+    valid_until: 2026-09-09T06:33:24.629541+00:00
+    carrier_ref: null
+    formality: 3
+    claim_scope:
+    - maintainability
+    - portability
+    congruence_level: null
+    reliability: 0.75
+    refine_kind: null
+  - id: 20260611-gate-review-generated-standalone-workflow
+    type: gate:review
+    content: 'Adversarial probe (Codex, tactical): naive ''ci exec runs full run-gates'' BREAKS on runner trust boundary — gate_commands from .s5d/config.yaml would execute untrusted fork-PR code (gates.rs:78,277; env model deny-list only). Refinement: generated pipeline calls built-in-only checks (validate, architecture, drift-check); gate_commands are structurally excluded from CI exec.'
+    verdict: refine
+    valid_until: 2026-09-09T06:38:28.954894+00:00
+    carrier_ref: null
+    formality: 4
+    claim_scope:
+    - security
+    - trust-boundary
+    congruence_level: null
+    reliability: 0.85
+    refine_kind: specialise
+  - id: 20260611-gate-review-generated-standalone-workflow
+    type: gate:review
+    content: 'Post-refinement review (same probe, sources: GitHub fork/pull_request_target docs, GitLab MR-pipeline docs): with built-in-only exec on pull_request (read-only GITHUB_TOKEN, permissions contents:read) the untrusted path executes no repo-configured commands; full run-gates remains a local/trusted-context step. Design survives.'
+    verdict: pass
+    valid_until: 2026-09-09T06:38:28.960266+00:00
+    carrier_ref: null
+    formality: 4
+    claim_scope:
+    - security
+    - trust-boundary
+    congruence_level: null
+    reliability: 0.85
+    refine_kind: null
+  depends_on: []
+  rationale: null
+  spec_ref: feat.s5d.ci-init__20260611.s5d.yaml
+  prompt: How should s5d inject PR-time enforcement into CI?
+  next_move: probe
+- id: composite-action-in-s5d-repo
+  title: Composite action in s5d repo
+  content: 's5d ci init writes a thin workflow that references a composite action living in the s5d repo subdirectory (uses: system5-dev/s5d/.github/actions/s5d@<tag>). Check logic centrally maintained; user workflows stay minimal. GitLab equivalent: include:remote fragment.'
+  scope: ci injection
+  kind: system
+  layer: invalid
+  r_eff: null
+  evidence:
+  - id: 20260611-external-composite-action-in-s5d-repo
+    type: external
+    content: Subdirectory composite action is referencable cross-repo (owner/repo/path@ref) but 2026 supply-chain standard pins 40-char SHA — users do not auto-receive updates, erasing the central-maintenance benefit; GitLab still needs a separate generated fragment (CI/CD Catalog requires publishing) → two mechanisms instead of one. Adds a cross-repo supply-chain edge for zero v1 gain.
+    verdict: fail
+    valid_until: 2026-09-09T06:33:24.635358+00:00
+    carrier_ref: null
+    formality: 3
+    claim_scope:
+    - v1 scope
+    congruence_level: null
+    reliability: 0.7
+    refine_kind: null
+  depends_on: []
+  rationale: null
+  spec_ref: null
+  prompt: How should s5d inject PR-time enforcement into CI?
+  next_move: probe
+- id: reusable-workflow-include-project
+  title: Reusable workflow + include:project
+  content: GitHub workflow_call reusable workflow hosted in s5d repo, user workflow is a 5-line caller; GitLab include:project pinned to a ref. Maximum central control, minimum user-repo surface.
+  scope: ci injection
+  kind: system
+  layer: invalid
+  r_eff: null
+  evidence:
+  - id: 20260611-external-reusable-workflow-include-project
+    type: external
+    content: workflow_call maximizes central control but is the least flexible (single-job shape), hardest to debug locally, and GitLab include:project/Catalog requires published component — violates the v1 no-separate-publication constraint. Org-standardization benefit irrelevant for single-repo adopters (the current audience).
+    verdict: fail
+    valid_until: 2026-09-09T06:33:24.641015+00:00
+    carrier_ref: null
+    formality: 3
+    claim_scope:
+    - v1 scope
+    congruence_level: null
+    reliability: 0.7
+    refine_kind: null
+  depends_on: []
+  rationale: null
+  spec_ref: null
+  prompt: How should s5d inject PR-time enforcement into CI?
+  next_move: probe
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false

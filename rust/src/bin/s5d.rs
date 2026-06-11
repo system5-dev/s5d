@@ -13,6 +13,9 @@ mod cmd_provision;
 #[path = "s5d/cmd_skill.rs"]
 mod cmd_skill;
 
+#[path = "s5d/cmd_ci.rs"]
+mod cmd_ci;
+
 #[derive(Parser)]
 #[command(
     name = "s5d",
@@ -246,6 +249,11 @@ enum S5dCommand {
         #[command(subcommand)]
         command: SkillCommand,
     },
+    /// Generated CI enforcement (GitHub Actions / GitLab CI)
+    Ci {
+        #[command(subcommand)]
+        command: CiCommand,
+    },
     /// Start stdio MCP server (for Claude Code integration)
     #[command(hide = true)]
     Mcp,
@@ -357,6 +365,29 @@ enum AdminCommand {
 }
 
 // ── Skill subcommand tree ─────────────────────────────────────────────────────
+
+#[derive(Subcommand)]
+enum CiCommand {
+    /// Generate a PR pipeline: install pinned s5d binary, run `s5d ci exec`
+    Init {
+        /// Generate GitHub Actions workflow (.github/workflows/s5d.yml) — default
+        #[arg(long)]
+        github: bool,
+        /// Generate GitLab CI fragment (.s5d/ci/s5d.gitlab-ci.yml + include stub)
+        #[arg(long)]
+        gitlab: bool,
+        /// Generate for all supported CI systems
+        #[arg(long)]
+        all: bool,
+        /// Overwrite user-owned (marker-less) files
+        #[arg(long)]
+        force: bool,
+    },
+    /// Report stale or unmanaged generated CI config
+    Check,
+    /// Run built-in checks (validate, architecture, drift) — called by generated pipelines
+    Exec,
+}
 
 #[derive(Subcommand)]
 enum SkillCommand {
@@ -1001,6 +1032,16 @@ fn main() -> anyhow::Result<()> {
         S5dCommand::Install(args) => run_install_command(args),
         S5dCommand::Gate { command } => run_gate(command),
         S5dCommand::Skill { command } => run_skill_command(command),
+        S5dCommand::Ci { command } => match command {
+            CiCommand::Init {
+                github,
+                gitlab,
+                all,
+                force,
+            } => cmd_ci::run_ci_init(github, gitlab, all, force),
+            CiCommand::Check => cmd_ci::run_ci_check(),
+            CiCommand::Exec => cmd_ci::run_ci_exec(),
+        },
     }
 }
 

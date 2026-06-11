@@ -126,3 +126,17 @@ entries:
   status: success
   timestamp: 2026-06-09T20:10:41.186234+00:00
   record_ref: records/feat.s5d.rust-native-suite__20260609.record.yaml
+- spec_sha256: sha256:57b03e95da125a157e7199e0780cc8ee95b92c2fc0500db17c0afae684db3835
+  state_fingerprint: sha256:ebbceda7c211d971ad8a863500e608f1e93d0d690aff262309261ea0f6212f3b
+  package_id: feat.s5d.ci-init
+  action: import
+  status: success
+  timestamp: 2026-06-11T06:55:03.564946+00:00
+  record_ref: records/feat.s5d.ci-init__20260611.record.yaml
+- spec_sha256: sha256:5468d7febd03d343d819140b96111c9174b55d4153fcd0c806bf7bba7d1e7e60
+  state_fingerprint: sha256:430a5ee44f975a704fb49646f39b53dc3084b721bf4df15bc0cd51b9401cd720
+  package_id: decision.s5d.ci-injection
+  action: import
+  status: success
+  timestamp: 2026-06-11T06:55:03.687870+00:00
+  record_ref: records/decision.s5d.ci-injection__20260611.record.yaml

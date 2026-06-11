@@ -795,6 +795,7 @@ fn public_help_hides_internal_commands() {
     let help = run_ok(repo.path(), ["--help"]);
     for public in [
         "init", "new", "decision", "verify", "state", "run", "status", "show", "trace", "admin",
+        "ci",
     ] {
         assert!(
             help.stdout
@@ -5160,5 +5161,145 @@ fn import_rejects_scaffold_placeholder_paths() {
         denied.stderr.contains("scaffold placeholder paths"),
         "import must refuse the TODO scaffold path: {}",
         denied.summary()
+    );
+}
+
+// ── CI enforcement generation (feat.s5d.ci-init) ──────────────────────────────
+
+#[test]
+fn ci_init_generates_marked_templates_idempotently() {
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+
+    run_ok(repo.path(), ["ci", "init", "--all"]);
+    let gh = repo.path().join(".github/workflows/s5d.yml");
+    let gl_fragment = repo.path().join(".s5d/ci/s5d.gitlab-ci.yml");
+    let gl_root = repo.path().join(".gitlab-ci.yml");
+    let version = env!("CARGO_PKG_VERSION");
+    for f in [&gh, &gl_fragment, &gl_root] {
+        let content = fs::read_to_string(f).unwrap();
+        assert!(
+            content.starts_with("# s5d-ci-template: v"),
+            "{} must start with the template marker:\n{}",
+            f.display(),
+            content
+        );
+        assert!(
+            content.contains(version),
+            "{} must pin the generating version {version}",
+            f.display()
+        );
+    }
+    let gh_content = fs::read_to_string(&gh).unwrap();
+    assert!(
+        gh_content.contains("s5d ci exec") && gh_content.contains("permissions:"),
+        "workflow must call ci exec under explicit permissions:\n{gh_content}"
+    );
+
+    // Idempotent: second run regenerates identical managed content.
+    run_ok(repo.path(), ["ci", "init", "--all"]);
+    assert_eq!(fs::read_to_string(&gh).unwrap(), gh_content);
+
+    // User-owned (marker stripped) → refuse without --force.
+    let stripped = gh_content.lines().skip(1).collect::<Vec<_>>().join("\n");
+    fs::write(&gh, &stripped).unwrap();
+    let denied = run_fail(repo.path(), ["ci", "init", "--github"]);
+    assert!(
+        denied.stderr.contains("user-owned"),
+        "must refuse to overwrite marker-less file:\n{}",
+        denied.summary()
+    );
+    run_ok(repo.path(), ["ci", "init", "--github", "--force"]);
+    assert!(fs::read_to_string(&gh)
+        .unwrap()
+        .starts_with("# s5d-ci-template: v"));
+}
+
+#[test]
+fn ci_exec_passes_clean_repo_and_blocks_drift() {
+    let repo = StandaloneRepo::new();
+    seed_searchable_rust_repo(&repo);
+    run_ok(repo.path(), ["init"]);
+    let spec_str = setup_standard_spec(&repo, "feat.ciexec");
+
+    run_ok(repo.path(), ["preview", &spec_str]);
+    run_ok(repo.path(), ["approve", &spec_str, "--reviewer", "R"]);
+    run_ok(repo.path(), ["run-gates", &spec_str]);
+    run_ok(repo.path(), ["import", &spec_str, "--verified-by", "V"]);
+
+    let clean = run_ok(repo.path(), ["ci", "exec"]);
+    assert!(
+        clean.stdout.contains("all checks passed"),
+        "clean repo must pass ci exec:\n{}",
+        clean.summary()
+    );
+
+    // Drift the recorded state — ci exec must turn red.
+    let s5d_dir = repo.path().join(".s5d");
+    let mut aliases = s5d::AliasTable::load(&s5d_dir).unwrap();
+    let entry = aliases
+        .packages
+        .iter_mut()
+        .find(|e| e.artifact_type == "Component")
+        .expect("imported spec has a component alias");
+    entry.uuid = "00000000-0000-0000-0000-000000000000".into();
+    aliases.save(&s5d_dir).unwrap();
+
+    let drifted = run_fail(repo.path(), ["ci", "exec"]);
+    assert!(
+        drifted.stderr.contains("[drift]"),
+        "drift must fail ci exec:\n{}",
+        drifted.summary()
+    );
+}
+
+#[test]
+fn ci_exec_blocks_invalid_spec() {
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+    run_ok(
+        repo.path(),
+        [
+            "new",
+            "feat.broken.one",
+            "--tier",
+            "standard",
+            "--product",
+            "demo",
+        ],
+    );
+    let spec_path = only_spec_path(&repo);
+    {
+        let mut spec: s5d::Spec = load_yaml(&spec_path);
+        materialize_scaffold_paths(&mut spec);
+        // Break the single-feature invariant
+        spec.artifacts.as_mut().unwrap().features[0].id = "feat.other".into();
+        fs::write(&spec_path, serde_yaml::to_string(&spec).unwrap()).unwrap();
+    }
+    let outcome = run_fail(repo.path(), ["ci", "exec"]);
+    assert!(
+        outcome.stderr.contains("[validate]"),
+        "invalid spec must fail ci exec:\n{}",
+        outcome.summary()
+    );
+}
+
+#[test]
+fn ci_check_reports_stale_template() {
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+    run_ok(repo.path(), ["ci", "init", "--github"]);
+    let gh = repo.path().join(".github/workflows/s5d.yml");
+    let content = fs::read_to_string(&gh).unwrap();
+    let mut lines: Vec<&str> = content.lines().collect();
+    let downgraded = "# s5d-ci-template: v0 (generated by s5d 0.0.0; verify with s5d ci check)";
+    lines[0] = downgraded;
+    fs::write(&gh, lines.join("\n")).unwrap();
+
+    let outcome = run_fail(repo.path(), ["ci", "check"]);
+    assert!(
+        outcome.stdout.contains("stale") || outcome.stderr.contains("stale"),
+        "downgraded marker must report stale:\n{}",
+        outcome.summary()
     );
 }
