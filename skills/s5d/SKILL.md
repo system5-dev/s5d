@@ -37,6 +37,7 @@ Applies only to work grounded in an existing repository.
 - **Edit-after-approve invalidates approval.** Any spec change after `s5d state approve` changes its sha256. Recovery: preview → approve → import again.
 - **`verified-by` ≠ `reviewer`.** Import requires a verifier different from the approver. Conventional split: human approves, Diana verifies.
 - **gate:review on decision/high tier** closes via review evidence: `s5d decision add-evidence <spec> --hypothesis-id <id> --evidence-type gate:review --verdict pass`. Hypothesis/evidence commands accept decision- and high-tier specs.
+- **Generated CI runs built-in checks only** (validate, architecture, drift via `s5d ci exec`) — command gates (test/lint/contract) never execute in PR pipelines (fork trust boundary).
 - **Decide requires ≥3 hypotheses.** Two-hypothesis decisions are blocked without `--force`.
 - **Discovery output = tables, not prose.** "Discover this project" / "дискавери" produces Init Source Survey + Architecture Map in `.s5d/discovery/`, with `[VERIFIED]/[INFERRED]/[SPECULATIVE]` tags per claim. See §Discover.
 
@@ -192,6 +193,8 @@ Key commands (MCP + CLI). Full preconditions and the run/harness surface live in
 | Create scaffold | `s5d_new` | `s5d new` |
 | Add hypothesis | `s5d_add_hypothesis` | `s5d decision add-hypothesis` |
 | Add evidence | `s5d_add_evidence` | `s5d decision add-evidence` |
+| CI config | `s5d_ci_init` | `s5d ci init` |
+| CI staleness | `s5d_ci_check` | `s5d ci check` |
 | Validate | `s5d_validate` | `s5d verify validate` |
 | Graph check | `s5d_graph_check` | `s5d verify graph-check` |
 | Preview | `s5d_preview` | `s5d state preview` |

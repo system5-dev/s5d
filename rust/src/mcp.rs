@@ -407,6 +407,24 @@ fn core_tools() -> Vec<Value> {
             "inputSchema": {"type": "object", "properties": {}}
         }),
         json!({
+            "name": "s5d_ci_init",
+            "description": "Generate CI enforcement config (GitHub workflow / GitLab fragment): installs pinned s5d binary and runs built-in checks on PRs",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "github": {"type": "boolean", "description": "Generate GitHub Actions workflow (default when no flags set)"},
+                    "gitlab": {"type": "boolean", "description": "Generate GitLab CI fragment + include stub"},
+                    "all": {"type": "boolean", "description": "Generate for all supported CI systems"},
+                    "force": {"type": "boolean", "description": "Overwrite user-owned (marker-less) files"}
+                }
+            }
+        }),
+        json!({
+            "name": "s5d_ci_check",
+            "description": "Report stale or unmanaged generated CI config (fails if stale)",
+            "inputSchema": {"type": "object", "properties": {}}
+        }),
+        json!({
             "name": "s5d_discover_sync",
             "description": "Rebuild .s5d/discovery — file index, evidence, graph, and metamodel projection",
             "inputSchema": {"type": "object", "properties": {"path": {"type": "string", "description": "Target path to scan (defaults to project root)"}, "out": {"type": "string", "description": "Snapshot output directory (defaults to .s5d/discovery; relative paths resolve against the project root)"}}}
@@ -456,6 +474,8 @@ fn handle_tools_call(params: &Value) -> anyhow::Result<Value> {
         "s5d_note" => tool_s5d_note(args)?,
         "s5d_codebase_sync" => tool_s5d_codebase_sync(args)?,
         "s5d_codebase_check" => tool_s5d_codebase_check(args)?,
+        "s5d_ci_init" => tool_s5d_ci_init(args)?,
+        "s5d_ci_check" => tool_s5d_ci_check(args)?,
         "s5d_discover_sync" => tool_s5d_discover_sync(args)?,
         "s5d_discover_check" => tool_s5d_discover_check(args)?,
         "s5d_check" => tool_s5d_check(args)?,
@@ -512,6 +532,47 @@ fn discovery_out_dir(project: &crate::S5dProject, args: &Value) -> std::path::Pa
             }
         }
         None => project.root.join(".s5d/discovery"),
+    }
+}
+
+fn tool_s5d_ci_init(args: &Value) -> anyhow::Result<String> {
+    let root = std::env::current_dir()?;
+    let github = args["github"].as_bool().unwrap_or(false);
+    let gitlab = args["gitlab"].as_bool().unwrap_or(false);
+    let all = args["all"].as_bool().unwrap_or(false);
+    let force = args["force"].as_bool().unwrap_or(false);
+    let none = !github && !gitlab && !all;
+    let mut targets = Vec::new();
+    if github || all || none {
+        targets.push(crate::ci::CiTarget::Github);
+    }
+    if gitlab || all {
+        targets.push(crate::ci::CiTarget::Gitlab);
+    }
+    let written = crate::ci::ci_init(&root, &targets, force)?;
+    Ok(format!(
+        "CI config generated: {}",
+        written
+            .iter()
+            .map(|p| p.display().to_string())
+            .collect::<Vec<_>>()
+            .join(", ")
+    ))
+}
+
+fn tool_s5d_ci_check(_args: &Value) -> anyhow::Result<String> {
+    let root = std::env::current_dir()?;
+    let report = crate::ci::ci_check(&root)?;
+    if report.stale {
+        anyhow::bail!(
+            "generated CI config is stale: {}",
+            report.findings.join("; ")
+        );
+    }
+    if report.findings.is_empty() {
+        Ok("generated CI config is current".to_string())
+    } else {
+        Ok(report.findings.join("\n"))
     }
 }
 

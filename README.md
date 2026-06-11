@@ -117,6 +117,14 @@ s5d init --all
 
 Available as a plugin for Claude Code, Gemini CLI, and Codex.
 
+## CI enforcement
+
+```bash
+s5d ci init            # GitHub Actions (default); --gitlab / --all for more
+```
+
+Generates a self-contained PR pipeline that installs the pinned s5d release binary and runs `s5d ci exec` — built-in read-only checks only: spec validation, architecture check for specs that declare the gate, and drift-check. Configured command gates (test/lint/contract) **never execute in generated CI** — a fork PR must not run repo-configured commands on the runner. The generated files carry a version marker; `s5d ci check` reports stale or user-modified config.
+
 ## Tiers
 
 | Tier | When | Default gates |
