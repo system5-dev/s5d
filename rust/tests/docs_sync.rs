@@ -15,14 +15,24 @@ fn read_repo_file(rel: &str) -> String {
 #[test]
 fn skill_references_all_reference_docs() {
     let skill = read_repo_file("skills/s5d/SKILL.md");
-    for doc in ["metamodel.md", "session-protocol.md"] {
+    for doc in [
+        "metamodel.md",
+        "session-protocol.md",
+        "references/shape-layer.md",
+        "references/adversarial-review.md",
+    ] {
         assert!(skill.contains(doc), "SKILL.md must reference: {}", doc);
     }
 }
 
 #[test]
 fn reference_docs_exist() {
-    for doc in ["skills/s5d/metamodel.md", "skills/s5d/session-protocol.md"] {
+    for doc in [
+        "skills/s5d/metamodel.md",
+        "skills/s5d/session-protocol.md",
+        "skills/s5d/references/shape-layer.md",
+        "skills/s5d/references/adversarial-review.md",
+    ] {
         assert!(
             repo_root().join(doc).exists(),
             "reference doc missing: {}",
@@ -138,10 +148,10 @@ fn skill_defines_cli_conductor_contract() {
 fn flow_vocabulary_is_canonical_and_consistent() {
     // One operational flow string, byte-identical across every doc that states it.
     // Guards the drift that prompted this test: metamodel.md once cited a
-    // "Bootstrap → Frame → … → Build" flow as "defined in SKILL.md" while SKILL.md
-    // actually said "Route → Discover → … → Run". Four vocabularies, one lifecycle.
+    // "Bootstrap → Frame → … → Build" flow as "defined in SKILL.md" while the
+    // loaded skill used a different lifecycle. Four vocabularies, one lifecycle.
     const CANONICAL_FLOW: &str =
-        "Route → Discover → Target → Decide → Spec → Run → Verify → Ship → Learn";
+        "Route → Shape → Discover → Target → Decide → Spec → Run → Verify → Ship → Learn";
 
     for doc in ["skills/s5d/SKILL.md", "S5D.md", "skills/s5d/metamodel.md"] {
         let text = read_repo_file(doc);

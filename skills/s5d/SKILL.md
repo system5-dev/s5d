@@ -13,7 +13,11 @@ Control plane for changes in a repository with AI participation. Four things on 
 3. **Run evidence** — record what agents/tools produced, with integrity (approval chain, SHA256 binding, ledger).
 4. **Verify in code** — check that code matches the decision; roll back when it doesn't.
 
-Flow: `Route → Discover → Target → Decide → Spec → Run → Verify → Ship → Learn`
+Flow: `Route → Shape → Discover → Target → Decide → Spec → Run → Verify → Ship → Learn`
+
+`Shape` is a pre-control-plane intake layer for unclear intent. It may create or
+cite companion notes, but it does not create accepted S5D state. Only
+`.s5d/packages/*` and `.s5d/records/*` are lifecycle truth.
 
 `Discover` runs once per project (or when the map is stale — treat it as stale if the domains/components you're about to touch are absent from `.s5d/discovery/architecture-map.md`). Skip it on follow-up tasks that already have a current map.
 
@@ -23,6 +27,8 @@ Applies only to work grounded in an existing repository.
 
 **Reference docs:**
 - [metamodel.md](metamodel.md) — read §Complete Artifact Definitions BEFORE writing your first spec. Required-field cascade documented per artifact.
+- [references/shape-layer.md](references/shape-layer.md) — raw/vague intent → S5D-ready intake kernel
+- [references/adversarial-review.md](references/adversarial-review.md) — blind diff, edge-case, and acceptance review pattern
 - [domain-capability-mode.md](domain-capability-mode.md) — Product Intent → domain/capability design → implementation scope
 - [session-protocol.md](session-protocol.md) — WAL format, spec:// URI, REVIEW markers, conflicts, effectiveness metrics
 - [references/fpf/](references/fpf/) — FPF corpus. Load via `references/fpf/agent/load-policy.md`: start with `entrypoints.yaml` / `glossary.yaml` / `query-index.jsonl`, expand to modules only when exact wording needed.
@@ -39,7 +45,9 @@ Applies only to work grounded in an existing repository.
 - **gate:review on decision/high tier** closes via review evidence: `s5d decision add-evidence <spec> --hypothesis-id <id> --evidence-type gate:review --verdict pass`. Hypothesis/evidence commands accept decision- and high-tier specs.
 - **Generated CI runs built-in checks only** (validate, architecture, drift via `s5d ci exec`) — command gates (test/lint/contract) never execute in PR pipelines (fork trust boundary).
 - **Decide requires ≥3 hypotheses.** Two-hypothesis decisions are blocked without `--force`.
-- **Discovery output = tables, not prose.** "Discover this project" / "дискавери" produces Init Source Survey + Architecture Map in `.s5d/discovery/`, with `[VERIFIED]/[INFERRED]/[SPECULATIVE]` tags per claim. See §Discover.
+- **Discovery output = tables, not prose.** "Discover this project" / "onboard this repo" produces Init Source Survey + Architecture Map in `.s5d/discovery/`, with `[VERIFIED]/[INFERRED]/[SPECULATIVE]` tags per claim. See §Discover.
+- **Shape is not accepted state.** Shape notes, PRDs, UX docs, stories, research, and review reports are companion inputs until bound into `.s5d/packages/*` or `.s5d/records/*`.
+- **Review reports do not pass gates by themselves.** Adversarial review findings close only when fixed, explicitly deferred, or recorded as S5D evidence/gate state.
 
 ### MCP-only operations
 
@@ -81,7 +89,8 @@ s5d state reflect <feature-spec> --summary "Shipped cleanly" \
 
 ## Scope
 
-Out of scope: bugfix <30 LOC, config-only, docs-only.
+Out of scope: bugfix <30 LOC, config-only, docs-only. If Shape reveals the work
+is tiny and local, exit S5D rather than opening control-plane state.
 
 | Tier | Waivers |
 |------|---------|
@@ -100,9 +109,9 @@ Out of scope (exit S5D): bugfix <30 LOC, config-only, docs-only, status query.
 
 **Tier:** choice/tradeoff/architecture → `decision` | feature, 1 domain, no auth/payment/security → `lightweight` | feature, 2+ domains → `standard` | auth/payment/security/PII/compliance → `high` | ambiguous → pick higher.
 
-**Mode:** "discovery" / "дискавери" / "onboard project" / "map the domains" → `discover` (go to Discover, not Target) | raw product intent / ticket / design → `prepare` | "evaluate/compare" → `prepare` | "implement X" with a confirmed decision record or stated existing architecture → `execute` (enters at Spec; records the Target+Decide auto-waiver) | no signal → `prepare`.
+**Mode:** "discovery" / "onboard project" / "map the domains" → `discover` (go to Discover, not Target) | raw product intent / vague ticket / mixed PRD/design/transcript / unclear acceptance → `shape` | "evaluate/compare" → `prepare` | "implement X" with a confirmed decision record or stated existing architecture → `execute` (enters at Spec; records the Target+Decide auto-waiver) | no signal → `prepare`.
 
-Too vague to tell the domain count → run Discover / Domain-Capability mapping first, then classify. Don't force a tier on unreadable intent.
+Too vague to tell the domain count after Shape → run Discover / Domain-Capability mapping, then classify. Don't force a tier on unreadable intent.
 
 Emit routing explicitly:
 ```
@@ -113,6 +122,28 @@ Reason: touches auth + payments, needs target-state framing
 Cross-check with `s5d_route` (deterministic keyword classifier) when unsure. On disagreement — especially non-English requests or "X and Y" multi-domain, where the classifier is weaker — trust your semantic read and note the divergence.
 
 Run `s5d_init` if no `.s5d/` directory. Then check CI coverage: if the repo has CI (`.github/workflows/` or `.gitlab-ci.yml`) but no generated S5D pipeline, offer `s5d_ci_init` once — local hooks alone are bypassable by a plain `git push`. If generated config exists, `s5d_ci_check` must be clean (stale template → re-run `s5d ci init`).
+
+---
+
+## Shape
+
+Use Shape when the input is a raw idea, vague product request, mixed research,
+PRD/design/story material, or an implementation request with unclear acceptance.
+Follow [references/shape-layer.md](references/shape-layer.md).
+
+Produce an intake kernel: why this matters, impacted capabilities, known
+constraints, non-goals, success signal, assumptions, open questions, and
+companion sources. Then route:
+
+- tiny/local/docs/config work → exit S5D and do the direct task
+- enough ownership and acceptance → Target
+- missing current architecture map → Discover, then Target
+- architecture tradeoff → decision-tier Target
+- auth/payment/security/PII/compliance → high-tier Target
+
+Do not invent product facts. Mark assumptions explicitly and ask only when the
+missing fact is irreversible, external, secret-bearing, or would change the
+architecture.
 
 ---
 
@@ -138,13 +169,14 @@ After writing both files, run `s5d discover sync` (or `s5d_discover_sync` over M
 
 Do **not** produce a free-form prose summary in place of these tables. Narrative sections are allowed only as a header before each table or as a closing "Recommended S5D entry points" list.
 
-Triggers: explicit ("discovery", "дискавери проекта", "map the domains", "onboard this repo"), or any first-touch on an unknown repo before opening a feature spec.
+Triggers: explicit ("discovery", "map the domains", "onboard this repo"), or any first-touch on an unknown repo before opening a feature spec.
 
 ---
 
 ## Target
 
-State what's anomalous. Define acceptance BEFORE options.
+Consume the shaped intake kernel when one exists. State what's anomalous. Define
+acceptance BEFORE options.
 
 `s5d_new` (tier: decision) creates skeleton. For raw product intent, run Domain-Capability Design first: extract feature intent and use cases, discover current architecture, map impacted capabilities/entities/components/UX surfaces, then decide tier. Use the resulting map to populate the feature spec; do not jump from product text to code. If `--product` is unknown, infer it from existing `.s5d/` specs or the repo manifest and label the assumption; ask only when it can't be inferred.
 
@@ -166,6 +198,12 @@ Problem → acceptance scenarios (≥3 GWT) → implementation hypotheses (≥2)
 
 `s5d_new` creates scaffold. For feature specs, trace every user-facing change as `Feature → UseCase → Capability → Component` and declare cross-domain edges/contracts explicitly. Run `s5d_validate` + `s5d_graph_check`.
 
+Before Run, check implementation readiness: one shippable goal, actionable
+paths/actions, no `TBD`, at least three acceptance scenarios, explicit
+cross-domain contracts, and no unresolved open question that would change the
+architecture. Weak readiness blocks Run unless the skip is explicitly waived;
+high-tier assurance gates are never waived.
+
 ---
 
 ## Run
@@ -176,9 +214,27 @@ After approval: optionally use `s5d run start` / `s5d run exec` for bounded engi
 
 ---
 
+## Adversarial Review
+
+For material diffs, decision-tier work, high-tier work, or any `gate:review`
+closure, use [references/adversarial-review.md](references/adversarial-review.md).
+Run the review as a layered pattern: blind diff review, edge-case review, and
+acceptance audit. If a layer cannot run, record the missing layer as a review
+limitation rather than pretending the review passed.
+
+Findings close only when fixed, explicitly deferred, or recorded as S5D
+evidence/gate state. For decision/high specs, bind review evidence with
+`s5d decision add-evidence <spec> --hypothesis-id <id> --evidence-type gate:review`.
+For feature specs, bind the result through the record/gate mechanism available
+for that spec. A standalone markdown report is a companion document, not a
+passing gate.
+
+---
+
 ## Verify / Ship / Learn
 
-Verify: tests → `s5d_import` (SHA256 chain). Import rejects on hash mismatch → re-preview, re-approve.
+Verify: tests → adversarial review when material → `s5d_import` (SHA256 chain).
+Import rejects on hash mismatch → re-preview, re-approve.
 
 Ship: push and deploy require explicit human permission per action. Before the first push on a repo, ensure CI enforcement exists (`s5d_ci_init` — generates a PR pipeline running `s5d ci exec` built-in checks); on later ships run `s5d_ci_check` and refresh stale config.
 
@@ -218,9 +274,9 @@ Legacy hidden aliases (e.g. `s5d add-hypothesis`, `s5d validate`, `s5d apply pre
 
 The skill is a **human-facing conductor** of the S5D state machine — it is **not a second state machine**. The CLI/MCP own durable state (records, ledger, harness journal); the skill routes, drafts, summarizes, and recommends. It runs only engines marked `approved: true` in `.s5d/config.yaml`.
 
-**The skill may:** route the request, help draft/edit spec YAML, read run artifacts and summarize, normalize engine outputs into hypotheses/evidence via S5D commands, recommend run acceptance when evidence is sufficient.
+**The skill may:** route the request, shape vague intent, help draft/edit spec YAML, read run artifacts and summarize, coordinate adversarial review, normalize engine outputs into hypotheses/evidence via S5D commands, recommend run acceptance when evidence is sufficient.
 
-**The skill must not:** store its own run state outside S5D files, treat harness journal state as run truth, treat engine run as accepted evidence, call Claude/Codex/Gemini directly for S5D execution when `s5d run exec` applies, approve an engine not in `.s5d/config.yaml`, bypass preview/approve/import hash checks.
+**The skill must not:** store its own run state outside S5D files, treat Shape or review markdown as accepted state, treat harness journal state as run truth, treat engine run as accepted evidence, call Claude/Codex/Gemini directly for S5D execution when `s5d run exec` applies, approve an engine not in `.s5d/config.yaml`, bypass preview/approve/import hash checks.
 
 ---
 

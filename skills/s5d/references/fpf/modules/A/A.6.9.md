@@ -108,7 +108,9 @@ An occurrence SHALL be treated as an A.6.9 trigger when **either** (i) `CtxA ≠
 
 **ID/reference caveat.** Tokens like “same ID”, “same key”, “one‑to‑one”, “synced”, or “mirrors” often denote an **identification/indexing** claim or an **operational mapping artefact** rather than a sense‑level correspondence. If an ID claim is being used as a proxy for meaning (“same ID ⇒ same thing/role”), split it into (i) an explicit identification/indexing claim (A.6.6) and (ii) any Bridge claim about meaning (this pattern). Keep code/ETL facts as `witnessRefs`; they do not determine `kind/CL/Loss/scope` by themselves.
 
-**Multilingual caveat.** In non‑English prose, treat local‑language equivalents of the umbrella tokens as the same trigger class (e.g., Russian “эквивалентно”, “соответствует”, “это одно и то же”).
+**Multilingual caveat.** In non-English prose, treat local-language equivalents
+of umbrella tokens such as "equivalent", "corresponds", or "this is the same
+thing" as the same trigger class.
 
 **Lane/plane‑only caveat.** If `CtxA = CtxB` and the trigger is solely a lane/plane collapse, repair lane/plane typing first (A.7 / declared `Φ_plane`). You MAY satisfy this pattern by re‑typing endpoints + adding an explicit non‑licensing marker; do not invent a Bridge unless you actually need an auditable cross‑Context licence record.
 
@@ -457,4 +459,3 @@ A.6.9 turns a dangerous linguistic convenience into an explicit, reviewable, evo
 * **Constrains:** Any cross‑Context Concept‑Set row scope claims via weakest‑link and substitution thresholds.
 
 ### A.6.9:End
-

@@ -1800,7 +1800,7 @@ SoTA lesson -> FPF obligation map:
 | Benchmark practice needs parity pins, baselines, freshness, budgets, and comparator editions. | Do not read faster improvement as benchmark superiority without parity plan/report. | G.9. |
 
 Source id references:
-- `D2-SRC-1`: [Статика, динамика первой производной, динамика второй производной](https://ailev.livejournal.com/1648977.html).
+- `D2-SRC-1`: [Statics, first-derivative dynamics, second-derivative dynamics](https://ailev.livejournal.com/1648977.html).
 - `D2-SRC-2`: [Learning-Based Model Predictive Control: Toward Safe Learning in Control](https://www.annualreviews.org/eprint/2STMCYXGPHBRMTDP9W2D/full/10.1146/annurev-control-090419-075625) and [Review on model predictive control: an engineering perspective](https://link.springer.com/article/10.1007/s00170-021-07682-3).
 - `D2-SRC-3`: [A Survey of Constraint Formulations in Safe Reinforcement Learning](https://www.ijcai.org/proceedings/2024/0913.pdf), [A Review of Off-Policy Evaluation in Reinforcement Learning](https://arxiv.org/pdf/2212.06355), [Conservative Q-Learning for Offline Reinforcement Learning](https://proceedings.neurips.cc/paper/2020/hash/0d2b2061826a5df3221116a5085a6052-Abstract.html), and [Methods in dynamic treatment regimens using observational healthcare data](https://www.sciencedirect.com/science/article/pii/S0169260725000756).
 - `D2-SRC-4`: [Causal Inference: What If](https://miguelhernan.org/whatifbook) and [Causal Inference About the Effects of Interventions From Observational Studies in Medical Journals](https://jamanetwork.com/journals/jama/fullarticle/2818746).
