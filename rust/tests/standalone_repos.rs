@@ -4939,6 +4939,144 @@ fn rollback_falls_back_to_stored_owner_when_ledger_has_no_trace() {
 }
 
 #[test]
+fn rollback_after_reimport_does_not_false_flag_new_owner() {
+    // Epoch semantics (tribunal counterexample): A imports global X, A is
+    // rolled back (X tombstoned), B imports X and legitimately owns the new
+    // active alias entry. Rolling back B must tombstone X cleanly — the
+    // derivation must NOT resurrect A as "first ever importer" and veto.
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+
+    let spec1_str = setup_standard_spec(&repo, "feat.epoch1");
+    run_ok(repo.path(), ["preview", &spec1_str]);
+    run_ok(repo.path(), ["approve", &spec1_str, "--reviewer", "R"]);
+    run_ok(repo.path(), ["run-gates", &spec1_str]);
+    run_ok(repo.path(), ["import", &spec1_str, "--verified-by", "V"]);
+    run_ok(repo.path(), ["rollback", &spec1_str]);
+
+    // Clean up the rolled-back spec entirely (normal user hygiene). Its ledger
+    // import entry now has no matching file — the replay must neutralize that
+    // taint via the rollback entry instead of poisoning the key forever.
+    fs::remove_file(&spec1_str).unwrap();
+
+    run_ok(
+        repo.path(),
+        [
+            "new",
+            "feat.epoch2",
+            "--tier",
+            "lightweight",
+            "--product",
+            "shop",
+        ],
+    );
+    let spec2_path = only_spec_path(&repo);
+    let spec2_str = spec2_path.to_str().unwrap().to_string();
+    {
+        let mut spec: s5d::Spec = load_yaml(&spec2_path);
+        materialize_scaffold_paths(&mut spec);
+        fs::write(&spec2_path, serde_yaml::to_string(&spec).unwrap()).unwrap();
+    }
+    run_ok(repo.path(), ["preview", &spec2_str]);
+    run_ok(repo.path(), ["approve", &spec2_str, "--reviewer", "R"]);
+    run_ok(repo.path(), ["run-gates", &spec2_str]);
+    run_ok(repo.path(), ["import", &spec2_str, "--verified-by", "V"]);
+
+    let outcome = run_ok(repo.path(), ["rollback", &spec2_str]);
+    assert!(
+        !outcome.stderr.contains("ownership mismatch")
+            && !outcome.stderr.contains("ownership unverifiable"),
+        "untampered epoch transition must not be flagged:\n{}",
+        outcome.summary()
+    );
+
+    let s5d_dir = repo.path().join(".s5d");
+    let aliases = s5d::AliasTable::load(&s5d_dir).unwrap();
+    let shop_active = aliases
+        .global
+        .iter()
+        .any(|e| e.artifact_type == "Product" && e.artifact_id == "shop" && !e.deprecated);
+    assert!(
+        !shop_active,
+        "epoch-2 owner rollback must tombstone the global it legitimately owns:\n{:?}",
+        aliases.global
+    );
+}
+
+#[test]
+fn rollback_skips_tombstoning_when_ownership_unverifiable() {
+    // Sha anchoring (tribunal counterexample): a package file edited after
+    // import makes its historical claims unknowable. Keys that were unowned
+    // at that point are poisoned — rollback must neither veto-with-a-named-
+    // owner nor fall back to a destructive tombstone; it keeps the alias and
+    // reports the evidence gap.
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+
+    let spec1_str = setup_standard_spec(&repo, "feat.taint1");
+    run_ok(repo.path(), ["preview", &spec1_str]);
+    run_ok(repo.path(), ["approve", &spec1_str, "--reviewer", "R"]);
+    run_ok(repo.path(), ["run-gates", &spec1_str]);
+    run_ok(repo.path(), ["import", &spec1_str, "--verified-by", "V"]);
+
+    // Backdate-edit: change spec1's file AFTER its import (sha now mismatches
+    // the ledger entry, so its import claims become unknowable).
+    {
+        let mut content = fs::read_to_string(&spec1_str).unwrap();
+        content.push_str("\n# edited after import\n");
+        fs::write(&spec1_str, content).unwrap();
+    }
+
+    // Second spec with its own product global, imported after the tainted one.
+    run_ok(
+        repo.path(),
+        [
+            "new",
+            "feat.taint2",
+            "--tier",
+            "lightweight",
+            "--product",
+            "mart",
+        ],
+    );
+    let specs_dir = repo.path().join(".s5d").join("packages");
+    let spec2_path = fs::read_dir(&specs_dir)
+        .unwrap()
+        .map(|e| e.unwrap().path())
+        .find(|p| p.to_string_lossy().contains("feat.taint2"))
+        .expect("spec2 should exist");
+    let spec2_str = spec2_path.to_str().unwrap().to_string();
+    {
+        let mut spec: s5d::Spec = load_yaml(&spec2_path);
+        materialize_scaffold_paths(&mut spec);
+        fs::write(&spec2_path, serde_yaml::to_string(&spec).unwrap()).unwrap();
+    }
+    run_ok(repo.path(), ["preview", &spec2_str]);
+    run_ok(repo.path(), ["approve", &spec2_str, "--reviewer", "R"]);
+    run_ok(repo.path(), ["run-gates", &spec2_str]);
+    run_ok(repo.path(), ["import", &spec2_str, "--verified-by", "V"]);
+
+    let outcome = run_ok(repo.path(), ["rollback", &spec2_str]);
+    assert!(
+        outcome.stderr.contains("ownership unverifiable"),
+        "evidence gap must be reported:\n{}",
+        outcome.summary()
+    );
+
+    let s5d_dir = repo.path().join(".s5d");
+    let aliases = s5d::AliasTable::load(&s5d_dir).unwrap();
+    let mart_alive = aliases
+        .global
+        .iter()
+        .any(|e| e.artifact_type == "Product" && e.artifact_id == "mart" && !e.deprecated);
+    assert!(
+        mart_alive,
+        "inconclusive ownership evidence must never tombstone:\n{:?}",
+        aliases.global
+    );
+}
+
+#[test]
 fn reconcile_fails_closed_on_corrupted_uuid() {
     let repo = StandaloneRepo::new();
     run_ok(repo.path(), ["init"]);

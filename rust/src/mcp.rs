@@ -2158,6 +2158,12 @@ fn tool_s5d_rollback(args: &Value) -> anyhow::Result<String> {
             warning
         ));
     }
+    for label in &report.ownership_unverifiable {
+        out.push_str(&format!(
+            "\nwarn: ownership unverifiable (package files edited or deleted since import), NOT tombstoned: {}",
+            label
+        ));
+    }
     for label in &report.underivable_fallbacks {
         out.push_str(&format!(
             "\nwarn: no ledger trace for {} — tombstoned via stored owning_package (legacy fallback)",
