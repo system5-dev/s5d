@@ -35,3 +35,32 @@ its ledger `rollback` entry is seen. Pinned by
 - CLI/MCP mutation order centralized, matches old shape.
 - Remaining test-gap notes (MCP warning parity, reconcile-derived ownership)
   acknowledged; MCP shares the lib function and report serialization verbatim.
+
+---
+
+# Tribunal round 2 — Codex (2026-06-12)
+
+## VERDICT: REJECT (both lifecycle blockers confirmed and fixed in round 3)
+
+### Blocking 1 — self-poisoning on normal re-import
+Edit → re-approve → re-import leaves the FIRST ledger entry with a stale sha;
+that self-stale entry poisoned the package's own keys and degraded its own
+rollback to "unverifiable" skip.
+
+**Fix:** self-poison is harmless by construction — whichever of a package's
+imports was first, the owner is the same package. Read-rule: a verified
+Owner stands unless the poison set contains a FOREIGN package. Pinned by
+`rollback_after_edit_and_reimport_tombstones_own_globals`.
+
+### Blocking 2 — rolled-back spec file pins globals via referenced-guard
+`referenced_globals` walked all package files regardless of record status, so
+a rolled-back spec left on disk kept its globals alive forever (pre-existing
+behavior, now inconsistent with epoch semantics).
+
+**Fix:** specs whose record status is Deprecated no longer count as
+referencing. Pinned by
+`rollback_epoch_transition_works_with_old_spec_file_left_on_disk`.
+
+Also introduced `DerivedOwnership::UnverifiedCandidate` — a key whose only
+ledger candidate is unverified maps to fallback-tombstone when consistent
+with the stored field, and to non-destructive skip otherwise.

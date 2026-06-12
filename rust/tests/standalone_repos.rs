@@ -5004,6 +5004,121 @@ fn rollback_after_reimport_does_not_false_flag_new_owner() {
 }
 
 #[test]
+fn rollback_after_edit_and_reimport_tombstones_own_globals() {
+    // Normal evolution lifecycle (tribunal round-2 blocker 1): a spec is
+    // imported, edited, re-approved, re-imported. The FIRST ledger entry's
+    // sha no longer matches the current file — that self-stale entry must
+    // not poison the spec's own ownership: whichever of its imports was
+    // first, the owner is the same package. Rollback must tombstone cleanly.
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+    let spec_str = setup_standard_spec(&repo, "feat.evolve");
+
+    run_ok(repo.path(), ["preview", &spec_str]);
+    run_ok(repo.path(), ["approve", &spec_str, "--reviewer", "R"]);
+    run_ok(repo.path(), ["run-gates", &spec_str]);
+    run_ok(repo.path(), ["import", &spec_str, "--verified-by", "V"]);
+
+    // Edit (version bump) and run the pipeline again — second import entry.
+    {
+        let spec_path = PathBuf::from(&spec_str);
+        let mut spec: s5d::Spec = load_yaml(&spec_path);
+        spec.version = "1.0.1".into();
+        fs::write(&spec_path, serde_yaml::to_string(&spec).unwrap()).unwrap();
+    }
+    run_ok(repo.path(), ["preview", &spec_str]);
+    run_ok(repo.path(), ["approve", &spec_str, "--reviewer", "R"]);
+    run_ok(repo.path(), ["run-gates", &spec_str]);
+    run_ok(repo.path(), ["import", &spec_str, "--verified-by", "V"]);
+
+    let outcome = run_ok(repo.path(), ["rollback", &spec_str]);
+    assert!(
+        !outcome.stderr.contains("ownership unverifiable")
+            && !outcome.stderr.contains("ownership mismatch"),
+        "self-stale ledger entries must not block the owner's own rollback:\n{}",
+        outcome.summary()
+    );
+
+    let s5d_dir = repo.path().join(".s5d");
+    let aliases = s5d::AliasTable::load(&s5d_dir).unwrap();
+    let shop_active = aliases
+        .global
+        .iter()
+        .any(|e| e.artifact_type == "Product" && e.artifact_id == "shop" && !e.deprecated);
+    assert!(
+        !shop_active,
+        "evolved spec's rollback must still tombstone its own globals:\n{:?}",
+        aliases.global
+    );
+}
+
+#[test]
+fn rollback_epoch_transition_works_with_old_spec_file_left_on_disk() {
+    // Tribunal round-2 blocker 2: same epoch transition as the test above,
+    // but the rolled-back spec's package file is NOT deleted. Its record
+    // says Deprecated, so it must neither pin the global via the
+    // referenced-globals guard nor distort the derivation.
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+
+    let spec1_str = setup_standard_spec(&repo, "feat.keep1");
+    run_ok(repo.path(), ["preview", &spec1_str]);
+    run_ok(repo.path(), ["approve", &spec1_str, "--reviewer", "R"]);
+    run_ok(repo.path(), ["run-gates", &spec1_str]);
+    run_ok(repo.path(), ["import", &spec1_str, "--verified-by", "V"]);
+    run_ok(repo.path(), ["rollback", &spec1_str]);
+    // spec1's file stays on disk — only its record marks it Deprecated.
+
+    run_ok(
+        repo.path(),
+        [
+            "new",
+            "feat.keep2",
+            "--tier",
+            "lightweight",
+            "--product",
+            "shop",
+        ],
+    );
+    let specs_dir = repo.path().join(".s5d").join("packages");
+    let spec2_path = fs::read_dir(&specs_dir)
+        .unwrap()
+        .map(|e| e.unwrap().path())
+        .find(|p| p.to_string_lossy().contains("feat.keep2"))
+        .expect("spec2 should exist");
+    let spec2_str = spec2_path.to_str().unwrap().to_string();
+    {
+        let mut spec: s5d::Spec = load_yaml(&spec2_path);
+        materialize_scaffold_paths(&mut spec);
+        fs::write(&spec2_path, serde_yaml::to_string(&spec).unwrap()).unwrap();
+    }
+    run_ok(repo.path(), ["preview", &spec2_str]);
+    run_ok(repo.path(), ["approve", &spec2_str, "--reviewer", "R"]);
+    run_ok(repo.path(), ["run-gates", &spec2_str]);
+    run_ok(repo.path(), ["import", &spec2_str, "--verified-by", "V"]);
+
+    let outcome = run_ok(repo.path(), ["rollback", &spec2_str]);
+    assert!(
+        !outcome.stderr.contains("ownership mismatch")
+            && !outcome.stderr.contains("ownership unverifiable"),
+        "epoch transition with the old file kept must not be flagged:\n{}",
+        outcome.summary()
+    );
+
+    let s5d_dir = repo.path().join(".s5d");
+    let aliases = s5d::AliasTable::load(&s5d_dir).unwrap();
+    let shop_active = aliases
+        .global
+        .iter()
+        .any(|e| e.artifact_type == "Product" && e.artifact_id == "shop" && !e.deprecated);
+    assert!(
+        !shop_active,
+        "rolled-back spec1 must not pin the global alive via referenced-globals:\n{:?}",
+        aliases.global
+    );
+}
+
+#[test]
 fn rollback_skips_tombstoning_when_ownership_unverifiable() {
     // Sha anchoring (tribunal counterexample): a package file edited after
     // import makes its historical claims unknowable. Keys that were unowned
