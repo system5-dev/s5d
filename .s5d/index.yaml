@@ -109,3 +109,13 @@ features:
   status: applied
   product: s5d
   version: 1.0.0
+- id: decision.s5d.ownership-derivation
+  spec_path: packages/decision.s5d.ownership-derivation__20260612.s5d.yaml
+  status: applied
+  product: s5d
+  version: 1.0.0
+- id: feat.s5d.ownership-derivation
+  spec_path: packages/feat.s5d.ownership-derivation__20260612.s5d.yaml
+  status: applied
+  product: s5d
+  version: 1.0.0

@@ -1,0 +1,206 @@
+s5d: '1.0'
+id: feat.s5d.ownership-derivation
+version: 1.0.0
+product: s5d
+tier: standard
+allow_update: true
+meta:
+  title: ownership-derivation
+  authors: []
+  date: 2026-06-12
+  tickets: []
+  adrs: []
+  renames: []
+context: |
+  ## Problem
+  RAN-491: owning_package on global aliases decides what rollback tombstones,
+  but it sits outside compute_state_fingerprint — corrupting it is invisible to
+  drift-check (pinned by test owning_package_corruption_is_invisible_to_drift_check).
+  Rollback logic is also duplicated between CLI (bin/s5d.rs run_rollback) and
+  MCP (mcp.rs tool_s5d_rollback), so any fix would have to land twice.
+
+  ## Goal
+  Implement decision.s5d.ownership-derivation winner (derive-ownership-from-ledger):
+  rollback derives the owner of each global alias from the append-only ledger plus
+  stored packages at the point of use. Stored owning_package degrades to a verified
+  cache. Conservative semantics — derivation confirms or vetoes tombstoning, never
+  expands it; disagreement is a loud warning; underivable falls back to stored field.
+  Extract one shared lib rollback function used by both CLI and MCP.
+
+  ## Acceptance (GWT)
+  1. Given a global alias whose owning_package was tampered to claim spec A while
+     the ledger derivation attributes it to spec B, when A is rolled back, then the
+     alias is NOT tombstoned and a warning names both owners.
+  2. Given untampered aliases where derivation agrees with the stored field, when
+     the owning spec is rolled back, then tombstoning proceeds exactly as before
+     (regression-safe).
+  3. Given a legacy global alias with no ledger trace (underivable), when its stored
+     owner is rolled back, then tombstoning proceeds via stored-field fallback with
+     a warning, not a hard failure.
+  4. Given a global whose derivation attributes it to spec A but stored field names
+     another spec, when A is rolled back, then rollback reports the suspected tamper
+     loudly and takes no destructive action on that alias.
+
+  ## DO / DON'T
+  DO: extract shared rollback into the library; keep referenced_globals guard; keep
+  ledger/record/index updates byte-compatible; add corruption + fallback tests.
+  DON'T: change compute_state_fingerprint; add new persistent artifacts; make
+  rollback fail hard on legacy repos; let derivation tombstone anything the stored
+  field does not claim.
+
+  ## Privacy
+  Classification: Internal
+workflow:
+  mode: plan
+  target_architecture:
+    summary: Single shared rollback function in the library (import module) with
+      ledger-derived ownership cross-check; CLI and MCP are thin callers. The
+      mutable owning_package field is a verified cache, never the sole authority
+      for destructive actions.
+    invariants:
+    - Derivation never expands tombstoning beyond what the stored field claims
+    - Fingerprint formula unchanged — no baseline invalidation
+    - Underivable ownership degrades to stored-field trust with a warning
+  delivery_strategy:
+    summary: Extract run_rollback/tool_s5d_rollback bodies into one lib fn, add
+      derive_global_owners over ledger+packages, wire the cross-check, then cover
+      with corruption/fallback/regression tests in standalone_repos.rs.
+    rationale: Extraction first — implementing the cross-check twice would recreate
+      the duplication that made this class of fix expensive.
+  resources: null
+  role_map:
+    implementer: coder
+    owner: human
+    verifier: reviewer
+    reviewer: reviewer
+  review_policy:
+    cross_model_required: false
+    required_on: []
+  structure_outline: null
+  execution_mode:
+    engine: manual
+    max_iterations: null
+    stop_conditions:
+    - Phase acceptance reached
+    - Approved scope exhausted
+    - New decision required
+  phases:
+  - id: prototype
+    title: Prototype
+    scope: Reduce unknowns before committed implementation
+    roles:
+    - owner
+    - implementer
+    acceptance:
+    - Critical feasibility questions answered
+    - Telemetry approach identified
+    rollback:
+    - Discard spike output if assumptions fail
+  - id: build
+    title: Build
+    scope: Implement approved scope and pass local gates
+    roles:
+    - implementer
+    - reviewer
+    acceptance:
+    - Tampered owning_package no longer changes rollback outcome (skip + warning,
+      test-pinned)
+    - Untampered rollback behavior byte-compatible with before (regression tests
+      green)
+    - Underivable ownership falls back to stored field with warning (test-pinned)
+    - CLI and MCP rollback call one shared lib function
+    - cargo test green, fmt/clippy clean
+    rollback:
+    - Revert or reconcile if gates or review fail
+  - id: measure
+    title: Measure
+    scope: Collect telemetry and close the loop with an explicit verdict
+    roles:
+    - owner
+    - verifier
+    acceptance:
+    - Telemetry collected against success criteria
+    - Outcome verdict recorded
+    rollback:
+    - Iterate or kill if evidence stays weak
+artifacts:
+  products:
+  - id: s5d
+    name: s5d
+    organization: null
+  domains:
+  - id: dom.s5d.core
+    product: s5d
+    name: s5d core domain
+    classification: supporting
+    description: Scaffold default — rename or split into real bounded contexts
+    team: null
+    maturity_level: null
+  capabilities:
+  - id: cap.ownership-derivation
+    domain: dom.s5d.core
+    name: Rollback ownership integrity
+    description: Ledger-derived ownership cross-check protecting rollback tombstoning
+      from owning_package corruption
+    since: null
+  entities: []
+  features:
+  - id: feat.s5d.ownership-derivation
+    product: s5d
+    name: ownership-derivation
+    description: null
+  use_cases: []
+  systems:
+  - id: sys.s5d
+    product: s5d
+    name: s5d
+  containers:
+  - id: ctr.s5d.app
+    system: sys.s5d
+    name: s5d app
+    technology: null
+  components:
+  - id: comp.ownership-derivation
+    feature: feat.s5d.ownership-derivation
+    domain: dom.s5d.core
+    container: ctr.s5d.app
+    name: ownership derivation component
+    paths:
+    - rust/src/import.rs
+    - rust/src/mcp.rs
+    - rust/src/bin/s5d.rs
+    - rust/tests/standalone_repos.rs
+  roles: []
+  concerns: []
+  metrics: []
+  supersystems: []
+  transports: []
+links:
+  feature_to_domain:
+  - feature: feat.s5d.ownership-derivation
+    domain: dom.s5d.core
+  use_case_to_capability: []
+  use_case_to_entity: []
+  component_to_capability:
+  - component: comp.ownership-derivation
+    capability: cap.ownership-derivation
+  component_to_entity: []
+  container_to_capability: []
+  concern_to_metric: []
+  component_to_container: []
+  edges: []
+  depends_on: []
+  entity_relations: []
+  capability_to_entity: []
+  capability_to_concern: []
+contracts: []
+gates:
+- kind: schema
+- kind: graph
+roc: null
+problem: null
+hypotheses: []
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false
