@@ -241,6 +241,7 @@ mod tests {
             note_rationale: None,
             expires_at: None,
             auto_noted: false,
+            intent_kernel: None,
         }
     }
 

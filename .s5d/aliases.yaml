@@ -552,3 +552,21 @@ packages:
   package_id: feat.s5d.ownership-derivation
   owning_package: null
   deprecated: false
+- uuid: b908b6e6-da19-40b6-ad0b-9ec13e105f3b
+  artifact_id: cap.shape-native
+  artifact_type: Capability
+  package_id: feat.s5d.shape-native
+  owning_package: null
+  deprecated: false
+- uuid: 8727d32c-229d-4bef-9afc-5fb287dc6841
+  artifact_id: feat.s5d.shape-native
+  artifact_type: Feature
+  package_id: feat.s5d.shape-native
+  owning_package: null
+  deprecated: false
+- uuid: 5f4a6892-17e1-40be-945d-12d8e1af1903
+  artifact_id: comp.shape-native
+  artifact_type: Component
+  package_id: feat.s5d.shape-native
+  owning_package: null
+  deprecated: false

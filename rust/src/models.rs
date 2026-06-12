@@ -40,6 +40,43 @@ pub struct Spec {
     pub expires_at: Option<String>,
     #[serde(default)]
     pub auto_noted: bool,
+    /// Shape-layer intake kernel — verbatim provenance of the shaped intent
+    /// (decision.s5d.bmad-native-runtime). Skip-serialized so specs without a
+    /// kernel keep their serialized form (and state fingerprint) byte-identical.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub intent_kernel: Option<IntentKernel>,
+}
+
+/// The 8 shape-layer intake fields (skills/s5d/references/shape-layer.md),
+/// carried verbatim into sha-bound state. The kernel is intake provenance;
+/// the problem card stays the operative control plane — no coupling between
+/// them is validated.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct IntentKernel {
+    /// The business, user, operational, or architectural reason this work matters.
+    #[serde(default)]
+    pub why: String,
+    /// Candidate capabilities or use cases implicated by the request.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub capabilities: Vec<String>,
+    /// Known technical, product, legal, timing, compatibility, or migration constraints.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub constraints: Vec<String>,
+    /// What the work explicitly should not attempt.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub non_goals: Vec<String>,
+    /// Observable outcome that would make the work worth doing.
+    #[serde(default)]
+    pub success_signal: String,
+    /// Claims not yet verified — assumptions, not facts.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub assumptions: Vec<String>,
+    /// Questions whose answers would change scope, architecture, or risk.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub open_questions: Vec<String>,
+    /// External notes, PRDs, UX docs, research, stories used as input (paths/refs).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub companions: Vec<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

@@ -20,11 +20,50 @@ pub fn placeholder_path_components(spec: &crate::models::Spec) -> Vec<String> {
         .unwrap_or_default()
 }
 
+/// Readiness rules for an intake kernel (shape-layer.md): structural
+/// completeness only — content truthfulness stays with the agent. Empty
+/// result = ready. Used by `s5d shape` pre-spec and by validate_spec once
+/// the kernel is embedded.
+pub fn intent_kernel_readiness_errors(kernel: &IntentKernel) -> Vec<String> {
+    let mut errors = Vec::new();
+    if kernel.why.trim().is_empty() {
+        errors
+            .push("intent_kernel.why must be non-empty — name the reason this work matters".into());
+    }
+    if kernel.success_signal.trim().is_empty() {
+        errors.push(
+            "intent_kernel.success_signal must be non-empty — name the observable outcome that makes the work worth doing"
+                .into(),
+        );
+    }
+    let list_fields: [(&str, &Vec<String>); 6] = [
+        ("capabilities", &kernel.capabilities),
+        ("constraints", &kernel.constraints),
+        ("non_goals", &kernel.non_goals),
+        ("assumptions", &kernel.assumptions),
+        ("open_questions", &kernel.open_questions),
+        ("companions", &kernel.companions),
+    ];
+    for (name, values) in list_fields {
+        if values.iter().any(|v| v.trim().is_empty()) {
+            errors.push(format!(
+                "intent_kernel.{} contains an empty entry — remove it or fill it in",
+                name
+            ));
+        }
+    }
+    errors
+}
+
 pub fn validate_spec(spec: &Spec) -> Vec<String> {
     let mut errors = Vec::new();
 
     if spec.s5d != "1.0" {
         errors.push(format!("unsupported s5d version: {}", spec.s5d));
+    }
+
+    if let Some(ref kernel) = spec.intent_kernel {
+        errors.extend(intent_kernel_readiness_errors(kernel));
     }
 
     if !is_valid_id(&spec.id) {

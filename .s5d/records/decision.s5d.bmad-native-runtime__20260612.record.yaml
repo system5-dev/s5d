@@ -1,0 +1,74 @@
+spec_ref: decision.s5d.bmad-native-runtime__20260612.s5d.yaml
+spec_sha256: sha256:db3258ff10a95d1508a2e56d05f5f4898876e386193d8365adaa1880ac1fbb81
+status: applied
+sync_status: synced
+status_history:
+- status: proposed
+  timestamp: 2026-06-12T08:36:10.905374+00:00
+- status: previewed
+  timestamp: 2026-06-12T08:38:16.912264+00:00
+- status: approved
+  timestamp: 2026-06-12T08:38:16.955791+00:00
+- status: applied
+  timestamp: 2026-06-12T08:38:17.122179+00:00
+active_phase: null
+phase_history: []
+phase_runs: []
+approvals:
+- reviewer: Roman
+  date: 2026-06-12T08:38:16.955788+00:00
+  spec_sha256: sha256:9f0e6315a9ff2f423fb8f2726ab107db12d7f59b481c1dcedab3829610479cc8
+  diff_sha256: sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+preview:
+  diff_sha256: sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+  previewed_spec_sha256: sha256:9f0e6315a9ff2f423fb8f2726ab107db12d7f59b481c1dcedab3829610479cc8
+  actions:
+    create: 0
+    link: 0
+    update: 0
+    delete: 0
+  log: null
+reflection: null
+gate_results:
+- kind: review
+  status: passed
+  attempt: 1
+  timestamp: 2026-06-12T08:38:16.987563+00:00
+  log: |-
+    review gate passed (built-in): 1 review-evidence with verdict=pass
+      - hypothesis=kernel-in-spec-schema-lite evidence_id=20260612-gate-review-kernel-in-spec-schema-lite formality=3
+  exit_code: null
+  evidence_path: evidence/decision.s5d.bmad-native-runtime/review_1.log
+  command: null
+  duration_ms: 0
+  waiver_expires_at: null
+  kind_class: null
+decision:
+  title: 'Schema-lite native shaping: kernel-in-spec, commands reuse existing surfaces'
+  winner_id: kernel-in-spec-schema-lite
+  rejected_ids:
+  - commands-only-zero-schema-change
+  - full-bmad-artifact-model
+  context: Phase 2 of BMAD assimilation. Phase 1 (skill docs) closed vague-intake and review-discipline gaps in the synthetic benchmark; remaining gaps are native runtime support. Naive approaches either leave intake intent outside sha-bound state (zero-schema) or add Story/Epic global artifacts into the alias/ownership machinery hardened in RAN-491 (full model).
+  decision: Add intent_kernel as an optional skip-serialized Spec field carrying the 8 shape-layer fields verbatim. s5d shape ingests a kernel, classifies via the existing router, and scaffolds a spec with the kernel embedded. s5d review adversarial scaffolds the 3-layer report into .s5d/evidence/<spec>/. s5d plan stories inserts story-shaped workflow.phases entries into an existing spec. Readiness = validator rules over kernel structural completeness. CLI+MCP parity for all three.
+  rationale: Only option that puts intake intent INTO sha-bound approved state (Acceptance Auditor reviews bound intent, not loose markdown) while keeping baseline safety by construction — skip-serialized optional field, proven additive pattern in this repo (evidence skill/agent fields). Stories reuse workflow.phases; no new global artifact types touch alias/ownership.
+  consequences: Spec schema grows one optional struct (validated, fingerprint-neutral, compat test mandatory). Older binaries editing kernel-bearing specs drop the field — detected by the sha chain, documented limitation. PRD-to-epics mode (steal-list 5) deferred to Phase 3. Skill docs (shape-layer.md, SKILL.md) must point at the native commands once they exist.
+  decided_at: 2026-06-12T08:38:16.857702+00:00
+  confirmed_by: Roman
+  expires_at: 2026-09-10
+  do_list: []
+  dont_list: []
+  challenge:
+    mode: standard
+    passed: true
+    summary: '5 probes: kernel/ProblemCard role split resolves duplication; old-binary field drop is sha-chain-detected; fingerprint-neutrality pinned as mandatory compat test; readiness checks structural only (thin layer); shape must reuse route(), review must reuse evidence-dir + gate:review. Roman pre-approved this exact scope — his go-ahead answered an offer naming kernel fields, readiness validation, the three commands, and review evidence integration.'
+    checks: []
+  decision_subject: null
+  decision_subject_granularity: null
+  evaluative_surface: null
+  belief_state: null
+  outcome_model: null
+  pareto_set: []
+  choice_rule: null
+verified_by: Diana
+drift_tolerance: null

@@ -439,6 +439,37 @@ fn core_tools() -> Vec<Value> {
             "description": "Architecture check — validate component paths and declared cross-domain source dependencies",
             "inputSchema": {"type": "object", "required": ["spec"], "properties": {"spec": {"type": "string", "description": "Path to .s5d.yaml file"}}}
         }),
+        json!({
+            "name": "s5d_shape",
+            "description": "Shape an intake kernel: classify it via the deterministic router and check structural readiness. Kernel fields: why, capabilities, constraints, non_goals, success_signal, assumptions, open_questions, companions.",
+            "inputSchema": {
+                "type": "object",
+                "required": ["kernel"],
+                "properties": {
+                    "kernel": {"type": "object", "description": "IntentKernel object (why and success_signal required for readiness; list fields optional)"},
+                    "emit_spec": {"type": "string", "description": "Also scaffold a spec with the kernel embedded (feature id, e.g. feat.x.y)"},
+                    "tier": {"type": "string", "description": "Tier for the emitted spec: lightweight|standard|high (default standard)"},
+                    "product": {"type": "string", "description": "Product for the emitted spec"}
+                }
+            }
+        }),
+        json!({
+            "name": "s5d_review_adversarial",
+            "description": "Scaffold the 3-layer adversarial review report (blind diff / edge case / acceptance audit) into .s5d/evidence/<spec>/ and return the tier-correct evidence binding step",
+            "inputSchema": {"type": "object", "required": ["spec"], "properties": {"spec": {"type": "string", "description": "Path to .s5d.yaml file"}}}
+        }),
+        json!({
+            "name": "s5d_plan_stories",
+            "description": "Append story-shaped workflow phases (id/title/scope/acceptance/rollback) to a spec and re-validate it. Editing a spec changes its sha — re-approve if it was already approved.",
+            "inputSchema": {
+                "type": "object",
+                "required": ["spec", "stories"],
+                "properties": {
+                    "spec": {"type": "string", "description": "Path to .s5d.yaml file"},
+                    "stories": {"type": "array", "description": "Story list", "items": {"type": "object", "required": ["id", "title", "scope"], "properties": {"id": {"type": "string"}, "title": {"type": "string"}, "scope": {"type": "string"}, "acceptance": {"type": "array", "items": {"type": "string"}}, "rollback": {"type": "array", "items": {"type": "string"}}}}}
+                }
+            }
+        }),
     ]
 }
 
@@ -479,6 +510,9 @@ fn handle_tools_call(params: &Value) -> anyhow::Result<Value> {
         "s5d_discover_sync" => tool_s5d_discover_sync(args)?,
         "s5d_discover_check" => tool_s5d_discover_check(args)?,
         "s5d_check" => tool_s5d_check(args)?,
+        "s5d_shape" => tool_s5d_shape(args)?,
+        "s5d_review_adversarial" => tool_s5d_review_adversarial(args)?,
+        "s5d_plan_stories" => tool_s5d_plan_stories(args)?,
         _ => {
             return Ok(
                 json!({"content":[{"type":"text","text":format!("Error: unknown tool '{}'", name)}],"isError":true}),
@@ -653,6 +687,116 @@ fn tool_s5d_check(args: &Value) -> anyhow::Result<String> {
     } else {
         anyhow::bail!("{out}");
     }
+}
+
+// ── Shape / Review / Plan (decision.s5d.bmad-native-runtime) ─────────────────
+
+fn tool_s5d_shape(args: &Value) -> anyhow::Result<String> {
+    let kernel_value = args
+        .get("kernel")
+        .filter(|v| v.is_object())
+        .ok_or_else(|| anyhow::anyhow!("missing required argument: kernel (object)"))?;
+    let kernel: crate::IntentKernel = serde_json::from_value(kernel_value.clone())
+        .map_err(|e| anyhow::anyhow!("kernel does not parse as IntentKernel: {}", e))?;
+
+    let outcome = crate::shape_kernel(&kernel);
+    let mut out = format!("{}", outcome.route);
+    if outcome.readiness_errors.is_empty() {
+        out.push_str("\nReadiness: ready");
+    } else {
+        out.push_str("\nReadiness: not ready");
+        for e in &outcome.readiness_errors {
+            out.push_str(&format!("\n  error: {}", e));
+        }
+    }
+
+    if let Some(id) = args["emit_spec"].as_str() {
+        if !outcome.readiness_errors.is_empty() {
+            anyhow::bail!(
+                "{}\nkernel is not ready — fix readiness errors before emitting a spec",
+                out
+            );
+        }
+        crate::sanitize_id(id)?;
+        let tier = match args["tier"].as_str().unwrap_or("standard") {
+            "lightweight" => crate::Tier::Lightweight,
+            "standard" => crate::Tier::Standard,
+            "high" => crate::Tier::High,
+            other => anyhow::bail!("invalid tier: {} (use lightweight|standard|high)", other),
+        };
+        let product = args["product"].as_str().unwrap_or("MyProduct");
+
+        let cwd = std::env::current_dir()?;
+        let project = crate::S5dProject::find(&cwd)
+            .ok_or_else(|| anyhow::anyhow!("no .s5d/ found (run s5d_init first)"))?;
+        let today = chrono::Utc::now().format("%Y%m%d");
+        let spec_filename = format!("{}__{}.s5d.yaml", id, today);
+        let spec_path = project.s5d_dir().join("packages").join(&spec_filename);
+        if spec_path.exists() {
+            anyhow::bail!("spec already exists: {}", spec_path.display());
+        }
+
+        let mut spec = crate::generate_spec(id, tier, product);
+        spec.intent_kernel = Some(kernel);
+        let scaffold_errors = crate::validate_spec(&spec);
+        if !scaffold_errors.is_empty() {
+            anyhow::bail!(
+                "generated scaffold would not validate:\n  {}",
+                scaffold_errors.join("\n  ")
+            );
+        }
+        save_spec_yaml_mcp(&spec_path, &spec)?;
+        let sha = crate::S5dProject::file_sha256(&spec_path)?;
+        let record = crate::generate_record(&spec_filename, &sha);
+        project.save_record(&spec_filename, &record)?;
+        out.push_str(&format!(
+            "\nCreated spec with embedded kernel: {}",
+            spec_path.display()
+        ));
+    }
+    Ok(out)
+}
+
+fn tool_s5d_review_adversarial(args: &Value) -> anyhow::Result<String> {
+    let spec_arg = args["spec"]
+        .as_str()
+        .ok_or_else(|| anyhow::anyhow!("missing required argument: spec"))?;
+    let (project, _path, spec, _filename) = load_spec_context_mcp(spec_arg)?;
+    let (path, binding) = crate::scaffold_adversarial_review(&project, &spec)?;
+    Ok(format!(
+        "Adversarial review scaffold: {}\nBinding: {}",
+        path.display(),
+        binding
+    ))
+}
+
+fn tool_s5d_plan_stories(args: &Value) -> anyhow::Result<String> {
+    let spec_arg = args["spec"]
+        .as_str()
+        .ok_or_else(|| anyhow::anyhow!("missing required argument: spec"))?;
+    let stories_value = args
+        .get("stories")
+        .filter(|v| v.is_array())
+        .ok_or_else(|| anyhow::anyhow!("missing required argument: stories (array)"))?;
+    let stories: Vec<crate::StoryInput> = serde_json::from_value(stories_value.clone())
+        .map_err(|e| anyhow::anyhow!("stories do not parse as a story list: {}", e))?;
+
+    let (path, mut spec) = load_spec_yaml_mcp(spec_arg)?;
+    let added = crate::apply_stories(&mut spec, stories)?;
+    let errors = crate::validate_spec(&spec);
+    if !errors.is_empty() {
+        anyhow::bail!(
+            "spec would not validate after adding stories:\n  {}",
+            errors.join("\n  ")
+        );
+    }
+    save_spec_yaml_mcp(&path, &spec)?;
+    Ok(format!(
+        "Added {} story phase(s) to {}: {}\nnote: editing a spec changes its sha — re-run preview/approve if it was already approved",
+        added.len(),
+        spec.id,
+        added.join(", ")
+    ))
 }
 
 // ── S5D lifecycle helpers ─────────────────────────────────────────────────────

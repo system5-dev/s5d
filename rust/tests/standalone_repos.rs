@@ -666,6 +666,7 @@ fn write_architecture_lint_spec(repo: &StandaloneRepo, allow_billing_to_auth: bo
         note_rationale: None,
         expires_at: None,
         auto_noted: false,
+        intent_kernel: None,
     };
 
     fs::write(&spec_path, serde_yaml::to_string(&spec).unwrap()).unwrap();
@@ -762,6 +763,7 @@ fn write_codebase_governance_spec(repo: &StandaloneRepo) -> PathBuf {
         note_rationale: None,
         expires_at: None,
         auto_noted: false,
+        intent_kernel: None,
     };
 
     fs::write(&spec_path, serde_yaml::to_string(&spec).unwrap()).unwrap();
@@ -2336,6 +2338,7 @@ fn architecture_check_accepts_markdown_component_paths() {
         note_rationale: None,
         expires_at: None,
         auto_noted: false,
+        intent_kernel: None,
     };
     fs::write(&spec_path, serde_yaml::to_string(&spec).unwrap()).unwrap();
 
@@ -5796,5 +5799,192 @@ fn ci_init_rewires_managed_stub_and_check_flags_unwired_gitlab() {
         denied.stderr.contains("user-owned"),
         "mid-line marker mention must not count as managed:\n{}",
         denied.summary()
+    );
+}
+
+// ── Shape / Review / Plan (decision.s5d.bmad-native-runtime) ─────────────────
+
+#[test]
+fn shape_routes_kernel_and_reports_readiness() {
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+
+    // Incomplete kernel: missing success_signal → reported, exit stays 0
+    // (shape is a report; only --emit-spec hard-fails on readiness).
+    repo.write(
+        "kernel-partial.yaml",
+        "why: checkout abandons spike on slow payment confirmation\ncapabilities:\n  - payment processing\n",
+    );
+    let outcome = run_ok(repo.path(), ["shape", "kernel-partial.yaml"]);
+    assert!(
+        outcome.stdout.contains("Route:"),
+        "shape must print the routing block:\n{}",
+        outcome.summary()
+    );
+    assert!(
+        outcome.stderr.contains("intent_kernel.success_signal"),
+        "missing readiness field must be named:\n{}",
+        outcome.summary()
+    );
+
+    // Complete kernel → ready.
+    repo.write(
+        "kernel-full.yaml",
+        "why: checkout abandons spike on slow payment confirmation\nsuccess_signal: p95 payment confirmation under 2s\ncapabilities:\n  - payment processing\nconstraints:\n  - PCI scope must not grow\n",
+    );
+    let outcome = run_ok(repo.path(), ["shape", "kernel-full.yaml"]);
+    assert!(
+        outcome.stdout.contains("Readiness: ready"),
+        "complete kernel must be ready:\n{}",
+        outcome.summary()
+    );
+}
+
+#[test]
+fn shape_emit_spec_embeds_kernel_and_validates() {
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+
+    repo.write(
+        "kernel.yaml",
+        "why: orders need partial refunds\nsuccess_signal: refunds complete without support tickets\nassumptions:\n  - refund provider API supports partial amounts\n",
+    );
+    let outcome = run_ok(
+        repo.path(),
+        [
+            "shape",
+            "kernel.yaml",
+            "--emit-spec",
+            "feat.refunds",
+            "--product",
+            "shop",
+        ],
+    );
+    assert!(
+        outcome.stdout.contains("Embedded intent_kernel"),
+        "emit must embed the kernel:\n{}",
+        outcome.summary()
+    );
+
+    let spec_path = only_spec_path(&repo);
+    let spec: s5d::Spec = load_yaml(&spec_path);
+    let kernel = spec.intent_kernel.as_ref().expect("kernel embedded");
+    assert_eq!(kernel.why, "orders need partial refunds");
+    assert_eq!(kernel.assumptions.len(), 1);
+
+    // Emitted spec validates; corrupting the kernel is caught by validate.
+    let spec_str = spec_path.to_str().unwrap().to_string();
+    run_ok(repo.path(), ["validate", &spec_str]);
+    {
+        let mut broken = spec.clone();
+        broken.intent_kernel.as_mut().unwrap().why = "".into();
+        fs::write(&spec_path, serde_yaml::to_string(&broken).unwrap()).unwrap();
+    }
+    let failed = run_fail(repo.path(), ["validate", &spec_str]);
+    assert!(
+        failed.stdout.contains("intent_kernel.why") || failed.stderr.contains("intent_kernel.why"),
+        "validate must name the empty kernel field:\n{}",
+        failed.summary()
+    );
+}
+
+#[test]
+fn review_adversarial_scaffolds_layered_report() {
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+    let spec_str = setup_standard_spec(&repo, "feat.reviewme");
+
+    let outcome = run_ok(repo.path(), ["review", "adversarial", &spec_str]);
+    assert!(
+        outcome.stdout.contains("Binding:"),
+        "binding instruction must be printed:\n{}",
+        outcome.summary()
+    );
+    let report = repo
+        .path()
+        .join(".s5d")
+        .join("evidence")
+        .join("feat.reviewme")
+        .join("adversarial-review-1.md");
+    let content = fs::read_to_string(&report).expect("report scaffold written");
+    for layer in [
+        "Blind Diff Hunter",
+        "Edge Case Hunter",
+        "Acceptance Auditor",
+    ] {
+        assert!(content.contains(layer), "missing layer {layer}");
+    }
+
+    // Second run numbers the next report instead of overwriting.
+    run_ok(repo.path(), ["review", "adversarial", &spec_str]);
+    assert!(repo
+        .path()
+        .join(".s5d")
+        .join("evidence")
+        .join("feat.reviewme")
+        .join("adversarial-review-2.md")
+        .exists());
+}
+
+#[test]
+fn plan_stories_appends_phases_and_rejects_collisions() {
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+    let spec_str = setup_standard_spec(&repo, "feat.storied");
+
+    repo.write(
+        "stories.yaml",
+        "- id: story-cart\n  title: Cart line items\n  scope: Render and mutate cart lines\n  acceptance:\n    - line items render with quantity controls\n- id: story-checkout\n  title: Checkout handoff\n  scope: Hand the cart to the payment flow\n  acceptance:\n    - cart total matches payment intent amount\n",
+    );
+    let outcome = run_ok(
+        repo.path(),
+        ["plan", "stories", &spec_str, "--from", "stories.yaml"],
+    );
+    assert!(
+        outcome.stdout.contains("story-cart") && outcome.stdout.contains("story-checkout"),
+        "added story ids must be reported:\n{}",
+        outcome.summary()
+    );
+
+    let spec: s5d::Spec = load_yaml(std::path::Path::new(&spec_str));
+    let phases = &spec.workflow.as_ref().unwrap().phases;
+    assert!(phases.iter().any(|p| p.id == "story-cart"));
+    assert!(phases.iter().any(|p| p.id == "story-checkout"));
+
+    // Same file again → id collision must fail loudly.
+    let failed = run_fail(
+        repo.path(),
+        ["plan", "stories", &spec_str, "--from", "stories.yaml"],
+    );
+    assert!(
+        failed.stderr.contains("collides"),
+        "duplicate story ids must be rejected:\n{}",
+        failed.summary()
+    );
+
+    // Omitted rollback is defaulted (validator requires non-empty), and a
+    // story without acceptance is rejected with the real reason.
+    let checkout = spec
+        .workflow
+        .as_ref()
+        .unwrap()
+        .phases
+        .iter()
+        .find(|p| p.id == "story-checkout")
+        .unwrap();
+    assert!(!checkout.rollback.is_empty(), "rollback must be defaulted");
+
+    repo.write(
+        "stories-bad.yaml",
+        "- id: story-empty\n  title: No acceptance\n  scope: Should be rejected\n",
+    );
+    let failed = run_fail(
+        repo.path(),
+        ["plan", "stories", &spec_str, "--from", "stories-bad.yaml"],
+    );
+    assert!(
+        failed.stderr.contains("acceptance criterion"),
+        "story without acceptance must be rejected:\n{}",
+        failed.summary()
     );
 }
