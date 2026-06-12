@@ -154,7 +154,7 @@ State what's anomalous. Define acceptance BEFORE options.
 
 ≥3 hypotheses, different in kind. Per hypothesis: predictions, decomposition, rigor rating, weakest-link analysis.
 
-Challenge probes before `s5d_decide`: Lightweight → 1 probe (strongest counter-argument). Standard / High / Decision → 5 probes (counter-argument, tail failure, evidence weakness, weakest link, existing alternatives). Fatal flaw from probe → revisit hypotheses. Record the outcome via `--challenge-summary` on decide — the runtime refuses to decide without it (`--no-challenge` exists but skipping the challenge needs an explicit WAIVER line).
+Challenge probes before `s5d_decide`, matching the runtime's `--challenge-mode`: `tactical` → 1 probe (strongest counter-argument) for small-blast-radius decisions; `standard` → 5 probes (counter-argument, tail failure, evidence weakness, weakest link, existing alternatives) for decisions gating standard/high work. Fatal flaw from probe → revisit hypotheses. Record the outcome via `--challenge-summary` on decide: the MCP path refuses to decide without it; the CLI accepts `--no-challenge`/`--force` (warns and records the decision with no challenge object — the runtime does not route this through the gate-waiver system). Skipping the challenge is a skill-level step skip: record an explicit WAIVER line.
 
 Human confirms (non-waivable). WAL: `status=AWAITING_HUMAN`. If the winner needs implementation, create the linked feature spec **before** `s5d_decide` — the winner must carry a `spec_ref` — then confirm.
 
