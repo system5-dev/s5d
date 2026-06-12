@@ -4727,13 +4727,14 @@ fn bulk_reconcile_reports_failure_in_exit_code() {
 
 #[test]
 fn owning_package_corruption_is_invisible_to_drift_check() {
-    // KNOWN LIMITATION — tracked as RAN-491 (scenario #13 family):
+    // BY DESIGN — resolved by decision.s5d.ownership-derivation (RAN-491):
     // compute_state_fingerprint hashes global aliases as type:id:uuid —
-    // owning_package is not part of the fingerprint, so its corruption is
-    // undetectable by drift-check even though rollback semantics depend on
-    // it. Fixing requires a fingerprint migration (all baselines drift).
-    // This test documents the current blind spot; when RAN-491 lands it
-    // must be flipped to assert drift instead.
+    // owning_package is deliberately outside the fingerprint, because
+    // including it would invalidate every existing baseline. Instead the
+    // field is a verified cache: rollback derives ownership from the
+    // ledger + packages and cross-checks the stored value (see the
+    // rollback_* ownership tests below). Drift-check staying "synced"
+    // here is the intended behavior, not a blind spot.
     let repo = StandaloneRepo::new();
     run_ok(repo.path(), ["init"]);
     let spec_str = setup_standard_spec(&repo, "feat.rec5");
@@ -4762,8 +4763,178 @@ fn owning_package_corruption_is_invisible_to_drift_check() {
     let outcome = run_ok(repo.path(), ["drift-check", &spec_str]);
     assert!(
         outcome.stdout.contains("synced"),
-        "documents the blind spot — ownership is outside the fingerprint:\n{}",
+        "ownership is outside the fingerprint by design — rollback owns the check:\n{}",
         outcome.summary()
+    );
+}
+
+// ── Rollback ownership integrity (decision.s5d.ownership-derivation) ─────────
+
+#[test]
+fn rollback_vetoes_tombstoning_when_ledger_contradicts_stored_owner() {
+    // GWT: a global's owning_package is tampered to claim spec2 while the
+    // ledger derivation attributes it to spec1 (first importer). Rolling
+    // back spec2 must NOT tombstone the global and must warn loudly.
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+
+    let spec1_str = setup_standard_spec(&repo, "feat.owner1");
+    run_ok(repo.path(), ["preview", &spec1_str]);
+    run_ok(repo.path(), ["approve", &spec1_str, "--reviewer", "R"]);
+    run_ok(repo.path(), ["run-gates", &spec1_str]);
+    run_ok(repo.path(), ["import", &spec1_str, "--verified-by", "V"]);
+
+    // Second spec in the same repo, sharing the product global.
+    run_ok(
+        repo.path(),
+        [
+            "new",
+            "feat.owner2",
+            "--tier",
+            "lightweight",
+            "--product",
+            "shop",
+        ],
+    );
+    let specs_dir = repo.path().join(".s5d").join("packages");
+    let spec2_path = fs::read_dir(&specs_dir)
+        .unwrap()
+        .map(|e| e.unwrap().path())
+        .find(|p| p.to_string_lossy().contains("feat.owner2"))
+        .expect("spec2 should exist");
+    let spec2_str = spec2_path.to_str().unwrap().to_string();
+    {
+        let mut spec: s5d::Spec = load_yaml(&spec2_path);
+        materialize_scaffold_paths(&mut spec);
+        fs::write(&spec2_path, serde_yaml::to_string(&spec).unwrap()).unwrap();
+    }
+    run_ok(repo.path(), ["preview", &spec2_str]);
+    run_ok(repo.path(), ["approve", &spec2_str, "--reviewer", "R"]);
+    run_ok(repo.path(), ["run-gates", &spec2_str]);
+    run_ok(repo.path(), ["import", &spec2_str, "--verified-by", "V"]);
+
+    // Tamper: the shared Product global is owned by spec1 (first creator);
+    // rewrite the stored owner to claim spec2.
+    let s5d_dir = repo.path().join(".s5d");
+    let mut aliases = s5d::AliasTable::load(&s5d_dir).unwrap();
+    let entry = aliases
+        .global
+        .iter_mut()
+        .find(|e| {
+            e.artifact_type == "Product" && e.owning_package.as_deref() == Some("feat.owner1")
+        })
+        .expect("spec1 owns the Product global");
+    let tampered_key = (entry.artifact_type.clone(), entry.artifact_id.clone());
+    entry.owning_package = Some("feat.owner2".into());
+    aliases.save(&s5d_dir).unwrap();
+
+    let outcome = run_ok(repo.path(), ["rollback", &spec2_str]);
+    assert!(
+        outcome.stderr.contains("ownership mismatch"),
+        "tampered owner must surface as a mismatch warning:\n{}",
+        outcome.summary()
+    );
+
+    let after = s5d::AliasTable::load(&s5d_dir).unwrap();
+    let alive = after
+        .global
+        .iter()
+        .any(|e| (e.artifact_type.clone(), e.artifact_id.clone()) == tampered_key && !e.deprecated);
+    assert!(
+        alive,
+        "global with contradicted ownership must NOT be tombstoned:\n{:?}",
+        after.global
+    );
+}
+
+#[test]
+fn rollback_reports_suspected_tamper_without_destroying_global() {
+    // GWT: the ledger derivation attributes a global to the spec being
+    // rolled back, but the stored field was edited to name someone else
+    // (dodge attempt). Rollback must report it loudly and take no
+    // destructive action on that alias.
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+    let spec_str = setup_standard_spec(&repo, "feat.dodge");
+
+    run_ok(repo.path(), ["preview", &spec_str]);
+    run_ok(repo.path(), ["approve", &spec_str, "--reviewer", "R"]);
+    run_ok(repo.path(), ["run-gates", &spec_str]);
+    run_ok(repo.path(), ["import", &spec_str, "--verified-by", "V"]);
+
+    let s5d_dir = repo.path().join(".s5d");
+    let mut aliases = s5d::AliasTable::load(&s5d_dir).unwrap();
+    let entry = aliases
+        .global
+        .iter_mut()
+        .find(|e| e.owning_package.as_deref() == Some("feat.dodge"))
+        .expect("imported spec owns at least one global alias");
+    let dodged_key = (entry.artifact_type.clone(), entry.artifact_id.clone());
+    entry.owning_package = Some("feat.someone.else".into());
+    aliases.save(&s5d_dir).unwrap();
+
+    let outcome = run_ok(repo.path(), ["rollback", &spec_str]);
+    assert!(
+        outcome.stderr.contains("suspected ownership tamper"),
+        "dodge attempt must be reported:\n{}",
+        outcome.summary()
+    );
+
+    let after = s5d::AliasTable::load(&s5d_dir).unwrap();
+    let alive = after
+        .global
+        .iter()
+        .any(|e| (e.artifact_type.clone(), e.artifact_id.clone()) == dodged_key && !e.deprecated);
+    assert!(
+        alive,
+        "derivation must never tombstone an alias the stored field does not claim:\n{:?}",
+        after.global
+    );
+}
+
+#[test]
+fn rollback_falls_back_to_stored_owner_when_ledger_has_no_trace() {
+    // GWT: legacy alias with no ledger trace (created before ledger
+    // discipline or by hand). Rollback of its stored owner proceeds via
+    // stored-field trust with a warning — never a hard failure.
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+    let spec_str = setup_standard_spec(&repo, "feat.legacy");
+
+    run_ok(repo.path(), ["preview", &spec_str]);
+    run_ok(repo.path(), ["approve", &spec_str, "--reviewer", "R"]);
+    run_ok(repo.path(), ["run-gates", &spec_str]);
+    run_ok(repo.path(), ["import", &spec_str, "--verified-by", "V"]);
+
+    // Hand-append a global alias no spec declares and no ledger entry covers.
+    let s5d_dir = repo.path().join(".s5d");
+    let mut aliases = s5d::AliasTable::load(&s5d_dir).unwrap();
+    aliases.global.push(s5d::AliasEntry {
+        uuid: "11111111-1111-1111-1111-111111111111".into(),
+        artifact_id: "role.ghost".into(),
+        artifact_type: "Role".into(),
+        package_id: None,
+        owning_package: Some("feat.legacy".into()),
+        deprecated: false,
+    });
+    aliases.save(&s5d_dir).unwrap();
+
+    let outcome = run_ok(repo.path(), ["rollback", &spec_str]);
+    assert!(
+        outcome.stderr.contains("no ledger trace"),
+        "legacy fallback must be announced:\n{}",
+        outcome.summary()
+    );
+
+    let after = s5d::AliasTable::load(&s5d_dir).unwrap();
+    let ghost = after
+        .global
+        .iter()
+        .find(|e| e.artifact_id == "role.ghost")
+        .expect("ghost alias still present");
+    assert!(
+        ghost.deprecated,
+        "underivable alias claimed by the stored field must tombstone via fallback"
     );
 }
 

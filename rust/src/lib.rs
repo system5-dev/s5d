@@ -39,7 +39,10 @@ pub use drift::{check_drift, reconcile, DriftResult};
 pub use gates::{effective_gates_for_spec, run_gates};
 pub use graph::{check_domain_layering, graph_check, tarjan_scc};
 pub use identity::{AliasEntry, AliasTable};
-pub use import::{compute_diff, compute_state_fingerprint, execute_import, DiffActions};
+pub use import::{
+    compute_diff, compute_state_fingerprint, derive_global_owners, execute_import, rollback_spec,
+    DiffActions, RollbackReport,
+};
 pub use models::*;
 pub use phase_gates::{
     check_add_hypothesis, check_approve, check_challenge, check_decide, check_import,

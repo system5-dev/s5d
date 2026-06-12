@@ -147,3 +147,17 @@ entries:
   status: success
   timestamp: 2026-06-11T13:18:34.283184+00:00
   record_ref: records/feat.s5d.self-update__20260611.record.yaml
+- spec_sha256: sha256:25f8d74f16b8fcc0548f7a8a821f7a5b479a470abd599eb7684b63fe19f06de0
+  state_fingerprint: sha256:f3661f6500d4713210d6e64133caec154bd03f0a9e623e3b633c0b3dd358b251
+  package_id: decision.s5d.ownership-derivation
+  action: import
+  status: success
+  timestamp: 2026-06-12T07:00:58.037320+00:00
+  record_ref: records/decision.s5d.ownership-derivation__20260612.record.yaml
+- spec_sha256: sha256:164fbe42e314dab04baa9f2d61dd8395ab644ab62198967f358ba3620bbacb9c
+  state_fingerprint: sha256:748cc41bf3906aae6b9a9ac23e1f7c25e4d2b31a3ae81c7dd8c8d9832f2378fa
+  package_id: feat.s5d.ownership-derivation
+  action: import
+  status: success
+  timestamp: 2026-06-12T07:11:04.200544+00:00
+  record_ref: records/feat.s5d.ownership-derivation__20260612.record.yaml

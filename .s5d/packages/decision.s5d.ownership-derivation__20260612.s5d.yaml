@@ -1,0 +1,130 @@
+s5d: '1.0'
+id: decision.s5d.ownership-derivation
+version: 1.0.0
+product: s5d
+tier: decision
+allow_update: true
+meta:
+  title: ownership-derivation
+  authors: []
+  date: 2026-06-12
+  tickets: []
+  adrs: []
+  renames: []
+context: null
+workflow: null
+artifacts: null
+links: null
+contracts: []
+gates:
+- kind: review
+roc: null
+problem:
+  signal: How should S5D protect rollback ownership (owning_package) integrity without invalidating existing fingerprint baselines? (RAN-491 — owning_package sits outside compute_state_fingerprint, so corrupting it is invisible to drift-check while rollback tombstoning depends on it; pinned by test owning_package_corruption_is_invisible_to_drift_check)
+  constraints:
+  - Changing the fingerprint formula invalidates every imported baseline in every repo — mass false drift after upgrade is unacceptable as a silent default
+  - Rollback must never become destructive on derivation errors — when in doubt, keep data and report loudly
+  - Legacy repos (aliases created before ledger discipline, manual aliases.yaml edits) must keep working — degrade to warning, not hard failure
+  targets: []
+  indicators: []
+  goodhart_guard: null
+  acceptance: (1) Tampering owning_package cannot silently change rollback outcomes when ledger and packages are available; (2) zero false drift on existing baselines after upgrade — fingerprint formula untouched; (3) non-destructive degradation — underivable ownership falls back to stored field with at most a warning; (4) no migration day and no new persistent artifact required of users
+  blast_radius: .s5d state machine core — rollback path (CLI + MCP), alias table semantics; no user-facing schema change
+  reversibility: High — derivation is additive cross-check logic; reverting restores prior tombstoning behavior without data migration
+  status: backlog
+hypotheses:
+- id: versioned-fingerprint
+  title: Versioned fingerprint
+  content: Introduce fingerprint v2 that includes owning_package. New imports/reconciles stamp v2; existing entries stay valid under v1 until the next lifecycle event re-stamps them. No migration day; convergence by natural lifecycle.
+  scope: compute_state_fingerprint, drift-check, reconcile
+  kind: system
+  layer: L0
+  r_eff: null
+  evidence:
+  - id: 20260612-internal-versioned-fingerprint
+    type: internal
+    content: 'Analysis: avoids baseline invalidation (old entries valid under v1) but leaves a blind window — ownership corruption stays invisible between upgrade and the next lifecycle re-stamp, and dual-version fingerprint code persists indefinitely.'
+    verdict: refine
+    valid_until: 2026-09-10T06:55:25.115942+00:00
+    carrier_ref: null
+    formality: 2
+    claim_scope:
+    - compatibility
+    - detection-latency
+    congruence_level: null
+    reliability: 0.7
+    refine_kind: specialise
+  depends_on: []
+  rationale: null
+  spec_ref: null
+  prompt: null
+  next_move: null
+- id: separate-ownership-checksum
+  title: Separate ownership checksum
+  content: Keep the import fingerprint untouched; add a second checksum covering only ownership data, stored alongside. Drift-check compares each hash against its own baseline; missing ownership baseline is informational until first stamped.
+  scope: ledger entries, drift-check
+  kind: system
+  layer: L0
+  r_eff: null
+  evidence:
+  - id: 20260612-internal-separate-ownership-checksum
+    type: internal
+    content: 'Analysis: detects corruption without touching the import fingerprint, but adds a second permanent artifact to compute, store, and migrate; detects the symptom rather than removing the load-bearing role of the mutable field. Lower ideality than derivation.'
+    verdict: refine
+    valid_until: 2026-09-10T06:55:25.121203+00:00
+    carrier_ref: null
+    formality: 2
+    claim_scope:
+    - complexity
+    - detection
+    congruence_level: null
+    reliability: 0.7
+    refine_kind: specialise
+  depends_on: []
+  rationale: null
+  spec_ref: null
+  prompt: null
+  next_move: null
+- id: derive-ownership-from-ledger
+  title: Derive ownership from ledger
+  content: 'Rollback derives the owner of each global alias from the append-only ledger plus stored packages at the point of use, instead of trusting the mutable owning_package field. The field degrades to a verified cache: mismatch with the derivation is a loud error (or self-heal). Fingerprint formula unchanged; the corruption class stops being load-bearing.'
+  scope: rollback, alias table, ledger
+  kind: system
+  layer: L2
+  r_eff: null
+  evidence:
+  - id: 20260612-internal-derive-ownership-from-ledger
+    type: internal
+    content: 'Falsification probe on the s5d repo itself (2026-06-12): all 17 global aliases have owning_package present in the ledger as a successful import (17/17). Prerequisite for ledger derivation holds on real data. Caveat: probe checked owner-presence, not full derived-owner==stored-owner equality; implementation must add the full derivation test.'
+    verdict: pass
+    valid_until: 2026-09-10T06:55:25.110345+00:00
+    carrier_ref: null
+    formality: 3
+    claim_scope:
+    - derivability
+    - real-repo
+    congruence_level: null
+    reliability: 0.85
+    refine_kind: null
+  - id: 20260612-gate-review-derive-ownership-from-ledger
+    type: gate:review
+    content: 'Adversarial review, 5 probes: (1) ownership-transfer counter-argument REFUTED by identity.rs — resolve() is first-creator-wins, apply_renames preserves owning_package, no transfer API, so first-import derivation is correct by construction; (2) tail failure (edited+re-imported packages diverge current file from historical import) bounded by conservative semantics — derivation only vetoes/confirms tombstoning, never expands it, disagreement = skip + loud warning; (3) probe weakness (presence-only, not full equality) acknowledged, full derivation tests required in implementation; (4) weakest link — derivation sources are sha256-bound (packages) and append-only (ledger), strictly stronger than the unanchored alias field; (5) alternatives D1/D2 recorded as hypotheses with refine verdicts, merkle-izing aliases recreates the baseline-invalidation contradiction. No fatal flaw.'
+    verdict: pass
+    valid_until: 2026-09-10T07:00:05.862753+00:00
+    carrier_ref: null
+    formality: 3
+    claim_scope:
+    - adversarial-review
+    - decision-tier
+    congruence_level: null
+    reliability: 0.85
+    refine_kind: null
+  depends_on: []
+  rationale: null
+  spec_ref: feat.s5d.ownership-derivation__20260612.s5d.yaml
+  prompt: null
+  next_move: null
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false

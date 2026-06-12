@@ -3201,77 +3201,29 @@ fn run_rollback(spec_arg: &str) -> anyhow::Result<()> {
     let (project, _spec_path, spec, spec_filename) = load_spec_context(spec_arg)?;
     let _lock = project.acquire_lock(&format!("rollback.{}", spec.id))?;
 
-    let s5d_dir = project.s5d_dir();
+    let report = s5d::import::rollback_spec(&project, &spec, &spec_filename)?;
 
-    // Load ledger and find last successful import for this package
-    let mut ledger = project.load_ledger()?;
-    let last_import_idx = ledger
-        .entries
-        .iter()
-        .rposition(|e| e.package_id == spec.id && e.action == "import" && e.status == "success");
-
-    if last_import_idx.is_none() {
-        anyhow::bail!("no successful import found for {} to roll back", spec.id);
+    for warning in &report.ownership_mismatches {
+        eprintln!(
+            "{} ownership mismatch (possible owning_package corruption), NOT tombstoned: {}",
+            "warn".yellow(),
+            warning
+        );
     }
-
-    // Collect global artifact IDs still referenced by other specs
-    let other_specs = project.discover_specs()?;
-    let mut referenced_globals = std::collections::HashSet::new();
-    for (_, other) in &other_specs {
-        if other.id != spec.id {
-            referenced_globals.extend(s5d::import::collect_global_artifact_ids(other));
-        }
+    for warning in &report.suspected_tampers {
+        eprintln!(
+            "{} suspected ownership tamper, no action taken: {}",
+            "warn".yellow(),
+            warning
+        );
     }
-
-    // Tombstone alias entries for this package
-    let mut aliases = s5d::AliasTable::load(&s5d_dir)?;
-    for entry in &mut aliases.packages {
-        if entry.package_id.as_deref() == Some(&spec.id) && !entry.deprecated {
-            entry.deprecated = true;
-        }
+    for label in &report.underivable_fallbacks {
+        eprintln!(
+            "{} no ledger trace for {} — tombstoned via stored owning_package (legacy fallback)",
+            "warn".yellow(),
+            label
+        );
     }
-    for entry in &mut aliases.global {
-        if entry.owning_package.as_deref() == Some(&spec.id) && !entry.deprecated {
-            // Skip if another spec still references this global artifact
-            let key = (entry.artifact_type.clone(), entry.artifact_id.clone());
-            if !referenced_globals.contains(&key) {
-                entry.deprecated = true;
-            }
-        }
-    }
-    aliases.save(&s5d_dir)?;
-
-    // Append rollback ledger entry
-    ledger.entries.push(s5d::LedgerEntry {
-        spec_sha256: "rollback".into(),
-        state_fingerprint: "rollback".into(),
-        package_id: spec.id.clone(),
-        action: "rollback".into(),
-        status: "success".into(),
-        timestamp: chrono::Utc::now().to_rfc3339(),
-        record_ref: Some(format!(
-            "records/{}",
-            spec_filename.replace(".s5d.yaml", ".record.yaml")
-        )),
-    });
-    project.save_ledger(&ledger)?;
-
-    // Update record status
-    let mut record = project
-        .load_record(&spec_filename)?
-        .ok_or_else(|| anyhow::anyhow!("no record found for {}", spec_filename))?;
-    record.status = s5d::SpecStatus::Deprecated;
-    record.sync_status = s5d::SyncStatus::Unknown;
-    record.status_history.push(s5d::StatusEntry {
-        status: s5d::SpecStatus::Deprecated,
-        timestamp: chrono::Utc::now().to_rfc3339(),
-    });
-    project.save_record(&spec_filename, &record)?;
-
-    // Remove from index
-    let mut index = project.load_index()?;
-    index.features.retain(|e| e.id != spec.id);
-    project.save_index(&index)?;
 
     println!("{} Rolled back: {}", "ok".green(), spec.id);
     Ok(())
