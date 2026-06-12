@@ -258,7 +258,7 @@ The synthesis may stay in this pattern only if the source relation remains expli
 #### A.6.3.CR:5.2.b - Cross-language re-expression without hidden bridge work
 **Source slice.** `The backup controller stays in passive watch mode until the primary loop fails two consecutive heartbeat checks.`
 
-**Published slice.** `Резервный контроллер остаётся в режиме пассивного наблюдения, пока основной контур не пропустит две последовательные проверки heartbeat.`
+**Published translated slice, English rendering.** `The backup controller remains in passive watch mode until the primary loop misses two consecutive heartbeat checks.`
 
 This remains in `ConservativeRetextualization` only if the translation is still tethered to the same source claim, preserves the same described entity, and does not quietly add cross-tradition bridge claims such as "equivalent architecture role" or "same operational guarantee" beyond what the source actually states. If a legal, regulatory, cross-language, or domain-specific equivalence is now doing work, declare the correspondence or bridge owner explicitly instead of hiding equivalence pressure inside fluent translation.
 
@@ -352,4 +352,3 @@ Teams repeatedly need one second text over the same described entity, but the ne
 - **Boundary notes:** explanation-facing cases exit to `ExplanationFaithfulnessProfile`; representation-regime shifts exit to `RepresentationTransduction`; bounded comparative review units exit to `E.17.ID.CR ComparativeReading`; described-entity changes exit to `A.6.4`; deliberately weaker textual renderings whose narrower-use, forbidden-use, and reopen contract is primary route to `A.6.3.CSC Controlled Semantic Coarsening`.
 
 ### A.6.3.CR:End
-

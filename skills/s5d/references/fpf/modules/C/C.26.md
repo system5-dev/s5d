@@ -98,16 +98,16 @@ Example style:
 | Better | The readiness dashboard was not a passive read: its publication changed team behavior, so the dashboard result cannot be used alone as pre-publication readiness evidence. |
 | Best | Route ordinary metric issues through `C.16` and release assurance through `B.3`. Retain `C.26.1` only for the residual false passive-read issue: dashboard publication changed readiness behavior in window W. Decision diff: do not use the dashboard as sole release evidence; add independent work traces and record unsupported use. |
 
-Informative bilingual translation note:
+Informative English-only terminology note:
 
-| English | Prefer in Russian / bilingual use | Risk |
+| Term | Safe reading | Risk |
 | --- | --- | --- |
-| `probe` | probe / пробное воздействие / считывающее взаимодействие | "измерение" is too narrow; "зонд" sounds too physical. |
-| `state reading` | чтение состояния / state-reading claim | "состояние" without reading sounds ontological. |
-| `frame` | рамка сравнения / probe frame / model frame | "контекст" can collide with bounded context. |
-| `instrument` | instrument-like operation / операция-инструмент | "прибор" sounds too physical. |
-| `distributed state` | distributed-state reading | "распределённое состояние" sounds like a new object. |
-| `faithful-enough export` | достаточно верный перенос для заявленного use | "копия" suggests an impossible-copy ideal. |
+| `probe` | active probe or sensing interaction | "measurement" is too narrow; "sensor" sounds too physical. |
+| `state reading` | state-reading claim | "state" without reading sounds ontological. |
+| `frame` | comparison frame / probe frame / model frame | "context" can collide with bounded context. |
+| `instrument` | instrument-like operation | "device" sounds too physical. |
+| `distributed state` | distributed-state reading | "distributed state" without reading sounds like a new object. |
+| `faithful-enough export` | sufficiently faithful transfer for the stated use | "copy" suggests an impossible-copy ideal. |
 
 ### C.26:2 - Problem
 
