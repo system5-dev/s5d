@@ -5988,3 +5988,33 @@ fn plan_stories_appends_phases_and_rejects_collisions() {
         failed.summary()
     );
 }
+
+#[test]
+fn review_adversarial_rejects_path_traversal_spec_id() {
+    // spec.id comes from file content — a crafted id must not become a path
+    // segment that escapes .s5d/evidence/ (tribunal round-1 blocker).
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+    repo.write(
+        ".s5d/packages/evil__20260612.s5d.yaml",
+        "s5d: '1.0'\nid: ../../escape\nversion: 1.0.0\nproduct: shop\ntier: standard\n",
+    );
+    let failed = run_fail(
+        repo.path(),
+        [
+            "review",
+            "adversarial",
+            ".s5d/packages/evil__20260612.s5d.yaml",
+        ],
+    );
+    assert!(
+        failed.stderr.contains("invalid spec ID"),
+        "traversal id must be rejected before any write:\n{}",
+        failed.summary()
+    );
+    assert!(
+        !repo.path().join("escape").exists()
+            && !repo.path().parent().unwrap().join("escape").exists(),
+        "no directory may be created outside .s5d/evidence"
+    );
+}
