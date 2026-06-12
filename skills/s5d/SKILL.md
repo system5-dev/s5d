@@ -63,8 +63,11 @@ s5d new feat.refresh-rotation --tier standard --product auth \
 s5d verify validate <feature-spec>
 s5d decision decide <decision-spec> --title "Use server-side rotation" \
   --winner server-side-rotation --confirmed-by Roman \
+  --context "Revocation correctness > token statelessness" \
+  --decision "Adopt server-side rotation" \
   --rationale "Best revocation/complexity balance" \
-  --consequences "Needs persistent token-family store"
+  --consequences "Needs persistent token-family store" \
+  --challenge-summary "5 probes run: no fatal flaw; weakest link is family-store availability"
 s5d state preview <feature-spec>
 s5d state approve <feature-spec> --reviewer Roman
 # implement code
@@ -151,7 +154,7 @@ State what's anomalous. Define acceptance BEFORE options.
 
 ≥3 hypotheses, different in kind. Per hypothesis: predictions, decomposition, rigor rating, weakest-link analysis.
 
-Challenge probes before `s5d_decide`: Lightweight → 1 probe (strongest counter-argument). Standard / High / Decision → 5 probes (counter-argument, tail failure, evidence weakness, weakest link, existing alternatives). Fatal flaw from probe → revisit hypotheses.
+Challenge probes before `s5d_decide`: Lightweight → 1 probe (strongest counter-argument). Standard / High / Decision → 5 probes (counter-argument, tail failure, evidence weakness, weakest link, existing alternatives). Fatal flaw from probe → revisit hypotheses. Record the outcome via `--challenge-summary` on decide — the runtime refuses to decide without it (`--no-challenge` exists but skipping the challenge needs an explicit WAIVER line).
 
 Human confirms (non-waivable). WAL: `status=AWAITING_HUMAN`. If the winner needs implementation, create the linked feature spec **before** `s5d_decide` — the winner must carry a `spec_ref` — then confirm.
 
