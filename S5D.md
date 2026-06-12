@@ -151,7 +151,8 @@ s5d decision decide <decision-spec> --title "Use server-side rotation" \
   --context "Revocation correctness > token statelessness" \
   --decision "Adopt server-side rotation" \
   --rationale "Best revocation/complexity balance" \
-  --consequences "Needs persistent token-family store"
+  --consequences "Needs persistent token-family store" \
+  --challenge-summary "5 probes run: no fatal flaw; weakest link is family-store availability"
 s5d state preview <feature-spec>
 # → WAL: status=AWAITING_HUMAN, pending=approve
 

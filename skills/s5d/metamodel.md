@@ -636,10 +636,10 @@ Tiers determine which artifacts are required and which gates are enforced.
 | Tier | Artifacts Required | Default Gates | Non-waivable |
 |------|-------------------|---------------|--------------|
 | `note` | None | None | note_rationale present |
-| `decision` | None (problem + hypotheses + evidence) | None | confirmed_by, no duplicate hypotheses |
+| `decision` | None (problem + hypotheses + evidence) | review | confirmed_by, no duplicate hypotheses |
 | `lightweight` | capabilities | schema | schema gate |
 | `standard` | domains + capabilities + components | schema, graph | schema gate |
-| `high` | domains + capabilities + components + `"privacy"` keyword in context field | schema, graph | schema gate, privacy keyword check |
+| `high` | domains + capabilities + components + `"privacy"` keyword in context field | schema, graph, review | schema gate, privacy keyword check |
 
 **Note tier:** Just rationale. No artifact validation. Useful for capturing context without structural commitment.
 
@@ -649,7 +649,7 @@ Tiers determine which artifacts are required and which gates are enforced.
 
 **Standard tier:** Full metamodel. Domains, capabilities, and components all required. Graph validation runs, catching cycle and layering violations.
 
-**High tier:** Standard + privacy keyword required in spec `context` field + test and contract gates enforced. The privacy check is a keyword gate — validation scans for the literal word `"privacy"` to ensure it was considered. Used for features touching user data or compliance-sensitive paths.
+**High tier:** Standard + privacy keyword required in spec `context` field + a built-in `review` gate that passes only on recorded review evidence (`s5d decision add-evidence <spec> --hypothesis-id <id> --evidence-type gate:review --verdict pass`). `test`/`contract` gates run only when declared in the spec AND configured in `.s5d/config.yaml` — they are not enforced by default. The privacy check is a keyword gate — validation scans for the literal word `"privacy"` to ensure it was considered. Used for features touching user data or compliance-sensitive paths.
 
 **Workflow shell:** Optional on feature tiers. Use it when S5D needs to support a delivery/discovery process with explicit phases, roles, review policy, and outcome tracking. The workflow shell does not replace the core S5D reasoning model.
 
