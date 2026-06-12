@@ -819,7 +819,7 @@ gates:
 
 ## Phase Gates
 
-The canonical flow is defined in SKILL.md: `Route → Discover → Target → Decide → Spec → Run → Verify → Ship → Learn`. The gate system below operates within the Spec, Run, and Verify steps.
+The canonical flow is defined in SKILL.md: `Route → Shape → Discover → Target → Decide → Spec → Run → Verify → Ship → Learn`. The gate system below operates within the Spec, Run, and Verify steps.
 
 Structural gates block unconditionally. Methodological gates block by default but can be overridden with `--force`.
 

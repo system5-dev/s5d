@@ -11,6 +11,7 @@ hand. Each skill is read-only / plan-emitting by default; the producer skills
 
 | S5D stage | Skill | Contributes | Producer? |
 |-----------|-------|-------------|-----------|
+| **Shape** | `s5d` reference: `shape-layer.md` | intake kernel for vague intent, companion inputs, assumptions, and routing outcome | companion-only |
 | **Discover** | `ddd-refactor` | domain **modeling** quality — anemic models, value objects, missing ACL at integration seams | report |
 | **Discover** | `domain-refactor` | **boundary** violations vs `.s5d/discovery/architecture-map.md` (god-components, drift, orphans) | emits decision skeleton via `s5d new` |
 | **Discover** | `ai-technical-writer` | **docs** architecture — single home, `llms.txt`, front-matter, broken xrefs, orphans | report + `generate` |
@@ -30,12 +31,15 @@ hand. Each skill is read-only / plan-emitting by default; the producer skills
    below). Each runs its deterministic bash in its OWN context and returns only a
    distilled anomalies block — the raw dumps never reach the orchestrator. Their
    blocks become the evidence the Target/Decide stages reason over.
-2. **Decision authoring.** At `Target`/`Decide`, `system-design` runs the
+2. **Intent shaping.** At `Shape`, the S5D skill converts vague inputs into an
+   intake kernel and routes to direct execution, Discover, Target, or Decide.
+   Shape output is companion-only until bound into S5D package/record state.
+3. **Decision authoring.** At `Target`/`Decide`, `system-design` runs the
    interview and lands a decision-tier ADR through the CLI; `domain-refactor`
    lands its move plan the same way. No hand-rolled YAML.
-3. **Spec acceptance.** At `Spec`, `scenario-mine` mines the GWT scenarios so the
+4. **Spec acceptance.** At `Spec`, `scenario-mine` mines the GWT scenarios so the
    feature spec's `use_cases[].acceptance` is grounded in real code, not invented.
-4. **Gate execution.** At `Run`/`Verify`, the test/lint/security skills are the
+5. **Gate execution.** At `Run`/`Verify`, the test/lint/security skills are the
    gate commands `s5d run-gates` shells out to.
 
 ## Routing precedence
@@ -65,4 +69,3 @@ read-only subagents so a heavy report never bloats the orchestrator context.
    verdict `fail` for a real defect). Best-effort: if the MCP is unavailable, leave the
    distilled block in the run notes as a file-based fallback. The agent never writes
    evidence itself — binding is the orchestrator's job, keeping agents read-only.
-

@@ -15,27 +15,35 @@ A control plane for changes in a repository with AI participation. Not a methodo
 
 If a term doesn't serve one of these four, it doesn't belong. If an artifact isn't read by a human or a gate, it doesn't belong. If a simple change can't pass through almost in a straight line, the system is lying about its simplicity.
 
-The flow sequences these four:
+The flow sequences these four. `Shape` is a pre-control-plane intake layer: it
+turns unclear intent into a useful S5D entry point, but it does not create
+accepted state.
 
 ```
-Route → Discover → Target → Decide → Spec → Run → Verify → Ship → Learn
+Route → Shape → Discover → Target → Decide → Spec → Run → Verify → Ship → Learn
 ```
 
-`Discover` runs once per project (or when the architecture map is stale); later tasks skip it. Applies only to work grounded in an existing repository. No codebase, no S5D.
+`Shape` is skipped when the request is already concrete. `Discover` runs once per
+project (or when the architecture map is stale); later tasks skip it. Applies
+only to work grounded in an existing repository. No codebase, no S5D.
 
 **Reference docs** (read when needed, not upfront):
-- [metamodel.md](metamodel.md) — artifact graph, DDD decomposition, validation rules
-- [session-protocol.md](session-protocol.md) — WAL format, spec:// URI, REVIEW markers, conflicts, effectiveness metrics
+- [metamodel.md](skills/s5d/metamodel.md) — artifact graph, DDD decomposition, validation rules
+- [shape-layer.md](skills/s5d/references/shape-layer.md) — vague intent → S5D-ready intake kernel
+- [adversarial-review.md](skills/s5d/references/adversarial-review.md) — blind diff, edge-case, and acceptance review pattern
+- [session-protocol.md](skills/s5d/session-protocol.md) — WAL format, spec:// URI, REVIEW markers, conflicts, effectiveness metrics
 
 ---
 
 ## Scope
 
-**Out of scope:** bugfix <30 LOC, config-only, docs-only. Just do them.
+**Out of scope:** bugfix <30 LOC, config-only, docs-only. Just do them. If a
+Shape pass reveals that the work is tiny and local, exit S5D rather than opening
+control-plane state.
 
 | Tier | Steps | Waivers |
 |---|---|---|
-| Lightweight | Route → Target → Spec → Run → Verify → Ship → Learn | Steps can be waived |
+| Lightweight | Route → Shape if needed → Target → Spec → Run → Verify → Ship → Learn | Steps can be waived |
 | Standard | Full flow | Steps can be waived |
 | Decision | Full flow | Steps can be waived |
 | High | Full flow | No waivers allowed |
@@ -44,13 +52,18 @@ Route → Discover → Target → Decide → Spec → Run → Verify → Ship �
 
 ## Cross-cutting
 
-**WAL** — see [session-protocol.md](session-protocol.md). WAL saves are local writes (no permission needed). Ship commits require human permission.
+**WAL** — see [session-protocol.md](skills/s5d/session-protocol.md). WAL saves are local writes (no permission needed). Ship commits require human permission.
 
 **spec:// URI** — `spec://<module>/<document>#<section>`. Use in WAL, commits, REVIEW markers.
 
-**Conflicts** — see [session-protocol.md](session-protocol.md). Priority: Human > Spec > Code > Tests.
+**Conflicts** — see [session-protocol.md](skills/s5d/session-protocol.md). Priority: Human > Spec > Code > Tests.
 
 **Metamodel** — enforced by `s5d verify validate` (legacy alias: `s5d validate`). Spec without domains/capabilities/components = validation error.
+
+**Accepted state authority** — only `.s5d/packages/*` and `.s5d/records/*` are
+durable S5D truth. Shape notes, PRDs, UX docs, research, story files, and review
+reports are companion inputs until bound into a spec, record, hypothesis, or
+gate result.
 
 **CI enforcement** — local hooks are bypassable by a plain `git push`. When the repo has CI (`.github/workflows/`, `.gitlab-ci.yml`) but no generated S5D pipeline, offer `s5d_ci_init` once; when generated config exists, keep `s5d_ci_check` clean. The generated pipeline runs `s5d ci exec` built-in checks only — command gates never execute on PR runners.
 
@@ -64,6 +77,10 @@ Every active spec has two mutable surfaces:
 - `.s5d/records/<spec-id>__<date>.record.yaml` — runtime state: preview diff, approvals, gate results, import fingerprint, decision record, reflection, outcome verdict.
 
 `s5d_new` creates both. `s5d_add_hypothesis` / `s5d_add_evidence` edit spec YAML. Lifecycle commands such as preview, approve, gates, import, run, and reflect update the record file; read-only commands do not.
+
+Companion documents may explain intent, research, UX, stories, or review notes.
+They are useful input and evidence material, but never replace the package or
+record as the accepted lifecycle surface.
 
 ---
 
@@ -187,7 +204,8 @@ Classify before touching tools. First match wins.
 **Mode:**
 - "Evaluate/compare" → `prepare` (analyze + target framing, stop for human)
 - "Implement X" with a confirmed decision record or stated existing architecture → `execute` (enters at Spec; records the Target+Decide auto-waiver)
-- Too vague to tell the domain count → run Discover / Domain-Capability mapping first, then classify
+- Raw idea, vague product request, unclear acceptance, mixed PRD/design/transcript → `shape`
+- Too vague to tell the domain count after Shape → run Discover / Domain-Capability mapping, then classify
 - No signal → `prepare`
 
 Emit routing explicitly:
@@ -202,9 +220,28 @@ Cross-check with `s5d_route` (deterministic keyword classifier) when unsure. On 
 
 ---
 
+## Shape
+
+Shape turns raw or ambiguous intent into an S5D-ready intake kernel. It answers:
+why this matters, which capabilities are implicated, what constraints are known,
+what is explicitly not in scope, what success would look like, which assumptions
+are being made, and which questions are still blocking.
+
+Shape may cite companion material or draft a short companion note, but it does
+not create accepted state. If the shaped work is tiny, docs-only, or config-only,
+exit S5D. If it exposes architecture tradeoffs, auth/payment/security/PII, or
+cross-domain impact, route to the appropriate tier and continue to Discover or
+Target.
+
+Use [shape-layer.md](skills/s5d/references/shape-layer.md) when the entry point
+is not obvious.
+
+---
+
 ## Target
 
-State what's anomalous. Define acceptance BEFORE options.
+Consume the shaped intake kernel when one exists. State what's anomalous. Define
+acceptance BEFORE options.
 
 `s5d_new` (tier: decision) creates skeleton. Fill problem card and add hypotheses/evidence via YAML or `s5d_add_hypothesis`/`s5d_add_evidence`.
 
@@ -230,6 +267,12 @@ Problem → acceptance scenarios (>=3 GWT) → implementation hypotheses (>=2) �
 
 `s5d_new` creates scaffold. Write YAML with metamodel artifacts. `s5d_validate` + `s5d_graph_check`.
 
+Before Run, check implementation readiness: one shippable goal, actionable
+paths/actions, no `TBD`, at least three acceptance scenarios, explicit
+cross-domain contracts, and no unresolved open question that would change the
+architecture. Weak readiness blocks Run unless the skip is explicitly waived;
+high-tier assurance gates are never waived.
+
 ---
 
 ## Run
@@ -244,7 +287,17 @@ After approval: optionally use `s5d run start` / `s5d run exec` for bounded engi
 
 ## Verify
 
-Tests → `s5d_import` (SHA256 chain). Human reviews diff. Import rejects on hash mismatch → re-preview, re-approve.
+Tests → adversarial review when material → `s5d_import` (SHA256 chain). Human
+reviews diff. Import rejects on hash mismatch → re-preview, re-approve.
+
+For material changes, especially decision/high-tier work, run the adversarial
+review pattern before closing `gate:review`: blind diff review, edge-case review,
+and acceptance audit. Findings close only when fixed, explicitly deferred, or
+recorded as S5D evidence/gate state. A markdown review report alone is not a
+passing gate.
+
+Use [adversarial-review.md](skills/s5d/references/adversarial-review.md) when a
+review gate or high-risk diff is in play.
 
 ---
 
