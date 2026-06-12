@@ -3217,6 +3217,13 @@ fn run_rollback(spec_arg: &str) -> anyhow::Result<()> {
             warning
         );
     }
+    for label in &report.ownership_unverifiable {
+        eprintln!(
+            "{} ownership unverifiable (package files edited or deleted since import), NOT tombstoned: {}",
+            "warn".yellow(),
+            label
+        );
+    }
     for label in &report.underivable_fallbacks {
         eprintln!(
             "{} no ledger trace for {} — tombstoned via stored owning_package (legacy fallback)",

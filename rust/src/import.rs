@@ -426,33 +426,113 @@ pub fn execute_import(
     Ok((actions, fingerprint))
 }
 
+/// Per-key outcome of the ledger ownership derivation.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum DerivedOwnership {
+    /// Every ledger event that could have affected this key replays against
+    /// sha-verified package content — the owner is certain.
+    Owner(String),
+    /// A tainted ledger entry (package file edited since that import, or gone)
+    /// could have claimed the key first — nothing destructive may rely on it.
+    Unverifiable,
+}
+
 /// Derive the owner of every global artifact from the append-only ledger plus the
-/// stored packages: the owner is the FIRST package whose successful import/reconcile
-/// declared the artifact. This matches assignment by construction — AliasTable::resolve
-/// is first-creator-wins, apply_renames preserves the owner, and no transfer API exists.
-/// Best effort: ledger entries whose package file is gone contribute nothing, so an
-/// artifact can be absent from the map (underivable).
+/// stored packages, replaying the alias-table epoch semantics:
+///
+/// - AliasTable::resolve is first-creator-wins **within the current active epoch**:
+///   a rollback tombstones the entry, and the next import creates a fresh one with
+///   a new owner. The replay therefore releases a package's ownerships when its
+///   ledger `rollback` entry is seen.
+/// - An import/reconcile entry only contributes claims when the current package
+///   file's sha256 matches `LedgerEntry.spec_sha256`. A mismatching or missing file
+///   means we cannot know what that import declared — every key unowned at that
+///   point becomes poisoned (Unverifiable) until the tainting package is rolled
+///   back, because the unknown import may have been the true first creator.
+///
+/// Keys absent from the result have no ledger trace at all (legacy aliases).
+/// Renames are approximated through the current artifact ids; at worst they
+/// degrade to a non-destructive mismatch or Unverifiable, never a wrong tombstone.
 pub fn derive_global_owners(
     ledger: &Ledger,
     specs: &[(std::path::PathBuf, Spec)],
-) -> std::collections::HashMap<(String, String), String> {
-    let by_id: std::collections::HashMap<&str, &Spec> =
-        specs.iter().map(|(_, s)| (s.id.as_str(), s)).collect();
-    let mut owners = std::collections::HashMap::new();
+    universe: &std::collections::HashSet<(String, String)>,
+) -> std::collections::HashMap<(String, String), DerivedOwnership> {
+    let mut by_id: std::collections::HashMap<&str, (&Spec, String)> =
+        std::collections::HashMap::new();
+    for (path, spec) in specs {
+        let sha = S5dProject::file_sha256(path).unwrap_or_default();
+        by_id.insert(spec.id.as_str(), (spec, sha));
+    }
+
+    let mut owners: std::collections::HashMap<(String, String), String> =
+        std::collections::HashMap::new();
+    // key → set of packages whose unverifiable imports might own it
+    let mut poison: std::collections::HashMap<(String, String), std::collections::HashSet<String>> =
+        std::collections::HashMap::new();
+
     for entry in &ledger.entries {
-        if entry.status != "success" || (entry.action != "import" && entry.action != "reconcile") {
+        if entry.status != "success" {
             continue;
         }
-        let Some(spec) = by_id.get(entry.package_id.as_str()) else {
-            continue;
-        };
-        for key in collect_global_artifact_ids(spec) {
-            owners
-                .entry(key)
-                .or_insert_with(|| entry.package_id.clone());
+        match entry.action.as_str() {
+            "import" | "reconcile" => {
+                let verified = by_id
+                    .get(entry.package_id.as_str())
+                    .filter(|(_, sha)| *sha == entry.spec_sha256)
+                    .map(|(spec, _)| *spec);
+                match verified {
+                    Some(spec) => {
+                        for key in collect_global_artifact_ids(spec) {
+                            if universe.contains(&key) {
+                                owners
+                                    .entry(key)
+                                    .or_insert_with(|| entry.package_id.clone());
+                            }
+                        }
+                    }
+                    None => {
+                        // Unknown claims: poison every key unowned at this point.
+                        for key in universe {
+                            if !owners.contains_key(key) {
+                                poison
+                                    .entry(key.clone())
+                                    .or_default()
+                                    .insert(entry.package_id.clone());
+                            }
+                        }
+                    }
+                }
+            }
+            "rollback" => {
+                owners.retain(|_, owner| owner != &entry.package_id);
+                for set in poison.values_mut() {
+                    set.remove(&entry.package_id);
+                }
+                poison.retain(|_, set| !set.is_empty());
+            }
+            _ => {}
         }
     }
-    owners
+
+    let mut result = std::collections::HashMap::new();
+    for key in universe {
+        let poisoned = poison.contains_key(key);
+        match owners.get(key) {
+            // A verifiable claim cannot prove firstness past an earlier unknown one.
+            Some(_) if poisoned => {
+                result.insert(key.clone(), DerivedOwnership::Unverifiable);
+            }
+            Some(owner) => {
+                result.insert(key.clone(), DerivedOwnership::Owner(owner.clone()));
+            }
+            None if poisoned => {
+                result.insert(key.clone(), DerivedOwnership::Unverifiable);
+            }
+            None => {} // no trace — legacy
+        }
+    }
+    result
 }
 
 #[derive(Debug, Default)]
@@ -470,6 +550,11 @@ pub struct RollbackReport {
     pub suspected_tampers: Vec<String>,
     /// Tombstoned via stored-field trust because the ledger has no trace (legacy).
     pub underivable_fallbacks: Vec<String>,
+    /// Skipped because ownership could not be verified — a package file was edited
+    /// or deleted after import, so the ledger evidence is inconclusive. Tombstoning
+    /// on inconclusive evidence would let a two-file tamper destroy another spec's
+    /// global, so the entry is kept and reported.
+    pub ownership_unverifiable: Vec<String>,
 }
 
 /// Roll back the last successful import of a spec. Ownership of global aliases is
@@ -501,14 +586,22 @@ pub fn rollback_spec(
         }
     }
 
-    let derived_owners = derive_global_owners(&ledger, &all_specs);
+    let mut aliases = AliasTable::load(&s5d_dir)?;
+
+    // Derivation is scoped to the keys rollback can actually touch.
+    let universe: std::collections::HashSet<(String, String)> = aliases
+        .global
+        .iter()
+        .filter(|e| !e.deprecated)
+        .map(|e| (e.artifact_type.clone(), e.artifact_id.clone()))
+        .collect();
+    let derived_owners = derive_global_owners(&ledger, &all_specs, &universe);
 
     let mut report = RollbackReport {
         spec_id: spec.id.clone(),
         ..Default::default()
     };
 
-    let mut aliases = AliasTable::load(&s5d_dir)?;
     for entry in &mut aliases.packages {
         if entry.package_id.as_deref() == Some(&spec.id) && !entry.deprecated {
             entry.deprecated = true;
@@ -524,9 +617,11 @@ pub fn rollback_spec(
         let derived = derived_owners.get(&key);
 
         if stored_claims_spec {
-            // Corruption check first — a stored owner the ledger contradicts is
-            // reported even when the referenced-guard would keep the entry anyway.
-            if let Some(other_owner) = derived.filter(|o| *o != &spec.id) {
+            // Definite-corruption check first — a stored owner the ledger contradicts
+            // is reported even when the referenced-guard would keep the entry anyway.
+            if let Some(DerivedOwnership::Owner(other_owner)) =
+                derived.filter(|d| !matches!(d, DerivedOwnership::Owner(o) if o == &spec.id))
+            {
                 report.ownership_mismatches.push(format!(
                     "{} — stored owner is {} but ledger derivation says {}",
                     label, spec.id, other_owner
@@ -538,9 +633,15 @@ pub fn rollback_spec(
                 continue;
             }
             match derived {
-                Some(_) => {
+                Some(DerivedOwnership::Owner(_)) => {
                     entry.deprecated = true;
                     report.tombstoned_globals.push(label);
+                }
+                Some(DerivedOwnership::Unverifiable) => {
+                    // Inconclusive evidence must not destroy data: a two-file
+                    // tamper (alias field + any package file) would otherwise
+                    // route a foreign global into the fallback tombstone.
+                    report.ownership_unverifiable.push(label);
                 }
                 None => {
                     entry.deprecated = true;
@@ -548,7 +649,7 @@ pub fn rollback_spec(
                     report.underivable_fallbacks.push(label);
                 }
             }
-        } else if derived.map(String::as_str) == Some(spec.id.as_str()) {
+        } else if matches!(derived, Some(DerivedOwnership::Owner(o)) if o == &spec.id) {
             report.suspected_tampers.push(format!(
                 "{} — ledger derivation says {} owns it but stored owner is {}",
                 label,
