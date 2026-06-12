@@ -124,15 +124,11 @@ pub fn scaffold_adversarial_review(
     project: &S5dProject,
     spec: &Spec,
 ) -> anyhow::Result<(PathBuf, String)> {
+    // spec.id comes from FILE CONTENT, not a sanitized CLI argument — a
+    // crafted `id: ../../escape` must not become a path segment.
+    crate::sanitize_id(&spec.id)?;
     let evidence_dir = project.s5d_dir().join("evidence").join(&spec.id);
     std::fs::create_dir_all(&evidence_dir)?;
-
-    let mut n = 1;
-    let mut dest = evidence_dir.join(format!("adversarial-review-{}.md", n));
-    while dest.exists() {
-        n += 1;
-        dest = evidence_dir.join(format!("adversarial-review-{}.md", n));
-    }
 
     let report = format!(
         "# Adversarial review — {spec_id}\n\n\
@@ -159,7 +155,28 @@ pub fn scaffold_adversarial_review(
          - [ ] skipped layers recorded as limitations\n",
         spec_id = spec.id
     );
-    std::fs::write(&dest, report)?;
+
+    // create_new closes the exists→write race: a concurrent scaffold that
+    // wins the same number makes this attempt retry the next one.
+    let mut n = 1;
+    let dest = loop {
+        let candidate = evidence_dir.join(format!("adversarial-review-{}.md", n));
+        match std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&candidate)
+        {
+            Ok(mut file) => {
+                use std::io::Write;
+                file.write_all(report.as_bytes())?;
+                break candidate;
+            }
+            Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {
+                n += 1;
+            }
+            Err(e) => return Err(e.into()),
+        }
+    };
 
     let binding = match spec.tier {
         Tier::Decision | Tier::High => format!(

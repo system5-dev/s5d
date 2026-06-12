@@ -35,6 +35,9 @@ pub fn run_gates(
         .unwrap_or_default();
 
     // Evidence directory: .s5d/evidence/{spec_id}/
+    // spec.id comes from file content — sanitize before using it as a path
+    // segment (same confinement invariant as the review scaffold).
+    crate::sanitize_id(&spec.id)?;
     let evidence_dir = s5d_dir.join("evidence").join(&spec.id);
 
     let effective_gates = effective_gates_for_spec(spec);

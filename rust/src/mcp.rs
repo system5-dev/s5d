@@ -781,7 +781,9 @@ fn tool_s5d_plan_stories(args: &Value) -> anyhow::Result<String> {
     let stories: Vec<crate::StoryInput> = serde_json::from_value(stories_value.clone())
         .map_err(|e| anyhow::anyhow!("stories do not parse as a story list: {}", e))?;
 
-    let (path, mut spec) = load_spec_yaml_mcp(spec_arg)?;
+    // Project-resolving loader for CLI/MCP parity: the write is confined to a
+    // spec that lives inside an S5D project, same as the CLI path.
+    let (_project, abs_path, mut spec, _filename) = load_spec_context_mcp(spec_arg)?;
     let added = crate::apply_stories(&mut spec, stories)?;
     let errors = crate::validate_spec(&spec);
     if !errors.is_empty() {
@@ -790,7 +792,7 @@ fn tool_s5d_plan_stories(args: &Value) -> anyhow::Result<String> {
             errors.join("\n  ")
         );
     }
-    save_spec_yaml_mcp(&path, &spec)?;
+    save_spec_yaml_mcp(&abs_path, &spec)?;
     Ok(format!(
         "Added {} story phase(s) to {}: {}\nnote: editing a spec changes its sha — re-run preview/approve if it was already approved",
         added.len(),
