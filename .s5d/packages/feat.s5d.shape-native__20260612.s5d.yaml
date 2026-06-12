@@ -1,0 +1,214 @@
+s5d: '1.0'
+id: feat.s5d.shape-native
+version: 1.0.0
+product: s5d
+tier: standard
+allow_update: true
+meta:
+  title: shape-native
+  authors: []
+  date: 2026-06-12
+  tickets: []
+  adrs: []
+  renames: []
+context: |
+  ## Problem
+  Phase 1 of the BMAD assimilation shipped shaping/review as skill-layer docs
+  only (shape-layer.md, adversarial-review.md). The runtime has no native
+  support: intake kernels live outside sha-bound state (Acceptance Auditor
+  reviews loose markdown), readiness is prose, review reports have no feature-
+  tier binding surface, and story planning is manual phase editing.
+
+  ## Goal
+  Implement decision.s5d.bmad-native-runtime winner (kernel-in-spec-schema-lite)
+  in four slices, CLI+MCP parity throughout:
+  - S1: optional skip-serialized `intent_kernel` Spec field (8 shape-layer
+    fields verbatim) + readiness validation rules + serialization-compat test
+    pinning fingerprint neutrality for kernel-less specs.
+  - S2: `s5d shape` — ingest a kernel (file/stdin), classify via the existing
+    route(), emit the routing block, optionally scaffold a spec with the kernel
+    embedded.
+  - S3: `s5d review adversarial <spec>` — scaffold the 3-layer report
+    (finding-format template) into .s5d/evidence/<spec>/, print the binding
+    step for the spec's tier.
+  - S4: `s5d plan stories <spec> --from <file>` — append story-shaped
+    workflow.phases entries from a YAML list, then validate.
+
+  ## Acceptance (GWT)
+  1. Given any existing spec without a kernel, when serialized and fingerprinted
+     under the new schema, then both are identical to the old schema (compat
+     test pins this).
+  2. Given a kernel file, when s5d shape runs, then it prints the Route block
+     derived from route() and a scaffolded spec embeds the kernel verbatim;
+     readiness errors name each missing/empty required kernel field.
+  3. Given an imported spec, when s5d review adversarial runs, then a layered
+     report scaffold lands in .s5d/evidence/<spec>/ and the output names the
+     tier-correct binding step (gate:review evidence for decision/high, evidence
+     dir + record for feature tiers).
+  4. Given a stories YAML, when s5d plan stories runs, then story-shaped phases
+     (id/title/scope/acceptance/rollback) append to workflow.phases and the spec
+     still validates.
+
+  ## DO / DON'T
+  DO: skip_serializing_if on every new field; reuse route(); reuse evidence-dir
+  and gate surfaces; CLI/MCP parity; update shape-layer.md + SKILL.md to point
+  at the native commands.
+  DON'T: make intent_kernel required; author product content in the runtime;
+  add Story/Epic artifact types; touch compute_state_fingerprint or alias
+  machinery; let shape write spec files without an explicit flag.
+
+  ## Privacy
+  Classification: Internal
+workflow:
+  mode: plan
+  target_architecture:
+    summary: Intake intent is first-class sha-bound state — an optional
+      intent_kernel on Spec carries the shape-layer fields verbatim; shape,
+      adversarial review, and story planning are thin deterministic commands
+      over existing surfaces (router, evidence dirs, workflow.phases).
+    invariants:
+    - Specs without kernels serialize and fingerprint byte-identically to the old schema
+    - The runtime validates structure and routing, never authors content
+    - No new global artifact types; stories live in workflow.phases
+  delivery_strategy:
+    summary: Vertical slices S1-S4, each landing with its tests; schema first
+      (S1) so the commands build on the validated field; skill docs updated in
+      the same PR so doctrine and runtime do not diverge.
+    rationale: Schema-first ordering pins the compat guarantee before any
+      command depends on the field.
+  resources: null
+  role_map:
+    reviewer: reviewer
+    verifier: reviewer
+    owner: human
+    implementer: coder
+  review_policy:
+    cross_model_required: false
+    required_on: []
+  structure_outline: null
+  execution_mode:
+    engine: manual
+    max_iterations: null
+    stop_conditions:
+    - Phase acceptance reached
+    - Approved scope exhausted
+    - New decision required
+  phases:
+  - id: prototype
+    title: Prototype
+    scope: Reduce unknowns before committed implementation
+    roles:
+    - owner
+    - implementer
+    acceptance:
+    - Critical feasibility questions answered
+    - Telemetry approach identified
+    rollback:
+    - Discard spike output if assumptions fail
+  - id: build
+    title: Build
+    scope: Implement approved scope and pass local gates
+    roles:
+    - implementer
+    - reviewer
+    acceptance:
+    - Serialization-compat test pins fingerprint neutrality for kernel-less specs
+    - shape/review/plan-stories work over CLI and MCP with identical semantics
+    - Readiness errors name each missing kernel field
+    - cargo test green, fmt/clippy clean, skill docs updated
+    rollback:
+    - Revert or reconcile if gates or review fail
+  - id: measure
+    title: Measure
+    scope: Collect telemetry and close the loop with an explicit verdict
+    roles:
+    - owner
+    - verifier
+    acceptance:
+    - Telemetry collected against success criteria
+    - Outcome verdict recorded
+    rollback:
+    - Iterate or kill if evidence stays weak
+artifacts:
+  products:
+  - id: s5d
+    name: s5d
+    organization: null
+  domains:
+  - id: dom.s5d.core
+    product: s5d
+    name: s5d core domain
+    classification: supporting
+    description: Scaffold default — rename or split into real bounded contexts
+    team: null
+    maturity_level: null
+  capabilities:
+  - id: cap.shape-native
+    domain: dom.s5d.core
+    name: shape native
+    description: null
+    since: null
+  entities: []
+  features:
+  - id: feat.s5d.shape-native
+    product: s5d
+    name: shape-native
+    description: null
+  use_cases: []
+  systems:
+  - id: sys.s5d
+    product: s5d
+    name: s5d
+  containers:
+  - id: ctr.s5d.app
+    system: sys.s5d
+    name: s5d app
+    technology: null
+  components:
+  - id: comp.shape-native
+    feature: feat.s5d.shape-native
+    domain: dom.s5d.core
+    container: ctr.s5d.app
+    name: shape native component
+    paths:
+    - rust/src/shape.rs
+    - rust/src/models.rs
+    - rust/src/validate.rs
+    - rust/src/bin/s5d.rs
+    - rust/src/mcp.rs
+    - rust/tests/standalone_repos.rs
+    - skills/s5d/references/shape-layer.md
+  roles: []
+  concerns: []
+  metrics: []
+  supersystems: []
+  transports: []
+links:
+  feature_to_domain:
+  - feature: feat.s5d.shape-native
+    domain: dom.s5d.core
+  use_case_to_capability: []
+  use_case_to_entity: []
+  component_to_capability:
+  - capability: cap.shape-native
+    component: comp.shape-native
+  component_to_entity: []
+  container_to_capability: []
+  concern_to_metric: []
+  component_to_container: []
+  edges: []
+  depends_on: []
+  entity_relations: []
+  capability_to_entity: []
+  capability_to_concern: []
+contracts: []
+gates:
+- kind: schema
+- kind: graph
+roc: null
+problem: null
+hypotheses: []
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false

@@ -250,6 +250,9 @@ Key commands (MCP + CLI). Full preconditions and the run/harness surface live in
 |--------|-----|-----|
 | Bootstrap | `s5d_init` | `s5d init` |
 | Create scaffold | `s5d_new` | `s5d new` |
+| Shape kernel (route + readiness; `emit_spec` embeds it) | `s5d_shape` | `s5d shape <kernel.yaml>` |
+| Adversarial review scaffold | `s5d_review_adversarial` | `s5d review adversarial <spec>` |
+| Story phases | `s5d_plan_stories` | `s5d plan stories <spec> --from <yaml>` |
 | Add hypothesis | `s5d_add_hypothesis` | `s5d decision add-hypothesis` |
 | Add evidence | `s5d_add_evidence` | `s5d decision add-evidence` |
 | CI config | `s5d_ci_init` | `s5d ci init` |

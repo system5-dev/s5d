@@ -250,3 +250,86 @@ fn mcp_wire_full_lifecycle_with_import_guard_parity() {
 
     assert!(server.shutdown().success(), "server must exit 0 on EOF");
 }
+
+#[test]
+fn mcp_wire_shape_review_stories_parity() {
+    // CLI/MCP parity for the shape-native surface
+    // (decision.s5d.bmad-native-runtime): kernel shaping with emit, layered
+    // review scaffold, story phases — all over real stdio JSON-RPC.
+    let dir = TempDir::new().unwrap();
+    let root = dir.path();
+
+    let mut server = McpServer::spawn(root);
+    server.request("initialize", json!({}));
+    server.call_tool_ok("s5d_init", json!({}));
+
+    // Not-ready kernel reports readiness errors without failing the call.
+    let partial = server.call_tool_ok(
+        "s5d_shape",
+        json!({"kernel": {"why": "slow checkout drops conversions"}}),
+    );
+    let text = tool_text(&partial);
+    assert!(text.contains("Route:"), "s5d_shape route block: {partial}");
+    assert!(
+        text.contains("intent_kernel.success_signal"),
+        "readiness error must be named: {partial}"
+    );
+
+    // Ready kernel + emit_spec creates a spec with the kernel embedded.
+    let emitted = server.call_tool_ok(
+        "s5d_shape",
+        json!({
+            "kernel": {
+                "why": "slow checkout drops conversions",
+                "success_signal": "p95 checkout under 3s",
+                "constraints": ["no new PII collection"]
+            },
+            "emit_spec": "feat.fastpay",
+            "product": "shop"
+        }),
+    );
+    assert!(
+        tool_text(&emitted).contains("Created spec with embedded kernel"),
+        "emit: {emitted}"
+    );
+    let spec_rel = std::fs::read_dir(root.join(".s5d/packages"))
+        .unwrap()
+        .map(|e| e.unwrap().file_name().into_string().unwrap())
+        .find(|n| n.starts_with("feat.fastpay"))
+        .map(|n| format!(".s5d/packages/{n}"))
+        .expect("emitted spec exists");
+    let spec_yaml = std::fs::read_to_string(root.join(&spec_rel)).unwrap();
+    assert!(
+        spec_yaml.contains("intent_kernel") && spec_yaml.contains("p95 checkout under 3s"),
+        "kernel embedded in spec file:\n{spec_yaml}"
+    );
+
+    // Adversarial review scaffold lands in the evidence dir.
+    let review = server.call_tool_ok("s5d_review_adversarial", json!({"spec": spec_rel}));
+    assert!(
+        tool_text(&review).contains("Binding:"),
+        "review binding: {review}"
+    );
+    assert!(root
+        .join(".s5d/evidence/feat.fastpay/adversarial-review-1.md")
+        .exists());
+
+    // Story phases append and validate.
+    let stories = server.call_tool_ok(
+        "s5d_plan_stories",
+        json!({
+            "spec": spec_rel,
+            "stories": [
+                {"id": "story-wallet", "title": "Wallet support", "scope": "Apple/Google Pay path", "acceptance": ["wallet button renders on supported devices"]}
+            ]
+        }),
+    );
+    assert!(
+        tool_text(&stories).contains("story-wallet"),
+        "stories: {stories}"
+    );
+    let spec_yaml = std::fs::read_to_string(root.join(&spec_rel)).unwrap();
+    assert!(spec_yaml.contains("story-wallet"));
+
+    assert!(server.shutdown().success(), "server must exit 0 on EOF");
+}

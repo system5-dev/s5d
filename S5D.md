@@ -95,6 +95,9 @@ record as the accepted lifecycle surface.
 | Self-update check | — | `s5d admin update check` | Read-only. Plugin SessionStart may still run legacy `s5d update check --hook`. |
 | Self-update apply | — | `s5d admin update apply` | Fast-forwards the S5D checkout, relinks skills, replaces installed binary. Legacy alias: `s5d update apply`. |
 | Create scaffold | `s5d_new` | `s5d new` | Scaffold only — does not populate problem/artifacts. CLI `--hypothesis-id` auto-links `spec_ref`. |
+| Shape kernel | `s5d_shape` | `s5d shape <kernel.yaml>` | Routes the kernel via the deterministic classifier and checks structural readiness (why + success_signal non-empty, no blank list entries). `--emit-spec` / `emit_spec` scaffolds a spec with the kernel embedded; emit hard-fails on readiness errors. |
+| Adversarial review scaffold | `s5d_review_adversarial` | `s5d review adversarial <spec>` | Writes the 3-layer report scaffold into `.s5d/evidence/<spec>/` (numbered, never overwrites) and prints the tier-correct evidence binding step. Companion report — not a passing gate by itself. |
+| Story phases | `s5d_plan_stories` | `s5d plan stories <spec> --from <yaml>` | Appends story-shaped workflow phases. Every story must carry ≥1 acceptance criterion; rollback defaults when omitted; duplicate phase ids rejected. Editing a spec changes its sha — re-approve if already approved. |
 | Quick note | `s5d_note` | `s5d new note.<slug> --tier note` | Hidden shorthand alias: `s5d note`. |
 | Add hypothesis | `s5d_add_hypothesis` | `s5d decision add-hypothesis` | Decision or high tier. Duplicate IDs rejected. Legacy alias: `s5d add-hypothesis`. |
 | Add evidence | `s5d_add_evidence` | `s5d decision add-evidence` | Decision or high tier. `formality` 1–5 on command surface. Legacy alias: `s5d add-evidence`. |

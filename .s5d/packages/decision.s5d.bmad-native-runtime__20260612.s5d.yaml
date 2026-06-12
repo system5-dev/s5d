@@ -1,0 +1,132 @@
+s5d: '1.0'
+id: decision.s5d.bmad-native-runtime
+version: 1.0.0
+product: s5d
+tier: decision
+allow_update: true
+meta:
+  title: bmad-native-runtime
+  authors: []
+  date: 2026-06-12
+  tickets: []
+  adrs: []
+  renames: []
+context: null
+workflow: null
+artifacts: null
+links: null
+contracts: []
+gates:
+- kind: review
+roc: null
+problem:
+  signal: How should BMAD shaping/planning/review capabilities become native S5D runtime without making companion docs lifecycle truth and without invalidating fingerprint baselines? (Phase 2 of the BMAD assimilation — Phase 1 shipped skill-layer docs only; benchmark steal-list items 1-4)
+  constraints:
+  - Companion documents must never become the source of lifecycle truth — shape-layer.md doctrine, non-negotiable
+  - No fingerprint baseline invalidation — any new Spec field must keep the serialized form of existing specs byte-identical (RAN-491 lesson)
+  - Thin layer — the runtime validates structure and routing, never authors product content; content quality stays with the agent/skill
+  - CLI/MCP parity for every new command
+  targets: []
+  indicators: []
+  goodhart_guard: null
+  acceptance: (1) An intake kernel can be carried inside sha-bound approved state so the Acceptance Auditor reviews against bound intent, not loose markdown; (2) existing specs and baselines unaffected (serialization-compat pinned by test); (3) shape routing reuses the existing router; (4) review reports land in evidence surfaces that gates can consume; (5) stories reuse workflow.phases, no second modeling surface
+  blast_radius: Spec schema (additive), validate, router callers, CLI+MCP command surface; no alias/ownership/fingerprint machinery changes
+  reversibility: High — optional skip-serialized field plus new commands; removing them restores prior behavior, specs without kernels never change
+  status: backlog
+hypotheses:
+- id: kernel-in-spec-schema-lite
+  title: Kernel-in-spec, schema-lite
+  content: 'Add intent_kernel (the 8 shape-layer fields: why, capabilities, constraints, non_goals, success_signal, assumptions, open_questions, companions) as an optional skip-serialized Spec field. s5d shape ingests a kernel, routes via the existing router, and scaffolds a spec with the kernel embedded — intake provenance becomes sha-bound approved state. Stories map onto the existing workflow.phases (no new artifact type). s5d review adversarial scaffolds the 3-layer report into .s5d/evidence/<spec>/ and binds via existing evidence/gate surfaces. Readiness = validator rules over kernel completeness.'
+  scope: models.rs Spec, validate, router, CLI+MCP commands
+  kind: system
+  layer: L2
+  r_eff: null
+  evidence:
+  - id: 20260612-internal-kernel-in-spec-schema-lite
+    type: internal
+    content: 'models.rs already uses skip_serializing_if=Option::is_none for additive optional fields (evidence provenance skill/agent) — the baseline-safe additive-schema pattern is established in this repo. Kernel-in-spec closes the Phase-1 gap adversarial-review.md names explicitly: the Acceptance Auditor layer needs accepted intent IN sha-bound state, while markdown-only companions are flagged as not-a-passing-gate. Stories reuse workflow.phases (observed in every scaffold: id/title/scope/acceptance/rollback per phase) — no second modeling surface. Caveat: fingerprint-neutrality of the new field is INFERRED until pinned by a serialization-compat test (implementation requirement).'
+    verdict: pass
+    valid_until: 2026-09-10T08:36:55.112959+00:00
+    carrier_ref: null
+    formality: 3
+    claim_scope:
+    - baseline-safety
+    - precedent
+    - review-binding
+    congruence_level: null
+    reliability: 0.85
+    refine_kind: null
+  - id: 20260612-gate-review-kernel-in-spec-schema-lite
+    type: gate:review
+    content: 'Adversarial review, 5 probes: (1) kernel-duplicates-ProblemCard counter-argument resolved by role split — kernel is verbatim intake provenance, card is the operative control plane; the four fields with no home today (non_goals, assumptions, open_questions, companions) justify the struct, and no validator coupling is introduced; (2) tail failure — an older binary re-serializing a kernel-bearing spec silently drops the unknown field, but the sha chain catches the file change (approval invalidated), so loss is detected, not silent; (3) evidence weakness — fingerprint-neutrality is INFERRED until a serialization-compat test pins that an old-style spec under the new schema is fingerprint-identical (hard implementation requirement); (4) weakest link — runtime readiness checks validate structure and routing coherence only, truthfulness stays with the agent, matching thin-layer doctrine; (5) existing alternatives — the router already classifies, so s5d shape must reuse route() internals, and review must reuse evidence-dir plus gate:review surfaces rather than invent parallel ones. No fatal flaw.'
+    verdict: pass
+    valid_until: 2026-09-10T08:37:54.564657+00:00
+    carrier_ref: null
+    formality: 3
+    claim_scope:
+    - adversarial-review
+    - decision-tier
+    congruence_level: null
+    reliability: 0.85
+    refine_kind: null
+  depends_on: []
+  rationale: null
+  spec_ref: feat.s5d.shape-native__20260612.s5d.yaml
+  prompt: null
+  next_move: null
+- id: commands-only-zero-schema-change
+  title: Commands-only, zero schema change
+  content: 'All three commands operate on files outside the spec schema: shape writes .s5d/discovery/shape-<slug>.md (non-state, like discovery artifacts), review writes evidence-dir reports, plan stories prints workflow.phases guidance. The kernel never enters sha-bound state; the existing problem card stays the only landing zone and the skill maps kernel to card manually as today.'
+  scope: CLI+MCP commands only
+  kind: system
+  layer: L0
+  r_eff: null
+  evidence:
+  - id: 20260612-internal-commands-only-zero-schema-change
+    type: internal
+    content: 'Zero fingerprint risk by construction, but the kernel stays outside sha-bound state — the Acceptance Auditor keeps depending on unbound markdown, which is exactly the failure mode adversarial-review.md warns about (markdown-only report is companion input, not a gate). The shape doctrine''s own rule that companion docs must not become lifecycle truth is violated in spirit: intake intent IS what approval should bind.'
+    verdict: refine
+    valid_until: 2026-09-10T08:36:55.117357+00:00
+    carrier_ref: null
+    formality: 2
+    claim_scope:
+    - fingerprint-risk
+    - review-binding
+    congruence_level: null
+    reliability: 0.75
+    refine_kind: specialise
+  depends_on: []
+  rationale: null
+  spec_ref: null
+  prompt: null
+  next_move: null
+- id: full-bmad-artifact-model
+  title: Full BMAD artifact model
+  content: First-class Story/Epic artifact types in artifacts, a companion registry in links, and readiness as a new gate kind. Maximum native PRD-to-stories parity with BMAD (T08), at the cost of new global artifact types entering the alias/ownership/fingerprint machinery and a second modeling surface competing with workflow.phases.
+  scope: metamodel artifacts/links/gates, alias table, import
+  kind: system
+  layer: L0
+  r_eff: null
+  evidence:
+  - id: 20260612-internal-full-bmad-artifact-model
+    type: internal
+    content: 'New global artifact types enter the alias/ownership/fingerprint machinery hardened literally today (RAN-491) — the biggest possible blast radius for the least incremental value: workflow.phases already model story-shaped execution units with acceptance and rollback per phase, so Story/Epic artifacts would be a second competing surface. PRD-to-epics planning (steal-list item 5) stays a Phase-3 candidate behind the schema-lite kernel.'
+    verdict: refine
+    valid_until: 2026-09-10T08:36:55.122480+00:00
+    carrier_ref: null
+    formality: 2
+    claim_scope:
+    - blast-radius
+    - redundancy
+    congruence_level: null
+    reliability: 0.75
+    refine_kind: specialise
+  depends_on: []
+  rationale: null
+  spec_ref: null
+  prompt: null
+  next_move: null
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false

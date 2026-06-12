@@ -119,3 +119,13 @@ features:
   status: applied
   product: s5d
   version: 1.0.0
+- id: decision.s5d.bmad-native-runtime
+  spec_path: packages/decision.s5d.bmad-native-runtime__20260612.s5d.yaml
+  status: applied
+  product: s5d
+  version: 1.0.0
+- id: feat.s5d.shape-native
+  spec_path: packages/feat.s5d.shape-native__20260612.s5d.yaml
+  status: applied
+  product: s5d
+  version: 1.0.0

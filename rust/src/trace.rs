@@ -568,6 +568,7 @@ mod tests {
             note_rationale: None,
             expires_at: None,
             auto_noted: false,
+            intent_kernel: None,
         };
 
         let decision_spec = crate::Spec {
@@ -605,6 +606,7 @@ mod tests {
             note_rationale: None,
             expires_at: None,
             auto_noted: false,
+            intent_kernel: None,
         };
 
         fs::write(

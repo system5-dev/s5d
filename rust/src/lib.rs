@@ -51,6 +51,10 @@ pub use phase_gates::{
 pub use project::S5dProject;
 pub use ralph::{build_ralph_task_package, RalphPreset};
 pub use router::{route, RouteMode, RouteResult};
+pub use shape::{
+    apply_stories, parse_kernel, scaffold_adversarial_review, shape_kernel, ShapeOutcome,
+    StoryInput,
+};
 pub use template::*;
 pub use trace::{
     format_code_trace, trace_code_path, CodeTrace, CodeTraceCapability, CodeTraceDecision,
@@ -60,6 +64,7 @@ pub use validate::validate_spec;
 
 pub mod ci;
 pub mod infer;
+pub mod shape;
 pub mod suite;
 
 /// Validate that an ID is safe for use in file paths.
@@ -490,6 +495,7 @@ mod tests {
             note_rationale: None,
             expires_at: None,
             auto_noted: false,
+            intent_kernel: None,
         }
     }
 
@@ -1163,6 +1169,7 @@ mod tests {
             expires_at: None,
             workflow: None,
             auto_noted: false,
+            intent_kernel: None,
         };
 
         let errors = validate_spec(&spec);
@@ -1248,6 +1255,7 @@ mod tests {
             note_rationale: None,
             expires_at: None,
             auto_noted: false,
+            intent_kernel: None,
         };
 
         let yaml = serde_yaml::to_string(&spec).unwrap();
@@ -1307,6 +1315,7 @@ mod tests {
             note_rationale: None,
             expires_at: None,
             auto_noted: false,
+            intent_kernel: None,
         };
 
         let yaml = serde_yaml::to_string(&spec).unwrap();
@@ -1370,6 +1379,7 @@ mod tests {
             note_rationale: Some("Using JWT for stateless auth across services — no session store needed. Decision deferred from PROJ-100.".into()),
             expires_at: Some("2027-03-18".into()),
             auto_noted: false,
+            intent_kernel: None,
         };
 
         let errors = validate_spec(&spec);

@@ -178,6 +178,7 @@ pub fn generate_spec(id: &str, tier: Tier, product: &str) -> Spec {
         note_rationale: None,
         expires_at: None,
         auto_noted: false,
+        intent_kernel: None,
     }
 }
 
@@ -221,6 +222,7 @@ pub fn generate_decision_spec(id: &str, product: &str, question: &str) -> Spec {
         note_rationale: None,
         expires_at: None,
         auto_noted: false,
+        intent_kernel: None,
     }
 }
 
@@ -257,6 +259,7 @@ pub fn generate_note_spec(id: &str, product: &str, title: &str, rationale: &str)
         note_rationale: Some(rationale.into()),
         expires_at: Some(expires),
         auto_noted: false,
+        intent_kernel: None,
     }
 }
 
@@ -296,5 +299,53 @@ mod tests {
 
         spec.artifacts.as_mut().unwrap().components[0].paths = vec!["src/real/".into()];
         assert!(crate::validate::placeholder_path_components(&spec).is_empty());
+    }
+
+    #[test]
+    fn intent_kernel_is_fingerprint_neutral_when_absent() {
+        // decision.s5d.bmad-native-runtime hard requirement: specs without a
+        // kernel must keep their serialized form (YAML and canonical JSON)
+        // free of the new key, so existing fingerprints and approval shas
+        // do not move on upgrade.
+        let spec = generate_spec("feat.test.compat", Tier::Standard, "Prod");
+        assert!(spec.intent_kernel.is_none());
+
+        let yaml = serde_yaml::to_string(&spec).unwrap();
+        assert!(
+            !yaml.contains("intent_kernel"),
+            "kernel-less spec YAML must not carry the key:\n{}",
+            yaml
+        );
+
+        let json = serde_json::to_value(&spec).unwrap();
+        assert!(
+            json.get("intent_kernel").is_none(),
+            "kernel-less spec canonical JSON must not carry the key"
+        );
+
+        // Round-trip: the key must stay absent after parse + re-serialize.
+        // (Byte-identity is NOT asserted — Binding map entries have unstable
+        // key order in YAML; fingerprints are immune because canonical JSON
+        // hashing sorts keys.)
+        let reparsed: Spec = serde_yaml::from_str(&yaml).unwrap();
+        assert!(reparsed.intent_kernel.is_none());
+        assert!(!serde_yaml::to_string(&reparsed)
+            .unwrap()
+            .contains("intent_kernel"));
+
+        // And with a kernel, the key appears with skip-serialized empties.
+        let mut with_kernel = generate_spec("feat.test.compat2", Tier::Standard, "Prod");
+        with_kernel.intent_kernel = Some(IntentKernel {
+            why: "because".into(),
+            success_signal: "observable win".into(),
+            ..Default::default()
+        });
+        let yaml2 = serde_yaml::to_string(&with_kernel).unwrap();
+        assert!(yaml2.contains("intent_kernel"));
+        assert!(
+            !yaml2.contains("non_goals"),
+            "empty kernel lists must be skip-serialized:\n{}",
+            yaml2
+        );
     }
 }

@@ -62,6 +62,26 @@ Produce the smallest useful kernel:
 - Ask the user only for missing information that is irreversible,
   external-side-effecting, secret-bearing, or architecture-changing.
 
+## Native Runtime Support
+
+The kernel is a first-class spec field (`intent_kernel`) — optional, and absent
+from specs that never used Shape. Runtime commands (CLI / MCP):
+
+- `s5d shape <kernel.yaml>` / `s5d_shape` — classify the kernel through the
+  deterministic router and check structural readiness; with
+  `--emit-spec <id>` (`emit_spec`) it scaffolds a spec with the kernel embedded,
+  so approval sha-binds the intake intent and the Acceptance Auditor reviews
+  bound intent instead of loose markdown.
+- `s5d review adversarial <spec>` / `s5d_review_adversarial` — scaffold the
+  3-layer report into `.s5d/evidence/<spec>/` and print the tier-correct
+  evidence binding step.
+- `s5d plan stories <spec> --from <stories.yaml>` / `s5d_plan_stories` — append
+  story-shaped workflow phases (each story must carry acceptance; rollback
+  defaults). Editing a spec changes its sha — re-approve if already approved.
+
+Readiness is structural (why + success_signal non-empty, no blank list
+entries) — content truthfulness stays with the agent.
+
 ## Readiness Bridge
 
 Before leaving Shape, make the next step explicit:

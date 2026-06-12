@@ -254,6 +254,18 @@ enum S5dCommand {
         #[command(subcommand)]
         command: CiCommand,
     },
+    /// Shape an intake kernel: route it and check readiness
+    Shape(ShapeArgs),
+    /// Review helpers (adversarial review scaffold)
+    Review {
+        #[command(subcommand)]
+        command: ReviewCommand,
+    },
+    /// Planning helpers (story-shaped workflow phases)
+    Plan {
+        #[command(subcommand)]
+        command: PlanCommand,
+    },
     /// Start stdio MCP server (for Claude Code integration)
     #[command(hide = true)]
     Mcp,
@@ -387,6 +399,44 @@ enum CiCommand {
     Check,
     /// Run built-in checks (validate, architecture, drift) — called by generated pipelines
     Exec,
+}
+
+#[derive(Args)]
+struct ShapeArgs {
+    /// Path to a kernel YAML file (shape-layer fields: why, capabilities,
+    /// constraints, non_goals, success_signal, assumptions, open_questions,
+    /// companions)
+    kernel: String,
+    /// Also scaffold a spec with the kernel embedded (feature id, e.g. feat.x.y)
+    #[arg(long)]
+    emit_spec: Option<String>,
+    /// Tier for the emitted spec (lightweight|standard|high)
+    #[arg(long, default_value = "standard")]
+    tier: String,
+    /// Product for the emitted spec
+    #[arg(long)]
+    product: Option<String>,
+}
+
+#[derive(Subcommand)]
+enum ReviewCommand {
+    /// Scaffold the 3-layer adversarial review report into .s5d/evidence/<spec>/
+    Adversarial {
+        /// Spec path or id
+        spec: String,
+    },
+}
+
+#[derive(Subcommand)]
+enum PlanCommand {
+    /// Append story-shaped workflow phases to a spec from a YAML list
+    Stories {
+        /// Spec path or id
+        spec: String,
+        /// YAML file with a list of stories ({id,title,scope,acceptance,rollback})
+        #[arg(long)]
+        from: String,
+    },
 }
 
 #[derive(Subcommand)]
@@ -1050,7 +1100,100 @@ fn main() -> anyhow::Result<()> {
             CiCommand::Check => cmd_ci::run_ci_check(),
             CiCommand::Exec => cmd_ci::run_ci_exec(),
         },
+        S5dCommand::Shape(args) => run_shape(&args),
+        S5dCommand::Review { command } => match command {
+            ReviewCommand::Adversarial { spec } => run_review_adversarial(&spec),
+        },
+        S5dCommand::Plan { command } => match command {
+            PlanCommand::Stories { spec, from } => run_plan_stories(&spec, &from),
+        },
     }
+}
+
+// ── Shape / Review / Plan (decision.s5d.bmad-native-runtime) ─────────────────
+
+fn run_shape(args: &ShapeArgs) -> anyhow::Result<()> {
+    let yaml = std::fs::read_to_string(&args.kernel)
+        .map_err(|e| anyhow::anyhow!("cannot read kernel file {}: {}", args.kernel, e))?;
+    let kernel = s5d::parse_kernel(&yaml)?;
+    let outcome = s5d::shape_kernel(&kernel);
+
+    println!("{}", outcome.route);
+    if outcome.readiness_errors.is_empty() {
+        println!("{} Readiness: ready", "ok".green());
+    } else {
+        println!("Readiness: not ready");
+        for e in &outcome.readiness_errors {
+            eprintln!("  {} {}", "error:".red(), e);
+        }
+    }
+
+    if let Some(ref id) = args.emit_spec {
+        if !outcome.readiness_errors.is_empty() {
+            anyhow::bail!("kernel is not ready — fix readiness errors before emitting a spec");
+        }
+        run_new(id, &args.tier, args.product.as_deref(), None, None, None)?;
+        // Embed the kernel into the freshly scaffolded spec.
+        let cwd = std::env::current_dir()?;
+        let project = s5d::S5dProject::find(&cwd)
+            .ok_or_else(|| anyhow::anyhow!("no .s5d/ found (run `s5d init` first)"))?;
+        let today = chrono::Utc::now().format("%Y%m%d");
+        let spec_filename = format!("{}__{}.s5d.yaml", id, today);
+        let spec_path = project.s5d_dir().join("packages").join(&spec_filename);
+        let mut spec: s5d::Spec = serde_yaml::from_str(&std::fs::read_to_string(&spec_path)?)?;
+        spec.intent_kernel = Some(kernel);
+        save_spec_yaml(&spec_path, &spec)?;
+        // The record was generated before the kernel embed — refresh its sha
+        // so the draft record matches the file on disk.
+        let sha = s5d::S5dProject::file_sha256(&spec_path)?;
+        let record = s5d::generate_record(&spec_filename, &sha);
+        project.save_record(&spec_filename, &record)?;
+        println!(
+            "  {} Embedded intent_kernel into {}",
+            "ok".green(),
+            spec_path.display()
+        );
+    }
+    Ok(())
+}
+
+fn run_review_adversarial(spec_arg: &str) -> anyhow::Result<()> {
+    let (project, _spec_path, spec, _spec_filename) = load_spec_context(spec_arg)?;
+    let (path, binding) = s5d::scaffold_adversarial_review(&project, &spec)?;
+    println!(
+        "{} Adversarial review scaffold: {}",
+        "ok".green(),
+        path.display()
+    );
+    println!("  Binding: {}", binding);
+    Ok(())
+}
+
+fn run_plan_stories(spec_arg: &str, from: &str) -> anyhow::Result<()> {
+    let (_project, spec_path, mut spec, _spec_filename) = load_spec_context(spec_arg)?;
+    let yaml = std::fs::read_to_string(from)
+        .map_err(|e| anyhow::anyhow!("cannot read stories file {}: {}", from, e))?;
+    let stories: Vec<s5d::StoryInput> = serde_yaml::from_str(&yaml)
+        .map_err(|e| anyhow::anyhow!("stories file does not parse as a story list: {}", e))?;
+    let added = s5d::apply_stories(&mut spec, stories)?;
+
+    let errors = s5d::validate_spec(&spec);
+    if !errors.is_empty() {
+        anyhow::bail!(
+            "spec would not validate after adding stories:\n  {}",
+            errors.join("\n  ")
+        );
+    }
+    save_spec_yaml(&spec_path, &spec)?;
+    println!(
+        "{} Added {} story phase(s) to {}: {}",
+        "ok".green(),
+        added.len(),
+        spec.id,
+        added.join(", ")
+    );
+    println!("  note: editing a spec changes its sha — re-run preview/approve if it was already approved");
+    Ok(())
 }
 
 fn run_decision_command(command: DecisionCommand) -> anyhow::Result<()> {

@@ -161,3 +161,17 @@ entries:
   status: success
   timestamp: 2026-06-12T07:11:04.200544+00:00
   record_ref: records/feat.s5d.ownership-derivation__20260612.record.yaml
+- spec_sha256: sha256:9f0e6315a9ff2f423fb8f2726ab107db12d7f59b481c1dcedab3829610479cc8
+  state_fingerprint: sha256:a0e571c5226a4497004f1cf2635640b8baa21ce1d5b893709fc8a442a9012cde
+  package_id: decision.s5d.bmad-native-runtime
+  action: import
+  status: success
+  timestamp: 2026-06-12T08:38:17.093993+00:00
+  record_ref: records/decision.s5d.bmad-native-runtime__20260612.record.yaml
+- spec_sha256: sha256:f3ea979f932455f70d3aeb388534fa3d64bd985b5c7a5e8c9e270be231742525
+  state_fingerprint: sha256:8ed3d251cce5d2f6f0987d372754a4b5ffd78cbe756814d29430bb29c34beb97
+  package_id: feat.s5d.shape-native
+  action: import
+  status: success
+  timestamp: 2026-06-12T08:57:24.373984+00:00
+  record_ref: records/feat.s5d.shape-native__20260612.record.yaml
