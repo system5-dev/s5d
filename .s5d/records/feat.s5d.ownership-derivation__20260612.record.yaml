@@ -1,0 +1,69 @@
+spec_ref: feat.s5d.ownership-derivation__20260612.s5d.yaml
+spec_sha256: sha256:1d0488fcc4da8b6608daa00574203666a222034fe86bd66535c95ed06d58fe8f
+status: applied
+sync_status: synced
+status_history:
+- status: proposed
+  timestamp: 2026-06-12T07:00:22.197224+00:00
+- status: previewed
+  timestamp: 2026-06-12T07:02:43.018280+00:00
+- status: approved
+  timestamp: 2026-06-12T07:02:43.036262+00:00
+- status: applied
+  timestamp: 2026-06-12T07:11:04.210326+00:00
+active_phase: null
+phase_history:
+- phase_id: build
+  status: active
+  timestamp: 2026-06-12T07:11:10.928062+00:00
+  reviewer: null
+  engine: manual
+  notes: Started work state 'Build'
+- phase_id: build
+  status: accepted
+  timestamp: 2026-06-12T07:11:10.941356+00:00
+  reviewer: Roman
+  engine: null
+  notes: Human run evidence acceptance
+phase_runs: []
+approvals:
+- reviewer: Roman
+  date: 2026-06-12T07:02:43.036258+00:00
+  spec_sha256: sha256:164fbe42e314dab04baa9f2d61dd8395ab644ab62198967f358ba3620bbacb9c
+  diff_sha256: sha256:734dab44b19e5b8693ae8687f8518785be9d231543ae610c88658993ca3ae2d2
+preview:
+  diff_sha256: sha256:734dab44b19e5b8693ae8687f8518785be9d231543ae610c88658993ca3ae2d2
+  previewed_spec_sha256: sha256:164fbe42e314dab04baa9f2d61dd8395ab644ab62198967f358ba3620bbacb9c
+  actions:
+    create: 3
+    link: 3
+    update: 4
+    delete: 0
+  log: null
+reflection: null
+gate_results:
+- kind: schema
+  status: passed
+  attempt: 1
+  timestamp: 2026-06-12T07:11:04.155068+00:00
+  log: schema validation passed (built-in)
+  exit_code: null
+  evidence_path: evidence/feat.s5d.ownership-derivation/schema_1.log
+  command: null
+  duration_ms: 0
+  waiver_expires_at: null
+  kind_class: null
+- kind: graph
+  status: passed
+  attempt: 1
+  timestamp: 2026-06-12T07:11:04.155142+00:00
+  log: graph check passed (built-in)
+  exit_code: null
+  evidence_path: evidence/feat.s5d.ownership-derivation/graph_1.log
+  command: null
+  duration_ms: 0
+  waiver_expires_at: null
+  kind_class: null
+decision: null
+verified_by: Diana
+drift_tolerance: null

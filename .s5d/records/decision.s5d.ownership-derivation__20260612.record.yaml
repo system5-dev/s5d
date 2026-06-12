@@ -1,0 +1,74 @@
+spec_ref: decision.s5d.ownership-derivation__20260612.s5d.yaml
+spec_sha256: sha256:7ea4541fa6237b7ad4631297e64b0835179e1eee516d59a442235f6636fe70cd
+status: applied
+sync_status: synced
+status_history:
+- status: proposed
+  timestamp: 2026-06-12T06:54:55.529419+00:00
+- status: previewed
+  timestamp: 2026-06-12T07:00:51.440630+00:00
+- status: approved
+  timestamp: 2026-06-12T07:00:51.459373+00:00
+- status: applied
+  timestamp: 2026-06-12T07:00:58.046004+00:00
+active_phase: null
+phase_history: []
+phase_runs: []
+approvals:
+- reviewer: Roman
+  date: 2026-06-12T07:00:51.459369+00:00
+  spec_sha256: sha256:25f8d74f16b8fcc0548f7a8a821f7a5b479a470abd599eb7684b63fe19f06de0
+  diff_sha256: sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+preview:
+  diff_sha256: sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+  previewed_spec_sha256: sha256:25f8d74f16b8fcc0548f7a8a821f7a5b479a470abd599eb7684b63fe19f06de0
+  actions:
+    create: 0
+    link: 0
+    update: 0
+    delete: 0
+  log: null
+reflection: null
+gate_results:
+- kind: review
+  status: passed
+  attempt: 1
+  timestamp: 2026-06-12T07:00:57.987319+00:00
+  log: |-
+    review gate passed (built-in): 1 review-evidence with verdict=pass
+      - hypothesis=derive-ownership-from-ledger evidence_id=20260612-gate-review-derive-ownership-from-ledger formality=3
+  exit_code: null
+  evidence_path: evidence/decision.s5d.ownership-derivation/review_1.log
+  command: null
+  duration_ms: 0
+  waiver_expires_at: null
+  kind_class: null
+decision:
+  title: Derive global-alias ownership from ledger at rollback time
+  winner_id: derive-ownership-from-ledger
+  rejected_ids:
+  - versioned-fingerprint
+  - separate-ownership-checksum
+  context: 'RAN-491: owning_package sits outside compute_state_fingerprint, so corruption is invisible to drift-check while rollback tombstoning depends on it. Fixing via fingerprint change would invalidate every existing baseline (mass false drift). TRIZ physical contradiction: formula must change and must not change.'
+  decision: 'Rollback derives the owner of each global alias from the append-only ledger plus stored packages at the point of use. The stored owning_package field degrades to a verified cache: derivation confirms or vetoes tombstoning, never expands it; disagreement is a loud warning; underivable ownership falls back to the stored field (legacy repos keep working). Fingerprint formula untouched. Shared lib extraction removes the CLI/MCP rollback duplication so the cross-check exists once.'
+  rationale: 'Only option that removes the contradiction instead of balancing it: the mutable field stops being load-bearing, so corrupting it stops being a threat — nothing to detect, no baselines invalidated, no migration day, no second persistent artifact. Probe on the s5d repo itself confirmed derivability (17/17 owners present in ledger).'
+  consequences: 'Rollback gains a ledger+packages scan (rare operation, cheap). Tamper-to-dodge case (field edited away from true owner) is detected and reported but not auto-tombstoned — operator decides. Pre-ledger aliases degrade to stored-field trust with a warning. CLI and MCP rollback collapse into one lib function. Follow-up: full derived==stored equality check could later run in s5d ci exec as a read-only integrity check.'
+  decided_at: 2026-06-12T07:00:43.400176+00:00
+  confirmed_by: Roman
+  expires_at: 2026-09-10
+  do_list: []
+  dont_list: []
+  challenge:
+    mode: standard
+    passed: true
+    summary: '5 probes run: ownership-transfer counter-argument refuted by identity.rs (first-creator-wins, renames preserve owner, no transfer API); edited-package tail failure bounded by veto-only semantics (derivation never expands tombstoning, disagreement = skip + loud warning); probe presence-only weakness acknowledged with full-derivation tests required; weakest-link check shows derivation sources sha256-bound/append-only vs unanchored alias field; alternatives D1/D2 carry refine verdicts, merkle-izing aliases recreates the contradiction. No fatal flaw.'
+    checks: []
+  decision_subject: null
+  decision_subject_granularity: null
+  evaluative_surface: null
+  belief_state: null
+  outcome_model: null
+  pareto_set: []
+  choice_rule: null
+verified_by: Diana
+drift_tolerance: null

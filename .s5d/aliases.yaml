@@ -534,3 +534,21 @@ packages:
   package_id: feat.s5d.self-update
   owning_package: null
   deprecated: false
+- uuid: ec8a5081-8f37-48ac-a69a-4ea1aa36a53e
+  artifact_id: cap.ownership-derivation
+  artifact_type: Capability
+  package_id: feat.s5d.ownership-derivation
+  owning_package: null
+  deprecated: false
+- uuid: 7982d3b1-4774-4128-ba80-65dbb00652e7
+  artifact_id: feat.s5d.ownership-derivation
+  artifact_type: Feature
+  package_id: feat.s5d.ownership-derivation
+  owning_package: null
+  deprecated: false
+- uuid: cf86a094-f413-4eb0-9ede-46ad61623707
+  artifact_id: comp.ownership-derivation
+  artifact_type: Component
+  package_id: feat.s5d.ownership-derivation
+  owning_package: null
+  deprecated: false

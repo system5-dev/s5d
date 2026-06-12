@@ -425,3 +425,168 @@ pub fn execute_import(
 
     Ok((actions, fingerprint))
 }
+
+/// Derive the owner of every global artifact from the append-only ledger plus the
+/// stored packages: the owner is the FIRST package whose successful import/reconcile
+/// declared the artifact. This matches assignment by construction — AliasTable::resolve
+/// is first-creator-wins, apply_renames preserves the owner, and no transfer API exists.
+/// Best effort: ledger entries whose package file is gone contribute nothing, so an
+/// artifact can be absent from the map (underivable).
+pub fn derive_global_owners(
+    ledger: &Ledger,
+    specs: &[(std::path::PathBuf, Spec)],
+) -> std::collections::HashMap<(String, String), String> {
+    let by_id: std::collections::HashMap<&str, &Spec> =
+        specs.iter().map(|(_, s)| (s.id.as_str(), s)).collect();
+    let mut owners = std::collections::HashMap::new();
+    for entry in &ledger.entries {
+        if entry.status != "success" || (entry.action != "import" && entry.action != "reconcile") {
+            continue;
+        }
+        let Some(spec) = by_id.get(entry.package_id.as_str()) else {
+            continue;
+        };
+        for key in collect_global_artifact_ids(spec) {
+            owners
+                .entry(key)
+                .or_insert_with(|| entry.package_id.clone());
+        }
+    }
+    owners
+}
+
+#[derive(Debug, Default)]
+pub struct RollbackReport {
+    pub spec_id: String,
+    /// Globals tombstoned ("Type:id"), derivation agreed or artifact was underivable.
+    pub tombstoned_globals: Vec<String>,
+    /// Globals kept because another spec still references them.
+    pub kept_referenced: Vec<String>,
+    /// Stored field claims this spec but the ledger derivation names another owner —
+    /// possible owning_package corruption. Skipped, nothing tombstoned.
+    pub ownership_mismatches: Vec<String>,
+    /// Ledger derivation attributes the global to this spec but the stored field
+    /// names someone else — possible tamper to dodge rollback. Reported, no action.
+    pub suspected_tampers: Vec<String>,
+    /// Tombstoned via stored-field trust because the ledger has no trace (legacy).
+    pub underivable_fallbacks: Vec<String>,
+}
+
+/// Roll back the last successful import of a spec. Ownership of global aliases is
+/// cross-checked against the ledger derivation (decision.s5d.ownership-derivation):
+/// the derivation confirms or vetoes tombstoning, never expands it. Disagreements
+/// surface in the report for the caller to print loudly.
+pub fn rollback_spec(
+    project: &S5dProject,
+    spec: &Spec,
+    spec_filename: &str,
+) -> anyhow::Result<RollbackReport> {
+    let s5d_dir = project.s5d_dir();
+    let mut ledger = project.load_ledger()?;
+
+    let has_import = ledger
+        .entries
+        .iter()
+        .any(|e| e.package_id == spec.id && e.action == "import" && e.status == "success");
+    if !has_import {
+        anyhow::bail!("no successful import found for {} to roll back", spec.id);
+    }
+
+    // Globals still referenced by other specs are never tombstoned.
+    let all_specs = project.discover_specs()?;
+    let mut referenced_globals = std::collections::HashSet::new();
+    for (_, other) in &all_specs {
+        if other.id != spec.id {
+            referenced_globals.extend(collect_global_artifact_ids(other));
+        }
+    }
+
+    let derived_owners = derive_global_owners(&ledger, &all_specs);
+
+    let mut report = RollbackReport {
+        spec_id: spec.id.clone(),
+        ..Default::default()
+    };
+
+    let mut aliases = AliasTable::load(&s5d_dir)?;
+    for entry in &mut aliases.packages {
+        if entry.package_id.as_deref() == Some(&spec.id) && !entry.deprecated {
+            entry.deprecated = true;
+        }
+    }
+    for entry in &mut aliases.global {
+        if entry.deprecated {
+            continue;
+        }
+        let key = (entry.artifact_type.clone(), entry.artifact_id.clone());
+        let label = format!("{}:{}", entry.artifact_type, entry.artifact_id);
+        let stored_claims_spec = entry.owning_package.as_deref() == Some(&spec.id);
+        let derived = derived_owners.get(&key);
+
+        if stored_claims_spec {
+            // Corruption check first — a stored owner the ledger contradicts is
+            // reported even when the referenced-guard would keep the entry anyway.
+            if let Some(other_owner) = derived.filter(|o| *o != &spec.id) {
+                report.ownership_mismatches.push(format!(
+                    "{} — stored owner is {} but ledger derivation says {}",
+                    label, spec.id, other_owner
+                ));
+                continue;
+            }
+            if referenced_globals.contains(&key) {
+                report.kept_referenced.push(label);
+                continue;
+            }
+            match derived {
+                Some(_) => {
+                    entry.deprecated = true;
+                    report.tombstoned_globals.push(label);
+                }
+                None => {
+                    entry.deprecated = true;
+                    report.tombstoned_globals.push(label.clone());
+                    report.underivable_fallbacks.push(label);
+                }
+            }
+        } else if derived.map(String::as_str) == Some(spec.id.as_str()) {
+            report.suspected_tampers.push(format!(
+                "{} — ledger derivation says {} owns it but stored owner is {}",
+                label,
+                spec.id,
+                entry.owning_package.as_deref().unwrap_or("<none>")
+            ));
+        }
+    }
+    aliases.save(&s5d_dir)?;
+
+    ledger.entries.push(LedgerEntry {
+        spec_sha256: "rollback".into(),
+        state_fingerprint: "rollback".into(),
+        package_id: spec.id.clone(),
+        action: "rollback".into(),
+        status: "success".into(),
+        timestamp: Utc::now().to_rfc3339(),
+        record_ref: Some(format!(
+            "records/{}",
+            spec_filename.replace(".s5d.yaml", ".record.yaml")
+        )),
+    });
+    project.save_ledger(&ledger)?;
+
+    let mut record = project
+        .load_record(spec_filename)?
+        .ok_or_else(|| anyhow::anyhow!("no record found for {}", spec_filename))?;
+    record.status = SpecStatus::Deprecated;
+    record.sync_status = SyncStatus::Unknown;
+    record.status_history.push(StatusEntry {
+        status: SpecStatus::Deprecated,
+        timestamp: Utc::now().to_rfc3339(),
+    });
+    project.save_record(spec_filename, &record)?;
+
+    let mut index = project.load_index()?;
+    index.features.retain(|e| e.id != spec.id);
+    project.save_index(&index)?;
+
+    Ok(report)
+}
