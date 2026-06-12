@@ -84,6 +84,10 @@ pub fn apply_stories(spec: &mut Spec, stories: Vec<StoryInput>) -> anyhow::Resul
                 story.id
             );
         }
+        // Phase ids become filesystem path components downstream (run task
+        // artifacts under .s5d/tasks/) — reject unsafe ids at planning time.
+        crate::sanitize_id(&story.id)
+            .map_err(|e| anyhow::anyhow!("story id '{}' is unsafe: {}", story.id, e))?;
         // A story without acceptance criteria is not a story — the validator
         // enforces non-empty phase acceptance, so fail with the real reason.
         if story.acceptance.is_empty() {
