@@ -6018,3 +6018,26 @@ fn review_adversarial_rejects_path_traversal_spec_id() {
         "no directory may be created outside .s5d/evidence"
     );
 }
+
+#[test]
+fn plan_stories_rejects_unsafe_story_ids() {
+    // Phase ids become path components in run-task artifacts — traversal
+    // ids must die at planning time (tribunal round-2 blocker).
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+    let spec_str = setup_standard_spec(&repo, "feat.unsafe");
+
+    repo.write(
+        "stories-evil.yaml",
+        "- id: ../../escape\n  title: Evil\n  scope: Should be rejected\n  acceptance:\n    - never\n",
+    );
+    let failed = run_fail(
+        repo.path(),
+        ["plan", "stories", &spec_str, "--from", "stories-evil.yaml"],
+    );
+    assert!(
+        failed.stderr.contains("unsafe"),
+        "traversal story id must be rejected:\n{}",
+        failed.summary()
+    );
+}
