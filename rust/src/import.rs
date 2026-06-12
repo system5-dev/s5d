@@ -429,11 +429,17 @@ pub fn execute_import(
 /// Per-key outcome of the ledger ownership derivation.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum DerivedOwnership {
-    /// Every ledger event that could have affected this key replays against
-    /// sha-verified package content — the owner is certain.
+    /// The owner is certain: a sha-verified claim exists and every unverifiable
+    /// ledger event that could have claimed the key first belongs to the same
+    /// package — whichever import was actually first, the owner is identical.
     Owner(String),
-    /// A tainted ledger entry (package file edited since that import, or gone)
-    /// could have claimed the key first — nothing destructive may rely on it.
+    /// No verified claim, and exactly one package's unverifiable imports could
+    /// have created the key. Not proof — the key might equally have no ledger
+    /// origin — but the only candidate the ledger offers.
+    UnverifiedCandidate(String),
+    /// Multiple packages could own the key (a tainted entry from a DIFFERENT
+    /// package precedes or shadows the verified claim) — nothing destructive
+    /// may rely on it.
     Unverifiable,
 }
 
@@ -517,19 +523,33 @@ pub fn derive_global_owners(
 
     let mut result = std::collections::HashMap::new();
     for key in universe {
-        let poisoned = poison.contains_key(key);
+        let poison_set = poison.get(key);
         match owners.get(key) {
-            // A verifiable claim cannot prove firstness past an earlier unknown one.
-            Some(_) if poisoned => {
-                result.insert(key.clone(), DerivedOwnership::Unverifiable);
-            }
             Some(owner) => {
-                result.insert(key.clone(), DerivedOwnership::Owner(owner.clone()));
+                // Self-poison is harmless: a package's own stale-sha entries
+                // (normal edit + re-import lifecycle) cannot change WHO owns
+                // the key — whichever of its imports was first, the owner is
+                // the same package. Only foreign unknowns break certainty.
+                let foreign = poison_set.is_some_and(|set| set.iter().any(|p| p != owner));
+                if foreign {
+                    result.insert(key.clone(), DerivedOwnership::Unverifiable);
+                } else {
+                    result.insert(key.clone(), DerivedOwnership::Owner(owner.clone()));
+                }
             }
-            None if poisoned => {
-                result.insert(key.clone(), DerivedOwnership::Unverifiable);
-            }
-            None => {} // no trace — legacy
+            None => match poison_set {
+                Some(set) if set.len() == 1 => {
+                    let candidate = set.iter().next().expect("len checked").clone();
+                    result.insert(
+                        key.clone(),
+                        DerivedOwnership::UnverifiedCandidate(candidate),
+                    );
+                }
+                Some(_) => {
+                    result.insert(key.clone(), DerivedOwnership::Unverifiable);
+                }
+                None => {} // no trace — legacy
+            },
         }
     }
     result
@@ -577,11 +597,26 @@ pub fn rollback_spec(
         anyhow::bail!("no successful import found for {} to roll back", spec.id);
     }
 
-    // Globals still referenced by other specs are never tombstoned.
+    // Globals still referenced by other LIVE specs are never tombstoned.
+    // A rolled-back spec (record status Deprecated) whose package file is still
+    // on disk must not pin globals alive — its claim ended with its rollback,
+    // matching the epoch semantics of the ownership derivation below.
     let all_specs = project.discover_specs()?;
     let mut referenced_globals = std::collections::HashSet::new();
-    for (_, other) in &all_specs {
-        if other.id != spec.id {
+    for (path, other) in &all_specs {
+        if other.id == spec.id {
+            continue;
+        }
+        let other_filename = path
+            .file_name()
+            .map(|f| f.to_string_lossy().into_owned())
+            .unwrap_or_default();
+        let rolled_back = project
+            .load_record(&other_filename)
+            .ok()
+            .flatten()
+            .is_some_and(|r| r.status == SpecStatus::Deprecated);
+        if !rolled_back {
             referenced_globals.extend(collect_global_artifact_ids(other));
         }
     }
@@ -637,7 +672,15 @@ pub fn rollback_spec(
                     entry.deprecated = true;
                     report.tombstoned_globals.push(label);
                 }
-                Some(DerivedOwnership::Unverifiable) => {
+                // The only ledger candidate is this spec itself — unverified
+                // but consistent with the stored field; nothing contradicts.
+                Some(DerivedOwnership::UnverifiedCandidate(c)) if c == &spec.id => {
+                    entry.deprecated = true;
+                    report.tombstoned_globals.push(label.clone());
+                    report.underivable_fallbacks.push(label);
+                }
+                Some(DerivedOwnership::UnverifiedCandidate(_))
+                | Some(DerivedOwnership::Unverifiable) => {
                     // Inconclusive evidence must not destroy data: a two-file
                     // tamper (alias field + any package file) would otherwise
                     // route a foreign global into the fallback tombstone.
