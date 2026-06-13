@@ -1,0 +1,17 @@
+spec_ref: feat.s5d.thin-assurance-primitives__20260613.s5d.yaml
+spec_sha256: sha256:8c6337447db6eb6cb07b9b5a659c44f9f975c27a65967576dd47c25a1296907b
+status: proposed
+sync_status: unknown
+status_history:
+- status: proposed
+  timestamp: 2026-06-13T18:16:05.940650+00:00
+active_phase: null
+phase_history: []
+phase_runs: []
+approvals: []
+preview: null
+reflection: null
+gate_results: []
+decision: null
+verified_by: null
+drift_tolerance: null

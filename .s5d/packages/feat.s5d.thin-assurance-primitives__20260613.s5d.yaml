@@ -1,0 +1,170 @@
+s5d: '1.0'
+id: feat.s5d.thin-assurance-primitives
+version: 1.0.0
+product: s5d
+tier: standard
+allow_update: true
+meta:
+  title: thin-assurance-primitives
+  authors: []
+  date: 2026-06-13
+  tickets: []
+  adrs: []
+  renames: []
+context: |
+  ## Problem
+
+  ## Goal
+
+  ## Privacy
+  Classification: Internal
+workflow:
+  mode: plan
+  target_architecture:
+    summary: Describe the steady-state design this change should reach
+    invariants: []
+  delivery_strategy:
+    summary: Describe how this change moves current code toward the target architecture
+    rationale: null
+  resources: null
+  role_map:
+    implementer: coder
+    verifier: reviewer
+    reviewer: reviewer
+    owner: human
+  review_policy:
+    cross_model_required: false
+    required_on: []
+  structure_outline: null
+  execution_mode:
+    engine: manual
+    max_iterations: null
+    stop_conditions:
+    - Phase acceptance reached
+    - Approved scope exhausted
+    - New decision required
+  phases:
+  - id: prototype
+    title: Prototype
+    scope: Reduce unknowns before committed implementation
+    roles:
+    - owner
+    - implementer
+    acceptance:
+    - Critical feasibility questions answered
+    - Telemetry approach identified
+    rollback:
+    - Discard spike output if assumptions fail
+  - id: build
+    title: Build
+    scope: Implement approved scope and pass local gates
+    roles:
+    - implementer
+    - reviewer
+    acceptance:
+    - Declared gates pass
+    - Change matches approved scope
+    rollback:
+    - Revert or reconcile if gates or review fail
+  - id: measure
+    title: Measure
+    scope: Collect telemetry and close the loop with an explicit verdict
+    roles:
+    - owner
+    - verifier
+    acceptance:
+    - Telemetry collected against success criteria
+    - Outcome verdict recorded
+    rollback:
+    - Iterate or kill if evidence stays weak
+artifacts:
+  products:
+  - id: s5d
+    name: s5d
+    organization: null
+  domains:
+  - id: dom.s5d.core
+    product: s5d
+    name: s5d core domain
+    classification: supporting
+    description: Scaffold default — rename or split into real bounded contexts
+    team: null
+    maturity_level: null
+  capabilities:
+  - id: cap.thin-assurance-primitives
+    domain: dom.s5d.core
+    name: thin assurance primitives
+    description: null
+    since: null
+  entities: []
+  features:
+  - id: feat.s5d.thin-assurance-primitives
+    product: s5d
+    name: thin-assurance-primitives
+    description: null
+  use_cases: []
+  systems:
+  - id: sys.s5d
+    product: s5d
+    name: s5d
+  containers:
+  - id: ctr.s5d.app
+    system: sys.s5d
+    name: s5d app
+    technology: null
+  components:
+  - id: comp.thin-assurance-primitives
+    feature: feat.s5d.thin-assurance-primitives
+    domain: dom.s5d.core
+    container: ctr.s5d.app
+    name: thin assurance primitives component
+    paths:
+    - TODO-set-source-paths/
+  roles: []
+  concerns: []
+  metrics: []
+  supersystems: []
+  transports: []
+links:
+  feature_to_domain:
+  - feature: feat.s5d.thin-assurance-primitives
+    domain: dom.s5d.core
+  use_case_to_capability: []
+  use_case_to_entity: []
+  component_to_capability:
+  - component: comp.thin-assurance-primitives
+    capability: cap.thin-assurance-primitives
+  component_to_entity: []
+  container_to_capability: []
+  concern_to_metric: []
+  component_to_container: []
+  edges: []
+  depends_on: []
+  entity_relations: []
+  capability_to_entity: []
+  capability_to_concern: []
+contracts: []
+gates:
+- kind: schema
+- kind: graph
+roc: null
+problem:
+  signal: Внешний BMAD-класс воркфлоу не может гонять полный цикл S5D только через MCP — есть гэпы в primitive-API
+  constraints:
+  - 'control-plane не оркестратор: ноль sequencing и persona внутри S5D'
+  - S5D линкует телеметрию/флаги/CI а не владеет ими
+  - тонкость только для assurance-проводки не для elicitation-контента
+  targets:
+  - полнота MCP-API примитивов под внешний воркфлоу
+  - тонкий внешний адаптер-скилл BMAD-класса
+  indicators: []
+  goodhart_guard: null
+  acceptance: 'Скрипт прогоняет intake→shape→evidence→gates→decision→reflect только MCP-вызовами, без ручного YAML; boundary-тест: ноль sequencing/persona в S5D'
+  blast_radius: null
+  reversibility: null
+  status: null
+hypotheses: []
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false

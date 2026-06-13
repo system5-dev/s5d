@@ -25,7 +25,7 @@ problem:
   targets: []
   indicators: []
   goodhart_guard: null
-  acceptance: 'Решение явно называет границу control-plane S5D (владеет repo-state/spec/evidence/gates/decision/drift/rollback vs линкует телеметрию/флаги/CI через telemetry_refs/ROC); отношение к BMAD сформулировано без "S5D над BMAD" (BMAD = внешний skill-слой, вызывающий MCP S5D); реорг-таргет выводится из consequences (тонкий assurance для внешнего воркфлоу, elicitation+persona вне схемы); согласовано с границей control-plane≠orchestrator (note.blueprint-projection).'
+  acceptance: Решение явно называет границу control-plane S5D (владеет repo-state/spec/evidence/gates/decision/drift/rollback vs линкует телеметрию/флаги/CI через telemetry_refs/ROC); отношение к BMAD сформулировано без "S5D над BMAD" (BMAD = внешний skill-слой, вызывающий MCP S5D); реорг-таргет выводится из consequences (тонкий assurance для внешнего воркфлоу, elicitation+persona вне схемы); согласовано с границей control-plane≠orchestrator (note.blueprint-projection).
   blast_radius: null
   reversibility: null
   status: backlog
@@ -108,7 +108,7 @@ hypotheses:
     agent: tribunal
   depends_on: []
   rationale: null
-  spec_ref: null
+  spec_ref: feat.s5d.thin-assurance-primitives__20260613.s5d.yaml
   prompt: Является ли S5D repo-state assurance kernel'ом с внешним skill-слоем для воркфлоу?
   next_move: build
 decision: null
