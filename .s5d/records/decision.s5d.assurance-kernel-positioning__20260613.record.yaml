@@ -1,0 +1,43 @@
+spec_ref: decision.s5d.assurance-kernel-positioning__20260613.s5d.yaml
+spec_sha256: sha256:26ed4b143f20db06f9cb37dcf1a3e0fa847a3dc0e860a71325d0104c6630e7db
+status: proposed
+sync_status: unknown
+status_history:
+- status: proposed
+  timestamp: 2026-06-13T12:47:25.774746+00:00
+active_phase: null
+phase_history: []
+phase_runs: []
+approvals: []
+preview: null
+reflection: null
+gate_results: []
+decision:
+  title: S5D = repo-state assurance kernel Operator Loop'а; BMAD-класс = внешний skill-адаптер
+  winner_id: s5d-repo-state-assurance-kernel-bmad-класс-внешний-skill-адаптер
+  rejected_ids:
+  - s5d-как-полный-control-plane-bmad-тонким-слоем-сверху
+  - s5d-авто-проецирует-воркфлоу-из-spec-графа
+  context: 'Вопрос: сделать S5D конкурентным с BMAD. Уточнён Романом: фокус S5D — поддержка методологии Operator Loop (requirements→architecture→verification), S5D уровнем выше BMAD, BMAD-эквивалент дёшев. Трибунал стресс-тестил формулировку перед фиксацией.'
+  decision: 'S5D = repo-state assurance kernel — подмножество control plane Operator Loop''а (repo-state/spec/evidence/gates/decision/drift/rollback), линкующее телеметрию/флаги/CI через telemetry_refs/ROC, но НЕ владеющее ими. BMAD-класс воркфлоу = ВНЕШНИЙ skill-слой, вызывающий MCP-инструменты S5D на границах spec/evidence/decision. Фрейминг: ''BMAD ведёт front-of-loop discovery; S5D связывает и верифицирует repo-state-обязательства'', НЕ ''S5D над BMAD''.'
+  rationale: 'Трибунал сошёлся (Codex REJECT-исходной→третий, Gemini APPROVE с теми же findings; арбитр: расхождение ярлыков мнимое). Две ловушки исходной формулировки [VERIFIED обоими, file:line]: (1) ''весь control plane'' — S5D не владеет flags/телеметрией/CI/триггерами; (2) ''над BMAD'' — elicitation+persona BMAD не сводится к role_map. Третий вариант сохраняет стратегию и держит границу control-plane≠orchestrator. spec_ref пропущен через --force: реализация (реорг) — downstream feature-спек, моделируется ПОСЛЕ фиксации позиции.'
+  consequences: 'Реорг-таргет (отдельный feature-спек): (1) довести примитивы S5D (shape/elicitation-kernel, evidence-types, gates, decision) до тонкого assurance для внешнего воркфлоу; (2) elicitation+persona — в skill-слое, НЕ в spec-схеме; (3) ''дёшево'' применимо к assurance-проводке, не к elicitation/persona. Не приписывать S5D телеметрию/флаги; не затаскивать секвенирование ролей внутрь control plane.'
+  decided_at: 2026-06-13T13:32:22.681986+00:00
+  confirmed_by: Roman
+  expires_at: 2026-09-11
+  do_list: []
+  dont_list: []
+  challenge:
+    mode: standard
+    passed: true
+    summary: 'Трибунал 2026-06-13: Codex (high, REJECT исходной→третий, HIGH, file:line к mcp.rs/models.rs/shape.rs/metamodel.md) + Gemini (flash, APPROVE, findings совпадают). Арбитр (Claude) подтвердил конвергенцию; (b) отвергнута — нет схемных оснований для work-DAG-проекции.'
+    checks: []
+  decision_subject: null
+  decision_subject_granularity: null
+  evaluative_surface: null
+  belief_state: null
+  outcome_model: null
+  pareto_set: []
+  choice_rule: null
+verified_by: null
+drift_tolerance: null

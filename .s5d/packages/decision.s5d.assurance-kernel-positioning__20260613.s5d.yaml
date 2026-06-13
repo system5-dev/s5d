@@ -1,0 +1,117 @@
+s5d: '1.0'
+id: decision.s5d.assurance-kernel-positioning
+version: 1.0.0
+product: s5d
+tier: decision
+allow_update: true
+meta:
+  title: assurance-kernel-positioning
+  authors: []
+  date: 2026-06-13
+  tickets: []
+  adrs: []
+  renames: []
+context: null
+workflow: null
+artifacts: null
+links: null
+contracts: []
+gates:
+- kind: review
+roc: null
+problem:
+  signal: 'Какова позиция S5D относительно методологии Operator Loop и воркфлоу BMAD-класса: весь control plane, пир BMAD, или repo-state assurance kernel с внешним skill-слоем?'
+  constraints: []
+  targets: []
+  indicators: []
+  goodhart_guard: null
+  acceptance: 'Решение явно называет границу control-plane S5D (владеет repo-state/spec/evidence/gates/decision/drift/rollback vs линкует телеметрию/флаги/CI через telemetry_refs/ROC); отношение к BMAD сформулировано без "S5D над BMAD" (BMAD = внешний skill-слой, вызывающий MCP S5D); реорг-таргет выводится из consequences (тонкий assurance для внешнего воркфлоу, elicitation+persona вне схемы); согласовано с границей control-plane≠orchestrator (note.blueprint-projection).'
+  blast_radius: null
+  reversibility: null
+  status: backlog
+hypotheses:
+- id: s5d-как-полный-control-plane-bmad-тонким-слоем-сверху
+  title: S5D как полный control plane, BMAD тонким слоем сверху
+  content: S5D = тот самый "engineering control plane", который называет Operator Loop. BMAD-класс воркфлоу — тонкая компоновка примитивов S5D; S5D концептуально "над" BMAD; BMAD-эквивалент "раз плюнуть". (Исходная формулировка (a)-as-worded.)
+  scope: Позиционирование S5D относительно Operator Loop и BMAD-класса воркфлоу
+  kind: system
+  layer: invalid
+  r_eff: null
+  evidence:
+  - id: 20260613-gate-review-s5d-как-полный-control-plane-bmad-тонким-слоем-сверху
+    type: gate:review
+    content: 'Трибунал отверг две части этой формулировки [VERIFIED обоими]: (1) "S5D = весь control plane" — переоценка: S5D не владеет feature-flags/ingestion телеметрии/CI-оркестрацией/alerting/takeover-триггерами/product-metric-решениями (s5d_reflect только records telemetry_refs); (2) "S5D над BMAD" неточно: BMAD — пир на facilitation-слое, elicitation+persona не сводится к примитивам S5D. "BMAD раз плюнуть" верно только для assurance-проводки, не для elicitation+persona-контента.'
+    verdict: fail
+    valid_until: 2026-09-11T12:49:21.752101+00:00
+    carrier_ref: null
+    formality: 3
+    claim_scope:
+    - S5D как полный control plane и над BMAD
+    congruence_level: null
+    reliability: 0.85
+    refine_kind: null
+    skill: tribunal
+    agent: tribunal
+  depends_on: []
+  rationale: null
+  spec_ref: null
+  prompt: Является ли S5D всем control plane методологии и стоит ли он над BMAD?
+  next_move: null
+- id: s5d-авто-проецирует-воркфлоу-из-spec-графа
+  title: S5D авто-проецирует воркфлоу из spec-графа
+  content: 'S5D генерирует BMAD-класс воркфлоу как проекцию из spec dependency-графа. (Вариант (b).) Прио-трибунал (note.blueprint-projection, 2026-06-06) уже отверг чистую work-DAG-проекцию: схема не имеет work-node/implementation-deps, только domain-level links.edges; s5d = control plane для repo state, НЕ task orchestrator.'
+  scope: Позиционирование S5D относительно Operator Loop и BMAD-класса воркфлоу
+  kind: system
+  layer: invalid
+  r_eff: null
+  evidence:
+  - id: 20260613-gate-review-s5d-авто-проецирует-воркфлоу-из-spec-графа
+    type: gate:review
+    content: 'Отвергнуто прио-трибуналом (note.blueprint-projection, 2026-06-06, Codex+Gemini оба CONCERNS) и подтверждено текущим: чистой work-DAG-проекции из spec нет — схема имеет только domain-level links.edges, без work-node/implementation-deps. s5d = control plane для repo state, НЕ task orchestrator (определяет ЧТО верифицируется, агент — КАК). Operator-Loop фрейминг не добавил схемных оснований для пересмотра.'
+    verdict: fail
+    valid_until: 2026-09-11T13:30:07.115475+00:00
+    carrier_ref: null
+    formality: 3
+    claim_scope:
+    - Авто-проекция воркфлоу из spec-графа
+    congruence_level: null
+    reliability: 0.9
+    refine_kind: null
+    skill: tribunal
+    agent: tribunal
+  depends_on: []
+  rationale: null
+  spec_ref: null
+  prompt: Может ли S5D авто-проецировать воркфлоу из spec-графа?
+  next_move: null
+- id: s5d-repo-state-assurance-kernel-bmad-класс-внешний-skill-адаптер
+  title: S5D = repo-state assurance kernel; BMAD-класс = внешний skill-адаптер
+  content: 'S5D покрывает ПОДМНОЖЕСТВО control plane Operator Loop: repo-state / spec / evidence / gates / decision / drift / rollback. НЕ владеет feature-flags, ingestion телеметрии, CI-оркестрацией, alerting, takeover-триггерами, product-metric-решениями — линкует через telemetry_refs/ROC. BMAD-класс воркфлоу = ВНЕШНИЙ skill-слой, вызывающий MCP-инструменты S5D на границах spec/evidence/decision. Governance-precedence: гейты S5D решают допустимость продукции BMAD в репо, но BMAD — пир на facilitation/methodology-слое (elicitation+persona — отдельная способность, не сводится к role_map), не подчинённый. Фрейминг: "BMAD ведёт front-of-loop discovery; S5D связывает и верифицирует repo-state-обязательства".'
+  scope: Позиционирование S5D относительно Operator Loop и BMAD-класса воркфлоу
+  kind: system
+  layer: L1
+  r_eff: null
+  evidence:
+  - id: 20260613-gate-review-s5d-repo-state-assurance-kernel-bmad-класс-внешний-skill-адаптер
+    type: gate:review
+    content: 'Трибунал (Codex high + Gemini flash, Claude арбитр, 2026-06-13). Сошлись на этой гипотезе. Codex (REJECT исходной формулировки → третий вариант, file:line refs к rust/src/mcp.rs, models.rs, shape.rs, metamodel.md): S5D покрывает подмножество control plane (repo-state/spec/evidence/gates/decision/drift/rollback — реальные MCP-поверхности), НЕ владеет телеметрией/флагами/CI/триггерами; BMAD elicitation+persona не сводится к role_map (name→owner); граница control-plane≠orchestrator держится только если BMAD-воркфлоу — ВНЕШНИЙ skill-слой, вызывающий MCP S5D. Gemini (APPROVE): те же findings — "BMAD=HOW, S5D=WHAT", operational gap по телеметрии, (a) работает как producer вызывающий MCP. Арбитр: расхождение ярлыков мнимое, архитектура у обоих одна.'
+    verdict: pass
+    valid_until: 2026-09-11T12:49:02.058685+00:00
+    carrier_ref: null
+    formality: 3
+    claim_scope:
+    - Позиционирование S5D как repo-state assurance kernel; BMAD-класс как внешний skill-адаптер
+    congruence_level: null
+    reliability: 0.85
+    refine_kind: null
+    skill: tribunal
+    agent: tribunal
+  depends_on: []
+  rationale: null
+  spec_ref: null
+  prompt: Является ли S5D repo-state assurance kernel'ом с внешним skill-слоем для воркфлоу?
+  next_move: build
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false
