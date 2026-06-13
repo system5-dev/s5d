@@ -175,8 +175,8 @@ pub fn check_import(record: &Option<Record>, verified_by: &str) -> Vec<PhaseChec
 /// Process phase checks: print results, return whether to proceed.
 /// Returns Ok(true) to proceed, Err for structural or unforced methodological failures.
 pub fn enforce_checks(checks: &[PhaseCheck], force: bool) -> anyhow::Result<bool> {
-    let mut has_structural_failure = false;
-    let mut has_methodological_failure = false;
+    let mut structural_failures: Vec<&str> = Vec::new();
+    let mut methodological_failures: Vec<&str> = Vec::new();
 
     for check in checks {
         if check.passed {
@@ -185,7 +185,7 @@ pub fn enforce_checks(checks: &[PhaseCheck], force: bool) -> anyhow::Result<bool
         match check.severity {
             Severity::Structural => {
                 eprintln!("  {} {}", "error:".red(), check.message);
-                has_structural_failure = true;
+                structural_failures.push(check.message.as_str());
             }
             Severity::Methodological => {
                 if force {
@@ -196,19 +196,27 @@ pub fn enforce_checks(checks: &[PhaseCheck], force: bool) -> anyhow::Result<bool
                     );
                 } else {
                     eprintln!("  {} {}", "warn:".yellow(), check.message);
-                    has_methodological_failure = true;
+                    methodological_failures.push(check.message.as_str());
                 }
             }
         }
     }
 
-    if has_structural_failure {
-        anyhow::bail!("structural prerequisite failed — cannot proceed");
+    // Include the specific failed checks in the error so callers that don't see
+    // stderr (e.g. the MCP server) get an actionable message, not a bare verdict.
+    if !structural_failures.is_empty() {
+        anyhow::bail!(
+            "structural prerequisite failed — cannot proceed:\n  - {}",
+            structural_failures.join("\n  - ")
+        );
     }
 
-    if has_methodological_failure && !force {
+    if !methodological_failures.is_empty() && !force {
         eprintln!("  use --force to override methodological checks");
-        anyhow::bail!("methodological prerequisites not met");
+        anyhow::bail!(
+            "methodological prerequisites not met (use --force to override):\n  - {}",
+            methodological_failures.join("\n  - ")
+        );
     }
 
     Ok(true)

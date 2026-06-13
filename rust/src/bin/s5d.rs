@@ -284,6 +284,8 @@ enum DecisionCommand {
     AddHypothesis(AddHypothesisArgs),
     /// Add evidence to a hypothesis in a decision spec
     AddEvidence(AddEvidenceArgs),
+    /// Set the problem-card acceptance criteria (required before deciding)
+    SetAcceptance(SetAcceptanceArgs),
     /// Record a decision in a decision spec
     Decide(Box<DecideArgs>),
 }
@@ -615,6 +617,15 @@ struct AddEvidenceArgs {
     /// Provenance: which assess agent produced this evidence (e.g. "security-scan-assess").
     #[arg(long)]
     agent: Option<String>,
+}
+
+#[derive(Args)]
+struct SetAcceptanceArgs {
+    /// Path to .s5d.yaml file
+    spec: String,
+    /// Acceptance criteria — how we'll know the problem is solved
+    #[arg(long)]
+    acceptance: String,
 }
 
 #[derive(Args)]
@@ -1200,6 +1211,7 @@ fn run_decision_command(command: DecisionCommand) -> anyhow::Result<()> {
     match command {
         DecisionCommand::AddHypothesis(args) => run_add_hypothesis_command(args),
         DecisionCommand::AddEvidence(args) => run_add_evidence_command(args),
+        DecisionCommand::SetAcceptance(args) => run_set_acceptance(&args.spec, &args.acceptance),
         DecisionCommand::Decide(args) => run_decide_command(*args),
     }
 }
@@ -1356,6 +1368,22 @@ fn run_add_evidence_command(args: AddEvidenceArgs) -> anyhow::Result<()> {
         args.skill,
         args.agent,
     )
+}
+
+fn run_set_acceptance(spec_path: &str, acceptance: &str) -> anyhow::Result<()> {
+    if acceptance.trim().is_empty() {
+        anyhow::bail!("--acceptance cannot be empty");
+    }
+    let (path, mut spec) = load_spec_yaml(spec_path)?;
+    let card = spec
+        .problem
+        .as_mut()
+        .and_then(|p| p.as_card_mut())
+        .ok_or_else(|| anyhow::anyhow!("spec has no structured problem card — cannot set acceptance"))?;
+    card.acceptance = Some(acceptance.to_string());
+    save_spec_yaml(&path, &spec)?;
+    println!("{} Set acceptance on {}", "ok".green(), spec.id);
+    Ok(())
 }
 
 fn run_decide_command(args: DecideArgs) -> anyhow::Result<()> {
@@ -2408,7 +2436,7 @@ fn run_note(text: &str, product: Option<&str>) -> anyhow::Result<()> {
         .filter(|s| !s.is_empty())
         .collect::<Vec<_>>()
         .join("-");
-    let slug = if slug.len() > 40 { &slug[..40] } else { &slug };
+    let slug = s5d::truncate_chars(&slug, 40);
     let slug = slug.trim_end_matches('-');
 
     let id = format!("note.{}", slug);
@@ -3902,10 +3930,10 @@ fn show_decision(spec: &s5d::Spec, decision: Option<&s5d::DecisionRecord>) {
                 other => other.to_string(),
             };
 
-            // Truncate content to first line or 80 chars
+            // Truncate content to first line or 72 chars (char-safe — content is often Cyrillic)
             let content_short = ev.content.lines().next().unwrap_or("");
-            let content_display = if content_short.len() > 72 {
-                format!("{}…", &content_short[..72])
+            let content_display = if content_short.chars().count() > 72 {
+                format!("{}…", s5d::truncate_chars(content_short, 72))
             } else {
                 content_short.to_string()
             };

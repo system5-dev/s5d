@@ -556,6 +556,13 @@ impl ProblemField {
         }
     }
 
+    pub fn as_card_mut(&mut self) -> Option<&mut ProblemCard> {
+        match self {
+            ProblemField::Card(c) => Some(c),
+            ProblemField::Text(_) => None,
+        }
+    }
+
     pub fn signal(&self) -> &str {
         match self {
             ProblemField::Card(c) => &c.signal,

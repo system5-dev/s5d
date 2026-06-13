@@ -82,6 +82,13 @@ pub fn sanitize_id(id: &str) -> anyhow::Result<&str> {
     Ok(id)
 }
 
+/// Truncate a string to at most `max` characters (not bytes).
+/// Byte-slicing (`&s[..max]`) panics when `max` lands inside a multi-byte
+/// UTF-8 codepoint — which is most of Roman's specs (Cyrillic). This never does.
+pub fn truncate_chars(s: &str, max: usize) -> String {
+    s.chars().take(max).collect()
+}
+
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 #[cfg(test)]
@@ -89,6 +96,18 @@ mod tests {
     use super::*;
     use std::collections::HashMap;
     use tempfile::TempDir;
+
+    #[test]
+    fn truncate_chars_never_splits_a_codepoint() {
+        // 80 two-byte Cyrillic chars: a byte slice at 72 would panic mid-'я'.
+        let cyr = "я".repeat(80);
+        let out = truncate_chars(&cyr, 72);
+        assert_eq!(out.chars().count(), 72);
+        assert!(cyr.starts_with(&out));
+        // shorter-than-max returns the whole string; ASCII boundary stays correct.
+        assert_eq!(truncate_chars("abc", 72), "abc");
+        assert_eq!(truncate_chars("abcdef", 3), "abc");
+    }
 
     fn build_notifications_spec() -> Spec {
         Spec {

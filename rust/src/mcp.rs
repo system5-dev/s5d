@@ -249,6 +249,18 @@ fn core_tools() -> Vec<Value> {
             }
         }),
         json!({
+            "name": "s5d_set_acceptance",
+            "description": "Set the problem-card acceptance criteria on a spec (decision-tier specs require it before deciding)",
+            "inputSchema": {
+                "type": "object",
+                "required": ["spec", "acceptance"],
+                "properties": {
+                    "spec": {"type": "string", "description": "Path to .s5d.yaml file"},
+                    "acceptance": {"type": "string", "description": "How we'll know the problem is solved"}
+                }
+            }
+        }),
+        json!({
             "name": "s5d_status",
             "description": "Show status of all specs in the current project",
             "inputSchema": {
@@ -489,6 +501,7 @@ fn handle_tools_call(params: &Value) -> anyhow::Result<Value> {
         "s5d_decide" => tool_s5d_decide(args)?,
         "s5d_add_hypothesis" => tool_s5d_add_hypothesis(args)?,
         "s5d_add_evidence" => tool_s5d_add_evidence(args)?,
+        "s5d_set_acceptance" => tool_s5d_set_acceptance(args)?,
         "s5d_reflect" => tool_s5d_reflect(args)?,
         "s5d_phase_list" => tool_s5d_phase_list(args)?,
         "s5d_phase_start" => tool_s5d_phase_start(args)?,
@@ -1588,6 +1601,29 @@ fn tool_s5d_add_hypothesis(args: &Value) -> anyhow::Result<String> {
 
 // ── s5d_add_evidence ──────────────────────────────────────────────────────────
 
+fn tool_s5d_set_acceptance(args: &Value) -> anyhow::Result<String> {
+    let spec_path = args["spec"]
+        .as_str()
+        .ok_or_else(|| anyhow::anyhow!("missing required argument: spec"))?;
+    let acceptance = args["acceptance"]
+        .as_str()
+        .ok_or_else(|| anyhow::anyhow!("missing required argument: acceptance"))?;
+    if acceptance.trim().is_empty() {
+        anyhow::bail!("acceptance cannot be empty");
+    }
+    let (path, mut spec) = load_spec_yaml_mcp(spec_path)?;
+    let card = spec
+        .problem
+        .as_mut()
+        .and_then(|p| p.as_card_mut())
+        .ok_or_else(|| {
+            anyhow::anyhow!("spec has no structured problem card — cannot set acceptance")
+        })?;
+    card.acceptance = Some(acceptance.to_string());
+    save_spec_yaml_mcp(&path, &spec)?;
+    Ok(format!("Set acceptance on {}", spec.id))
+}
+
 fn tool_s5d_add_evidence(args: &Value) -> anyhow::Result<String> {
     let spec_path = args["spec"]
         .as_str()
@@ -2128,8 +2164,8 @@ fn tool_s5d_show(args: &Value) -> anyhow::Result<String> {
             out.push_str(&format!("  {} {} — {}\n", hyp.id, hyp.title, status));
             for ev in &hyp.evidence {
                 let content_short = ev.content.lines().next().unwrap_or("");
-                let content_display = if content_short.len() > 72 {
-                    format!("{}…", &content_short[..72])
+                let content_display = if content_short.chars().count() > 72 {
+                    format!("{}…", crate::truncate_chars(content_short, 72))
                 } else {
                     content_short.to_string()
                 };
@@ -2470,7 +2506,7 @@ fn tool_s5d_note(args: &Value) -> anyhow::Result<String> {
         .filter(|s| !s.is_empty())
         .collect::<Vec<_>>()
         .join("-");
-    let slug = if slug.len() > 40 { &slug[..40] } else { &slug };
+    let slug = crate::truncate_chars(&slug, 40);
     let slug = slug.trim_end_matches('-');
 
     let id = format!("note.{}", slug);
