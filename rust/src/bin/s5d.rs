@@ -286,6 +286,8 @@ enum DecisionCommand {
     AddEvidence(AddEvidenceArgs),
     /// Set the problem-card acceptance criteria (required before deciding)
     SetAcceptance(SetAcceptanceArgs),
+    /// Create or update the problem card (signal/acceptance/constraints/targets) on any tier
+    SetProblem(SetProblemArgs),
     /// Record a decision in a decision spec
     Decide(Box<DecideArgs>),
 }
@@ -626,6 +628,24 @@ struct SetAcceptanceArgs {
     /// Acceptance criteria — how we'll know the problem is solved
     #[arg(long)]
     acceptance: String,
+}
+
+#[derive(Args)]
+struct SetProblemArgs {
+    /// Path to .s5d.yaml file
+    spec: String,
+    /// Problem signal — what triggered this (required to create a new card)
+    #[arg(long)]
+    signal: Option<String>,
+    /// Acceptance — how we'll know it's solved
+    #[arg(long)]
+    acceptance: Option<String>,
+    /// Hard constraints (comma-separated)
+    #[arg(long)]
+    constraints: Option<String>,
+    /// Optimization targets (comma-separated)
+    #[arg(long)]
+    targets: Option<String>,
 }
 
 #[derive(Args)]
@@ -1212,6 +1232,7 @@ fn run_decision_command(command: DecisionCommand) -> anyhow::Result<()> {
         DecisionCommand::AddHypothesis(args) => run_add_hypothesis_command(args),
         DecisionCommand::AddEvidence(args) => run_add_evidence_command(args),
         DecisionCommand::SetAcceptance(args) => run_set_acceptance(&args.spec, &args.acceptance),
+        DecisionCommand::SetProblem(args) => run_set_problem(args),
         DecisionCommand::Decide(args) => run_decide_command(*args),
     }
 }
@@ -1383,6 +1404,28 @@ fn run_set_acceptance(spec_path: &str, acceptance: &str) -> anyhow::Result<()> {
     card.acceptance = Some(acceptance.to_string());
     save_spec_yaml(&path, &spec)?;
     println!("{} Set acceptance on {}", "ok".green(), spec.id);
+    Ok(())
+}
+
+fn run_set_problem(args: SetProblemArgs) -> anyhow::Result<()> {
+    let split = |s: Option<String>| {
+        s.map(|v| {
+            v.split(',')
+                .map(|x| x.trim().to_string())
+                .filter(|x| !x.is_empty())
+                .collect::<Vec<_>>()
+        })
+    };
+    let (path, mut spec) = load_spec_yaml(&args.spec)?;
+    s5d::upsert_problem_card(
+        &mut spec,
+        args.signal,
+        args.acceptance,
+        split(args.constraints),
+        split(args.targets),
+    )?;
+    save_spec_yaml(&path, &spec)?;
+    println!("{} Set problem card on {}", "ok".green(), spec.id);
     Ok(())
 }
 

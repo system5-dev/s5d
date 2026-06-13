@@ -261,6 +261,21 @@ fn core_tools() -> Vec<Value> {
             }
         }),
         json!({
+            "name": "s5d_set_problem",
+            "description": "Create or update the structured problem card (signal/acceptance/constraints/targets) on any spec. Creating a card requires signal; updates keep fields not passed.",
+            "inputSchema": {
+                "type": "object",
+                "required": ["spec"],
+                "properties": {
+                    "spec": {"type": "string", "description": "Path to .s5d.yaml file"},
+                    "signal": {"type": "string", "description": "What triggered this — required to create a new card"},
+                    "acceptance": {"type": "string", "description": "How we'll know the problem is solved"},
+                    "constraints": {"type": "string", "description": "Hard constraints (comma-separated)"},
+                    "targets": {"type": "string", "description": "Optimization targets (comma-separated)"}
+                }
+            }
+        }),
+        json!({
             "name": "s5d_status",
             "description": "Show status of all specs in the current project",
             "inputSchema": {
@@ -502,6 +517,7 @@ fn handle_tools_call(params: &Value) -> anyhow::Result<Value> {
         "s5d_add_hypothesis" => tool_s5d_add_hypothesis(args)?,
         "s5d_add_evidence" => tool_s5d_add_evidence(args)?,
         "s5d_set_acceptance" => tool_s5d_set_acceptance(args)?,
+        "s5d_set_problem" => tool_s5d_set_problem(args)?,
         "s5d_reflect" => tool_s5d_reflect(args)?,
         "s5d_phase_list" => tool_s5d_phase_list(args)?,
         "s5d_phase_start" => tool_s5d_phase_start(args)?,
@@ -1600,6 +1616,32 @@ fn tool_s5d_add_hypothesis(args: &Value) -> anyhow::Result<String> {
 }
 
 // ── s5d_add_evidence ──────────────────────────────────────────────────────────
+
+fn tool_s5d_set_problem(args: &Value) -> anyhow::Result<String> {
+    let spec_path = args["spec"]
+        .as_str()
+        .ok_or_else(|| anyhow::anyhow!("missing required argument: spec"))?;
+    let signal = args["signal"].as_str().map(|s| s.to_string());
+    let acceptance = args["acceptance"].as_str().map(|s| s.to_string());
+    let split = |key: &str| {
+        args[key].as_str().map(|v| {
+            v.split(',')
+                .map(|x| x.trim().to_string())
+                .filter(|x| !x.is_empty())
+                .collect::<Vec<_>>()
+        })
+    };
+    let (path, mut spec) = load_spec_yaml_mcp(spec_path)?;
+    crate::upsert_problem_card(
+        &mut spec,
+        signal,
+        acceptance,
+        split("constraints"),
+        split("targets"),
+    )?;
+    save_spec_yaml_mcp(&path, &spec)?;
+    Ok(format!("Set problem card on {}", spec.id))
+}
 
 fn tool_s5d_set_acceptance(args: &Value) -> anyhow::Result<String> {
     let spec_path = args["spec"]

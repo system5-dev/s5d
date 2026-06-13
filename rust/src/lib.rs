@@ -89,6 +89,55 @@ pub fn truncate_chars(s: &str, max: usize) -> String {
     s.chars().take(max).collect()
 }
 
+/// Create or update the structured problem card on a spec. Decision specs ship
+/// with a card; standard/lightweight ones do not, so an external workflow needs
+/// a way to set one via the API instead of hand-editing YAML. Creating a card
+/// requires a `signal` (the one non-optional ProblemCard field); updates keep
+/// any field not passed.
+pub fn upsert_problem_card(
+    spec: &mut Spec,
+    signal: Option<String>,
+    acceptance: Option<String>,
+    constraints: Option<Vec<String>>,
+    targets: Option<Vec<String>>,
+) -> anyhow::Result<()> {
+    if signal.is_none() && acceptance.is_none() && constraints.is_none() && targets.is_none() {
+        anyhow::bail!(
+            "set-problem needs at least one of --signal / --acceptance / --constraints / --targets"
+        );
+    }
+    let mut card = match spec.problem.take() {
+        Some(ProblemField::Card(c)) => c,
+        Some(ProblemField::Text(t)) => ProblemCard {
+            signal: t,
+            ..Default::default()
+        },
+        None => {
+            let sig = signal.clone().ok_or_else(|| {
+                anyhow::anyhow!("this spec has no problem card yet — --signal is required to create one")
+            })?;
+            ProblemCard {
+                signal: sig,
+                ..Default::default()
+            }
+        }
+    };
+    if let Some(s) = signal {
+        card.signal = s;
+    }
+    if let Some(a) = acceptance {
+        card.acceptance = Some(a);
+    }
+    if let Some(c) = constraints {
+        card.constraints = c;
+    }
+    if let Some(t) = targets {
+        card.targets = t;
+    }
+    spec.problem = Some(ProblemField::Card(card));
+    Ok(())
+}
+
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 #[cfg(test)]
@@ -107,6 +156,25 @@ mod tests {
         // shorter-than-max returns the whole string; ASCII boundary stays correct.
         assert_eq!(truncate_chars("abc", 72), "abc");
         assert_eq!(truncate_chars("abcdef", 3), "abc");
+    }
+
+    #[test]
+    fn upsert_problem_card_creates_then_updates() {
+        // standard specs ship with problem: None — creating needs a signal.
+        let mut spec = generate_spec("feat.x", Tier::Standard, "p");
+        assert!(spec.problem.is_none());
+        assert!(upsert_problem_card(&mut spec, None, Some("acc".into()), None, None).is_err());
+
+        upsert_problem_card(&mut spec, Some("sig".into()), Some("acc".into()), None, None).unwrap();
+        let card = spec.problem.as_ref().unwrap().as_card().unwrap();
+        assert_eq!(card.signal, "sig");
+        assert_eq!(card.acceptance.as_deref(), Some("acc"));
+
+        // update keeps the signal we didn't pass again
+        upsert_problem_card(&mut spec, None, Some("acc2".into()), None, None).unwrap();
+        let card = spec.problem.as_ref().unwrap().as_card().unwrap();
+        assert_eq!(card.signal, "sig");
+        assert_eq!(card.acceptance.as_deref(), Some("acc2"));
     }
 
     fn build_notifications_spec() -> Spec {

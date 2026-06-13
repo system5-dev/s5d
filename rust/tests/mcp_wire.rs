@@ -333,3 +333,129 @@ fn mcp_wire_shape_review_stories_parity() {
 
     assert!(server.shutdown().success(), "server must exit 0 on EOF");
 }
+
+// Integration coverage for this session's changes, all over real stdio JSON-RPC:
+// set_problem (create + signal-required + update), set_acceptance (as_card_mut),
+// and a Cyrillic evidence preview through s5d_show — the regression for the
+// byte-slice crash that previously killed the MCP server mid-flow.
+#[test]
+fn mcp_wire_problem_card_setters_and_cyrillic_show() {
+    let dir = TempDir::new().unwrap();
+    let root = dir.path();
+    let mut server = McpServer::spawn(root);
+    server.request("initialize", json!({}));
+    server.call_tool_ok("s5d_init", json!({}));
+
+    // standard specs ship without a problem card
+    server.call_tool_ok(
+        "s5d_new",
+        json!({"id": "feat.demo.card", "tier": "standard", "product": "demo"}),
+    );
+    let spec = std::fs::read_dir(root.join(".s5d/packages"))
+        .unwrap()
+        .map(|e| e.unwrap().file_name().into_string().unwrap())
+        .find(|n| n.starts_with("feat.demo.card"))
+        .map(|n| format!(".s5d/packages/{n}"))
+        .expect("standard spec created");
+
+    // creating a card requires a signal
+    let no_signal = server.call_tool("s5d_set_problem", json!({"spec": spec, "acceptance": "x"}));
+    assert!(
+        no_signal["error"]["message"]
+            .as_str()
+            .unwrap_or("")
+            .contains("signal"),
+        "set_problem must demand --signal to create a card: {no_signal}"
+    );
+
+    // with a signal it creates the card (Cyrillic must not panic in upsert)
+    server.call_tool_ok(
+        "s5d_set_problem",
+        json!({"spec": spec, "signal": "медленный чекаут роняет конверсию", "acceptance": "конверсия восстановлена"}),
+    );
+    // set_acceptance updates the now-existing card (exercises as_card_mut)
+    server.call_tool_ok(
+        "s5d_set_acceptance",
+        json!({"spec": spec, "acceptance": "новый критерий приёмки"}),
+    );
+
+    // decision spec + Cyrillic evidence longer than the 72-char preview cut
+    server.call_tool_ok(
+        "s5d_new",
+        json!({"id": "decision.demo.cyr", "tier": "decision", "product": "demo", "question": "что выбрать?"}),
+    );
+    let dspec = std::fs::read_dir(root.join(".s5d/packages"))
+        .unwrap()
+        .map(|e| e.unwrap().file_name().into_string().unwrap())
+        .find(|n| n.starts_with("decision.demo.cyr"))
+        .map(|n| format!(".s5d/packages/{n}"))
+        .expect("decision spec created");
+    let added = server.call_tool_ok(
+        "s5d_add_hypothesis",
+        json!({"spec": dspec, "title": "Option A", "content": "описание варианта", "scope": "infra"}),
+    );
+    let hyp_id = tool_text(&added)
+        .strip_prefix("Added hypothesis: ")
+        .and_then(|s| s.split(" (").next())
+        .expect("hypothesis id in response")
+        .to_string();
+    server.call_tool_ok(
+        "s5d_add_evidence",
+        json!({"spec": dspec, "hypothesis_id": hyp_id, "evidence_type": "gate:review",
+               "content": "я".repeat(90), "verdict": "pass"}),
+    );
+    // before the char-safe fix, this byte-sliced the Cyrillic preview at 72 and
+    // panicked the server; now it must render the tree and exit cleanly.
+    let shown = server.call_tool_ok("s5d_show", json!({"spec": dspec}));
+    assert!(
+        tool_text(&shown).contains("Option A"),
+        "s5d_show must render Cyrillic evidence without panicking: {shown}"
+    );
+
+    assert!(server.shutdown().success(), "server must exit 0 on EOF");
+}
+
+// The opaque-bail fix: a methodological decide failure must NAME the failed
+// checks in the returned error, not just say "prerequisites not met" — the MCP
+// caller never sees stderr.
+#[test]
+fn mcp_wire_decide_error_names_failed_checks() {
+    let dir = TempDir::new().unwrap();
+    let root = dir.path();
+    let mut server = McpServer::spawn(root);
+    server.request("initialize", json!({}));
+    server.call_tool_ok("s5d_init", json!({}));
+    server.call_tool_ok(
+        "s5d_new",
+        json!({"id": "decision.demo.gate", "tier": "decision", "product": "demo", "question": "?"}),
+    );
+    let spec = std::fs::read_dir(root.join(".s5d/packages"))
+        .unwrap()
+        .map(|e| e.unwrap().file_name().into_string().unwrap())
+        .find(|n| n.starts_with("decision.demo.gate"))
+        .map(|n| format!(".s5d/packages/{n}"))
+        .expect("decision spec created");
+    let added = server.call_tool_ok(
+        "s5d_add_hypothesis",
+        json!({"spec": spec, "title": "Only One", "content": "c", "scope": "s"}),
+    );
+    let hyp = tool_text(&added)
+        .strip_prefix("Added hypothesis: ")
+        .and_then(|s| s.split(" (").next())
+        .expect("hypothesis id")
+        .to_string();
+    // one hypothesis + no acceptance -> methodological failure
+    let denied = server.call_tool(
+        "s5d_decide",
+        json!({"spec": spec, "title": "t", "winner": hyp, "confirmed_by": "roman",
+               "context": "c", "decision": "d", "rationale": "r", "consequences": "q",
+               "challenge_summary": "s"}),
+    );
+    let msg = denied["error"]["message"].as_str().unwrap_or("");
+    assert!(
+        msg.contains("hypotheses") || msg.contains("acceptance"),
+        "decide error must name the specific failed checks: {denied}"
+    );
+
+    assert!(server.shutdown().success(), "server must exit 0 on EOF");
+}
