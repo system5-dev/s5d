@@ -1,0 +1,43 @@
+spec_ref: decision.s5d.autonomous-loop-mandate__20260614.s5d.yaml
+spec_sha256: sha256:fecd2f9f9f814c2522e82dc6cf12d83ab14432058de43c9a2e206c245f3a9443
+status: proposed
+sync_status: unknown
+status_history:
+- status: proposed
+  timestamp: 2026-06-14T06:26:57.674595+00:00
+active_phase: null
+phase_history: []
+phase_runs: []
+approvals: []
+preview: null
+reflection: null
+gate_results: []
+decision:
+  title: Mandate envelope makes the long autonomous agentic cycle first-class
+  winner_id: mandate-envelope-as-first-class-aggregate
+  rejected_ids:
+  - collapse-lifecycle-and-demote-spec-to-a-work-unit
+  - two-plane-split-assurance-plane-plus-operate-loop-plane
+  context: S5D hard-codes a human Approve before every Execute (Phase) and scatters loop controls across ExecutionMode/Roc/HarnessState/WorkflowPhaseRun, so it cannot run a long autonomous agentic cycle — its most important missing capability — while also being over-complicated (40+ types).
+  decision: Introduce a first-class Mandate envelope {scope, budget (absorbs Roc), stop_conditions, pre-approved gates}, approved once by a human and SHA-bound. Inside it the agent loops autonomously (pull→execute→self-gate via run_gates→record→repeat), escalating only on stop-condition/budget-exhaustion/gate-failure. H3 (tier/blast-radius) is folded in as an embedded, ledgered, expiring policy layer deciding which gates are pre-approvable; H2's ceremony-stripping applies only INSIDE the envelope (never cutting the SHA approval spine); H4 is admitted only as a thin runner adapter subordinate to S5D writes.
+  rationale: 'Tribunal (Codex+Gemini, both read models.rs) converged independently on H1: it is the only option making autonomy explicit while preserving guarantees. H2 as a mechanism is FATAL (collapsing Preview/Approve/Import severs Approval.spec_sha256+diff_sha256). H3 alone keeps autonomy implicit (the current scattered failure). H4 as a second plane leaks guarantees vs the Ledger. The Mandate matches a proven pattern (protected-environment + budget + required-checks / durable-execution) layered over S5D''s existing ledger.'
+  consequences: 'Preserved invariant: one human-approved bounded envelope → many autonomous iterations, each SHA-bound, gated, ledgered, reversible, drift-checkable. Three required design constraints from the challenge: (a) envelope-level drift-check as a stop-condition (guard local-pass/global-drift tail failure); (b) a minimum eligibility-gate floor for envelope admission (weakest link = gate coverage); (c) high/decision blast-radius work stays human-gated, excluded from envelopes. Mandate must ABSORB ExecutionMode+Roc, not duplicate them. Implemented via feat.s5d.autonomous-loop-mandate.'
+  decided_at: 2026-06-14T06:34:17.459551+00:00
+  confirmed_by: Roman
+  expires_at: 2026-09-12
+  do_list: []
+  dont_list: []
+  challenge:
+    mode: standard
+    passed: true
+    summary: '5 probes (standard): counter-argument (blank-check) — mitigated by SHA-bound scope + gate-fail escalation + tier exclusion; tail-failure (local-pass/global-drift) — concern → constraint (a) envelope drift-stop; evidence-weakness (two-LLM shared bias) — reliability discounted to 0.85, auditors diverged on H2/H3 and found a real FATAL so not echo; weakest-link — gate coverage binds the whole chain → constraint (b) gate floor; existing-alternatives — H1 mirrors CI protected-environment/durable-execution, reinforcing it over H4. No fatal flaw; winner survived.'
+    checks: []
+  decision_subject: null
+  decision_subject_granularity: null
+  evaluative_surface: null
+  belief_state: null
+  outcome_model: null
+  pareto_set: []
+  choice_rule: null
+verified_by: null
+drift_tolerance: null

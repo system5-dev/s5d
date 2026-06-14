@@ -1,0 +1,156 @@
+s5d: '1.0'
+id: feat.s5d.autonomous-loop-mandate
+version: 1.0.0
+product: s5d
+tier: standard
+allow_update: true
+meta:
+  title: autonomous-loop-mandate
+  authors: []
+  date: 2026-06-14
+  tickets: []
+  adrs: []
+  renames: []
+context: |
+  ## Problem
+
+  ## Goal
+
+  ## Privacy
+  Classification: Internal
+workflow:
+  mode: plan
+  target_architecture:
+    summary: Describe the steady-state design this change should reach
+    invariants: []
+  delivery_strategy:
+    summary: Describe how this change moves current code toward the target architecture
+    rationale: null
+  resources: null
+  role_map:
+    implementer: coder
+    reviewer: reviewer
+    owner: human
+    verifier: reviewer
+  review_policy:
+    cross_model_required: false
+    required_on: []
+  structure_outline: null
+  execution_mode:
+    engine: manual
+    max_iterations: null
+    stop_conditions:
+    - Phase acceptance reached
+    - Approved scope exhausted
+    - New decision required
+  phases:
+  - id: prototype
+    title: Prototype
+    scope: Reduce unknowns before committed implementation
+    roles:
+    - owner
+    - implementer
+    acceptance:
+    - Critical feasibility questions answered
+    - Telemetry approach identified
+    rollback:
+    - Discard spike output if assumptions fail
+  - id: build
+    title: Build
+    scope: Implement approved scope and pass local gates
+    roles:
+    - implementer
+    - reviewer
+    acceptance:
+    - Declared gates pass
+    - Change matches approved scope
+    rollback:
+    - Revert or reconcile if gates or review fail
+  - id: measure
+    title: Measure
+    scope: Collect telemetry and close the loop with an explicit verdict
+    roles:
+    - owner
+    - verifier
+    acceptance:
+    - Telemetry collected against success criteria
+    - Outcome verdict recorded
+    rollback:
+    - Iterate or kill if evidence stays weak
+artifacts:
+  products:
+  - id: s5d
+    name: s5d
+    organization: null
+  domains:
+  - id: dom.s5d.core
+    product: s5d
+    name: s5d core domain
+    classification: supporting
+    description: Scaffold default — rename or split into real bounded contexts
+    team: null
+    maturity_level: null
+  capabilities:
+  - id: cap.autonomous-loop-mandate
+    domain: dom.s5d.core
+    name: autonomous loop mandate
+    description: null
+    since: null
+  entities: []
+  features:
+  - id: feat.s5d.autonomous-loop-mandate
+    product: s5d
+    name: autonomous-loop-mandate
+    description: null
+  use_cases: []
+  systems:
+  - id: sys.s5d
+    product: s5d
+    name: s5d
+  containers:
+  - id: ctr.s5d.app
+    system: sys.s5d
+    name: s5d app
+    technology: null
+  components:
+  - id: comp.autonomous-loop-mandate
+    feature: feat.s5d.autonomous-loop-mandate
+    domain: dom.s5d.core
+    container: ctr.s5d.app
+    name: autonomous loop mandate component
+    paths:
+    - TODO-set-source-paths/
+  roles: []
+  concerns: []
+  metrics: []
+  supersystems: []
+  transports: []
+links:
+  feature_to_domain:
+  - feature: feat.s5d.autonomous-loop-mandate
+    domain: dom.s5d.core
+  use_case_to_capability: []
+  use_case_to_entity: []
+  component_to_capability:
+  - component: comp.autonomous-loop-mandate
+    capability: cap.autonomous-loop-mandate
+  component_to_entity: []
+  container_to_capability: []
+  concern_to_metric: []
+  component_to_container: []
+  edges: []
+  depends_on: []
+  entity_relations: []
+  capability_to_entity: []
+  capability_to_concern: []
+contracts: []
+gates:
+- kind: schema
+- kind: graph
+roc: null
+problem: null
+hypotheses: []
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false

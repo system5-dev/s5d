@@ -1,0 +1,146 @@
+s5d: '1.0'
+id: decision.s5d.autonomous-loop-mandate
+version: 1.0.0
+product: s5d
+tier: decision
+allow_update: true
+meta:
+  title: autonomous-loop-mandate
+  authors: []
+  date: 2026-06-14
+  tickets: []
+  adrs: []
+  renames: []
+context: null
+workflow: null
+artifacts: null
+links: null
+contracts: []
+gates:
+- kind: review
+roc: null
+problem:
+  signal: 'S5D hard-codes a human Approve gate before every Execute (Phase: ...Preview→Approve→Execute...), so each spec needs a human per cycle; the loop machinery (ExecutionMode, Roc, HarnessState, WorkflowPhaseRun, s5d_execute_loop) exists but is scattered and not first-class. S5D cannot run a long autonomous agentic cycle.'
+  constraints:
+  - Preserve SHA256 approval chain (Approval.spec_sha256 + diff_sha256); preserve append-only Ledger
+  - rollback
+  - drift-check
+  - Record state-tracking; high/decision tiers stay human-gated per action; the envelope must ABSORB existing ExecutionMode+Roc controls
+  - not duplicate them; no second source of truth — S5D remains the sole authority for approvals/phase_runs/gate_results/ledger.
+  targets:
+  - first-class autonomy (explicit envelope concept); reduced schema/ceremony on the hot path; guarantees fully preserved per iteration
+  indicators: []
+  goodhart_guard: null
+  acceptance: One human-approved bounded envelope yields many autonomous iterations with zero human input between approval and a stop-condition; each iteration is SHA-bound, gated, ledgered, reversible, and drift-checkable; human approval happens once per envelope, not once per spec/cycle; ceremony on the hot path is reduced (fewer mandatory steps/types when an envelope is active).
+  blast_radius: null
+  reversibility: null
+  status: backlog
+hypotheses:
+- id: mandate-envelope-as-first-class-aggregate
+  title: Mandate envelope as first-class aggregate
+  content: Add one first-class concept — Mandate{scope, budget(absorbs Roc), stop_conditions, pre-approved gates}. Human approves the Mandate ONCE (SHA-bound to scope+budget+stop+gates); the agent then loops inside it pulling work, executing, self-gating via run_gates, recording evidence; escalates to a human only on stop-condition / budget exhaustion / gate failure. Approve moves from per-spec to mandate-level. Mandate ABSORBS the scattered ExecutionMode+Roc controls rather than duplicating them; every iteration still writes GateResult+WorkflowPhaseRun+Record+LedgerEntry so SHA/ledger/rollback/drift guarantees hold per-cycle. Embeds H3 as a policy layer (tier/blast-radius decides which gates are pre-approvable) and admits H4 only as a thin runner adapter.
+  scope: S5D lifecycle + schema (Phase, Spec aggregate, runtime state)
+  kind: system
+  layer: L1
+  r_eff: null
+  evidence:
+  - id: 20260614-gate-review-mandate-envelope-as-first-class-aggregate
+    type: gate:review
+    content: 'Tribunal (Claude arbiter; Codex gpt-5.5-high + Gemini, both read models.rs). Per-hypothesis: H1 APPROVE+APPROVE → adopt; H2 REJECT(Codex,FATAL: collapsing Preview/Approve/Import severs Approval.spec_sha256+diff_sha256 bind, models.rs:961)+CONCERNS(Gemini); H3 CONCERNS+REJECT (autonomy implicit, not first-class); H4 CONCERNS+REJECT (second plane = guarantee leak vs Ledger). Both auditors converged INDEPENDENTLY on: H1 Mandate as architecture + H2 ceremony-stripping inside the envelope + H3 as embedded ledgered/expiring policy + H4 only as a thin subordinate runner adapter. Preserved invariant: one human-approved bounded envelope → many autonomous iterations, each SHA-bound, gated, ledgered, reversible, drift-checkable. Constraint flagged by both: Mandate must ABSORB ExecutionMode+Roc, not duplicate (models.rs:411/488).'
+    verdict: pass
+    valid_until: 2026-09-12T06:28:45.847790+00:00
+    carrier_ref: null
+    formality: 4
+    claim_scope:
+    - architecture-direction
+    congruence_level: null
+    reliability: 0.85
+    refine_kind: null
+    skill: tribunal
+  depends_on: []
+  rationale: null
+  spec_ref: feat.s5d.autonomous-loop-mandate__20260614.s5d.yaml
+  prompt: How to make a long autonomous cycle first-class while preserving guarantees and cutting ceremony?
+  next_move: build
+- id: collapse-lifecycle-and-demote-spec-to-a-work-unit
+  title: Collapse lifecycle and demote Spec to a work-unit
+  content: 'Make the loop the primary object; demote Spec to a unit of work the loop consumes; fold Preview/Approve/Import into a single admit-to-envelope gate. Simplify by removal rather than addition. REJECTED as the mechanism: collapsing Preview→Approve→Import severs the joint that binds approval to spec_sha256+diff_sha256 before Execute (Approval, models.rs:961) — a direct breach of guarantee (c). Salvaged only as a philosophy: strip ceremony INSIDE H1''s envelope when a Mandate is active, never by cutting the assurance spine.'
+  scope: S5D lifecycle (Phase, Preview/Approve/Import)
+  kind: system
+  layer: invalid
+  r_eff: null
+  evidence:
+  - id: 20260614-gate-review-collapse-lifecycle-and-demote-spec-to-a-work-unit
+    type: gate:review
+    content: 'Tribunal: Codex REJECT (FATAL), Gemini CONCERNS. Collapsing Preview/Approve/Import severs the joint binding approval to spec_sha256+diff_sha256 before Execute (Approval, models.rs:961) — breaches guarantee (c). Salvaged only as a simplification philosophy applied INSIDE the H1 envelope, never as the mechanism.'
+    verdict: fail
+    valid_until: 2026-09-12T06:33:28.210328+00:00
+    carrier_ref: null
+    formality: 4
+    claim_scope:
+    - architecture-direction
+    congruence_level: null
+    reliability: 0.85
+    refine_kind: null
+    skill: tribunal
+  depends_on: []
+  rationale: null
+  spec_ref: null
+  prompt: null
+  next_move: defer
+- id: autonomy-as-a-tier-or-blast-radius-property
+  title: Autonomy as a tier or blast-radius property
+  content: 'No new type: for lightweight/standard specs under a declared budget the per-cycle human Approve auto-waives within the ROC envelope; high/decision always human-gated. Reuses existing waiver/ROC/tier machinery. REJECTED as the primary architecture: autonomy stays implicit policy over Tier+Roc+waivers — exactly the current scattered failure mode (not first-class). Salvaged as an embedded policy layer inside H1, provided every auto-waive is ledgered, expiring, and gate-result-backed.'
+  scope: S5D policy (Tier, Roc, waivers)
+  kind: system
+  layer: L0
+  r_eff: null
+  evidence:
+  - id: 20260614-gate-review-autonomy-as-a-tier-or-blast-radius-property
+    type: gate:review
+    content: 'Tribunal: Codex CONCERNS, Gemini REJECT. As a standalone architecture it keeps autonomy implicit policy over Tier+Roc+waivers — the exact current scattered failure (fails first-class criterion). But both auditors endorse it as an embedded policy layer inside H1, provided every auto-waive is ledgered, expiring, and gate-result-backed. Hence specialise: narrowed from architecture to a sub-policy of the Mandate.'
+    verdict: refine
+    valid_until: 2026-09-12T06:33:55.072901+00:00
+    carrier_ref: null
+    formality: 4
+    claim_scope:
+    - architecture-direction
+    congruence_level: null
+    reliability: 0.85
+    refine_kind: specialise
+    skill: tribunal
+  depends_on: []
+  rationale: null
+  spec_ref: null
+  prompt: null
+  next_move: defer
+- id: two-plane-split-assurance-plane-plus-operate-loop-plane
+  title: 'Two-plane split: assurance plane plus operate-loop plane'
+  content: 'Keep S5D as the slow assurance plane (decisions, high-tier, human); add a thin SEPARATE operate-loop plane that consumes pre-approved specs, runs autonomously, and reports evidence back. REJECTED as a second plane: a separate plane can mutate outside the S5D state spine, leaking guarantees and drifting from the Ledger (models.rs:1120). Salvaged only as a thin runner/execution adapter subordinate to S5D — it may execute but must never write approvals/phase_runs/gate_results/ledger in S5D''s stead.'
+  scope: S5D runtime boundary (execution adapter vs source of truth)
+  kind: system
+  layer: invalid
+  r_eff: null
+  evidence:
+  - id: 20260614-gate-review-two-plane-split-assurance-plane-plus-operate-loop-plane
+    type: gate:review
+    content: 'Tribunal: Gemini REJECT, Codex CONCERNS. A separate operate-loop plane can mutate outside the S5D state spine, leaking guarantees and drifting from the Ledger (models.rs:1120); also doubles architectural surface against the complexity-reduction goal. Salvaged only as a thin runner adapter subordinate to S5D — never a second source of truth.'
+    verdict: fail
+    valid_until: 2026-09-12T06:33:39.654595+00:00
+    carrier_ref: null
+    formality: 4
+    claim_scope:
+    - architecture-direction
+    congruence_level: null
+    reliability: 0.85
+    refine_kind: null
+    skill: tribunal
+  depends_on: []
+  rationale: null
+  spec_ref: null
+  prompt: null
+  next_move: defer
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false
