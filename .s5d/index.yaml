@@ -94,11 +94,6 @@ features:
   status: applied
   product: s5d
   version: 1.0.0
-- id: feat.s5d.ci-init
-  spec_path: packages/feat.s5d.ci-init__20260611.s5d.yaml
-  status: applied
-  product: s5d
-  version: 1.0.0
 - id: decision.s5d.ci-injection
   spec_path: packages/decision.s5d.ci-injection__20260611.s5d.yaml
   status: applied
@@ -126,6 +121,11 @@ features:
   version: 1.0.0
 - id: feat.s5d.shape-native
   spec_path: packages/feat.s5d.shape-native__20260612.s5d.yaml
+  status: applied
+  product: s5d
+  version: 1.0.0
+- id: feat.s5d.ci-init
+  spec_path: packages/feat.s5d.ci-init__20260611.s5d.yaml
   status: applied
   product: s5d
   version: 1.0.0

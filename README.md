@@ -93,6 +93,7 @@ S5D records agent execution as evidence against a desired system state. It can r
 - engine completion does not accept the work; human `run accept` remains explicit
 - `s5d run harness start`, `s5d run harness status`, and `s5d run harness exec` add the operational layer: isolated git worktree, clean preflight, heartbeat/status, timeout, and journal under `.s5d/harness/`
 - harness state is not run truth; `.record.yaml` remains authoritative for active work state, evidence, gates, and approvals
+- `s5d run benchmark <suite.json|yaml> [--format markdown|json]` scores paired native vs skill-guided assistant runs with a fixed rubric and required scenario tags so improvements can be compared as evidence instead of anecdotes
 - `s5d discover sync/check` builds `.s5d/discovery/*`: file index, evidence JSONL, graph JSON, and a metamodel projection. The core is stack-agnostic; language parsers can be added later as optional evidence providers.
 - `ralph-init` warms repo context from docs, tests, environment setup, and current test results
 - `ralph-bugfix` enforces regression-first bugfix execution with explicit root-cause evidence
@@ -128,7 +129,7 @@ Available as a plugin for Claude Code, Gemini CLI, and Codex.
 s5d ci init            # GitHub Actions (default); --gitlab / --all for more
 ```
 
-Generates a self-contained PR pipeline that installs the pinned s5d release binary and runs `s5d ci exec` — built-in read-only checks only: spec validation, architecture check for specs that declare the gate, and drift-check. Configured command gates (test/lint/contract) **never execute in generated CI** — a fork PR must not run repo-configured commands on the runner. The generated files carry a version marker; `s5d ci check` reports stale or user-modified config.
+Generates a self-contained PR pipeline that installs the pinned s5d release binary and runs `s5d ci exec` — built-in read-only checks only: spec validation, component path/architecture marker checks for specs that declare components, explicit architecture checks, and drift-check. Configured command gates (test/lint/contract) **never execute in generated CI** — a fork PR must not run repo-configured commands on the runner. The generated files carry a version marker; `s5d ci check` reports stale or user-modified config.
 
 ## Tiers
 
@@ -142,7 +143,7 @@ Generates a self-contained PR pipeline that installs the pinned s5d release bina
 
 The review gate is satisfied by recorded review evidence: `s5d decision add-evidence <spec> --hypothesis-id <id> --evidence-type gate:review --verdict pass ...` (works on decision- and high-tier specs).
 
-Schema, graph, and architecture gates run built-in validation. Add `architecture` to a spec to check component paths and declared source dependencies. Use `s5d codebase sync/check` when you track `.s5d/codebase/*` coverage snapshots, and `s5d discover sync/check` when you track `.s5d/discovery/*` discovery artifacts. Add `lint`, `test`, `contract` gates to your spec when you've configured commands for them in `.s5d/config.yaml`.
+Schema, graph, and architecture gates run built-in validation. Generated CI always checks declared `components[].paths` as implementation markers; add `architecture` to a spec when you also want the explicit architecture gate in local lifecycle flows. Use `s5d codebase sync/check` when you track `.s5d/codebase/*` coverage snapshots, and `s5d discover sync/check` when you track `.s5d/discovery/*` discovery artifacts. Add `lint`, `test`, `contract` gates to your spec when you've configured commands for them in `.s5d/config.yaml`.
 
 `install.sh` must be run from a checked-out repository copy. `curl | bash` is intentionally unsupported.
 
@@ -151,6 +152,8 @@ Schema, graph, and architecture gates run built-in validation. Add `architecture
 - `skills/s5d/SKILL.md` — command reference and flow
 - `skills/s5d/metamodel.md` — artifact definitions and validation rules
 - `skills/s5d/session-protocol.md` — WAL format, conflict resolution
+- `docs/testing-and-benchmarking.md` — test layers and skill-vs-native benchmark contract
+- `examples/skill-benchmark.json` — five-family fuzzy benchmark suite template (`happy-path`, `edge-case`, `failure-handling`, `scope-drift`, `stale-intent`)
 
 ## License
 

@@ -175,3 +175,10 @@ entries:
   status: success
   timestamp: 2026-06-12T08:57:24.373984+00:00
   record_ref: records/feat.s5d.shape-native__20260612.record.yaml
+- spec_sha256: sha256:107be16ab36965e756d9f2a9c569e438cf30c9688bb8d4f7b2ceeeca3f254118
+  state_fingerprint: sha256:711c8cc1fac7d4079024301bfd339b2082cfae2345659d8d077dc689c488be92
+  package_id: feat.s5d.ci-init
+  action: import
+  status: success
+  timestamp: 2026-06-14T10:14:20.773119+00:00
+  record_ref: records/feat.s5d.ci-init__20260611.record.yaml

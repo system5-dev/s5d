@@ -65,7 +65,7 @@ durable S5D truth. Shape notes, PRDs, UX docs, research, story files, and review
 reports are companion inputs until bound into a spec, record, hypothesis, or
 gate result.
 
-**CI enforcement** — local hooks are bypassable by a plain `git push`. When the repo has CI (`.github/workflows/`, `.gitlab-ci.yml`) but no generated S5D pipeline, offer `s5d_ci_init` once; when generated config exists, keep `s5d_ci_check` clean. The generated pipeline runs `s5d ci exec` built-in checks only — command gates never execute on PR runners.
+**CI enforcement** — local hooks are bypassable by a plain `git push`. When the repo has CI (`.github/workflows/`, `.gitlab-ci.yml`) but no generated S5D pipeline, offer `s5d_ci_init` once; when generated config exists, keep `s5d_ci_check` clean. The generated pipeline runs `s5d ci exec` built-in checks only: spec validation, component path/architecture marker checks, and drift. Command gates never execute on PR runners.
 
 ---
 
@@ -101,7 +101,7 @@ record as the accepted lifecycle surface.
 | Quick note | `s5d_note` | `s5d new note.<slug> --tier note` | Hidden shorthand alias: `s5d note`. |
 | Add hypothesis | `s5d_add_hypothesis` | `s5d decision add-hypothesis` | Decision or high tier. Duplicate IDs rejected. Legacy alias: `s5d add-hypothesis`. |
 | Add evidence | `s5d_add_evidence` | `s5d decision add-evidence` | Decision or high tier. `formality` 1–5 on command surface. Legacy alias: `s5d add-evidence`. |
-| CI config | `s5d_ci_init` | `s5d ci init` | Generates PR pipeline (GitHub/GitLab): pinned binary + `s5d ci exec` built-in checks. Command gates never run in CI. |
+| CI config | `s5d_ci_init` | `s5d ci init` | Generates PR pipeline (GitHub/GitLab): pinned binary + `s5d ci exec` built-in checks, including component path/architecture marker checks. Command gates never run in CI. |
 | CI staleness | `s5d_ci_check` | `s5d ci check` | Fails when generated config lags the template version. |
 | Validate | `s5d_validate` | `s5d verify validate` | Read-only. Must pass before preview. Legacy alias: `s5d validate`. |
 | Graph check | `s5d_graph_check` | `s5d verify graph-check` | Cycles/layering errors block preview. Legacy alias: `s5d graph-check`. |
@@ -129,6 +129,7 @@ record as the accepted lifecycle surface.
 | Start operational harness | — | `s5d run harness start <spec> --phase <id> --name <id>` | Requires clean source worktree unless `--force`. Creates an isolated git worktree, starts the state there, and writes `.s5d/harness/<id>.yaml`. Legacy alias: `s5d harness start`. |
 | Harness status | — | `s5d run harness status <id>` | Shows worktree, branch, active state, heartbeat freshness, current command, and last event. Harness status is operational visibility only. Legacy alias: `s5d harness status`. |
 | Harness command | — | `s5d run harness exec <id> --timeout-s <n> -- <cmd> ...` | Runs an argv command in the harness worktree, captures stdout/stderr under `.s5d/harness/<id>/commands/`, and records timeout/failure/completion in the journal. Legacy alias: `s5d harness exec`. |
+| Benchmark assistant variants | — | `s5d run benchmark <suite.json\|yaml> [--format markdown\|json]` | Scores fixed native vs skill-guided run artifacts with explicit rubric weights and required scenario tags. The scorer is deterministic; human/model judgment that fills the rubric remains evidence input, not gate truth. |
 
 ### Recovery Commands
 

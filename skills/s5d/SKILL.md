@@ -43,7 +43,7 @@ Applies only to work grounded in an existing repository.
 - **Edit-after-approve invalidates approval.** Any spec change after `s5d state approve` changes its sha256. Recovery: preview → approve → import again.
 - **`verified-by` ≠ `reviewer`.** Import requires a verifier different from the approver. Conventional split: human approves, Diana verifies.
 - **gate:review on decision/high tier** closes via review evidence: `s5d decision add-evidence <spec> --hypothesis-id <id> --evidence-type gate:review --verdict pass`. Hypothesis/evidence commands accept decision- and high-tier specs.
-- **Generated CI runs built-in checks only** (validate, architecture, drift via `s5d ci exec`) — command gates (test/lint/contract) never execute in PR pipelines (fork trust boundary).
+- **Generated CI runs built-in checks only** (validate, component path/architecture markers, drift via `s5d ci exec`) — command gates (test/lint/contract) never execute in PR pipelines (fork trust boundary).
 - **Decide requires ≥3 hypotheses.** Two-hypothesis decisions are blocked without `--force`.
 - **Discovery output = tables, not prose.** "Discover this project" / "onboard this repo" produces Init Source Survey + Architecture Map in `.s5d/discovery/`, with `[VERIFIED]/[INFERRED]/[SPECULATIVE]` tags per claim. See §Discover.
 - **Shape is not accepted state.** Shape notes, PRDs, UX docs, stories, research, and review reports are companion inputs until bound into `.s5d/packages/*` or `.s5d/records/*`.
@@ -212,6 +212,10 @@ high-tier assurance gates are never waived.
 
 After approval: optionally use `s5d run start` / `s5d run exec` for bounded engine work, implement → local tests → `s5d_run_gates`. REVIEW markers for non-obvious decisions. Engine completion is only evidence; human acceptance is explicit (`s5d run accept <spec> --id <state> --reviewer <name>`).
 
+### Autonomous loop (mandate envelope)
+
+For long unattended runs, a spec may carry a `mandate:` envelope — `{scope, budget (max_calls/max_time_s), min_gate_floor, stop_conditions}`. A human admits it **once** (`s5d_mandate_admit`, SHA-bound to the spec); then the agent drives the loop by calling `s5d_mandate_run` each cycle. Each step adjudicates admission → recorded gate floor → drift → budget and returns the next phase, or halts: escalate (gate/drift/budget/spec-edited) or complete (scope exhausted). High/decision tiers are excluded — they stay human-gated per action. s5d only adjudicates and authorizes; **the agent runs the phase** (`s5d run start`/`exec`) and re-invokes — s5d never spawns an engine.
+
 ---
 
 ## Adversarial Review
@@ -262,6 +266,9 @@ Key commands (MCP + CLI). Full preconditions and the run/harness surface live in
 | Preview | `s5d_preview` | `s5d state preview` |
 | Approve | `s5d_approve` | `s5d state approve --reviewer <name>` |
 | Run gates | `s5d_run_gates` | `s5d verify run-gates` |
+| Mandate admit (authorize autonomous loop) | `s5d_mandate_admit` | `s5d mandate admit <spec> --reviewer <name>` |
+| Mandate run (one loop control step) | `s5d_mandate_run` | `s5d mandate run <spec>` |
+| Benchmark assistant variants | — | `s5d run benchmark <suite.json\|yaml> [--format markdown\|json]` |
 | Import | `s5d_import` | `s5d state import --verified-by <name>` |
 | Decide | `s5d_decide` | `s5d decision decide --confirmed-by <name>` |
 | Reflect | `s5d_reflect` | `s5d state reflect` |

@@ -219,6 +219,11 @@ Compare two runs on the same task:
 
 Hold model, prompt, task, and time budget constant. Record judgment, efficiency, REVIEW markers created, and whether intentional behavior changed.
 
+Use `s5d run benchmark <suite.json|yaml>` to score the paired runs after the raw
+artifacts exist. The command is deterministic: it applies rubric weights and
+formats markdown/json. It does not judge the run by itself; the judged criterion
+scores and links to raw artifacts are benchmark input.
+
 ### Replay Protocol
 
 Use replay when validating long-term memory:

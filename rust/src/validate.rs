@@ -90,6 +90,10 @@ pub fn validate_spec(spec: &Spec) -> Vec<String> {
         validate_workflow(workflow, &mut errors);
     }
 
+    if let Some(ref mandate) = spec.mandate {
+        validate_mandate(spec, mandate, &mut errors);
+    }
+
     // Check for duplicate hypothesis IDs (applies to all tiers with hypotheses)
     {
         let mut seen_hyp_ids = std::collections::HashSet::new();
@@ -906,5 +910,99 @@ fn is_valid_id(id: &str) -> bool {
 fn validate_id(id: &str, kind: &str, errors: &mut Vec<String>) {
     if !is_valid_id(id) {
         errors.push(format!("invalid {} ID: {}", kind, id));
+    }
+}
+
+/// Autonomous-loop envelope validation (decision.s5d.autonomous-loop-mandate).
+/// Enforces the challenge constraints at the schema gate:
+///   (b) min_gate_floor must be declared in spec.gates,
+///   (c) high/decision blast-radius work stays human-gated (no mandate),
+///   plus: non-empty scope and a bounded budget (no unbounded autonomy).
+/// Constraint (a) — drift is always a stop-condition — needs no flag; the loop
+/// driver (`mandate::adjudicate_mandate`) escalates on any detected drift.
+fn validate_mandate(spec: &Spec, m: &crate::models::Mandate, errors: &mut Vec<String>) {
+    if matches!(spec.tier, Tier::High | Tier::Decision) {
+        errors.push(format!(
+            "mandate not allowed on {} tier — high/decision work stays human-gated per action",
+            spec.tier
+        ));
+    }
+    if m.scope.trim().is_empty() {
+        errors.push(
+            "mandate.scope must be non-empty — an unscoped autonomous loop is rejected".into(),
+        );
+    }
+    if m.budget.max_calls.is_none() && m.budget.max_time_s.is_none() {
+        errors.push(
+            "mandate.budget must bound the loop (set max_calls and/or max_time_s) — unbounded autonomy is rejected".into(),
+        );
+    }
+    let gate_kinds: std::collections::HashSet<&str> =
+        spec.gates.iter().map(|g| g.kind.as_str()).collect();
+    for g in &m.min_gate_floor {
+        if !gate_kinds.contains(g.as_str()) {
+            errors.push(format!(
+                "mandate.min_gate_floor gate '{}' not declared in spec.gates",
+                g
+            ));
+        }
+    }
+}
+
+#[cfg(test)]
+mod mandate_tests {
+    use super::validate_spec;
+    use crate::models::Spec;
+
+    fn errs(yaml: &str) -> Vec<String> {
+        let spec: Spec = serde_yaml::from_str(yaml).expect("spec parses");
+        validate_spec(&spec)
+            .into_iter()
+            .filter(|e| e.contains("mandate"))
+            .collect()
+    }
+
+    const BASE: &str = r#"
+s5d: "1.0"
+id: feat.x.y
+version: "1.0.0"
+product: x
+tier: standard
+gates:
+  - kind: test
+  - kind: review
+"#;
+
+    #[test]
+    fn valid_mandate_has_no_mandate_errors() {
+        let y = format!(
+            "{BASE}mandate:\n  scope: src/x\n  budget:\n    max_calls: 50\n  min_gate_floor: [test]\n"
+        );
+        assert!(errs(&y).is_empty(), "unexpected: {:?}", errs(&y));
+    }
+
+    #[test]
+    fn mandate_on_high_tier_rejected() {
+        let y = BASE.replace("tier: standard", "tier: high")
+            + "mandate:\n  scope: src/x\n  budget:\n    max_calls: 5\n";
+        assert!(errs(&y)
+            .iter()
+            .any(|e| e.contains("not allowed on high tier")));
+    }
+
+    #[test]
+    fn unbounded_budget_rejected() {
+        let y = format!("{BASE}mandate:\n  scope: src/x\n  budget: {{}}\n");
+        assert!(errs(&y).iter().any(|e| e.contains("unbounded autonomy")));
+    }
+
+    #[test]
+    fn gate_floor_must_be_declared() {
+        let y = format!(
+            "{BASE}mandate:\n  scope: src/x\n  budget:\n    max_calls: 5\n  min_gate_floor: [contract]\n"
+        );
+        assert!(errs(&y)
+            .iter()
+            .any(|e| e.contains("not declared in spec.gates")));
     }
 }

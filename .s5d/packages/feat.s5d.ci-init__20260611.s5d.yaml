@@ -151,7 +151,10 @@ artifacts:
     container: ctr.s5d.app
     name: ci init/check/exec
     paths:
+    - .github/workflows/check.yml
+    - .github/workflows/s5d.yml
     - rust/src/ci.rs
+    - rust/src/ci_github_workflow.tpl
     - rust/src/bin/s5d/cmd_ci.rs
   roles: []
   concerns: []

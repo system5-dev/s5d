@@ -1,0 +1,2 @@
+review gate passed (built-in): 1 review-evidence with verdict=pass
+  - hypothesis=derive-ownership-from-ledger evidence_id=20260612-gate-review-derive-ownership-from-ledger formality=3

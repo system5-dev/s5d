@@ -1,0 +1,2 @@
+review gate passed (built-in): 1 review-evidence with verdict=pass
+  - hypothesis=generated-standalone-workflow evidence_id=20260611-gate-review-generated-standalone-workflow formality=4

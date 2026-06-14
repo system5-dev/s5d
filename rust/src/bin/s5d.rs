@@ -158,6 +158,11 @@ enum S5dCommand {
         #[command(subcommand)]
         command: RunCommand,
     },
+    /// Autonomous-loop envelope: admit (approve once, SHA-bound) and run
+    Mandate {
+        #[command(subcommand)]
+        command: MandateCommand,
+    },
     /// Phase lifecycle for workflow-driven execution
     #[command(hide = true)]
     Phase {
@@ -367,6 +372,33 @@ enum RunCommand {
         #[command(subcommand)]
         command: HarnessCommand,
     },
+    /// Score a skill-guided vs native assistant benchmark suite
+    Benchmark {
+        /// JSON/YAML benchmark suite file
+        input: String,
+        /// Output format: markdown or json
+        #[arg(long, default_value = "markdown")]
+        format: String,
+    },
+}
+
+#[derive(Subcommand)]
+enum MandateCommand {
+    /// Admit a spec's mandate envelope — one human approval, SHA-bound to the spec.
+    /// Authorizes the autonomous loop; re-escalates if the spec is later edited.
+    Admit {
+        /// Path to .s5d.yaml file
+        spec: String,
+        /// Reviewer name — the human authorizing the autonomous loop
+        #[arg(long)]
+        reviewer: String,
+    },
+    /// One autonomous-loop control step: adjudicate admission/gates/drift/budget,
+    /// then authorize the next phase (exit 0) or halt (exit 1 escalate / 2 complete).
+    Run {
+        /// Path to .s5d.yaml file
+        spec: String,
+    },
 }
 
 #[derive(Subcommand)]
@@ -401,7 +433,7 @@ enum CiCommand {
     },
     /// Report stale or unmanaged generated CI config
     Check,
-    /// Run built-in checks (validate, architecture, drift) — called by generated pipelines
+    /// Run built-in checks (validate, component paths, architecture, drift) — called by generated pipelines
     Exec,
 }
 
@@ -1088,6 +1120,10 @@ fn main() -> anyhow::Result<()> {
         S5dCommand::Check(args) => run_check(&args.spec, &args.format),
         S5dCommand::DriftCheck(args) => run_drift_check(args.spec.as_deref()),
         S5dCommand::Run { command } => run_run_command(command),
+        S5dCommand::Mandate { command } => match command {
+            MandateCommand::Admit { spec, reviewer } => run_mandate_admit(&spec, &reviewer),
+            MandateCommand::Run { spec } => run_mandate_run(&spec),
+        },
         S5dCommand::Phase { command } => match command {
             PhaseCommand::List { spec } => run_phase_list(&spec),
             PhaseCommand::Start { spec, id } => run_phase_start(&spec, &id),
@@ -1311,7 +1347,22 @@ fn run_run_command(command: RunCommand) -> anyhow::Result<()> {
             run_execute_loop(&args.spec, &args.phase, &args.engine, args.mode.as_deref())
         }
         RunCommand::Harness { command } => run_harness_command(command),
+        RunCommand::Benchmark { input, format } => run_benchmark(&input, &format),
     }
+}
+
+fn run_benchmark(input: &str, format: &str) -> anyhow::Result<()> {
+    let suite = s5d::load_skill_benchmark(std::path::Path::new(input))?;
+    let report = s5d::score_skill_benchmark(&suite)?;
+    match format {
+        "markdown" | "md" => print!("{}", s5d::format_benchmark_markdown(&report)),
+        "json" => println!("{}", serde_json::to_string_pretty(&report)?),
+        other => anyhow::bail!(
+            "unsupported benchmark format '{}': use markdown or json",
+            other
+        ),
+    }
+    Ok(())
 }
 
 fn run_admin_command(command: AdminCommand) -> anyhow::Result<()> {
@@ -1400,7 +1451,9 @@ fn run_set_acceptance(spec_path: &str, acceptance: &str) -> anyhow::Result<()> {
         .problem
         .as_mut()
         .and_then(|p| p.as_card_mut())
-        .ok_or_else(|| anyhow::anyhow!("spec has no structured problem card — cannot set acceptance"))?;
+        .ok_or_else(|| {
+            anyhow::anyhow!("spec has no structured problem card — cannot set acceptance")
+        })?;
     card.acceptance = Some(acceptance.to_string());
     save_spec_yaml(&path, &spec)?;
     println!("{} Set acceptance on {}", "ok".green(), spec.id);
@@ -3218,6 +3271,130 @@ fn run_approve(spec_arg: &str, reviewer: &str, require_owner: bool) -> anyhow::R
     );
     println!("  diff_sha256: {}", diff_sha);
     Ok(())
+}
+
+// ── Mandate admit ─────────────────────────────────────────────────────────────
+
+/// Record a human's one-time admission of a spec's mandate envelope, SHA-bound to
+/// the current spec. This is the single human gate for the autonomous loop: after
+/// admission the agent drives the loop via `mandate run` without per-iteration
+/// approval, re-escalating only when the spec's sha changes or a gate/drift/budget
+/// stop fires. The mandate constraints — high/decision tiers stay human-gated (c),
+/// bounded budget + declared gate floor (b) — plus FULL spec validity are enforced
+/// here as a hard gate: a human must not authorize autonomy over an invalid spec.
+fn run_mandate_admit(spec_arg: &str, reviewer: &str) -> anyhow::Result<()> {
+    let reviewer = reviewer.trim();
+    if reviewer.is_empty() {
+        eprintln!("  {} --reviewer must not be empty", "error:".red());
+        std::process::exit(2);
+    }
+
+    let (project, spec_path, spec, spec_filename) = load_spec_context(spec_arg)?;
+
+    if spec.mandate.is_none() {
+        eprintln!(
+            "  {} spec has no `mandate:` envelope to admit",
+            "error:".red()
+        );
+        std::process::exit(1);
+    }
+
+    // Hard gate: the WHOLE spec must be valid (not just the mandate fields) before
+    // a human authorizes an autonomous loop over it — a malformed tier/workflow
+    // would otherwise admit and only surface later inside the loop.
+    let errors = s5d::validate::validate_spec(&spec);
+    if !errors.is_empty() {
+        eprintln!(
+            "  {} spec is invalid — cannot admit a mandate over it:",
+            "error:".red()
+        );
+        for e in &errors {
+            eprintln!("    - {}", e);
+        }
+        std::process::exit(1);
+    }
+
+    let spec_sha = s5d::S5dProject::file_sha256(&spec_path)?;
+
+    let mut record = project
+        .load_record(&spec_filename)?
+        .ok_or_else(|| anyhow::anyhow!("no record found for {}", spec_filename))?;
+
+    record.mandate_admission = Some(s5d::MandateAdmission {
+        reviewer: reviewer.into(),
+        date: chrono::Utc::now().to_rfc3339(),
+        spec_sha256: spec_sha.clone(),
+    });
+    project.save_record(&spec_filename, &record)?;
+
+    println!(
+        "{} Mandate admitted: {} (reviewer: {})",
+        "ok".green(),
+        spec_filename,
+        reviewer
+    );
+    println!("  spec_sha256: {}", spec_sha);
+    println!("  Autonomous loop authorized until the spec changes.");
+    Ok(())
+}
+
+/// Halt the loop and hand back to a human. Exit code 1 = escalate.
+fn mandate_escalate(reason: &str) -> ! {
+    eprintln!("  {} {}", "escalate:".red().bold(), reason);
+    std::process::exit(1);
+}
+
+/// One control step of the autonomous loop. s5d adjudicates — it never runs an
+/// engine itself (control plane, not orchestrator). The calling agent re-invokes
+/// this each cycle: exit 0 authorizes the printed next phase, exit 2 means the
+/// scope is exhausted (clean stop), exit 1 escalates to a human. Per the mandate
+/// decision the loop halts on a failing gate floor (b), drift (a), or budget
+/// exhaustion — and on a spec edit that breaks the admission SHA binding.
+fn run_mandate_run(spec_arg: &str) -> anyhow::Result<()> {
+    let (project, spec_path, spec, spec_filename) = load_spec_context(spec_arg)?;
+    let mut record = project
+        .load_record(&spec_filename)?
+        .ok_or_else(|| anyhow::anyhow!("no record found for {}", spec_filename))?;
+
+    match s5d::mandate::adjudicate_mandate(&project, &spec, &spec_path, &spec_filename, &record)? {
+        s5d::mandate::MandateStep::Escalate { reason } => mandate_escalate(&reason),
+        s5d::mandate::MandateStep::Complete => {
+            println!(
+                "{} all phases accepted — mandate scope exhausted",
+                "complete".green().bold()
+            );
+            std::process::exit(2);
+        }
+        s5d::mandate::MandateStep::Continue {
+            phase_id,
+            scope,
+            iteration,
+            max_calls,
+            stop_conditions,
+        } => {
+            // Persist the budget unit the adjudicator authorized.
+            record.mandate_iterations = iteration;
+            project.save_record(&spec_filename, &record)?;
+            let budget_note = max_calls
+                .map(|m| format!("{iteration}/{m}"))
+                .unwrap_or_else(|| iteration.to_string());
+            println!(
+                "{} next phase: {} (iteration {})",
+                "continue".green().bold(),
+                phase_id,
+                budget_note
+            );
+            println!("  scope: {scope}");
+            if !stop_conditions.is_empty() {
+                println!(
+                    "  stop-conditions (agent-evaluated): {}",
+                    stop_conditions.join("; ")
+                );
+            }
+            println!("  the agent now runs it (e.g. `s5d run start {spec_arg} --id {phase_id}`)");
+            Ok(())
+        }
+    }
 }
 
 // ── RunGates ──────────────────────────────────────────────────────────────────

@@ -250,6 +250,7 @@ mod tests {
             expires_at: None,
             auto_noted: false,
             intent_kernel: None,
+            mandate: None,
         }
     }
 
@@ -320,6 +321,8 @@ mod tests {
             decision: None,
             verified_by: None,
             drift_tolerance: None,
+            mandate_admission: None,
+            mandate_iterations: 0,
         };
         record.decision = Some(DecisionRecord {
             title: "Decision".into(),

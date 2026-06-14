@@ -4,6 +4,7 @@
 // Modules on the critical path: intent → validate → approve → apply → drift → rollback
 
 pub mod arch;
+pub mod benchmark;
 pub mod codebase;
 pub mod discovery;
 pub mod drift;
@@ -14,6 +15,7 @@ pub mod hooks_json;
 pub mod identity;
 pub mod import;
 pub mod lsp;
+pub mod mandate;
 pub mod mcp;
 pub mod models;
 pub mod phase_gates;
@@ -25,6 +27,11 @@ pub mod trace;
 pub mod validate;
 
 pub use arch::{architecture_check, ArchitectureCheckReport, ComponentCoverage, SourceDependency};
+pub use benchmark::{
+    format_benchmark_markdown, load_skill_benchmark, score_skill_benchmark, AssistantRun,
+    BenchmarkArtifact, BenchmarkCase, BenchmarkCaseResult, BenchmarkCriterion, BenchmarkMean,
+    BenchmarkRunScore, SkillBenchmarkReport, SkillBenchmarkSuite,
+};
 pub use codebase::{
     build_codebase_snapshot, load_codebase_snapshot, write_codebase_snapshot, CodebaseCoverage,
     CodebaseModule, CodebaseSnapshot, CoverageStatus, ModuleCoverage,
@@ -114,7 +121,9 @@ pub fn upsert_problem_card(
         },
         None => {
             let sig = signal.clone().ok_or_else(|| {
-                anyhow::anyhow!("this spec has no problem card yet — --signal is required to create one")
+                anyhow::anyhow!(
+                    "this spec has no problem card yet — --signal is required to create one"
+                )
             })?;
             ProblemCard {
                 signal: sig,
@@ -165,7 +174,14 @@ mod tests {
         assert!(spec.problem.is_none());
         assert!(upsert_problem_card(&mut spec, None, Some("acc".into()), None, None).is_err());
 
-        upsert_problem_card(&mut spec, Some("sig".into()), Some("acc".into()), None, None).unwrap();
+        upsert_problem_card(
+            &mut spec,
+            Some("sig".into()),
+            Some("acc".into()),
+            None,
+            None,
+        )
+        .unwrap();
         let card = spec.problem.as_ref().unwrap().as_card().unwrap();
         assert_eq!(card.signal, "sig");
         assert_eq!(card.acceptance.as_deref(), Some("acc"));
@@ -583,6 +599,7 @@ mod tests {
             expires_at: None,
             auto_noted: false,
             intent_kernel: None,
+            mandate: None,
         }
     }
 
@@ -1257,6 +1274,7 @@ mod tests {
             workflow: None,
             auto_noted: false,
             intent_kernel: None,
+            mandate: None,
         };
 
         let errors = validate_spec(&spec);
@@ -1343,6 +1361,7 @@ mod tests {
             expires_at: None,
             auto_noted: false,
             intent_kernel: None,
+            mandate: None,
         };
 
         let yaml = serde_yaml::to_string(&spec).unwrap();
@@ -1403,6 +1422,7 @@ mod tests {
             expires_at: None,
             auto_noted: false,
             intent_kernel: None,
+            mandate: None,
         };
 
         let yaml = serde_yaml::to_string(&spec).unwrap();
@@ -1467,6 +1487,7 @@ mod tests {
             expires_at: Some("2027-03-18".into()),
             auto_noted: false,
             intent_kernel: None,
+            mandate: None,
         };
 
         let errors = validate_spec(&spec);

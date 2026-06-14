@@ -1,0 +1,2 @@
+review gate passed (built-in): 1 review-evidence with verdict=pass
+  - hypothesis=kernel-in-spec-schema-lite evidence_id=20260612-gate-review-kernel-in-spec-schema-lite formality=3

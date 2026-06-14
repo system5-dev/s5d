@@ -119,7 +119,10 @@ artifacts:
     container: ctr.s5d.app
     name: thin assurance primitives component
     paths:
-    - TODO-set-source-paths/
+    - rust/src/bin/s5d.rs
+    - rust/src/mcp.rs
+    - rust/tests/standalone_repos.rs
+    - skills/s5d/SKILL.md
   roles: []
   concerns: []
   metrics: []

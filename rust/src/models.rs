@@ -45,6 +45,12 @@ pub struct Spec {
     /// kernel keep their serialized form (and state fingerprint) byte-identical.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub intent_kernel: Option<IntentKernel>,
+    /// Autonomous-loop envelope (decision.s5d.autonomous-loop-mandate). When set
+    /// and admitted, the agent loops within this SHA-bound budget without a
+    /// per-cycle human Approve. Skip-serialized so specs without it stay
+    /// byte-identical (state fingerprint unchanged).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub mandate: Option<Mandate>,
 }
 
 /// The 8 shape-layer intake fields (skills/s5d/references/shape-layer.md),
@@ -407,7 +413,7 @@ pub struct Gate {
     pub kind: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Roc {
     #[serde(default)]
     pub tools: Vec<String>,
@@ -419,6 +425,30 @@ pub struct Roc {
     pub risk: Option<String>,
     #[serde(default)]
     pub escalation: Option<String>,
+}
+
+/// Autonomous-loop envelope — first-class aggregate making a long autonomous
+/// agentic cycle explicit (decision.s5d.autonomous-loop-mandate). Approved ONCE
+/// by a human and SHA-bound via the spec; the loop then runs many iterations
+/// within it. ABSORBS Roc (budget) and stop_conditions rather than duplicating
+/// them. Invariant: one approved envelope → many iterations, each SHA-bound,
+/// gated, ledgered, reversible, drift-checkable.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct Mandate {
+    /// What the autonomous loop may touch (paths/domains). Non-empty.
+    pub scope: String,
+    /// Budget envelope — reuses Roc (max_calls / max_time_s / escalation / ...).
+    #[serde(default)]
+    pub budget: Roc,
+    /// Agent-facing loop-end conditions. Free-form prose: the controller surfaces
+    /// these each step but does not machine-evaluate them (the agent owns the call).
+    #[serde(default)]
+    pub stop_conditions: Vec<String>,
+    /// Constraint (b): eligibility gates required before admission and re-checked
+    /// from recorded gate results on every loop step. Each must be declared in
+    /// `spec.gates`. Drift is always a stop-condition (constraint a) and needs no flag.
+    #[serde(default)]
+    pub min_gate_floor: Vec<String>,
 }
 
 // ── Workflow ──────────────────────────────────────────────────────────────────
@@ -800,6 +830,29 @@ pub struct Record {
     /// Default policy (when None): all drift = failed (binary, current behavior).
     #[serde(default)]
     pub drift_tolerance: Option<String>,
+    /// Human admission of the spec's mandate envelope (slice 2), SHA-bound.
+    /// The one-time approval that authorizes autonomous-loop execution. The loop
+    /// driver re-checks `spec_sha256` against the live spec before each iteration;
+    /// an edited spec invalidates admission and re-escalates to a human.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub mandate_admission: Option<MandateAdmission>,
+    /// Autonomous-loop iteration counter (slice 3). Each authorized `mandate run`
+    /// step consumes one unit; the loop halts when it reaches `mandate.budget.max_calls`.
+    #[serde(default, skip_serializing_if = "is_zero_u32")]
+    pub mandate_iterations: u32,
+}
+
+fn is_zero_u32(n: &u32) -> bool {
+    *n == 0
+}
+
+/// Human admission of a [`Mandate`] envelope. One-time, SHA-bound approval that
+/// authorizes the autonomous loop to run without per-iteration human gates.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MandateAdmission {
+    pub reviewer: String,
+    pub date: String,
+    pub spec_sha256: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]

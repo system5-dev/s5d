@@ -2,8 +2,9 @@
 //!
 //! The generated pipeline contains no check logic: it installs a pinned
 //! release binary and calls `s5d ci exec`, which runs built-in read-only
-//! checks only. Config-driven gate_commands never execute here — a fork PR
-//! must not be able to run repo-configured commands on the CI runner.
+//! checks only: spec validation, component path/architecture marker checks,
+//! and drift checks. Config-driven gate_commands never execute here — a fork
+//! PR must not be able to run repo-configured commands on the CI runner.
 
 use colored::Colorize;
 

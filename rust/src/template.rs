@@ -179,6 +179,7 @@ pub fn generate_spec(id: &str, tier: Tier, product: &str) -> Spec {
         expires_at: None,
         auto_noted: false,
         intent_kernel: None,
+        mandate: None,
     }
 }
 
@@ -223,6 +224,7 @@ pub fn generate_decision_spec(id: &str, product: &str, question: &str) -> Spec {
         expires_at: None,
         auto_noted: false,
         intent_kernel: None,
+        mandate: None,
     }
 }
 
@@ -260,6 +262,7 @@ pub fn generate_note_spec(id: &str, product: &str, title: &str, rationale: &str)
         expires_at: Some(expires),
         auto_noted: false,
         intent_kernel: None,
+        mandate: None,
     }
 }
 
@@ -284,6 +287,8 @@ pub fn generate_record(spec_filename: &str, spec_sha256: &str) -> Record {
         decision: None,
         verified_by: None,
         drift_tolerance: None,
+        mandate_admission: None,
+        mandate_iterations: 0,
     }
 }
 

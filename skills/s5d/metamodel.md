@@ -152,6 +152,19 @@ External phase runs are configured in `.s5d/config.yaml`, not in the spec:
 
 `s5d phase run` captures stdout/stderr under `.s5d/runs/`, appends `phase_runs[]` to the record, and appends a `verified` phase-history entry only when the command exits successfully. Human phase acceptance remains a separate step.
 
+### Mandate Envelope (autonomous loop)
+
+`mandate` is an optional top-level field that authorizes a long autonomous loop over the spec's phases. A human admits it **once** (`s5d mandate admit`, SHA-bound to the spec); the agent then drives the loop with `s5d mandate run` (one control step per cycle), which adjudicates and returns the next phase or halts. s5d adjudicates and authorizes only — it never runs an engine itself; the agent executes the returned phase and re-invokes.
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `scope` | string | non-empty — what the loop may touch (paths/domains) |
+| `budget` | Roc | bounds the loop; **must** set `max_calls` and/or `max_time_s` (unbounded autonomy is rejected) |
+| `min_gate_floor` | list | eligibility gates that must have a recorded pass before each iteration; each must be declared in `gates[]` |
+| `stop_conditions` | list | free-form loop-end conditions |
+
+Validation (enforced at `mandate admit`): rejected on `high`/`decision` tiers (those stay human-gated per action), on any invalid spec, on empty `scope`, on an unbounded `budget`, and on any `min_gate_floor` entry not declared in `gates[]`. Each authorized `mandate run` step increments `mandate_iterations` in the record; the loop halts (escalates) when a gate floor has no recorded pass, on detected drift, budget exhaustion, unreadable time-budget admission, or a spec edit that breaks the admission SHA binding — and completes when all phases are accepted.
+
 ---
 
 ## Complete Artifact Definitions

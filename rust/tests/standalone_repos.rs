@@ -288,6 +288,10 @@ fn seed_searchable_rust_repo(repo: &StandaloneRepo) {
         "src/lib.rs",
         "pub struct BillingService;\n\nimpl BillingService {\n    pub fn standalonee2emarker(&self) -> &'static str {\n        \"standalonee2emarker\"\n    }\n}\n",
     );
+    repo.write(
+        "src/handler.rs",
+        "pub fn handle_billing_request() -> &'static str {\n    \"ok\"\n}\n",
+    );
     repo.mkdir("apps/mobile");
 }
 
@@ -667,6 +671,7 @@ fn write_architecture_lint_spec(repo: &StandaloneRepo, allow_billing_to_auth: bo
         expires_at: None,
         auto_noted: false,
         intent_kernel: None,
+        mandate: None,
     };
 
     fs::write(&spec_path, serde_yaml::to_string(&spec).unwrap()).unwrap();
@@ -764,6 +769,7 @@ fn write_codebase_governance_spec(repo: &StandaloneRepo) -> PathBuf {
         expires_at: None,
         auto_noted: false,
         intent_kernel: None,
+        mandate: None,
     };
 
     fs::write(&spec_path, serde_yaml::to_string(&spec).unwrap()).unwrap();
@@ -910,7 +916,15 @@ fn public_help_hides_internal_commands() {
     }
 
     let run_help = run_ok(repo.path(), ["run", "--help"]);
-    for public in ["list", "start", "accept", "exec", "task", "harness"] {
+    for public in [
+        "list",
+        "start",
+        "accept",
+        "exec",
+        "task",
+        "harness",
+        "benchmark",
+    ] {
         assert!(
             run_help
                 .stdout
@@ -957,6 +971,61 @@ fn public_help_hides_internal_commands() {
             hook_help.stdout
         );
     }
+}
+
+#[test]
+fn run_benchmark_scores_skill_against_native_assistant() {
+    let repo = StandaloneRepo::new();
+    repo.write(
+        "skill-benchmark.json",
+        r#"{
+          "benchmark": "S5D skill vs native assistant",
+          "scale": "criterion scores are judged 0.0..1.0; output is weighted percent",
+          "required_tags":["scope-drift"],
+          "criteria": [
+            {"id":"correctness","weight":4},
+            {"id":"scope","weight":2},
+            {"id":"evidence","weight":3},
+            {"id":"tests","weight":1}
+          ],
+          "cases": [
+            {
+              "id":"T01",
+              "name":"Review a diff against accepted intent",
+              "tags":["scope-drift"],
+              "runs":[
+                {"id":"native","scores":{"correctness":0.5,"scope":0.6,"evidence":0.2,"tests":0.4}},
+                {"id":"skill","scores":{"correctness":0.9,"scope":0.9,"evidence":1.0,"tests":0.8}}
+              ]
+            }
+          ]
+        }"#,
+    );
+
+    let output = run_ok(repo.path(), ["run", "benchmark", "skill-benchmark.json"]);
+    assert!(
+        output
+            .stdout
+            .contains("| T01 | scope-drift | 42.0 | 92.0 | +50.0 | skill |"),
+        "{}",
+        output.summary()
+    );
+
+    let json = run_ok(
+        repo.path(),
+        [
+            "run",
+            "benchmark",
+            "skill-benchmark.json",
+            "--format",
+            "json",
+        ],
+    );
+    assert!(
+        json.stdout.contains("\"skill_minus_native\": 50.0"),
+        "{}",
+        json.summary()
+    );
 }
 
 #[test]
@@ -2245,8 +2314,17 @@ fn architecture_check_allows_declared_domain_edge() {
 }
 
 #[test]
-fn architecture_check_accepts_markdown_component_paths() {
+fn architecture_check_accepts_document_and_config_component_paths() {
     let repo = StandaloneRepo::new();
+    repo.write(".codex-plugin/plugin.json", "{\"name\":\"s5d\"}\n");
+    repo.write(
+        "Cargo.toml",
+        "[package]\nname = \"s5d\"\nversion = \"0.1.0\"\n",
+    );
+    repo.write("gemini-extension.json", "{\"name\":\"s5d\"}\n");
+    repo.write("install.sh", "#!/usr/bin/env sh\n");
+    repo.write("manifest.yaml", "name: s5d\n");
+    repo.write("workflow.tpl", "name: __NAME__\n");
     repo.write("skills/s5d/SKILL.md", "# S5D\n");
     run_ok(repo.path(), ["init"]);
 
@@ -2308,7 +2386,15 @@ fn architecture_check_accepts_markdown_component_paths() {
                 domain: "dom.s5d.execution".into(),
                 container: "ctr.s5d.skill-docs".into(),
                 name: "S5D Skill Docs".into(),
-                paths: vec!["skills/s5d/SKILL.md".into()],
+                paths: vec![
+                    ".codex-plugin/plugin.json".into(),
+                    "Cargo.toml".into(),
+                    "gemini-extension.json".into(),
+                    "install.sh".into(),
+                    "manifest.yaml".into(),
+                    "workflow.tpl".into(),
+                    "skills/s5d/SKILL.md".into(),
+                ],
             }],
             ..Default::default()
         }),
@@ -2339,6 +2425,7 @@ fn architecture_check_accepts_markdown_component_paths() {
         expires_at: None,
         auto_noted: false,
         intent_kernel: None,
+        mandate: None,
     };
     fs::write(&spec_path, serde_yaml::to_string(&spec).unwrap()).unwrap();
 
@@ -2346,7 +2433,7 @@ fn architecture_check_accepts_markdown_component_paths() {
     let result = run_ok(repo.path(), ["check", spec_str]);
     assert!(
         result.stdout.contains("architecture ok"),
-        "architecture check should accept markdown component paths:\n{}",
+        "architecture check should accept document/config component paths:\n{}",
         result.summary()
     );
 }
@@ -4291,6 +4378,11 @@ fn setup_standard_spec(repo: &StandaloneRepo, feature_id: &str) -> String {
     let mut spec: s5d::Spec = load_yaml(&spec_path);
     materialize_scaffold_paths(&mut spec);
     let artifacts = spec.artifacts.as_mut().unwrap();
+    for component in &mut artifacts.components {
+        if component.paths.len() == 1 && component.paths[0] == "src/" {
+            component.paths = vec!["src/lib.rs".into()];
+        }
+    }
     artifacts.domains.push(s5d::Domain {
         id: "dom.core".into(),
         product: "shop".into(),
@@ -5622,6 +5714,10 @@ fn ci_init_generates_marked_templates_idempotently() {
         gh_content.contains("s5d ci exec") && gh_content.contains("permissions:"),
         "workflow must call ci exec under explicit permissions:\n{gh_content}"
     );
+    assert!(
+        gh_content.contains("component paths"),
+        "workflow must surface component path marker checks:\n{gh_content}"
+    );
 
     // Idempotent: second run regenerates identical managed content.
     run_ok(repo.path(), ["ci", "init", "--all"]);
@@ -5677,6 +5773,37 @@ fn ci_exec_passes_clean_repo_and_blocks_drift() {
         drifted.stderr.contains("[drift]"),
         "drift must fail ci exec:\n{}",
         drifted.summary()
+    );
+}
+
+#[test]
+fn ci_exec_blocks_unresolved_component_paths_without_architecture_gate() {
+    let repo = StandaloneRepo::new();
+    seed_searchable_rust_repo(&repo);
+    run_ok(repo.path(), ["init"]);
+    let spec_str = setup_standard_spec(&repo, "feat.ciexec.marker");
+    let spec_path = PathBuf::from(&spec_str);
+    {
+        let mut spec: s5d::Spec = load_yaml(&spec_path);
+        spec.gates.retain(|gate| gate.kind != "architecture");
+        let component = spec
+            .artifacts
+            .as_mut()
+            .unwrap()
+            .components
+            .first_mut()
+            .unwrap();
+        component.paths = vec!["src/DOES_NOT_EXIST_marker.py".into()];
+        fs::write(&spec_path, serde_yaml::to_string(&spec).unwrap()).unwrap();
+    }
+
+    let outcome = run_fail(repo.path(), ["ci", "exec"]);
+    assert!(
+        outcome.stderr.contains("[architecture]")
+            && outcome.stderr.contains("DOES_NOT_EXIST_marker.py")
+            && outcome.stderr.contains("matched no source files"),
+        "ci exec must fail when component markers do not resolve to code:\n{}",
+        outcome.summary()
     );
 }
 
@@ -5756,9 +5883,10 @@ fn ci_init_rewires_managed_stub_and_check_flags_unwired_gitlab() {
     let _ = downgraded;
     run_ok(repo.path(), ["ci", "init", "--gitlab"]);
     assert!(
-        fs::read_to_string(&root_ci)
-            .unwrap()
-            .starts_with(&format!("# s5d-ci-template: v{}", s5d::ci::TEMPLATE_VERSION)),
+        fs::read_to_string(&root_ci).unwrap().starts_with(&format!(
+            "# s5d-ci-template: v{}",
+            s5d::ci::TEMPLATE_VERSION
+        )),
         "managed stub must be regenerated to the current template version"
     );
 
@@ -6039,5 +6167,260 @@ fn plan_stories_rejects_unsafe_story_ids() {
         failed.stderr.contains("unsafe"),
         "traversal story id must be rejected:\n{}",
         failed.summary()
+    );
+}
+
+// ── Mandate admission (slice 2) ───────────────────────────────────────────────
+
+/// Scaffold a lightweight spec, attach a mandate envelope, and return its path.
+/// `gate_floor` is written into both spec.gates (as declared gates) and the
+/// mandate's min_gate_floor so the envelope validates clean by default.
+fn scaffold_spec_with_mandate(
+    repo: &StandaloneRepo,
+    id: &str,
+    tier: &str,
+    gate_floor: &[&str],
+) -> PathBuf {
+    run_ok(repo.path(), ["new", id, "--tier", tier, "--product", "s5d"]);
+    let spec_path = spec_path_by_id(repo, id);
+    let mut spec: s5d::Spec = load_yaml(&spec_path);
+    spec.gates = gate_floor
+        .iter()
+        .map(|k| s5d::Gate {
+            kind: (*k).to_string(),
+        })
+        .collect();
+    spec.mandate = Some(s5d::Mandate {
+        scope: "src/".into(),
+        budget: s5d::Roc {
+            max_calls: Some(50),
+            ..Default::default()
+        },
+        stop_conditions: vec![],
+        min_gate_floor: gate_floor.iter().map(|k| (*k).to_string()).collect(),
+    });
+    fs::write(&spec_path, serde_yaml::to_string(&spec).unwrap()).unwrap();
+    spec_path
+}
+
+#[test]
+fn mandate_admit_records_sha_bound_admission() {
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+    let spec_path =
+        scaffold_spec_with_mandate(&repo, "feat.s5d.loop-ok", "lightweight", &["schema"]);
+    let spec_str = spec_path.to_str().unwrap();
+
+    let out = run_ok(
+        repo.path(),
+        ["mandate", "admit", spec_str, "--reviewer", "Roman"],
+    );
+    assert!(out.stdout.contains("Mandate admitted"), "{}", out.summary());
+
+    let record: s5d::Record = load_yaml(&record_path_for(&spec_path));
+    let admission = record
+        .mandate_admission
+        .expect("mandate_admission must be recorded");
+    assert_eq!(admission.reviewer, "Roman");
+    let expected_sha = s5d::S5dProject::file_sha256(&spec_path).unwrap();
+    assert_eq!(
+        admission.spec_sha256, expected_sha,
+        "admission must bind the live spec sha"
+    );
+}
+
+#[test]
+fn mandate_admit_rejects_high_tier() {
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+    // High tier carries a valid-shaped mandate; admission must still refuse it (c).
+    let spec_path = scaffold_spec_with_mandate(&repo, "feat.s5d.loop-high", "high", &["schema"]);
+    let spec_str = spec_path.to_str().unwrap();
+
+    let failed = run_fail(
+        repo.path(),
+        ["mandate", "admit", spec_str, "--reviewer", "Roman"],
+    );
+    assert!(
+        failed.stderr.contains("high/decision"),
+        "high-tier mandate must be rejected:\n{}",
+        failed.summary()
+    );
+    let record: s5d::Record = load_yaml(&record_path_for(&spec_path));
+    assert!(
+        record.mandate_admission.is_none(),
+        "rejected admission must not be recorded"
+    );
+}
+
+#[test]
+fn mandate_admit_rejects_undeclared_gate_floor() {
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+    let spec_path =
+        scaffold_spec_with_mandate(&repo, "feat.s5d.loop-gap", "lightweight", &["schema"]);
+    // Constraint (b): reference a gate floor the spec never declares.
+    let mut spec: s5d::Spec = load_yaml(&spec_path);
+    spec.gates.clear();
+    if let Some(ref mut m) = spec.mandate {
+        m.min_gate_floor = vec!["schema".into()];
+    }
+    fs::write(&spec_path, serde_yaml::to_string(&spec).unwrap()).unwrap();
+    let spec_str = spec_path.to_str().unwrap();
+
+    let failed = run_fail(
+        repo.path(),
+        ["mandate", "admit", spec_str, "--reviewer", "Roman"],
+    );
+    assert!(
+        failed.stderr.contains("min_gate_floor"),
+        "undeclared gate floor must be rejected:\n{}",
+        failed.summary()
+    );
+}
+
+#[test]
+fn mandate_run_authorizes_next_phase_and_consumes_budget() {
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+    // No gate floor → adjudication skips gating; standard scaffold has phases.
+    let spec_path = scaffold_spec_with_mandate(&repo, "feat.s5d.run-ok", "standard", &[]);
+    let spec_str = spec_path.to_str().unwrap();
+    run_ok(
+        repo.path(),
+        ["mandate", "admit", spec_str, "--reviewer", "Roman"],
+    );
+
+    let step = run_ok(repo.path(), ["mandate", "run", spec_str]);
+    assert!(step.stdout.contains("continue"), "{}", step.summary());
+    let record: s5d::Record = load_yaml(&record_path_for(&spec_path));
+    assert_eq!(record.mandate_iterations, 1, "one budget unit consumed");
+
+    run_ok(repo.path(), ["mandate", "run", spec_str]);
+    let record: s5d::Record = load_yaml(&record_path_for(&spec_path));
+    assert_eq!(record.mandate_iterations, 2, "budget accrues across steps");
+}
+
+#[test]
+fn mandate_run_escalates_when_spec_edited_after_admission() {
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+    let spec_path = scaffold_spec_with_mandate(&repo, "feat.s5d.run-edit", "standard", &[]);
+    let spec_str = spec_path.to_str().unwrap();
+    run_ok(
+        repo.path(),
+        ["mandate", "admit", spec_str, "--reviewer", "Roman"],
+    );
+
+    // Edit the spec → its sha no longer matches the SHA-bound admission.
+    let mut spec: s5d::Spec = load_yaml(&spec_path);
+    spec.version = "9.9.9".into();
+    fs::write(&spec_path, serde_yaml::to_string(&spec).unwrap()).unwrap();
+
+    let failed = run_fail(repo.path(), ["mandate", "run", spec_str]);
+    assert!(
+        failed.stderr.contains("spec changed since admission"),
+        "edited spec must re-escalate:\n{}",
+        failed.summary()
+    );
+}
+
+#[test]
+fn mandate_run_halts_on_budget_exhaustion() {
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+    let spec_path = scaffold_spec_with_mandate(&repo, "feat.s5d.run-budget", "standard", &[]);
+    // Tighten the budget to a single call before admission binds the sha.
+    let mut spec: s5d::Spec = load_yaml(&spec_path);
+    if let Some(ref mut m) = spec.mandate {
+        m.budget.max_calls = Some(1);
+    }
+    fs::write(&spec_path, serde_yaml::to_string(&spec).unwrap()).unwrap();
+    let spec_str = spec_path.to_str().unwrap();
+    run_ok(
+        repo.path(),
+        ["mandate", "admit", spec_str, "--reviewer", "Roman"],
+    );
+
+    run_ok(repo.path(), ["mandate", "run", spec_str]); // iteration 1/1
+    let failed = run_fail(repo.path(), ["mandate", "run", spec_str]); // 1 >= 1 → halt
+    assert!(
+        failed.stderr.contains("budget exhausted"),
+        "exhausted budget must halt the loop:\n{}",
+        failed.summary()
+    );
+}
+
+#[test]
+fn mandate_run_halts_when_floor_gate_has_no_recorded_pass() {
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+    let spec_path = scaffold_spec_with_mandate(&repo, "feat.s5d.run-gate", "standard", &["schema"]);
+    let spec_str = spec_path.to_str().unwrap();
+    run_ok(
+        repo.path(),
+        ["mandate", "admit", spec_str, "--reviewer", "Roman"],
+    );
+
+    // No gate result recorded yet. The controller adjudicates RECORDED state and
+    // never executes gates itself — so it must escalate, not run the gate.
+    let failed = run_fail(repo.path(), ["mandate", "run", spec_str]);
+    assert!(
+        failed.stderr.contains("gate floor 'schema'") && failed.stderr.contains("recorded"),
+        "missing recorded gate pass must halt the loop:\n{}",
+        failed.summary()
+    );
+}
+
+#[test]
+fn mandate_run_continues_when_floor_gate_recorded_pass() {
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+    let spec_path =
+        scaffold_spec_with_mandate(&repo, "feat.s5d.run-gpass", "standard", &["schema"]);
+    let spec_str = spec_path.to_str().unwrap();
+    run_ok(
+        repo.path(),
+        ["mandate", "admit", spec_str, "--reviewer", "Roman"],
+    );
+
+    // Agent self-gates and records a pass; THEN the controller authorizes the loop.
+    configure_gate_command(&repo, "schema", vec!["true".into()]);
+    run_ok(repo.path(), ["verify", "run-gates", spec_str]);
+
+    let step = run_ok(repo.path(), ["mandate", "run", spec_str]);
+    assert!(
+        step.stdout.contains("continue"),
+        "recorded gate pass must let the loop continue:\n{}",
+        step.summary()
+    );
+}
+
+/// Boundary guard: s5d is a control plane, not a task orchestrator. `mandate run`
+/// may authorize the next phase and consume budget, but it must NOT start the
+/// phase or emit an engine task package — running the work is the agent's job.
+#[test]
+fn mandate_run_adjudicates_without_orchestrating() {
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+    let spec_path = scaffold_spec_with_mandate(&repo, "feat.s5d.run-boundary", "standard", &[]);
+    let spec_str = spec_path.to_str().unwrap();
+    run_ok(
+        repo.path(),
+        ["mandate", "admit", spec_str, "--reviewer", "Roman"],
+    );
+
+    run_ok(repo.path(), ["mandate", "run", spec_str]);
+
+    let record: s5d::Record = load_yaml(&record_path_for(&spec_path));
+    assert!(
+        record.active_phase.is_none(),
+        "mandate run must not auto-start a phase"
+    );
+    let tasks_dir = repo.path().join(".s5d").join("tasks");
+    let emitted_artifact = tasks_dir.exists() && fs::read_dir(&tasks_dir).unwrap().next().is_some();
+    assert!(
+        !emitted_artifact,
+        "mandate run must not emit an engine task artifact"
     );
 }

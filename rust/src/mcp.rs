@@ -166,6 +166,29 @@ fn core_tools() -> Vec<Value> {
             }
         }),
         json!({
+            "name": "s5d_mandate_admit",
+            "description": "Admit a spec's mandate envelope — one human approval, SHA-bound. Authorizes the autonomous loop; re-escalates if the spec is later edited. Rejects high/decision tiers and unbounded/under-gated envelopes.",
+            "inputSchema": {
+                "type": "object",
+                "required": ["spec", "reviewer"],
+                "properties": {
+                    "spec": {"type": "string", "description": "Path to .s5d.yaml file"},
+                    "reviewer": {"type": "string", "description": "Reviewer name — the human authorizing the autonomous loop"}
+                }
+            }
+        }),
+        json!({
+            "name": "s5d_mandate_run",
+            "description": "One autonomous-loop control step. s5d adjudicates admission/gate-floor/drift/budget and returns the next phase to run, or halts (escalate/complete). s5d never runs an engine itself — the calling agent executes the returned phase and re-invokes this each cycle.",
+            "inputSchema": {
+                "type": "object",
+                "required": ["spec"],
+                "properties": {
+                    "spec": {"type": "string", "description": "Path to .s5d.yaml file"}
+                }
+            }
+        }),
+        json!({
             "name": "s5d_import",
             "description": "Transactional import — apply spec to alias table and ledger",
             "inputSchema": {
@@ -512,6 +535,8 @@ fn handle_tools_call(params: &Value) -> anyhow::Result<Value> {
         "s5d_preview" => tool_s5d_preview(args)?,
         "s5d_approve" => tool_s5d_approve(args)?,
         "s5d_run_gates" => tool_s5d_run_gates(args)?,
+        "s5d_mandate_admit" => tool_s5d_mandate_admit(args)?,
+        "s5d_mandate_run" => tool_s5d_mandate_run(args)?,
         "s5d_import" => tool_s5d_import(args)?,
         "s5d_decide" => tool_s5d_decide(args)?,
         "s5d_add_hypothesis" => tool_s5d_add_hypothesis(args)?,
@@ -1318,6 +1343,98 @@ fn tool_s5d_run_gates(args: &Value) -> anyhow::Result<String> {
         anyhow::bail!("{}", out);
     }
     Ok(out.trim_end().to_string())
+}
+
+// ── s5d_mandate_admit / s5d_mandate_run ───────────────────────────────────────
+
+fn tool_s5d_mandate_admit(args: &Value) -> anyhow::Result<String> {
+    let spec_arg = args["spec"]
+        .as_str()
+        .ok_or_else(|| anyhow::anyhow!("missing required argument: spec"))?;
+    let reviewer = args["reviewer"]
+        .as_str()
+        .ok_or_else(|| anyhow::anyhow!("missing required argument: reviewer"))?
+        .trim();
+    if reviewer.is_empty() {
+        anyhow::bail!("reviewer must not be empty");
+    }
+
+    let (project, spec_path, spec, spec_filename) = load_spec_context_mcp(spec_arg)?;
+    if spec.mandate.is_none() {
+        anyhow::bail!("spec has no `mandate:` envelope to admit");
+    }
+
+    // Hard gate: the WHOLE spec must be valid before a human authorizes an
+    // autonomous loop over it (not just the mandate fields).
+    let errors = crate::validate::validate_spec(&spec);
+    if !errors.is_empty() {
+        anyhow::bail!(
+            "spec is invalid — cannot admit a mandate over it:\n  - {}",
+            errors.join("\n  - ")
+        );
+    }
+
+    let spec_sha = crate::S5dProject::file_sha256(&spec_path)?;
+    let mut record = project
+        .load_record(&spec_filename)?
+        .ok_or_else(|| anyhow::anyhow!("no record found for {}", spec_filename))?;
+    record.mandate_admission = Some(crate::MandateAdmission {
+        reviewer: reviewer.into(),
+        date: chrono::Utc::now().to_rfc3339(),
+        spec_sha256: spec_sha.clone(),
+    });
+    project.save_record(&spec_filename, &record)?;
+
+    Ok(format!(
+        "Mandate admitted: {spec_filename} (reviewer: {reviewer})\nspec_sha256: {spec_sha}\nAutonomous loop authorized until the spec changes."
+    ))
+}
+
+/// One autonomous-loop control step. s5d adjudicates and returns the next phase;
+/// it never runs an engine itself (control plane, not orchestrator). The calling
+/// agent executes the returned phase and re-invokes this each cycle. Escalation
+/// (admission/gate/drift/budget) surfaces as a tool error; scope exhaustion and
+/// continuation surface as Ok text.
+fn tool_s5d_mandate_run(args: &Value) -> anyhow::Result<String> {
+    let spec_arg = args["spec"]
+        .as_str()
+        .ok_or_else(|| anyhow::anyhow!("missing required argument: spec"))?;
+    let (project, spec_path, spec, spec_filename) = load_spec_context_mcp(spec_arg)?;
+    let mut record = project
+        .load_record(&spec_filename)?
+        .ok_or_else(|| anyhow::anyhow!("no record found for {}", spec_filename))?;
+
+    match crate::mandate::adjudicate_mandate(&project, &spec, &spec_path, &spec_filename, &record)?
+    {
+        crate::mandate::MandateStep::Escalate { reason } => anyhow::bail!("escalate: {reason}"),
+        crate::mandate::MandateStep::Complete => {
+            Ok("complete: all phases accepted — mandate scope exhausted".into())
+        }
+        crate::mandate::MandateStep::Continue {
+            phase_id,
+            scope,
+            iteration,
+            max_calls,
+            stop_conditions,
+        } => {
+            record.mandate_iterations = iteration;
+            project.save_record(&spec_filename, &record)?;
+            let budget_note = max_calls
+                .map(|m| format!("{iteration}/{m}"))
+                .unwrap_or_else(|| iteration.to_string());
+            let stop_line = if stop_conditions.is_empty() {
+                String::new()
+            } else {
+                format!(
+                    "\n  stop-conditions (agent-evaluated): {}",
+                    stop_conditions.join("; ")
+                )
+            };
+            Ok(format!(
+                "continue: next phase {phase_id} (iteration {budget_note})\n  scope: {scope}{stop_line}\n  the agent runs it (e.g. s5d run start {spec_arg} --id {phase_id}); s5d does not run engines."
+            ))
+        }
+    }
 }
 
 // ── s5d_import ────────────────────────────────────────────────────────────────

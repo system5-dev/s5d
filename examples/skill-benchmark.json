@@ -1,0 +1,229 @@
+{
+  "benchmark": "S5D skill vs native assistant",
+  "date": "2026-06-14",
+  "scale": "criterion scores are judged 0.0..1.0; output is weighted percent",
+  "required_tags": [
+    "happy-path",
+    "edge-case",
+    "failure-handling",
+    "scope-drift",
+    "stale-intent"
+  ],
+  "artifacts": [
+    {
+      "kind": "protocol",
+      "path": "docs/testing-and-benchmarking.md",
+      "note": "Benchmark contract and guardrails."
+    }
+  ],
+  "criteria": [
+    {
+      "id": "correctness",
+      "label": "Correctness",
+      "weight": 4,
+      "description": "The answer or patch satisfies the actual task."
+    },
+    {
+      "id": "scope",
+      "label": "Scope preservation",
+      "weight": 2,
+      "description": "The run avoids unrelated changes and preserves repo boundaries."
+    },
+    {
+      "id": "evidence",
+      "label": "Evidence discipline",
+      "weight": 3,
+      "description": "Claims are backed by files, commands, artifacts, or explicit uncertainty."
+    },
+    {
+      "id": "tests",
+      "label": "Verification",
+      "weight": 1,
+      "description": "Relevant tests/checks are run or the gap is stated clearly."
+    }
+  ],
+  "cases": [
+    {
+      "id": "T01",
+      "name": "Shape a small feature into an S5D spec",
+      "tags": ["happy-path"],
+      "prompt": "Turn this bounded feature request into the smallest valid S5D package.",
+      "expected_best_shape": "Preserve the accepted lifecycle, fill concrete acceptance scenarios, and avoid over-building infrastructure.",
+      "artifacts": [
+        {
+          "kind": "prompt",
+          "path": "benchmarks/T01/prompt.md",
+          "note": "Placeholder path for the frozen task prompt."
+        }
+      ],
+      "runs": [
+        {
+          "id": "native",
+          "label": "Native assistant",
+          "scores": {
+            "correctness": 0.7,
+            "scope": 0.6,
+            "evidence": 0.4,
+            "tests": 0.4
+          },
+          "notes": [
+            "Template score only: replace with a judged transcript before using as evidence."
+          ]
+        },
+        {
+          "id": "skill",
+          "label": "S5D skill-guided assistant",
+          "scores": {
+            "correctness": 0.9,
+            "scope": 0.9,
+            "evidence": 0.8,
+            "tests": 0.7
+          },
+          "notes": [
+            "Template score only: replace with a judged transcript before using as evidence."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "T02",
+      "name": "Route a non-English high-risk request",
+      "tags": ["edge-case"],
+      "prompt": "добавить оплату и авторизацию в существующий пользовательский поток",
+      "expected_best_shape": "Treat payment/auth as high-tier despite non-English wording and deterministic router limitations.",
+      "runs": [
+        {
+          "id": "native",
+          "label": "Native assistant",
+          "scores": {
+            "correctness": 0.5,
+            "scope": 0.6,
+            "evidence": 0.3,
+            "tests": 0.3
+          },
+          "notes": [
+            "Template score only: replace with a judged transcript before using as evidence."
+          ]
+        },
+        {
+          "id": "skill",
+          "label": "S5D skill-guided assistant",
+          "scores": {
+            "correctness": 0.9,
+            "scope": 0.8,
+            "evidence": 0.8,
+            "tests": 0.6
+          },
+          "notes": [
+            "Template score only: replace with a judged transcript before using as evidence."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "T03",
+      "name": "Diagnose a repeated gate failure",
+      "tags": ["failure-handling"],
+      "prompt": "A configured gate failed twice with the same error. Continue the work.",
+      "expected_best_shape": "Stop variation attempts, read the error literally, inspect the configured command/help/source, and identify root cause before another run.",
+      "runs": [
+        {
+          "id": "native",
+          "label": "Native assistant",
+          "scores": {
+            "correctness": 0.4,
+            "scope": 0.5,
+            "evidence": 0.3,
+            "tests": 0.2
+          },
+          "notes": [
+            "Template score only: replace with a judged transcript before using as evidence."
+          ]
+        },
+        {
+          "id": "skill",
+          "label": "S5D skill-guided assistant",
+          "scores": {
+            "correctness": 0.9,
+            "scope": 0.9,
+            "evidence": 0.9,
+            "tests": 0.8
+          },
+          "notes": [
+            "Template score only: replace with a judged transcript before using as evidence."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "T04",
+      "name": "Review a diff against accepted intent",
+      "tags": ["scope-drift"],
+      "prompt": "Review this diff and check whether it violates the accepted S5D story and edge cases.",
+      "expected_best_shape": "Find behavioral drift, cite the accepted spec/record, and avoid treating a prose report as a passing gate.",
+      "runs": [
+        {
+          "id": "native",
+          "label": "Native assistant",
+          "scores": {
+            "correctness": 0.5,
+            "scope": 0.6,
+            "evidence": 0.2,
+            "tests": 0.4
+          },
+          "notes": [
+            "Template score only: replace with a judged transcript before using as evidence."
+          ]
+        },
+        {
+          "id": "skill",
+          "label": "S5D skill-guided assistant",
+          "scores": {
+            "correctness": 0.9,
+            "scope": 0.9,
+            "evidence": 1.0,
+            "tests": 0.8
+          },
+          "notes": [
+            "Template score only: replace with a judged transcript before using as evidence."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "T05",
+      "name": "Replay after branch state changed",
+      "tags": ["stale-intent"],
+      "prompt": "Repeat the review after the branch moved and the earlier findings may be stale.",
+      "expected_best_shape": "Refresh current checkout/HEAD, re-read affected files, and preserve only findings that still reproduce.",
+      "runs": [
+        {
+          "id": "native",
+          "label": "Native assistant",
+          "scores": {
+            "correctness": 0.4,
+            "scope": 0.5,
+            "evidence": 0.3,
+            "tests": 0.3
+          },
+          "notes": [
+            "Template score only: replace with a judged transcript before using as evidence."
+          ]
+        },
+        {
+          "id": "skill",
+          "label": "S5D skill-guided assistant",
+          "scores": {
+            "correctness": 0.9,
+            "scope": 0.9,
+            "evidence": 0.9,
+            "tests": 0.7
+          },
+          "notes": [
+            "Template score only: replace with a judged transcript before using as evidence."
+          ]
+        }
+      ]
+    }
+  ]
+}

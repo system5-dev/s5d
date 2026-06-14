@@ -1,0 +1,69 @@
+s5d: '1.0'
+id: note.blueprint-projection
+version: 1.0.0
+product: s5d
+tier: note
+allow_update: true
+meta:
+  title: note.blueprint-projection
+  authors: []
+  date: 2026-06-06
+  tickets: []
+  adrs: []
+  renames: []
+context: |
+  ## СТАТУС: пересмотрено вторым трибуналом + 6 source-probes против реальных файлов s5d.
+  Первая версия note опровергнута на ~70% — НЕ из-за источника (статья реальна, см. ниже),
+  а из-за переоценки механики против реальной схемы s5d.
+
+  ## Источник — ВЕРИФИЦИРОВАН [OBSERVED]
+  Goedel-Architect, arXiv:2606.06468v1 [cs.AI], 4 Jun 2026 (Princeton Language and Intelligence:
+  Arora, Chi Jin, Danqi Chen, Mengdi Wang и др. + Amazon). Прочитан с первоисточника (PDF на диске)
+  и лично Романом. Ранняя ревизия ошибочно сочла источник фантомом (index-lag WebSearch на свежую
+  июнь-2026 статью + устаревший training cutoff: backbone DeepSeek-V4-Flash и бенч USAMO-2026 были
+  сочтены несуществующими — оба реальны и присутствуют в статье). Исправлено по первоисточнику.
+
+  Механика (Figure 1, [OBSERVED]): blueprint = dependency graph G0 определений и лемм, ведущий к
+  главной теореме T (рёбра = объявленные зависимости; узлы стартуют unsolved). Theorem proving
+  закрывает каждую лемму Lean-прувером ПАРАЛЛЕЛЬНО, ограничивая её объявленными родителями, проверяя
+  кандидат против Lean-компилятора + Mathlib; узел → solved / unsolved / formally negated. Refinement:
+  провал несёт один из ДВУХ диагнозов — STATEMENT_WRONG (формализация ложна → переписать) или
+  PROOF_TOO_HARD (провабельна, но не сцеплена с родителями → декомпозиция в helper-леммы) → ревизия
+  G_{k+1}, solved-узлы сохраняются, ре-прув, цикл до полного закрытия либо до исчерпания budget.
+  ПРИМЕЧАНИЕ: реальная таксономия статьи = 2 диагноза, НЕ 5-way (5-way была МОЕЙ proposal-порта).
+
+  ## Второй трибунал (Codex + Gemini, оба CONCERNS/HIGH) — что ОПРОВЕРГНУТО [OBSERVED]
+  - "scoped re-derive без графа" — ЛОВУШКА: invalidate transitive dependents СТРОГО требует
+    dependency graph. Нельзя получить выгоду графа, не заплатив за граф. (был мой "минимальный кирпич")
+  - "projection из spec" — НЕ чистая: схема не имеет work-node / implementation-deps (probe P2),
+    только domain-level links.edges. Либо проекция из СУЩЕСТВУЮЩИХ edges (пере-визуализация),
+    либо schema-change сейчас (противоречит "schema потом"). Чистой проекции work-DAG нет.
+  - 5-way failure-таксономия НЕ операционализирует evidence.refine_kind — оси ОРТОГОНАЛЬНЫ (probe P3). Отложить.
+  - mandatory-для-standard убит распределением размеров (probe P1: ~85% спеков <3 компонентов = ceremony).
+  - ГРАНИЦА (Gemini, ключевое возражение): s5d = control plane для REPO STATE, НЕ task orchestrator
+    (Airflow/Make). Execution work-DAG смешивает target-state (ЧТО верифицируется) с work-plan
+    (КАК агент секвенирует фикс). s5d определяет ЧТО; агент определяет КАК.
+
+  ## Что ВЫЖИЛО — единственный честный перенос
+  "Structural Invalidation Pattern" как REASONING-guidance (не механика, не новая схема, не mandatory):
+  при провале АВТОМАТИЧЕСКОГО гейта на компоненте X агент использует СУЩЕСТВУЮЩИЙ graph_check
+  (Tarjan SCC на domain links.edges; реален — rust/src/lib.rs: graph_check/tarjan_scc/check_domain_layering)
+  → находит downstream-компоненты → метит их evidence STALE перед повторной имплементацией.
+  Ноль новой схемы; использует то, что уже есть; не нарушает control-plane/orchestrator границу.
+
+  ## Mandate
+  Reasoning pattern, opt-in. Полноценный execution-DAG (если когда-нибудь понадобится) — только как
+  sidecar-артефакт вне канонической spec-схемы (.s5d/run/), для будущих High-tier спеков (сейчас их 0),
+  с явными lifecycle-правилами и обучением graph_check формату sidecar. НЕ сейчас, НЕ mandatory, НЕ в spec-схему.
+workflow: null
+artifacts: null
+links: null
+contracts: []
+gates: []
+roc: null
+problem: null
+hypotheses: []
+decision: null
+note_rationale: 'Пересмотрено вторым трибуналом + 6 source-probes против реальных файлов s5d. Источник Goedel-Architect (arXiv 2606.06468v1, 4 Jun 2026, Princeton Language and Intelligence) ВЕРИФИЦИРОВАН по первоисточнику (PDF на диске) и прочтён Романом лично — ранняя ревизия ошибочно сочла его фантомом (index-lag WebSearch + устаревший training cutoff), исправлено. Реальная механика: blueprint = dependency-DAG лемм, параллельное закрытие узлов Lean-прувером, 2 диагноза провала (STATEMENT_WRONG / PROOF_TOO_HARD) драйвят ревизию глобального blueprint. Опровергнуто (из probes против s5d, НЕ из-за источника): mandatory-DAG (P1 — 85% спеков <3 компонентов), projection-из-spec (P2 — work-node-deps нет в схеме), 5-way-таксономия как операционализация refine_kind (P3 — ортогональны; реальная таксономия статьи = 2 диагноза), scoped-re-derive-без-графа (логическая ловушка). Граница (Gemini): s5d = control plane, НЕ task orchestrator. ВЫЖИЛО: "Structural Invalidation Pattern" — reasoning-guidance поверх СУЩЕСТВУЮЩЕГО graph_check (Tarjan SCC на domain edges), ноль новой схемы, opt-in.'
+expires_at: 2026-09-04
+auto_noted: false

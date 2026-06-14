@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-pub const TEMPLATE_VERSION: u32 = 2;
+pub const TEMPLATE_VERSION: u32 = 3;
 
 // Marker contract: every generated CI file starts with this prefix on line 1.
 // Presence is the signal that the file is managed by s5d; absence means the
@@ -196,9 +196,9 @@ fn parse_marker_version(line: &str) -> Option<u32> {
     version_str.parse().ok()
 }
 
-/// Run built-in CI checks (validate, architecture, drift) — no gate_commands
-/// or config-driven engines are executed. Fork-PR trust boundary: only
-/// read-only checks that cannot be subverted by PR author.
+/// Run built-in CI checks (validate, component path/architecture markers, drift)
+/// — no gate_commands or config-driven engines are executed. Fork-PR trust
+/// boundary: only read-only checks that cannot be subverted by PR author.
 ///
 /// Returns `Ok(true)` when all checks pass, `Ok(false)` on any failure
 /// (caller should exit non-zero).
@@ -229,8 +229,11 @@ pub fn ci_exec(root: &Path) -> anyhow::Result<bool> {
             all_passed = false;
         }
 
-        // (b) Architecture check for specs with architecture gate
-        if spec.gates.iter().any(|g| g.kind == "architecture") {
+        // (b) Component path / architecture marker check. `components[].paths`
+        // is the code-existence binding, so generated CI must fail when a
+        // component points at source that does not resolve even if the spec did
+        // not declare an optional `architecture` gate.
+        if should_run_architecture_check(spec) {
             match crate::architecture_check(spec, &project.root) {
                 Ok(report) => {
                     if report.errors.is_empty() {
@@ -292,4 +295,14 @@ pub fn ci_exec(root: &Path) -> anyhow::Result<bool> {
     }
 
     Ok(all_passed)
+}
+
+fn should_run_architecture_check(spec: &crate::models::Spec) -> bool {
+    spec.gates.iter().any(|gate| gate.kind == "architecture")
+        || spec.artifacts.as_ref().is_some_and(|artifacts| {
+            artifacts
+                .components
+                .iter()
+                .any(|component| !component.paths.is_empty())
+        })
 }

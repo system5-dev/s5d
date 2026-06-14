@@ -1,37 +1,57 @@
 s5d: '1.0'
-id: feat.s5d.autonomous-loop-mandate
+id: feat.s5d.waiver-enforcement
 version: 1.0.0
 product: s5d
-tier: standard
+tier: high
 allow_update: true
 meta:
-  title: autonomous-loop-mandate
+  title: waiver-enforcement
   authors: []
-  date: 2026-06-14
+  date: 2026-06-12
   tickets: []
   adrs: []
   renames: []
-context: |
-  ## Problem
+context: '## Problem
+
+  Docs promise "High | No waivers allowed" and "assurance gates never waivable", but
+  s5d_waiver only checks gate existence and import accepts any non-expired waived
+  status — high-tier schema/graph/review are bypassable via MCP (external audit, CRITICAL).
+
 
   ## Goal
 
+  Enforce the written contract in code at BOTH boundaries: waiver creation refuses
+  high-tier specs and assurance kinds; import refuses records carrying contract-forbidden
+  waivers (defense against pre-existing/tampered records). Single shared predicate
+  so docs, creation, and import cannot drift.
+
+
   ## Privacy
+
   Classification: Internal
+
+  '
 workflow:
   mode: plan
   target_architecture:
-    summary: Describe the steady-state design this change should reach
-    invariants: []
+    summary: 'gates::waiver_forbidden_reason(tier, kind) is the single source of truth:
+      high tier → no waivers of any kind; assurance kinds (schema, graph, review,
+      architecture, contract, privacy) → never waivable on any tier. tool_s5d_waiver
+      consults it before writing; both import paths consult it before accepting a
+      waived gate result. Docs aligned to the same canonical set.'
+    invariants:
+    - A waived assurance gate can neither be created nor imported
+    - High-tier records with any waiver are rejected at import
+    - Command gates (test/lint/timeout) on non-high tiers remain waivable
   delivery_strategy:
     summary: Describe how this change moves current code toward the target architecture
     rationale: null
   resources: null
   role_map:
-    implementer: coder
-    reviewer: reviewer
     owner: human
     verifier: reviewer
+    implementer: coder
+    reviewer: reviewer
   review_policy:
     cross_model_required: false
     required_on: []
@@ -62,8 +82,11 @@ workflow:
     - implementer
     - reviewer
     acceptance:
-    - Declared gates pass
-    - Change matches approved scope
+    - MCP waiver on assurance kind or high tier → refused with reason
+    - Import refuses record with forbidden waived gate (tamper defense)
+    - Command-gate waiver on standard tier still works end-to-end
+    - s5d_decide schema requires challenge_summary; S5D.md Decide prose matches SKILL.md;
+      docs_sync guards challenge semantics
     rollback:
     - Revert or reconcile if gates or review fail
   - id: measure
@@ -91,16 +114,16 @@ artifacts:
     team: null
     maturity_level: null
   capabilities:
-  - id: cap.autonomous-loop-mandate
+  - id: cap.waiver-enforcement
     domain: dom.s5d.core
-    name: autonomous loop mandate
+    name: Waiver contract enforcement
     description: null
     since: null
   entities: []
   features:
-  - id: feat.s5d.autonomous-loop-mandate
+  - id: feat.s5d.waiver-enforcement
     product: s5d
-    name: autonomous-loop-mandate
+    name: waiver-enforcement
     description: null
   use_cases: []
   systems:
@@ -113,22 +136,14 @@ artifacts:
     name: s5d app
     technology: null
   components:
-  - id: comp.autonomous-loop-mandate
-    feature: feat.s5d.autonomous-loop-mandate
+  - id: comp.waiver-enforcement
+    feature: feat.s5d.waiver-enforcement
     domain: dom.s5d.core
     container: ctr.s5d.app
-    name: autonomous loop mandate component
+    name: waiver enforcement
     paths:
-    - rust/src/bin/s5d.rs
+    - rust/src/gates.rs
     - rust/src/mcp.rs
-    - rust/src/models.rs
-    - rust/src/mandate.rs
-    - rust/src/phase_gates.rs
-    - rust/src/template.rs
-    - rust/src/validate.rs
-    - rust/tests/standalone_repos.rs
-    - skills/s5d/SKILL.md
-    - skills/s5d/metamodel.md
   roles: []
   concerns: []
   metrics: []
@@ -136,13 +151,13 @@ artifacts:
   transports: []
 links:
   feature_to_domain:
-  - feature: feat.s5d.autonomous-loop-mandate
+  - feature: feat.s5d.waiver-enforcement
     domain: dom.s5d.core
   use_case_to_capability: []
   use_case_to_entity: []
   component_to_capability:
-  - component: comp.autonomous-loop-mandate
-    capability: cap.autonomous-loop-mandate
+  - component: comp.waiver-enforcement
+    capability: cap.waiver-enforcement
   component_to_entity: []
   container_to_capability: []
   concern_to_metric: []
@@ -156,9 +171,24 @@ contracts: []
 gates:
 - kind: schema
 - kind: graph
+- kind: review
 roc: null
 problem: null
-hypotheses: []
+hypotheses:
+- id: shared-waivability-rule
+  title: Shared waivability rule
+  content: One const + one function in gates.rs consulted by waiver creation AND both
+    import paths; docs_sync pins doc list to the code constant
+  scope: gate enforcement
+  kind: system
+  layer: L0
+  r_eff: null
+  evidence: []
+  depends_on: []
+  rationale: null
+  spec_ref: null
+  prompt: null
+  next_move: null
 decision: null
 note_rationale: null
 expires_at: null

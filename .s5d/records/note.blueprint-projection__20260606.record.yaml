@@ -1,10 +1,10 @@
-spec_ref: feat.s5d.autonomous-loop-mandate__20260614.s5d.yaml
-spec_sha256: sha256:d3fc877fbadeccd98ef7a2ef57e06bea8b6af8ba7743a565d9db578be12817f2
+spec_ref: note.blueprint-projection__20260606.s5d.yaml
+spec_sha256: sha256:aba050080ccd1be360b955968e6ec33c9e857bc69632a578f64bc27d0d881284
 status: proposed
-sync_status: degraded
+sync_status: unknown
 status_history:
 - status: proposed
-  timestamp: 2026-06-14T06:29:06.419574+00:00
+  timestamp: 2026-06-06T07:51:26.906910+00:00
 active_phase: null
 phase_history: []
 phase_runs: []
