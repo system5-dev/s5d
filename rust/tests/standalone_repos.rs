@@ -5758,7 +5758,7 @@ fn ci_init_rewires_managed_stub_and_check_flags_unwired_gitlab() {
     assert!(
         fs::read_to_string(&root_ci)
             .unwrap()
-            .starts_with(&format!("# s5d-ci-template: v{}", 1)),
+            .starts_with(&format!("# s5d-ci-template: v{}", s5d::ci::TEMPLATE_VERSION)),
         "managed stub must be regenerated to the current template version"
     );
 

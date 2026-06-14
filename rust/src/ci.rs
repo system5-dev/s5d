@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-pub const TEMPLATE_VERSION: u32 = 1;
+pub const TEMPLATE_VERSION: u32 = 2;
 
 // Marker contract: every generated CI file starts with this prefix on line 1.
 // Presence is the signal that the file is managed by s5d; absence means the

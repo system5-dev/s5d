@@ -1,6 +1,8 @@
 name: s5d
 on:
   pull_request:
+  push:
+    branches: [main, master]
 permissions:
   contents: read
 jobs:
