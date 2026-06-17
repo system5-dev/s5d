@@ -182,6 +182,16 @@ Schema, graph, and architecture gates run built-in validation. Generated CI alwa
 - `docs/testing-and-benchmarking.md` — test layers and skill-vs-native benchmark contract
 - `examples/skill-benchmark.json` — five-family fuzzy benchmark suite template (`happy-path`, `edge-case`, `failure-handling`, `scope-drift`, `stale-intent`)
 
+## Credits
+
+Built on the shoulders of giants:
+
+- Groundwork and tooling from **system5-dev**.
+- Metamodel authored by **Ivan Podobed** (Иван Подобед).
+- Partially draws on **FPF** by **Anatoly Levenchuk** (Анатолий Левенчук).
+
+No warranties either way — see License. 🙂
+
 ## License
 
-MIT
+Apache-2.0 — see [LICENSE](LICENSE).
