@@ -1,0 +1,18 @@
+{
+  "name": "s5d",
+  "owner": {
+    "name": "system5-dev",
+    "email": "rvoronin@quandex.com"
+  },
+  "description": "S5D — control plane for repository changes with AI participation.",
+  "plugins": [
+    {
+      "name": "s5d",
+      "source": "./",
+      "description": "S5D — decision and validation layer for repo changes. Preview, approve, import, drift-check, rollback.",
+      "homepage": "https://github.com/system5-dev/s5d",
+      "repository": "https://github.com/system5-dev/s5d",
+      "license": "Apache-2.0"
+    }
+  ]
+}

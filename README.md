@@ -121,7 +121,34 @@ s5d init --claude
 s5d init --all
 ```
 
-Available as a plugin for Claude Code, Gemini CLI, and Codex.
+### Install as a plugin
+
+Instead of cloning, install S5D directly from the GitHub repo.
+
+**Claude Code** — add the marketplace, then install the plugin:
+
+```
+/plugin marketplace add system5-dev/s5d
+/plugin install s5d@s5d
+```
+
+Updates: `/plugin marketplace update s5d`.
+
+**Gemini CLI** — install the extension from the repo URL (requires `git`):
+
+```bash
+gemini extensions install https://github.com/system5-dev/s5d
+```
+
+Updates: `gemini extensions update s5d`.
+
+**Codex (and CLI/MCP from a checkout)** — Codex has no marketplace install; use the
+`install.sh` path above, then register the MCP server and skills from the checkout:
+
+```bash
+s5d init --codex   # or --claude / --gemini / --cursor / --all
+```
+
 
 ## CI enforcement
 
