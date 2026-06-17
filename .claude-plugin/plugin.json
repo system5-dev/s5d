@@ -1,6 +1,6 @@
 {
   "name": "s5d",
-  "version": "0.11.0-alpha.15",
+  "version": "0.11.0-alpha.16",
   "description": "S5D — decision and validation layer for repo changes. Preview, approve, import, drift-check, rollback.",
   "skills": [
     "./skills/s5d",
