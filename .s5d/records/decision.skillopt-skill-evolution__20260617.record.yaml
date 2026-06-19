@@ -1,0 +1,43 @@
+spec_ref: decision.skillopt-skill-evolution__20260617.s5d.yaml
+spec_sha256: sha256:b42a161916ec529d876da1259e8e5e5a6f79e66e9707bce5acd5e1c7bdc3ceb4
+status: proposed
+sync_status: unknown
+status_history:
+- status: proposed
+  timestamp: 2026-06-17T19:04:45.808477+00:00
+active_phase: null
+phase_history: []
+phase_runs: []
+approvals: []
+preview: null
+reflection: null
+gate_results: []
+decision:
+  title: Adopt H2 (quarantined external optimizer, human-gated); reject naive in-tree automated gate; keep H4 open
+  winner_id: external-offline-optimizer-pr-s5d-gates
+  rejected_ids:
+  - skillopt-as-a-mandate-gated-flow-in-tree
+  - do-not-build-score-variance-defeats-the-gate
+  context: Evaluating whether to integrate SkillOpt-style (arXiv 2605.23904) validation-gated skill optimization into S5D. S5D already owns the substrate (deterministic benchmark aggregator, evidence/gate/SHA chain, autonomous-loop Mandate envelope) but has no optimizer-edit step. A probe arc + a 2-auditor tribunal (Codex+Gemini) informed the choice.
+  decision: 'Adopt H2: a SkillOpt-style optimizer may run ONLY as an external, quarantined candidate-generator that emits a candidate skill + benchmark report as a PR; S5D''s role is unchanged human-gated preview/approve/import, with `s5d run benchmark` as ADVISORY only and no automated accept/reject. H2 is binding only with an artifact-boundary contract (provenance, optimizer config, benchmark protocol, raw judge outputs, rejected-edit history, no direct mutation path) — else it collapses into H3. S5D must never run or steer the optimizer loop.'
+  rationale: 'Naive in-tree automated gating (H1) on absolute single-shot LLM scores is noise-dominated under the current protocol: a fixed rollout scored 57-75% across independent gradings (18pt spread) plus a ~20pt framing-dependent mean shift on identical input — together ≥ SkillOpt''s +19pt reported lift — so a strictly-improves gate would accept regressions and reject gains. The structural reason is decisive (independently verified by Codex at rust/src/benchmark.rs:122, s5d.rs:1354): s5d''s benchmark is a deterministic aggregator of EXTERNALLY-supplied scores, not a judge; automating on it would launder external judge variance into an apparently deterministic s5d verdict. Per the tribunal, this rejects automation FOR THE CURRENT ABSOLUTE-SCORING PROTOCOL, not automation in principle. H2 keeps the human as acceptance authority and preserves control-plane≠orchestrator. The 18/20pt figures are red-flag evidence, not a validated noise model.'
+  consequences: Skill evolution stays human-in-the-loop ("assisted editing", not autonomous self-evolution) — accepted trade-off. The optimizer is out of scope for s5d itself; if built, it lives in a separate tool. The one concrete s5d-side deliverable is feat.s5d.external-skill-pr-contract (the artifact-boundary contract). H4 (pairwise A/B + statistical delta-gating over K INDEPENDENT samples, with objective checks where applicable and human merge) is the deferred future path that could re-enable automated acceptance once a preregistered low-variance protocol + harness exist; the door is explicitly left open.
+  decided_at: 2026-06-18T17:47:58.251679+00:00
+  confirmed_by: Roman
+  expires_at: 2026-09-16
+  do_list: []
+  dont_list: []
+  challenge:
+    mode: standard
+    passed: true
+    summary: '2-auditor tribunal (Codex+Gemini, Opus arbiter), both CONCERNS/HIGH, convergent. Probes: objective metrics could gate code-skills (but s5d skills are largely judgment/process); evidence weakness n=3 + one batched call single judge (acknowledged, figures = red-flag not proof); optimizer gaming the reviewer (mitigated by advisory benchmark + adversarial review); human reviewer becomes bottleneck (accepted H2 trade-off); status-quo ≈ H3. Both flagged the rationale overclaimed (naive-gate-failure ≠ automation-impossible) and named missing H4 (pairwise/statistical gating). Conditions actioned before decide: H4 added + decomposed, rationale narrowed to absolute-scoring-variance, H2 artifact-boundary contract bound. No fatal flaw to H2 topology; control-plane≠orchestrator independently confirmed sound.'
+    checks: []
+  decision_subject: null
+  decision_subject_granularity: null
+  evaluative_surface: null
+  belief_state: null
+  outcome_model: null
+  pareto_set: []
+  choice_rule: null
+verified_by: null
+drift_tolerance: null

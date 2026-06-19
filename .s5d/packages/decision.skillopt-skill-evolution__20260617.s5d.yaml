@@ -1,0 +1,164 @@
+s5d: '1.0'
+id: decision.skillopt-skill-evolution
+version: 1.0.0
+product: s5d
+tier: decision
+allow_update: true
+meta:
+  title: skillopt-skill-evolution
+  authors: []
+  date: 2026-06-17
+  tickets: []
+  adrs: []
+  renames: []
+context: null
+workflow: null
+artifacts: null
+links: null
+contracts: []
+gates:
+- kind: review
+roc: null
+problem:
+  signal: SkillOpt (arXiv 2605.23904) shows validation-gated bounded-edit optimization on a skill document yields +19-24pt accuracy lift inside agent loops, including Claude Code. S5D already owns the substrate — s5d run benchmark emits a scalar rubric score (native vs skill), the evidence/gate/SHA chain governs bounded doc edits, and the autonomous-loop Mandate envelope provides the approve-once loop — but has no optimizer-edit step wiring these together.
+  constraints:
+  - control-plane≠orchestrator invariant (note.blueprint-projection) — optimizer/rollout loop must not live inside the skill; no weakening of evidence/gate/SHA guarantees; rubric judge variance must be measured/bounded before trusting an automated accept-reject gate; high/decision-tier skills stay human-gated (Mandate excludes them).
+  targets:
+  - measurable skill-quality lift via s5d run benchmark; bounded change radius per accepted edit; full provenance (SHA-bound) of every accepted skill edit; zero new inference-time cost at deployment.
+  indicators: []
+  goodhart_guard: null
+  acceptance: 'A recorded decision on whether and how to integrate SkillOpt-style optimization that: (1) preserves control-plane≠orchestrator (optimizer loop is HOW/agent, s5d is WHAT/gate); (2) reuses s5d run benchmark as the strictly-improves gate; (3) explicitly addresses rubric-judge score variance before any automated accept/reject; (4) reuses the Mandate envelope rather than adding a parallel loop machine.'
+  blast_radius: null
+  reversibility: null
+  status: backlog
+hypotheses:
+- id: skillopt-as-a-mandate-gated-flow-in-tree
+  title: SkillOpt as a Mandate-gated flow (in-tree)
+  content: 'Add an s5d optimizer-edit step driven by the agent inside the existing autonomous-loop Mandate envelope: agent proposes a bounded add/delete/replace edit to a SKILL.md, runs `s5d run benchmark`, and the Mandate gate admits the edit ONLY if the weighted score strictly improves over the SHA-bound baseline; rejected edits go to a buffer, accepted edits are preview/approve/import SHA-bound as gate:benchmark evidence. The optimizer loop runs in the agent/harness (HOW); s5d only adjudicates+records (WHAT), preserving control-plane≠orchestrator. Reuses benchmark scorer + Mandate + ledger; new surface = a strictly-improves benchmark gate + textual lr-budget/rejected-edit buffer as Mandate stop-conditions.'
+  scope: s5d skill-evolution flow; Mandate envelope; benchmark gate
+  kind: system
+  layer: L0
+  r_eff: null
+  evidence:
+  - id: 20260618-internal-skillopt-as-a-mandate-gated-flow-in-tree
+    type: internal
+    content: 'H1-survival probe (does median-of-K rescue the gate?). Single gemini-3-flash call producing K=10 ''independent'' grades of the same fixed rollout: within-batch weighted% mean=48.6, stdev=2.5, spread=9.5pt; bootstrap median-of-5 stdev=0.9. BUT the 10 grades share one context → anchored/auto-correlated, so the within-batch tightness is an ARTIFACT, not real robustness. Decisive cross-condition signal: the SAME rollout scored mean ~68.7% (correctness=1.0 every time) under 3 independent calls vs mean 48.6% (correctness 0.6-0.8) in the batched call — a ~20pt framing-dependent mean shift on identical input, exceeding SkillOpt''s +19pt lift. CONCLUSION: median-of-K within a single call gives false stability; the dominant, decision-relevant variance is BETWEEN independent gradings + prompt framing, which a single-call median cannot capture or fix. Properly testing median-of-K needs K INDEPENDENT calls (gemini throttled at ~3 sequential this session). Naive H1 undermined; this evidence does NOT rescue a hardened H1 — the framing-shift is a larger threat than per-grade jitter. To salvage H1 you would need: pinned judge + fixed framing + temp=0 + K independent samples, and still prove the residual band < lift.'
+    verdict: refine
+    valid_until: 2026-09-16T17:37:28.338077+00:00
+    carrier_ref: null
+    formality: 3
+    claim_scope:
+    - H1 gate feasibility
+    - median-of-K efficacy
+    congruence_level: null
+    reliability: 0.55
+    refine_kind: calibrate
+    skill: s5d
+    agent: claude-opus-session
+  depends_on: []
+  rationale: null
+  spec_ref: null
+  prompt: Can SkillOpt's validation-gated edit loop be expressed entirely as a Mandate envelope + benchmark gate without new orchestration state in s5d?
+  next_move: build
+- id: external-offline-optimizer-pr-s5d-gates
+  title: External offline optimizer → PR → s5d gates
+  content: Keep the SkillOpt optimizer fully outside s5d as a standalone offline tool (separate repo/script + optimizer model) that emits a candidate SKILL.md plus a benchmark report; the only s5d touchpoint is the normal review/gate path — the candidate lands as a PR, CI runs s5d checks, and a human imports it if `s5d run benchmark` shows improvement. s5d gains zero new code; the optimizer is a black box that produces evidence s5d already knows how to gate. Maximally preserves the control-plane boundary (s5d never sees the loop) at the cost of no first-class integration, no Mandate reuse, and weaker provenance linking edits to rollouts.
+  scope: external tool; PR/CI gate; no s5d code change
+  kind: system
+  layer: L0
+  r_eff: null
+  evidence:
+  - id: 20260618-gate-review-external-offline-optimizer-pr-s5d-gates
+    type: gate:review
+    content: 'Tribunal (Opus arbiter; Codex + Gemini auditors, standard mode). Both: CONCERNS / HIGH — convergent. AGREED: H2 topology is architecturally sound and preserves control-plane≠orchestrator; the structural claim (s5d benchmark is a deterministic aggregator, not a judge) independently verified by Codex at rust/src/benchmark.rs:122 + rust/src/bin/s5d.rs:1354. CONCERNS (both): the rejection rationale OVERCLAIMS — it conflates ''naive absolute-score gate fails'' with ''automated gating impossible''; rejecting all automation on n=3 + a flawed metric is overfit. Both independently named the missing H4: pairwise A/B blinded judging + statistical delta-gating over K independent samples structurally cancels the ~20pt framing shift and the absolute-score variance. Codex: H2 is distinct from H3 only with a hard artifact-boundary contract (provenance, optimizer config, benchmark protocol, raw judge outputs, rejected-edit history, no direct mutation path) — else H2 collapses to H3-plus-tool. Both: do not rest the decision on the exact 18/20pt figures as a validated noise model (red flag, not proof); and do not strawman SkillOpt (its real gate uses rollout batches/held-out selection/rejected-edit buffers, not one scalar). ARBITER VERDICT: APPROVE WITH CONDITIONS — adopt H2 topology now; (1) narrow rationale to ''absolute single-shot LLM scoring is too noisy under current protocol'', not automation-in-principle; (2) add H4 as the future-compatible automated path; (3) bind H2''s artifact-boundary contract; (4) keep benchmark advisory. Conditions actioned: H4 added; rationale narrowed in the pending decision.'
+    verdict: refine
+    valid_until: 2026-09-16T17:44:06.802438+00:00
+    carrier_ref: null
+    formality: 4
+    claim_scope:
+    - decision rationale
+    - option space
+    - H2 boundary contract
+    congruence_level: null
+    reliability: 0.8
+    refine_kind: generalise
+    skill: tribunal
+    agent: tribunal:codex+gemini
+  depends_on: []
+  rationale: null
+  spec_ref: feat.s5d.external-skill-pr-contract__20260618.s5d.yaml
+  prompt: Is keeping the optimizer fully external (s5d only gates the resulting PR) sufficient, avoiding any in-tree coupling?
+  next_move: probe
+- id: do-not-build-score-variance-defeats-the-gate
+  title: Do not build — score variance defeats the gate
+  content: 'Reject automated SkillOpt integration on the grounds that s5d''s benchmark score is rubric/model-judged and too noisy to back a strictly-improves accept/reject gate: SkillOpt''s reported lift relies on low-variance objective benchmarks (reasoning/code), whereas a judge-variance score will accept regressions and reject real gains, silently degrading skills under the appearance of optimization. Instead: keep skill edits human-authored, use `s5d run benchmark` only as an advisory before/after check (not an automated gate), and revisit only if/when an objective low-variance scorer exists. Weakest-link first: the gate is only as trustworthy as the score feeding it.'
+  scope: score reliability; gate trustworthiness; no automation
+  kind: system
+  layer: L1
+  r_eff: null
+  evidence:
+  - id: 20260618-internal-do-not-build-score-variance-defeats-the-gate
+    type: internal
+    content: 'Source read of rust/src/benchmark.rs: score_skill_benchmark/score_run is a deterministic pure function — it reads per-criterion scores (0.0..1.0) directly from the suite file''s run.scores and returns a weighted percent. grep for reqwest|http|judge|llm|model|stdin in benchmark.rs returns nothing: no judge, no model call, no rollout execution. `s5d run benchmark <suite>` (RunCommand::Benchmark, s5d.rs:1354) only aggregates externally-supplied judgments. CONSEQUENCE: the benchmark has zero intrinsic variance (running it N times on a fixed suite is identical); the score variance a SkillOpt strictly-improves gate depends on lives entirely in the EXTERNAL judge that fills run.scores, which s5d neither provides nor touches. The original probe design ("run s5d benchmark N times, measure spread") was based on a wrong model and is void. The real probe is: pick a judge (LLM grader), score the SAME rollout N times, measure spread of run.scores — a HOW-side experiment outside s5d.'
+    verdict: refine
+    valid_until: 2026-09-16T08:14:21.055793+00:00
+    carrier_ref: null
+    formality: 4
+    claim_scope:
+    - benchmark score variance
+    - gate reliability
+    congruence_level: null
+    reliability: 0.9
+    refine_kind: specialise
+    skill: s5d
+    agent: claude-opus-session
+  - id: 20260618-internal-do-not-build-score-variance-defeats-the-gate
+    type: internal
+    content: 'Judge-variance probe: one fixed (task, answer) rollout graded 3× with an identical prompt by gemini-3-flash against the real suite rubric (correctness w4 / scope w2 / evidence w3 / tests w1). Results: weighted% = 75.0 / 74.0 / 57.0 → spread 18.0pt, stdev 8.3pt. correctness stable at 1.0; scope (0.5/0.5/0.0), evidence (0.8/0.8/0.5), tests (0.1/0.0/0.2) all flip on identical input. The 18pt noise band ≈ SkillOpt''s entire reported lift (+19pt), so a naive strictly-improves gate on this score is noise-dominated: it would accept regressions and reject real gains. Confirms H3''s premise for the naive gate. LIMITATIONS: N=3 only (the 8-call loop hung at call 3 twice — gemini stdin-hang / throttle), single judge, single rollout, no temperature=0 / median-of-K ensemble / stronger-judge comparison. Does NOT rule out a hardened judging protocol (lower temp, median-of-K, more objective criteria) shrinking the band below the lift — that is the H1-survival probe.'
+    verdict: pass
+    valid_until: 2026-09-16T09:52:32.944809+00:00
+    carrier_ref: null
+    formality: 3
+    claim_scope:
+    - rubric-judge variance magnitude
+    congruence_level: null
+    reliability: 0.6
+    refine_kind: null
+    skill: s5d
+    agent: claude-opus-session
+  depends_on: []
+  rationale: null
+  spec_ref: null
+  prompt: Is the rubric-judge score variance large enough that any automated strictly-improves gate is unsafe, making advisory-only the correct stance?
+  next_move: probe
+- id: quarantined-optimizer-pairwise-statistical-gate-human-merge
+  title: Quarantined optimizer, pairwise/statistical gate, human merge
+  content: 'Automated gating IS feasible if the gate is redesigned to defeat the measured failure modes (raised by both tribunal auditors). Replace absolute single-shot LLM scoring with: (a) PAIRWISE A/B blinded judging — judge compares baseline output vs candidate side-by-side with randomized order, returns which strictly improves on the rubric (structurally cancels the ~20pt absolute-framing shift); or (b) STATISTICAL delta gating — accept only if candidate mean exceeds baseline by Z·stdev over K INDEPENDENT judge calls (not one batched/anchored call), with a noise-band/effect-size threshold; plus objective deterministic checks (compile/test/lint) where the skill governs code. Preregistered protocol, raw judge outputs retained, regression/canary sets, and a human still merges the skill text. The optimizer loop stays OUTSIDE s5d (quarantined); s5d validates/imports artifacts and humans accept — never runs or steers the loop. Not buildable now (needs the protocol + an objective/pairwise harness s5d lacks), but the correct future path. Supersedes the weaker "no automation until an objective scorer exists" framing: the blocker is absolute-score variance, not automation in principle.'
+  scope: future automated gate; pairwise/statistical judging; quarantined optimizer
+  kind: system
+  layer: L0
+  r_eff: null
+  evidence:
+  - id: 20260618-external-quarantined-optimizer-pairwise-statistical-gate-human-merge
+    type: external
+    content: 'Both tribunal auditors (Codex + Gemini), independently, asserted that the measured failure modes are specific to ABSOLUTE single-shot scoring and are addressable: (a) pairwise A/B blinded judging (baseline vs candidate side-by-side, randomized order) structurally cancels the ~20pt absolute-framing mean shift, since both sides share the same frame; (b) statistical delta-gating — accept only if candidate beats baseline by Z·stdev over K INDEPENDENT judge calls — converts per-grade noise into a powered hypothesis test rather than a single-threshold coin-flip; (c) objective deterministic checks (compile/test/lint) gate code-governing skills with zero judge noise. Gemini noted pairwise A/B as a ''well-documented'' mitigation for LLM-judge context-anchoring. STATUS: design-direction only — UNTESTED in this repo; s5d has no pairwise/statistical/objective harness, and the residual-noise-below-effect-size claim is unproven. Treated as a deferred hypothesis (next_move=defer), not a validated path; it is the door left open, not a build commitment.'
+    verdict: refine
+    valid_until: 2026-09-16T17:46:22.145819+00:00
+    carrier_ref: null
+    formality: 2
+    claim_scope:
+    - future automated-gate viability via pairwise/statistical judging
+    congruence_level: null
+    reliability: 0.5
+    refine_kind: formalise
+    skill: tribunal
+    agent: tribunal:codex+gemini
+  depends_on: []
+  rationale: null
+  spec_ref: null
+  prompt: Can a pairwise/statistical gate over K independent samples push the residual noise band below the effect size, making automated acceptance safe — while keeping the optimizer quarantined outside s5d?
+  next_move: defer
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false
