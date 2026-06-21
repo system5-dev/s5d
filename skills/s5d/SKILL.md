@@ -275,8 +275,23 @@ Key commands (MCP + CLI). Full preconditions and the run/harness surface live in
 | Drift check | `s5d_drift_check` | `s5d state drift-check` |
 | Rollback | `s5d_rollback` | `s5d state rollback` |
 | Trace | `s5d_trace` | `s5d trace <path>` |
+| Debt harvest | `s5d_debt` | `s5d debt [--check]` |
 
 Legacy hidden aliases (e.g. `s5d add-hypothesis`, `s5d validate`, `s5d apply preview`) remain supported for existing scripts.
+
+### Simplification debt markers
+
+Constitution #3 allows temporary measures only when explicitly marked with a
+removal plan. Mark one at the cut-site with an inline comment: a comment leader
+(`//`, `#`, `/*`, or `<!--`) immediately followed by the token
+`s5d:debt(ceiling="what was cut", trigger="when to revisit")`. `ceiling` names
+the limitation; `trigger` names the condition to revisit it.
+
+`s5d debt` harvests these read-only, binds each marker to its owning
+spec/component (via the architecture component-path map), groups the report by
+owner, and flags `no-trigger` (empty or missing trigger — rots silently) and
+`unowned` (no component covers the file). `s5d debt --check` exits non-zero when
+any `no-trigger` marker exists, for use in CI or a pre-commit hook.
 
 ---
 
