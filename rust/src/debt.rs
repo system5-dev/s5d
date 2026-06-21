@@ -37,7 +37,11 @@ pub struct DebtMarker {
 impl DebtMarker {
     /// A marker is trigger-less when the trigger argument is missing or blank.
     pub fn is_no_trigger(&self) -> bool {
-        self.trigger.as_deref().map(str::trim).unwrap_or("").is_empty()
+        self.trigger
+            .as_deref()
+            .map(str::trim)
+            .unwrap_or("")
+            .is_empty()
     }
 
     pub fn is_unowned(&self) -> bool {
@@ -178,7 +182,10 @@ pub fn format_text(report: &DebtReport) -> String {
     // Group by owner, preserving a stable order; unowned last.
     let mut by_owner: BTreeMap<String, Vec<&DebtMarker>> = BTreeMap::new();
     for marker in &report.markers {
-        let key = marker.owner.clone().unwrap_or_else(|| "unowned".to_string());
+        let key = marker
+            .owner
+            .clone()
+            .unwrap_or_else(|| "unowned".to_string());
         by_owner.entry(key).or_default().push(marker);
     }
 

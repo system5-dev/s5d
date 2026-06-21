@@ -6466,7 +6466,14 @@ fn debt_binds_owner_and_skips_build_dirs() {
     run_ok(repo.path(), ["init"]);
     run_ok(
         repo.path(),
-        ["new", "feat.demo.core", "--tier", "lightweight", "--product", "demo"],
+        [
+            "new",
+            "feat.demo.core",
+            "--tier",
+            "lightweight",
+            "--product",
+            "demo",
+        ],
     );
     // Point the scaffold component at src/ so it covers src/owned.rs.
     let spec_path = spec_path_by_id(&repo, "feat.demo.core");
