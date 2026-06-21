@@ -6,6 +6,7 @@
 pub mod arch;
 pub mod benchmark;
 pub mod codebase;
+pub mod debt;
 pub mod discovery;
 pub mod drift;
 pub mod gate;

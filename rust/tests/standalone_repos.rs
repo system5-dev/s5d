@@ -6424,3 +6424,38 @@ fn mandate_run_adjudicates_without_orchestrating() {
         "mandate run must not emit an engine task artifact"
     );
 }
+
+#[test]
+fn debt_harvest_finds_markers_and_check_fails_on_no_trigger() {
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+
+    // Assemble the marker token at runtime so the literal never appears in this
+    // committed test source — otherwise `s5d debt` on the s5d repo itself would
+    // harvest these fixtures as phantom markers.
+    let tok = format!("{}:debt", "s5d");
+
+    // One well-formed marker (ceiling + trigger), one trigger-less marker in a
+    // different comment syntax. No spec covers these files → both unowned.
+    repo.write(
+        "src/with_trigger.rs",
+        &format!("fn f() {{}}\n// {tok}(ceiling=\"global lock\", trigger=\"when >1 writer\")\n"),
+    );
+    repo.write(
+        "src/no_trigger.py",
+        &format!("# {tok}(ceiling=\"O(n^2) scan\")\n"),
+    );
+
+    // Default harvest finds both, extracts the ceiling, flags only the
+    // trigger-less one, and marks both unowned (no component covers them).
+    let out = run_ok(repo.path(), ["debt"]);
+    assert!(out.stdout.contains("with_trigger.rs"), "{}", out.summary());
+    assert!(out.stdout.contains("global lock"), "{}", out.summary());
+    assert!(out.stdout.contains("no_trigger.py"), "{}", out.summary());
+    assert!(out.stdout.contains("no-trigger"), "{}", out.summary());
+    assert!(out.stdout.contains("unowned"), "{}", out.summary());
+    assert!(out.stdout.contains("1 no-trigger"), "{}", out.summary());
+
+    // --check exits non-zero because a marker lacks a revisit trigger.
+    run_fail(repo.path(), ["debt", "--check"]);
+}

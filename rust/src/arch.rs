@@ -185,7 +185,7 @@ pub fn architecture_check(
     Ok(report)
 }
 
-fn resolve_component_path(project_root: &Path, pattern: &str) -> anyhow::Result<Vec<PathBuf>> {
+pub fn resolve_component_path(project_root: &Path, pattern: &str) -> anyhow::Result<Vec<PathBuf>> {
     if component_path_escapes_project(pattern) {
         anyhow::bail!(
             "component path '{}' escapes the project root; use a relative source path",

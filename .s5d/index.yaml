@@ -129,3 +129,8 @@ features:
   status: applied
   product: s5d
   version: 1.0.0
+- id: feat.s5d.simplification-debt-marker
+  spec_path: packages/feat.s5d.simplification-debt-marker__20260621.s5d.yaml
+  status: applied
+  product: s5d
+  version: 1.0.0

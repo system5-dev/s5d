@@ -570,3 +570,21 @@ packages:
   package_id: feat.s5d.shape-native
   owning_package: null
   deprecated: false
+- uuid: e3e64103-579e-4187-b1c1-95bab941489f
+  artifact_id: cap.simplification-debt-marker
+  artifact_type: Capability
+  package_id: feat.s5d.simplification-debt-marker
+  owning_package: null
+  deprecated: false
+- uuid: 39f259da-37ae-4327-8955-87e33e9edcd0
+  artifact_id: feat.s5d.simplification-debt-marker
+  artifact_type: Feature
+  package_id: feat.s5d.simplification-debt-marker
+  owning_package: null
+  deprecated: false
+- uuid: b8aa5f3e-8e8c-43b4-80f6-a63666f6874d
+  artifact_id: comp.simplification-debt-marker
+  artifact_type: Component
+  package_id: feat.s5d.simplification-debt-marker
+  owning_package: null
+  deprecated: false

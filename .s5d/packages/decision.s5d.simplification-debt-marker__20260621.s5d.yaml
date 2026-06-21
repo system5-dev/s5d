@@ -1,0 +1,149 @@
+s5d: '1.0'
+id: decision.s5d.simplification-debt-marker
+version: 1.0.0
+product: s5d
+tier: decision
+allow_update: true
+meta:
+  title: simplification-debt-marker
+  authors: []
+  date: 2026-06-21
+  tickets: []
+  adrs: []
+  renames: []
+context: null
+workflow: null
+artifacts: null
+links: null
+contracts: []
+gates:
+- kind: review
+roc: null
+problem:
+  signal: 'Constitution #3 mandates "temporary measures... explicitly marked, tightly scoped, paired with a removal plan", but a grep over skills/ rust/ hooks/ shows zero simplification markers and no mechanism to mark, collect, or flag them — the principle has no instrument. Ponytail (github.com/DietrichGebert/ponytail) demonstrates the missing piece: a grep-able inline marker naming the срезанный ceiling + revisit trigger, plus a harvest command that collects them into a debt ledger and flags trigger-less ones as "rot silently".'
+  constraints:
+  - Thin assurance only — no orchestration
+  - no sequencing; consistent with control-plane≠orchestrator boundary
+  - Marker capture must be low-friction at the point the cut is made (mid-implementation)
+  - not require a full spec edit per simplification
+  - Read-only harvest — reporting must change nothing
+  - Must not duplicate the existing TODO/FIXME convention into a parallel rotting store
+  targets:
+  - low capture friction at cut-site
+  - trigger-less markers are detectable not silent
+  - markers bind to S5D repo-state (spec/component/ledger) not a free-floating parallel store
+  indicators: []
+  goodhart_guard: null
+  acceptance: 'Decision names: (1) the marker format and where it lives (code comment vs spec field); (2) how markers are collected and trigger-less ones flagged; (3) the link to s5d''s existing repo-state surface (ledger / ownership-derivation component mapping / trace), consistent with assurance-kernel-positioning (S5D owns repo-state/evidence/drift, stays thin, not an orchestrator). A trigger-less or unbound marker must be detectable by a read-only command.'
+  blast_radius: null
+  reversibility: null
+  status: backlog
+hypotheses:
+- id: h1-inline-grep-marker-read-only-harvest-ponytail-port
+  title: H1 — Inline grep-marker + read-only harvest (ponytail port)
+  content: 'Port ponytail directly: a code comment marker `s5d:debt(ceiling="...", trigger="...")` written at the cut-site; a read-only `s5d debt` command greps the tree, groups by file, and flags markers missing a trigger as `no-trigger`. Marker lives only in code; harvest is a stateless report. Lowest friction, closest to source. Weakest link: the debt store is a parallel grep universe disconnected from S5D''s ledger/trace — it doesn''t bind to spec or component, so it can''t participate in drift/evidence the way the rest of S5D does.'
+  scope: marker capture + harvest, code-local only
+  kind: system
+  layer: invalid
+  r_eff: null
+  evidence:
+  - id: 20260621-internal-h1-inline-grep-marker-read-only-harvest-ponytail-port
+    type: internal
+    content: 'Decomposition: marker(code) + grep(harvest) + no-trigger flag. Meets low-friction and trigger-less-detectable targets. Fails the "binds to S5D repo-state" target and the "no parallel rotting store" constraint: a flat grep report keyed by file has no path to spec/component/ledger, so debt cannot enter drift/trace/evidence like the rest of S5D. Strictly dominated by H3, which adds the binding for one lookup.'
+    verdict: fail
+    valid_until: 2026-09-19T07:11:32.388180+00:00
+    carrier_ref: null
+    formality: 3
+    claim_scope:
+    - repo-state binding
+    congruence_level: null
+    reliability: 0.85
+    refine_kind: null
+    skill: s5d
+  depends_on: []
+  rationale: null
+  spec_ref: null
+  prompt: null
+  next_move: null
+- id: h2-debt-as-first-class-spec-evidence-no-code-comment
+  title: H2 — Debt as first-class spec evidence (no code comment)
+  content: 'Each intentional simplification is registered as an S5D artifact: a `debt:` entry in the feature spec or an evidence-type binding (ceiling + trigger + claim-scope) recorded in the ledger and reachable via `s5d trace`. No free-floating comments. Strongest provenance, fully inside the evidence chain. Weakest link: high friction — every cut needs a spec edit, which invalidates approval SHA; misses simplifications discovered mid-implementation that don''t merit a spec; violates the "low-friction at cut-site" target.'
+  scope: debt as spec/evidence artifact, no inline marker
+  kind: system
+  layer: invalid
+  r_eff: null
+  evidence:
+  - id: 20260621-internal-h2-debt-as-first-class-spec-evidence-no-code-comment
+    type: internal
+    content: 'Decomposition: debt registered as spec field / evidence binding, reachable via trace. Maximizes provenance but fails the "low-friction at cut-site" target: every simplification requires a spec edit, which changes the spec sha256 and invalidates any prior approval (documented S5D gotcha). Mid-implementation cuts that don''t merit a spec get dropped entirely. High friction predicts under-use → markers not written at all.'
+    verdict: fail
+    valid_until: 2026-09-19T07:11:34.859780+00:00
+    carrier_ref: null
+    formality: 3
+    claim_scope:
+    - capture friction
+    congruence_level: null
+    reliability: 0.8
+    refine_kind: null
+    skill: s5d
+  depends_on: []
+  rationale: null
+  spec_ref: null
+  prompt: null
+  next_move: null
+- id: h3-hybrid-inline-marker-is-source-of-truth-harvest-reconciles-into-ledger-via-ownership-derivation
+  title: 'H3 — Hybrid: inline marker is source of truth, harvest reconciles into ledger via ownership-derivation'
+  content: 'Inline `s5d:debt(ceiling, trigger)` comment is written at the cut-site (ponytail''s low friction). `s5d debt` harvests markers and maps each file path to its owning component/spec using the existing ownership-derivation (file→component→spec already in the ledger), emitting a debt view keyed by spec/component; trigger-less or unowned markers are flagged. Optionally a `--check` mode for CI/hook (non-zero on trigger-less markers). Marries ponytail''s cut-site capture with S5D''s repo-state binding — the same shape as drift-check (live code vs recorded state). Weakest link: ownership-derivation only resolves paths already mapped to a component; debt in an unmapped file surfaces as `unowned` rather than silently dropping — acceptable and itself a signal.'
+  scope: inline marker + harvest reconciled to ledger/components
+  kind: system
+  layer: L1
+  r_eff: null
+  evidence:
+  - id: 20260621-internal-h3-hybrid-inline-marker-is-source-of-truth-harvest-reconciles-into-ledger-via-ownership-derivation
+    type: internal
+    content: 'Decomposition: inline marker(cut-site) + harvest + path→component map (reuse of shipped ownership-derivation, decision.s5d.ownership-derivation applied/synced) + no-trigger/unowned flags + opt-in --check. Meets all three targets: low friction (comment at cut-site), trigger-less detectable (flag), repo-state binding (component/spec via existing map). Reconcile shape mirrors the existing drift-check (live code vs recorded state). Weakest link = path→component completeness; unmapped debt surfaces as `unowned`, a self-reporting signal not a silent drop. Net new machinery beyond H1 is one map lookup.'
+    verdict: pass
+    valid_until: 2026-09-19T07:11:37.353210+00:00
+    carrier_ref: null
+    formality: 3
+    claim_scope:
+    - 'targets: friction + detectability + binding'
+    congruence_level: null
+    reliability: 0.82
+    refine_kind: null
+    skill: s5d
+  depends_on: []
+  rationale: null
+  spec_ref: feat.s5d.simplification-debt-marker__20260621.s5d.yaml
+  prompt: null
+  next_move: null
+- id: h4-null-rely-on-todo-adversarial-review-add-nothing
+  title: 'H4 — Null: rely on TODO + adversarial review, add nothing'
+  content: 'Keep the status quo: Constitution #3 already mandates marking; trust code review / adversarial review to catch unmarked or trigger-less shortcuts. No new marker, no new command. Honest baseline to beat. Weakest link: this is exactly the state the signal indicts — nothing harvests or flags, so markers (when written at all) rot silently and review has no checklist surface to audit against. Fails the "trigger-less markers are detectable" target by construction.'
+  scope: process-only, no mechanism
+  kind: system
+  layer: invalid
+  r_eff: null
+  evidence:
+  - id: 20260621-internal-h4-null-rely-on-todo-adversarial-review-add-nothing
+    type: internal
+    content: 'Decomposition: zero mechanism, rely on review. Fails the "trigger-less markers are detectable" target by construction — nothing harvests or flags, so review has no audit surface and markers rot silently. This is precisely the state the signal indicts (grep shows zero markers today). Honest baseline, but dominated by any harvesting option.'
+    verdict: fail
+    valid_until: 2026-09-19T07:11:39.897687+00:00
+    carrier_ref: null
+    formality: 2
+    claim_scope:
+    - detectability
+    congruence_level: null
+    reliability: 0.9
+    refine_kind: null
+    skill: s5d
+  depends_on: []
+  rationale: null
+  spec_ref: null
+  prompt: null
+  next_move: null
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false

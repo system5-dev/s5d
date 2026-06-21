@@ -1,0 +1,64 @@
+spec_ref: feat.s5d.simplification-debt-marker__20260621.s5d.yaml
+spec_sha256: sha256:7d0dfc5b8d2987f1970bdfe9ab19a7f9da44fd5d589135a8278c418b096ce5e3
+status: operated
+sync_status: synced
+status_history:
+- status: proposed
+  timestamp: 2026-06-21T07:12:26.337368+00:00
+- status: previewed
+  timestamp: 2026-06-21T08:08:44.780001+00:00
+- status: approved
+  timestamp: 2026-06-21T09:33:20.308842+00:00
+- status: applied
+  timestamp: 2026-06-21T09:46:45.949+00:00
+- status: operated
+  timestamp: 2026-06-21T09:47:15.828321+00:00
+active_phase: null
+phase_history: []
+phase_runs: []
+approvals:
+- reviewer: Roman
+  date: 2026-06-21T09:33:20.308840+00:00
+  spec_sha256: sha256:78b5c8111df885113c44d34ae147ea2e9e8b6c471038bf241bc11720fb46f330
+  diff_sha256: sha256:9a112869600bff965104997dec63eaac9e665f8f607319b39ca5c9dd61af6750
+preview:
+  diff_sha256: sha256:9a112869600bff965104997dec63eaac9e665f8f607319b39ca5c9dd61af6750
+  previewed_spec_sha256: sha256:78b5c8111df885113c44d34ae147ea2e9e8b6c471038bf241bc11720fb46f330
+  actions:
+    create: 3
+    link: 3
+    update: 4
+    delete: 0
+  log: null
+reflection:
+  verdict: confirmed
+  measurement_window: implementation + self-host smoke run, 2026-06-21
+  telemetry_refs: []
+  summary: Shipped `s5d debt` (CLI + MCP s5d_debt) harvesting s5d:debt(ceiling, trigger) markers, binding file→owning component/spec via the arch component-path resolver, flagging no-trigger and unowned; --check exits non-zero on any no-trigger. 86/86 standalone_repos tests pass, clippy clean, runs clean on the s5d repo itself ("Clean ledger").
+  worked: []
+  issues:
+  - Acceptance wording said path→component "via the codebase coverage snapshot"
+  - but the snapshot is module-level only; the real file→component mechanism is the component-path resolver (arch::resolve_component_path)
+  - which I made pub and reused. Behavior matches acceptance (grouped by spec/component
+  - unowned flag); the wording was imprecise
+  - 'mechanism is correct. Follow-up (not in this feature''s scope): SKILL.md marker-syntax doc + Constitution #3 amendment making the marker canonical.'
+  structured_issues: []
+  follow_ups: []
+  evidence: []
+  heuristics:
+  - 'A grep-based scanner self-matches its own syntax examples: doc comments and test fixtures that embed a live marker token get harvested as phantom markers. Mitigate by (a) anchoring the regex to a comment leader, and (b) never committing a fully-formed live token in the scanner''s own source — describe syntax in prose/SKILL and assemble the token at runtime in tests (format!("{}:debt","s5d")).'
+gate_results:
+- kind: schema
+  status: passed
+  attempt: 1
+  timestamp: 2026-06-21T09:46:22.280225+00:00
+  log: schema validation passed (built-in)
+  exit_code: null
+  evidence_path: evidence/feat.s5d.simplification-debt-marker/schema_1.log
+  command: null
+  duration_ms: 0
+  waiver_expires_at: null
+  kind_class: null
+decision: null
+verified_by: Diana
+drift_tolerance: null

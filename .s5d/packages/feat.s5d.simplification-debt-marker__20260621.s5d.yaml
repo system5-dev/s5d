@@ -1,0 +1,184 @@
+s5d: '1.0'
+id: feat.s5d.simplification-debt-marker
+version: 1.0.0
+product: s5d
+tier: lightweight
+allow_update: true
+meta:
+  title: simplification-debt-marker
+  authors: []
+  date: 2026-06-21
+  tickets: []
+  adrs: []
+  renames: []
+context: |
+  ## Problem
+  decision.s5d.simplification-debt-marker (H3) adopted an inline cut-site debt
+  marker harvested into a repo-state-bound view, but no code implements it.
+  Constitution #3 still has no instrument to mark/collect/flag temporary measures.
+
+  ## Goal
+  Ship a read-only `s5d debt` command that harvests `s5d:debt(ceiling, trigger)`
+  markers, binds each to its owning component/spec via the codebase coverage
+  snapshot, and flags `no-trigger` / `unowned` markers; `--check` exits non-zero
+  on any `no-trigger` marker.
+
+  ## Privacy
+  Classification: Internal
+workflow:
+  mode: plan
+  target_architecture:
+    summary: A read-only `s5d debt` subcommand in the s5d binary harvests inline markers, resolves path→component via the codebase coverage snapshot, and reports grouped by spec/component with no-trigger and unowned flags; --check gates CI/hooks.
+    invariants:
+    - Harvest never writes to ledger, aliases, or source files
+    - path→component resolution reuses the codebase snapshot, not a reimplementation
+    - A marker with an empty trigger is always reported as no-trigger
+  delivery_strategy:
+    summary: Add a new debt.rs module with the harvest+classify logic, wire one subcommand in s5d.rs and one MCP tool in mcp.rs, cover with a fixture test in standalone_repos.rs.
+    rationale: One new module keeps the harvest logic isolated and unit-testable; CLI/MCP are thin wrappers, matching the existing command surface.
+  resources: null
+  role_map:
+    implementer: coder
+    owner: human
+    verifier: reviewer
+    reviewer: reviewer
+  review_policy:
+    cross_model_required: false
+    required_on: []
+  structure_outline: null
+  execution_mode:
+    engine: manual
+    max_iterations: null
+    stop_conditions:
+    - Phase acceptance reached
+    - Approved scope exhausted
+    - New decision required
+  phases:
+  - id: prototype
+    title: Prototype
+    scope: Reduce unknowns before committed implementation
+    roles:
+    - owner
+    - implementer
+    acceptance:
+    - Critical feasibility questions answered
+    - Telemetry approach identified
+    rollback:
+    - Discard spike output if assumptions fail
+  - id: build
+    title: Build
+    scope: Implement approved scope and pass local gates
+    roles:
+    - implementer
+    - reviewer
+    acceptance:
+    - Declared gates pass
+    - Change matches approved scope
+    rollback:
+    - Revert or reconcile if gates or review fail
+  - id: measure
+    title: Measure
+    scope: Collect telemetry and close the loop with an explicit verdict
+    roles:
+    - owner
+    - verifier
+    acceptance:
+    - Telemetry collected against success criteria
+    - Outcome verdict recorded
+    rollback:
+    - Iterate or kill if evidence stays weak
+artifacts:
+  products:
+  - id: s5d
+    name: s5d
+    organization: null
+  domains:
+  - id: dom.s5d.core
+    product: s5d
+    name: s5d core domain
+    classification: supporting
+    description: Scaffold default — rename or split into real bounded contexts
+    team: null
+    maturity_level: null
+  capabilities:
+  - id: cap.simplification-debt-marker
+    domain: dom.s5d.core
+    name: simplification debt marker
+    description: null
+    since: null
+  entities: []
+  features:
+  - id: feat.s5d.simplification-debt-marker
+    product: s5d
+    name: simplification-debt-marker
+    description: null
+  use_cases: []
+  systems:
+  - id: sys.s5d
+    product: s5d
+    name: s5d
+  containers:
+  - id: ctr.s5d.app
+    system: sys.s5d
+    name: s5d app
+    technology: null
+  components:
+  - id: comp.simplification-debt-marker
+    feature: feat.s5d.simplification-debt-marker
+    domain: dom.s5d.core
+    container: ctr.s5d.app
+    name: simplification debt marker component
+    paths:
+    - rust/src/debt.rs
+    - rust/src/bin/s5d.rs
+    - rust/src/mcp.rs
+    - rust/tests/standalone_repos.rs
+  roles: []
+  concerns: []
+  metrics: []
+  supersystems: []
+  transports: []
+links:
+  feature_to_domain:
+  - feature: feat.s5d.simplification-debt-marker
+    domain: dom.s5d.core
+  use_case_to_capability: []
+  use_case_to_entity: []
+  component_to_capability:
+  - capability: cap.simplification-debt-marker
+    component: comp.simplification-debt-marker
+  component_to_entity: []
+  container_to_capability: []
+  concern_to_metric: []
+  component_to_container: []
+  edges: []
+  depends_on: []
+  entity_relations: []
+  capability_to_entity: []
+  capability_to_concern: []
+contracts: []
+gates:
+- kind: schema
+roc: null
+problem:
+  signal: 'decision.s5d.simplification-debt-marker chose H3: an inline cut-site marker harvested into a debt view bound to S5D repo-state. No implementation exists — Constitution #3''s "explicitly marked temporary measures" still has no instrument.'
+  constraints:
+  - Read-only — no writes to ledger/aliases/files
+  - Reuse the existing .s5d/codebase coverage snapshot for path→component; do not reimplement file→component
+  - No new dependency — grep via existing repo-walk + regex already in the binary
+  - 'Marker regex is comment-syntax-agnostic (// and # at minimum)'
+  targets:
+  - low capture friction
+  - trigger-less + unowned detectable
+  - zero new deps
+  indicators: []
+  goodhart_guard: null
+  acceptance: 'A read-only `s5d debt` command exists that: greps `s5d:debt(ceiling=..., trigger=...)` markers across the tree (skipping .git/target/node_modules), maps each marker''s file path to its owning component/spec via the codebase coverage snapshot, prints a report grouped by spec/component, flags markers with an empty/absent trigger as `no-trigger` and markers in files not covered by any component as `unowned`. `--check` returns non-zero when any `no-trigger` marker exists. Running it changes nothing. A self-check test asserts harvest on a fixture tree finds the marker, flags a trigger-less one, and exits non-zero under --check.'
+  blast_radius: null
+  reversibility: null
+  status: null
+hypotheses: []
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false

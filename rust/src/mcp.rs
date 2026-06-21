@@ -490,6 +490,11 @@ fn core_tools() -> Vec<Value> {
             "inputSchema": {"type": "object", "required": ["spec"], "properties": {"spec": {"type": "string", "description": "Path to .s5d.yaml file"}}}
         }),
         json!({
+            "name": "s5d_debt",
+            "description": "Harvest s5d:debt simplification markers into a debt report grouped by owning spec/component, flagging trigger-less and unowned markers (read-only)",
+            "inputSchema": {"type": "object", "properties": {"check": {"type": "boolean", "description": "Fail if any marker has no revisit trigger"}}}
+        }),
+        json!({
             "name": "s5d_shape",
             "description": "Shape an intake kernel: classify it via the deterministic router and check structural readiness. Kernel fields: why, capabilities, constraints, non_goals, success_signal, assumptions, open_questions, companions.",
             "inputSchema": {
@@ -564,6 +569,7 @@ fn handle_tools_call(params: &Value) -> anyhow::Result<Value> {
         "s5d_discover_sync" => tool_s5d_discover_sync(args)?,
         "s5d_discover_check" => tool_s5d_discover_check(args)?,
         "s5d_check" => tool_s5d_check(args)?,
+        "s5d_debt" => tool_s5d_debt(args)?,
         "s5d_shape" => tool_s5d_shape(args)?,
         "s5d_review_adversarial" => tool_s5d_review_adversarial(args)?,
         "s5d_plan_stories" => tool_s5d_plan_stories(args)?,
@@ -741,6 +747,18 @@ fn tool_s5d_check(args: &Value) -> anyhow::Result<String> {
     } else {
         anyhow::bail!("{out}");
     }
+}
+
+fn tool_s5d_debt(args: &Value) -> anyhow::Result<String> {
+    let check = args["check"].as_bool().unwrap_or(false);
+    let cwd = std::env::current_dir()?;
+    let project = crate::S5dProject::find(&cwd).ok_or_else(|| anyhow::anyhow!("no .s5d/ found"))?;
+    let report = crate::debt::harvest(&project)?;
+    let out = crate::debt::format_text(&report);
+    if check && report.no_trigger_count() > 0 {
+        anyhow::bail!("{out}");
+    }
+    Ok(out)
 }
 
 // ── Shape / Review / Plan (decision.s5d.bmad-native-runtime) ─────────────────

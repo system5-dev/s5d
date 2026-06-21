@@ -144,6 +144,12 @@ enum S5dCommand {
         /// Source path inside the project
         path: String,
     },
+    /// Harvest s5d:debt simplification markers into a debt report (read-only)
+    Debt {
+        /// Exit non-zero if any marker has no revisit trigger
+        #[arg(long)]
+        check: bool,
+    },
     /// Search specs and decisions by keyword
     #[command(hide = true)]
     Search {
@@ -1146,6 +1152,7 @@ fn main() -> anyhow::Result<()> {
         S5dCommand::Decide(args) => run_decide_command(args),
         S5dCommand::Show { spec } => run_show(&spec),
         S5dCommand::Trace { path } => run_trace(&path),
+        S5dCommand::Debt { check } => run_debt(check),
         S5dCommand::Route {
             description,
             format,
@@ -4816,6 +4823,18 @@ fn run_trace(path: &str) -> anyhow::Result<()> {
         .ok_or_else(|| anyhow::anyhow!("no .s5d/ found (run `s5d init` first)"))?;
     let trace = s5d::trace_code_path(&project, path)?;
     println!("{}", s5d::format_code_trace(&trace));
+    Ok(())
+}
+
+fn run_debt(check: bool) -> anyhow::Result<()> {
+    let cwd = std::env::current_dir()?;
+    let project = s5d::S5dProject::find(&cwd)
+        .ok_or_else(|| anyhow::anyhow!("no .s5d/ found (run `s5d init` first)"))?;
+    let report = s5d::debt::harvest(&project)?;
+    println!("{}", s5d::debt::format_text(&report));
+    if check && report.no_trigger_count() > 0 {
+        std::process::exit(1);
+    }
     Ok(())
 }
 

@@ -182,3 +182,10 @@ entries:
   status: success
   timestamp: 2026-06-14T10:14:20.773119+00:00
   record_ref: records/feat.s5d.ci-init__20260611.record.yaml
+- spec_sha256: sha256:78b5c8111df885113c44d34ae147ea2e9e8b6c471038bf241bc11720fb46f330
+  state_fingerprint: sha256:e2011560942c58bfbeab32245aade1845d20593b4118253da29c90445f29033d
+  package_id: feat.s5d.simplification-debt-marker
+  action: import
+  status: success
+  timestamp: 2026-06-21T09:46:45.932571+00:00
+  record_ref: records/feat.s5d.simplification-debt-marker__20260621.record.yaml

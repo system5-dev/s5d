@@ -1,0 +1,44 @@
+spec_ref: decision.s5d.simplification-debt-marker__20260621.s5d.yaml
+spec_sha256: sha256:1dd2a8ab1d73f952909d21ea839066f10fa8120af4d0f3b8fbdb69436141f1c8
+status: proposed
+sync_status: unknown
+status_history:
+- status: proposed
+  timestamp: 2026-06-21T06:57:15.608407+00:00
+active_phase: null
+phase_history: []
+phase_runs: []
+approvals: []
+preview: null
+reflection: null
+gate_results: []
+decision:
+  title: Adopt hybrid inline debt-marker harvested into the S5D ledger
+  winner_id: h3-hybrid-inline-marker-is-source-of-truth-harvest-reconciles-into-ledger-via-ownership-derivation
+  rejected_ids:
+  - h1-inline-grep-marker-read-only-harvest-ponytail-port
+  - h2-debt-as-first-class-spec-evidence-no-code-comment
+  - h4-null-rely-on-todo-adversarial-review-add-nothing
+  context: 'Constitution #3 mandates explicitly-marked, removal-planned temporary measures, but a grep over skills/ rust/ hooks/ shows zero markers and no mechanism — the principle has no instrument. Ponytail (MIT) demonstrates the missing piece: a grep-able cut-site marker (ceiling + revisit trigger) plus a harvest that flags trigger-less ones. The choice is where the marker lives and how it binds to S5D''s repo-state surface.'
+  decision: Inline `s5d:debt(ceiling="...", trigger="...")` comment is the source of truth, written at the cut-site (low friction). A read-only `s5d debt` command harvests markers, maps each file path to its owning component/spec via the existing ownership-derivation, emits a debt view keyed by spec/component, and flags trigger-less markers (`no-trigger`) and unmapped ones (`unowned`). An opt-in `--check` mode returns non-zero for CI/hook use. Implementation is deferred to feat.s5d.simplification-debt-marker with its own approval.
+  rationale: H3 is the only option that keeps ponytail's cut-site low-friction capture while honoring assurance-kernel-positioning (S5D owns repo-state/evidence/drift, stays thin, not an orchestrator). The ledger binding is a single lookup over the already-existing path→component map, not new machinery — reuse, not over-engineering. H1's flat report is the forbidden parallel rotting store; H2's spec-edit-per-cut breaks approval SHA and misses mid-implementation cuts; H4 is the indicted status quo where markers rot silently.
+  consequences: 'Adds a comment convention (ceiling + mandatory trigger) and a read-only `s5d debt` command reusing ownership-derivation. Constitution #3 gains an enforceable surface. New weakest link: completeness of path→component mapping — debt in unmapped files surfaces as `unowned` (a signal, not a silent drop). Follow-up: feat.s5d.simplification-debt-marker for the Rust command + a Constitution #3 amendment making the marker the canonical way to record a temporary measure. Impact metrics (marker count, % with triggers, % resolved at trigger) deferred to the feature''s measure phase.'
+  decided_at: 2026-06-21T07:12:46.330909+00:00
+  confirmed_by: Roman
+  expires_at: 2026-09-19
+  do_list: []
+  dont_list: []
+  challenge:
+    mode: standard
+    passed: true
+    summary: '5 probes run, no fatal flaw. (1) "H1 simpler / H3 over-engineering": binding is one lookup over the existing ownership map, H3 = H1 + free reuse; an unbound store is the forbidden parallel rotting store. (2) Tail: --check blocking an in-PR trigger-less marker → mitigated, --check opt-in, default read-only. (3) Evidence weakness: ponytail''s only proof is their own walked-back benchmark, but the claim here is the narrow [OBSERVED] mechanical property (grep-able marker makes trigger-less detectable), not the contested impact metric; impact deferred to measure. (4) Weakest link: ownership mapping completeness; unowned surfaces as a signal, not a drop. (5) Existing alternatives: TODO/FIXME lack ceiling/trigger schema and harvest, gate: is for assurance not deferred debt, trace is for specs not comments — gap confirmed.'
+    checks: []
+  decision_subject: null
+  decision_subject_granularity: null
+  evaluative_surface: null
+  belief_state: null
+  outcome_model: null
+  pareto_set: []
+  choice_rule: null
+verified_by: null
+drift_tolerance: null
