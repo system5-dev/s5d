@@ -72,9 +72,19 @@ pub fn harvest(project: &S5dProject) -> anyhow::Result<DebtReport> {
     let trigger_re = Regex::new(r#"trigger\s*=\s*"([^"]*)""#)?;
 
     let mut markers = Vec::new();
-    // WalkBuilder respects .gitignore (skips target/, node_modules/) and hidden
-    // entries (skips .git/, .s5d/) by default.
-    for result in WalkBuilder::new(&project.root).build() {
+    // Honor .gitignore even outside a git repo (require_git(false)), skip hidden
+    // entries (.git/, .s5d/) by default, and always prune common build dirs by
+    // name — .gitignore alone misses them in a non-git or unconfigured project.
+    for result in WalkBuilder::new(&project.root)
+        .require_git(false)
+        .filter_entry(|entry| {
+            !matches!(
+                entry.file_name().to_str(),
+                Some(".git" | "target" | "node_modules")
+            )
+        })
+        .build()
+    {
         let entry = match result {
             Ok(e) => e,
             Err(_) => continue,

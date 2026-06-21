@@ -6459,3 +6459,37 @@ fn debt_harvest_finds_markers_and_check_fails_on_no_trigger() {
     // --check exits non-zero because a marker lacks a revisit trigger.
     run_fail(repo.path(), ["debt", "--check"]);
 }
+
+#[test]
+fn debt_binds_owner_and_skips_build_dirs() {
+    let repo = StandaloneRepo::new();
+    run_ok(repo.path(), ["init"]);
+    run_ok(
+        repo.path(),
+        ["new", "feat.demo.core", "--tier", "lightweight", "--product", "demo"],
+    );
+    // Point the scaffold component at src/ so it covers src/owned.rs.
+    let spec_path = spec_path_by_id(&repo, "feat.demo.core");
+    let mut spec: s5d::Spec = load_yaml(&spec_path);
+    materialize_scaffold_paths(&mut spec);
+    fs::write(&spec_path, serde_yaml::to_string(&spec).unwrap()).unwrap();
+
+    let tok = format!("{}:debt", "s5d");
+    repo.write(
+        "src/owned.rs",
+        &format!("// {tok}(ceiling=\"lock\", trigger=\"later\")\n"),
+    );
+    // A marker in a build dir must be pruned even without a git repo / gitignore.
+    repo.write(
+        "node_modules/dep.js",
+        &format!("// {tok}(ceiling=\"x\", trigger=\"y\")\n"),
+    );
+
+    let out = run_ok(repo.path(), ["debt"]);
+    // The owned marker is grouped under its feature, not reported as unowned.
+    assert!(out.stdout.contains("feat.demo.core"), "{}", out.summary());
+    assert!(out.stdout.contains("src/owned.rs"), "{}", out.summary());
+    assert!(out.stdout.contains("0 unowned"), "{}", out.summary());
+    // The build-dir marker is pruned.
+    assert!(!out.stdout.contains("node_modules"), "{}", out.summary());
+}
