@@ -41,7 +41,7 @@ Applies only to work grounded in an existing repository.
 - **Required-field cascade.** `component` requires `feature + domain + container + paths`. `domain` requires `product + classification`. `capability` requires `domain`. `contract.format` is an enum: `openapi / json_schema / protobuf / typespec`. All in `metamodel.md`.
 - **`structure_outline` is an object:** `{ summary: string, signatures: [string], types: [string] }`.
 - **Edit-after-approve invalidates approval.** Any spec change after `s5d state approve` changes its sha256. Recovery: preview → approve → import again.
-- **`verified-by` ≠ `reviewer`.** Import requires a verifier different from the approver. Conventional split: human approves, Diana verifies.
+- **`verified-by` ≠ `reviewer`.** Import expects a verifier different from the approver — a methodological check that warns and blocks by default but is `--force`-overridable, not a structural invariant. Conventional split: human approves, a second party verifies.
 - **gate:review on decision/high tier** closes via review evidence: `s5d decision add-evidence <spec> --hypothesis-id <id> --evidence-type gate:review --verdict pass`. Hypothesis/evidence commands accept decision- and high-tier specs.
 - **Generated CI runs built-in checks only** (validate, component path/architecture markers, drift via `s5d ci exec`) — command gates (test/lint/contract) never execute in PR pipelines (fork trust boundary).
 - **Decide requires ≥3 hypotheses.** Two-hypothesis decisions are blocked without `--force`.
@@ -61,26 +61,44 @@ Applies only to work grounded in an existing repository.
 s5d init
 s5d new decision.refresh-rotation --tier decision --product auth \
   --question "How should refresh tokens rotate?"
-s5d decision add-hypothesis <spec> --title "Server-side rotation" \
+
+# Decide needs >=3 hypotheses, different in kind, each carrying >=1 evidence
+# before s5d decision decide will accept them.
+s5d decision add-hypothesis <decision-spec> --title "Server-side rotation" \
   --content "Rotate on every refresh, persist token family state" --scope "auth boundary"
-s5d decision add-evidence <spec> --hypothesis-id server-side-rotation \
+s5d decision add-hypothesis <decision-spec> --title "Client-side sliding expiry" \
+  --content "No rotation; short TTL refreshed by the client" --scope "auth boundary"
+s5d decision add-hypothesis <decision-spec> --title "Reuse-detection only" \
+  --content "Keep static refresh tokens, revoke on detected reuse" --scope "auth boundary"
+s5d decision add-evidence <decision-spec> --hypothesis-id server-side-rotation \
   --evidence-type internal --content "Revocation lookup <5ms at p95" \
   --verdict pass --formality 4 --claim-scope latency --reliability 0.8
+s5d decision add-evidence <decision-spec> --hypothesis-id client-side-sliding-expiry \
+  --evidence-type internal --content "No server revocation path — fails logout-everywhere" \
+  --verdict fail --formality 3 --claim-scope revocation --reliability 0.8
+s5d decision add-evidence <decision-spec> --hypothesis-id reuse-detection-only \
+  --evidence-type internal --content "Detects theft but cannot pre-empt it" \
+  --verdict fail --formality 3 --claim-scope revocation --reliability 0.7
+
+# Winner needs a linked feature spec (spec_ref) BEFORE decide.
 s5d new feat.refresh-rotation --tier standard --product auth \
   --hypothesis-id server-side-rotation
 s5d verify validate <feature-spec>
+s5d verify graph-check <feature-spec>
+
 s5d decision decide <decision-spec> --title "Use server-side rotation" \
-  --winner server-side-rotation --confirmed-by Roman \
+  --winner server-side-rotation --rejected client-side-sliding-expiry,reuse-detection-only \
+  --confirmed-by <approver> \
   --context "Revocation correctness > token statelessness" \
   --decision "Adopt server-side rotation" \
   --rationale "Best revocation/complexity balance" \
   --consequences "Needs persistent token-family store" \
   --challenge-summary "5 probes run: no fatal flaw; weakest link is family-store availability"
 s5d state preview <feature-spec>
-s5d state approve <feature-spec> --reviewer Roman
+s5d state approve <feature-spec> --reviewer <approver>
 # implement code
 s5d verify run-gates <feature-spec>
-s5d state import <feature-spec> --verified-by Diana
+s5d state import <feature-spec> --verified-by <verifier>
 s5d state reflect <feature-spec> --summary "Shipped cleanly" \
   --heuristic "Link winner to feature spec before decide"
 ```
@@ -89,15 +107,22 @@ s5d state reflect <feature-spec> --summary "Shipped cleanly" \
 
 ## Scope
 
-Out of scope: bugfix <30 LOC, config-only, docs-only. If Shape reveals the work
-is tiny and local, exit S5D rather than opening control-plane state.
+Out of scope: bugfix <30 LOC, config-only, docs-only, status query. If Shape
+reveals the work is tiny and local, exit S5D rather than opening control-plane
+state.
 
-| Tier | Waivers |
-|------|---------|
-| Lightweight | Steps can be waived |
-| Standard | Steps can be waived |
-| Decision | Steps can be waived |
-| High | No waivers allowed |
+**Two kinds of waivability — do not conflate (full rules in §Waiver):**
+
+- **Never waivable, any tier:** assurance gates (schema, graph, review, contract,
+  privacy), Decide human confirmation, and Run approval. High-tier waives nothing
+  at all.
+- **Waivable with a recorded `WAIVER` line (Lightweight / Standard / Decision):**
+  workflow *steps* only — e.g. the Target/Decide auto-waiver pointing at a prior
+  confirmed decision, or a readiness skip. A waivable step is never a gate or a
+  human-confirmation point.
+
+So "Decision tier allows step waivers" does **not** mean its Decide confirmation
+can be skipped — that confirmation is in the never-waivable set above.
 
 ---
 
@@ -109,7 +134,9 @@ Out of scope (exit S5D): bugfix <30 LOC, config-only, docs-only, status query.
 
 **Tier:** choice/tradeoff/architecture → `decision` | feature, 1 domain, no auth/payment/security → `lightweight` | feature, 2+ domains → `standard` | auth/payment/security/PII/compliance → `high` | ambiguous → pick higher.
 
-**Mode:** "discovery" / "onboard project" / "map the domains" → `discover` (go to Discover, not Target) | raw product intent / vague ticket / mixed PRD/design/transcript / unclear acceptance → `shape` | "evaluate/compare" → `prepare` | "implement X" with a confirmed decision record or stated existing architecture → `execute` (enters at Spec; records the Target+Decide auto-waiver) | no signal → `prepare`.
+**Mode:** "discovery" / "onboard project" / "map the domains" → `discover` (go to Discover, not Target) | raw product intent / vague ticket / mixed PRD/design/transcript / unclear acceptance → `shape` | "evaluate/compare" → `prepare` | "implement X" backed by a **concrete decision/spec reference** — a prior decision record (winner + `confirmed_by`) or an existing component in the architecture map the change reuses → `execute` (enters at Spec; records the Target+Decide auto-waiver) | no signal → `prepare`.
+
+The `execute` auto-waiver points at that concrete reference; it never *skips* a decision. A merely *asserted* "the architecture already exists", with no decision record and no mapped component, does not qualify — route it to `prepare`/Target and frame it first.
 
 Too vague to tell the domain count after Shape → run Discover / Domain-Capability mapping, then classify. Don't force a tier on unreadable intent.
 
@@ -228,7 +255,8 @@ limitation rather than pretending the review passed.
 
 Findings close only when fixed, explicitly deferred, or recorded as S5D
 evidence/gate state. For decision/high specs, bind review evidence with
-`s5d decision add-evidence <spec> --hypothesis-id <id> --evidence-type gate:review`.
+`s5d decision add-evidence <spec> --hypothesis-id <id> --evidence-type gate:review --verdict pass`
+(`--verdict` is required).
 For feature specs, bind the result through the record/gate mechanism available
 for that spec. A standalone markdown report is a companion document, not a
 passing gate.
@@ -276,6 +304,17 @@ Key commands (MCP + CLI). Full preconditions and the run/harness surface live in
 | Rollback | `s5d_rollback` | `s5d state rollback` |
 | Trace | `s5d_trace` | `s5d trace <path>` |
 | Debt harvest | `s5d_debt` | `s5d debt [--check]` |
+| Run work states (list/start/exec/accept) | `s5d_phase_list` / `s5d_phase_start` / `s5d_execute_loop` / `s5d_phase_accept` | `s5d run list` / `start` / `exec` / `accept` |
+| Problem / acceptance card | `s5d_set_problem` / `s5d_set_acceptance` | `s5d state set-problem` / `set-acceptance` |
+| Architecture check | `s5d_check` | `s5d verify check` |
+| Discover sync / check | `s5d_discover_sync` / `s5d_discover_check` | `s5d discover sync` / `check` |
+| Codebase sync / check | `s5d_codebase_sync` / `s5d_codebase_check` | `s5d codebase sync` / `check` |
+| Reconcile drift | `s5d_reconcile` | `s5d state reconcile` |
+| Route classify | `s5d_route` | `s5d route` |
+| Record gate waiver | `s5d_waiver` | — (MCP-only) |
+| Note / Status / Show | `s5d_note` / `s5d_status` / `s5d_show` | `s5d note` / `s5d status` / `s5d show` |
+
+**Naming note:** the Run stage is `s5d run …` on the CLI but `s5d_phase_*` / `s5d_execute_loop` over MCP — same work states, different surface names. This table is the working set; the full surface lives in the repo's `S5D.md`.
 
 Legacy hidden aliases (e.g. `s5d add-hypothesis`, `s5d validate`, `s5d apply preview`) remain supported for existing scripts.
 

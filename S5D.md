@@ -153,12 +153,22 @@ s5d init
 s5d new decision.refresh-rotation --tier decision --product auth \
   --question "How should refresh tokens rotate?"
 
-# 2. Hypotheses + evidence
+# 2. Hypotheses + evidence — Decide needs >=3, different in kind, each with >=1 evidence
 s5d add-hypothesis <spec> --title "Server-side rotation" \
   --content "Rotate on every refresh, persist token family state" --scope "auth boundary"
+s5d add-hypothesis <spec> --title "Client-side sliding expiry" \
+  --content "No rotation; short TTL refreshed by the client" --scope "auth boundary"
+s5d add-hypothesis <spec> --title "Reuse-detection only" \
+  --content "Keep static refresh tokens, revoke on detected reuse" --scope "auth boundary"
 s5d add-evidence <spec> --hypothesis-id server-side-rotation \
   --evidence-type internal --content "Revocation lookup <5ms at p95" \
   --verdict pass --formality 4 --claim-scope latency --reliability 0.8
+s5d add-evidence <spec> --hypothesis-id client-side-sliding-expiry \
+  --evidence-type internal --content "No server revocation path — fails logout-everywhere" \
+  --verdict fail --formality 3 --claim-scope revocation --reliability 0.8
+s5d add-evidence <spec> --hypothesis-id reuse-detection-only \
+  --evidence-type internal --content "Detects theft but cannot pre-empt it" \
+  --verdict fail --formality 3 --claim-scope revocation --reliability 0.7
 
 # 3. Feature spec linked to winner
 s5d new feat.refresh-rotation --tier standard --product auth \
