@@ -1108,6 +1108,72 @@ fn decision_group_and_legacy_alias_mutate_same_spec() {
 }
 
 #[test]
+fn link_hypothesis_spec_ref_shared_by_cli_and_mcp() {
+    // CLI `s5d new --hypothesis-id` and MCP `s5d_new` now link a feature spec to
+    // its winning hypothesis through one shared method. Exercise it directly: set
+    // spec_ref when the hypothesis exists, and return None (not error) when absent.
+    let repo = StandaloneRepo::new();
+    seed_searchable_rust_repo(&repo);
+    run_ok(repo.path(), ["init"]);
+
+    run_ok(
+        repo.path(),
+        [
+            "new",
+            "decision.link-test",
+            "--tier",
+            "decision",
+            "--question",
+            "Which approach wins?",
+            "--product",
+            "s5d",
+        ],
+    );
+    let dec_path = only_spec_path(&repo);
+    let dec_str = dec_path.to_str().unwrap();
+    run_ok(
+        repo.path(),
+        [
+            "decision",
+            "add-hypothesis",
+            dec_str,
+            "--title",
+            "Winner approach",
+            "--content",
+            "do X",
+            "--scope",
+            "core",
+            "--kind",
+            "system",
+        ],
+    );
+
+    let project = s5d::S5dProject::find(repo.path()).expect("project found");
+    let feature_filename = "feat.link-test__20260101.s5d.yaml";
+
+    // Found hypothesis → returns the decision spec path and sets spec_ref.
+    let linked = project
+        .link_hypothesis_spec_ref("winner-approach", feature_filename)
+        .expect("link call succeeds");
+    assert_eq!(
+        linked.as_ref().and_then(|p| p.file_name()),
+        dec_path.file_name(),
+        "linker should return the decision spec it edited"
+    );
+    let dec: s5d::Spec = load_yaml(&dec_path);
+    assert_eq!(
+        dec.hypotheses[0].spec_ref.as_deref(),
+        Some(feature_filename)
+    );
+
+    // Missing hypothesis → None, not an error.
+    let missing = project
+        .link_hypothesis_spec_ref("no-such-hyp", feature_filename)
+        .expect("link call succeeds even when hypothesis is absent");
+    assert!(missing.is_none());
+}
+
+#[test]
 fn verify_and_apply_groups_preserve_legacy_aliases() {
     let repo = StandaloneRepo::new();
     seed_searchable_rust_repo(&repo);

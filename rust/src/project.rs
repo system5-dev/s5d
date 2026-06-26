@@ -192,6 +192,35 @@ impl S5dProject {
         Ok(results)
     }
 
+    /// Auto-link `spec_ref` on a hypothesis in a parent decision spec.
+    ///
+    /// Scans decision-tier specs for `hypothesis_id`, sets its `spec_ref` to
+    /// `spec_filename`, and saves the decision spec. Returns the decision spec
+    /// path on success, or `None` if no decision spec contains the hypothesis.
+    /// Shared by the CLI (`s5d new --hypothesis-id`) and the MCP `s5d_new` tool
+    /// so both surfaces link a feature spec to its winning hypothesis identically.
+    pub fn link_hypothesis_spec_ref(
+        &self,
+        hypothesis_id: &str,
+        spec_filename: &str,
+    ) -> anyhow::Result<Option<PathBuf>> {
+        for (dec_path, mut dec_spec) in self.discover_specs()? {
+            if !matches!(dec_spec.tier, Tier::Decision) {
+                continue;
+            }
+            if let Some(hyp) = dec_spec
+                .hypotheses
+                .iter_mut()
+                .find(|h| h.id == hypothesis_id)
+            {
+                hyp.spec_ref = Some(spec_filename.to_string());
+                atomic_write_string(&dec_path, &serde_yaml::to_string(&dec_spec)?)?;
+                return Ok(Some(dec_path));
+            }
+        }
+        Ok(None)
+    }
+
     pub fn load_record(&self, spec_filename: &str) -> anyhow::Result<Option<Record>> {
         let record_name = spec_filename.replace(".s5d.yaml", ".record.yaml");
         let path = self.s5d_dir().join("records").join(&record_name);

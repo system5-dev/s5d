@@ -113,12 +113,16 @@ state.
 
 **Two kinds of waivability — do not conflate (full rules in §Waiver):**
 
-- **Never waivable, any tier:** assurance gates (schema, graph, review, contract,
-  privacy), Decide human confirmation, and Run approval. High-tier waives nothing
-  at all.
+- **Structurally non-waivable (no API to bypass):** Decide human confirmation
+  (`confirmed_by`) and Run approval (`reviewer`). No flag skips these.
+- **Policy-non-waivable but API-reachable:** assurance gates (schema, graph,
+  review, contract, privacy). Doctrine (especially high-tier): close them via
+  fixes/evidence, not waivers — but the API does not forbid it (`s5d_waiver` records
+  `status: waived` with expiry; import accepts a non-expired one). Hold "never
+  waivable" as discipline, not a runtime invariant.
 - **Waivable with a recorded `WAIVER` line (Lightweight / Standard / Decision):**
-  workflow *steps* only — e.g. the Target/Decide auto-waiver pointing at a prior
-  confirmed decision, or a readiness skip. A waivable step is never a gate or a
+  workflow *steps* — e.g. the Target/Decide auto-waiver pointing at a prior
+  confirmed decision, or a readiness skip. A waivable step is never a
   human-confirmation point.
 
 So "Decision tier allows step waivers" does **not** mean its Decide confirmation
@@ -128,15 +132,15 @@ can be skipped — that confirmation is in the never-waivable set above.
 
 ## Route & Bootstrap
 
-Classify before touching tools. First match wins.
-
-Out of scope (exit S5D): bugfix <30 LOC, config-only, docs-only, status query.
+Classify before touching tools. First match wins. (Out-of-scope work exits S5D — see §Scope.)
 
 **Tier:** choice/tradeoff/architecture → `decision` | feature, 1 domain, no auth/payment/security → `lightweight` | feature, 2+ domains → `standard` | auth/payment/security/PII/compliance → `high` | ambiguous → pick higher.
 
 **Mode:** "discovery" / "onboard project" / "map the domains" → `discover` (go to Discover, not Target) | raw product intent / vague ticket / mixed PRD/design/transcript / unclear acceptance → `shape` | "evaluate/compare" → `prepare` | "implement X" backed by a **concrete decision/spec reference** — a prior decision record (winner + `confirmed_by`) or an existing component in the architecture map the change reuses → `execute` (enters at Spec; records the Target+Decide auto-waiver) | no signal → `prepare`.
 
 The `execute` auto-waiver points at that concrete reference; it never *skips* a decision. A merely *asserted* "the architecture already exists", with no decision record and no mapped component, does not qualify — route it to `prepare`/Target and frame it first.
+
+**MUST verify the backing reference yourself — `s5d_route` does not.** It classifies on keywords and emits `WAIVER: Target+Decide` for any "implement/build/add" phrasing without checking a decision record or the architecture map. Treat its waiver line as a suggestion, not proof a decision exists.
 
 Too vague to tell the domain count after Shape → run Discover / Domain-Capability mapping, then classify. Don't force a tier on unreadable intent.
 
@@ -192,7 +196,7 @@ architecture.
 
 Every claim carries a tag: `[VERIFIED]` (read from code/docs/tool), `[INFERRED]` (deduced from verified), `[SPECULATIVE]` (plausible, unconfirmed). Untagged = error.
 
-After writing both files, run `s5d discover sync` (or `s5d_discover_sync` over MCP) to rebuild the technical index (`.s5d/discovery/index.*`) so file-level evidence is linked. The two outputs are complementary: source-survey/architecture-map are agent-authored maps; `discover sync` is the deterministic file index.
+After writing both files, run `s5d discover sync` (or `s5d_discover_sync` over MCP) to rebuild the machine snapshot (`manifest.yaml`, `files.jsonl`, `graph.json`, `evidence.jsonl`, `metamodel.yaml`). **The two are independent, not validated against each other:** `discover sync` neither generates, reads, nor checks `source-survey.md` / `architecture-map.md`. Those two markdown maps are agent-authored *context* — useful for humans and for your own staleness judgment, but the runtime does not consume them. Don't treat them as a gate or a source of truth the tooling enforces.
 
 Do **not** produce a free-form prose summary in place of these tables. Narrative sections are allowed only as a header before each table or as a closing "Recommended S5D entry points" list.
 
@@ -215,7 +219,9 @@ acceptance BEFORE options.
 
 Challenge probes before `s5d_decide`, matching the runtime's `--challenge-mode`: `tactical` → 1 probe (strongest counter-argument) for small-blast-radius decisions; `standard` → 5 probes (counter-argument, tail failure, evidence weakness, weakest link, existing alternatives) for decisions gating standard/high work. Fatal flaw from probe → revisit hypotheses. Record the outcome via `--challenge-summary` on decide: the MCP path refuses to decide without it; the CLI accepts `--no-challenge`/`--force` (warns and records the decision with no challenge object — the runtime does not route this through the gate-waiver system). Skipping the challenge is a skill-level step skip: record an explicit WAIVER line.
 
-Human confirms (non-waivable). WAL: `status=AWAITING_HUMAN`. If the winner needs implementation, create the linked feature spec **before** `s5d_decide` — the winner must carry a `spec_ref` — then confirm.
+Human confirms (non-waivable). WAL: `status=AWAITING_HUMAN`. If the winner needs implementation, create the linked feature spec **before** `s5d_decide` — the winner must carry a `spec_ref` or decide bails.
+
+**Linking happens at creation time, on both surfaces:** `s5d new <feature> --hypothesis-id <id>` (CLI) or `s5d_new` with `hypothesis_id` (MCP) sets `spec_ref` on the winner as it scaffolds — one shared linker, warns if the id matches no decision hypothesis. There is no separate "link" command.
 
 ---
 
@@ -228,8 +234,11 @@ Problem → acceptance scenarios (≥3 GWT) → implementation hypotheses (≥2)
 Before Run, check implementation readiness: one shippable goal, actionable
 paths/actions, no `TBD`, at least three acceptance scenarios, explicit
 cross-domain contracts, and no unresolved open question that would change the
-architecture. Weak readiness blocks Run unless the skip is explicitly waived;
-high-tier assurance gates are never waived.
+architecture. **Most of this is an agent-side discipline, not a runtime gate** —
+`validate` only checks structural fields (non-empty `why`/`success_signal`,
+non-blank list entries, phase shape), not GWT counts or `TBD`. Treat weak
+readiness as a stop *you* enforce; only the schema/graph/review gates and the
+human approval are machine-checked.
 
 ---
 
@@ -238,6 +247,8 @@ high-tier assurance gates are never waived.
 `s5d_preview` → `s5d_approve` (human name required, non-waivable). WAL: `status=AWAITING_HUMAN, pending=approve <spec-id>`. Stop.
 
 After approval: optionally use `s5d run start` / `s5d run exec` for bounded engine work, implement → local tests → `s5d_run_gates`. REVIEW markers for non-obvious decisions. Engine completion is only evidence; human acceptance is explicit (`s5d run accept <spec> --id <state> --reviewer <name>`).
+
+**`s5d run exec` is CLI-only and needs a configured, `approved: true` engine in `.s5d/config.yaml`** — with no engine configured it can't run. The MCP surface exposes `s5d_phase_start`/`_phase_accept` and `s5d_execute_loop` (emits a task package), not direct external-engine execution. So "don't call Claude/Codex/Gemini directly" applies only when an approved engine is actually wired; otherwise you implement in-session and record evidence by hand.
 
 ### Autonomous loop (mandate envelope)
 
@@ -304,8 +315,9 @@ Key commands (MCP + CLI). Full preconditions and the run/harness surface live in
 | Rollback | `s5d_rollback` | `s5d state rollback` |
 | Trace | `s5d_trace` | `s5d trace <path>` |
 | Debt harvest | `s5d_debt` | `s5d debt [--check]` |
-| Run work states (list/start/exec/accept) | `s5d_phase_list` / `s5d_phase_start` / `s5d_execute_loop` / `s5d_phase_accept` | `s5d run list` / `start` / `exec` / `accept` |
-| Problem / acceptance card | `s5d_set_problem` / `s5d_set_acceptance` | `s5d state set-problem` / `set-acceptance` |
+| Run work states (list/start/accept) | `s5d_phase_list` / `s5d_phase_start` / `s5d_phase_accept` | `s5d run list` / `start` / `accept` |
+| Bounded engine work | `s5d_execute_loop` (emits a task package) | `s5d run exec` (runs an approved engine) — **different operations, not aliases** |
+| Problem / acceptance card | `s5d_set_problem` / `s5d_set_acceptance` | `s5d decision set-problem` / `set-acceptance` |
 | Architecture check | `s5d_check` | `s5d verify check` |
 | Discover sync / check | `s5d_discover_sync` / `s5d_discover_check` | `s5d discover sync` / `check` |
 | Codebase sync / check | `s5d_codebase_sync` / `s5d_codebase_check` | `s5d codebase sync` / `check` |
@@ -314,7 +326,7 @@ Key commands (MCP + CLI). Full preconditions and the run/harness surface live in
 | Record gate waiver | `s5d_waiver` | — (MCP-only) |
 | Note / Status / Show | `s5d_note` / `s5d_status` / `s5d_show` | `s5d note` / `s5d status` / `s5d show` |
 
-**Naming note:** the Run stage is `s5d run …` on the CLI but `s5d_phase_*` / `s5d_execute_loop` over MCP — same work states, different surface names. This table is the working set; the full surface lives in the repo's `S5D.md`.
+**Naming note:** the phase work-states are `s5d run list/start/accept` (CLI) ↔ `s5d_phase_*` (MCP) — same states, different names. But `s5d run exec` (CLI, runs an approved engine) and `s5d_execute_loop` (MCP, emits a task package) are **distinct operations**, not two names for one thing. This table is the working set; the full surface lives in the repo's `S5D.md`.
 
 Legacy hidden aliases (e.g. `s5d add-hypothesis`, `s5d validate`, `s5d apply preview`) remain supported for existing scripts.
 
@@ -352,4 +364,4 @@ WAIVER: <step> | Reason: <why> | Condition: <when required again> | Approved: <n
 ```
 Non-waivable: Decide human confirmation, Run approval. Route-to-Spec is an auto-waiver for Target and Decide — record it explicitly.
 
-**High-tier "no waivers" ≠ the Target/Decide auto-waiver.** "No waivers" governs *assurance gates* (schema, graph, review, contract, privacy, human approval) — never waivable, any tier. The Target+Decide auto-waiver is *not* a gate waiver: it points at a **prior confirmed decision** (winner + `confirmed_by`), it does not skip one. A high-tier feature with no prior decision record cannot auto-waive Decide — frame it first.
+**High-tier "no waivers" ≠ the Target/Decide auto-waiver.** The never-waivable set and the policy-vs-API distinction live in §Scope. The Target+Decide auto-waiver is *not* a gate waiver — it points at a **prior confirmed decision** (winner + `confirmed_by`), it does not skip one; a high-tier feature with no prior decision record cannot auto-waive Decide, so frame it first.

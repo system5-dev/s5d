@@ -206,7 +206,13 @@ pub fn route(description: &str) -> RouteResult {
         (_, RouteMode::Prepare) => (1, None),
         (_, RouteMode::Execute) => (
             3,
-            Some("WAIVER: Target+Decide | Reason: architecture decided | Approved: router".into()),
+            // The router is a deterministic cross-check, not the source of truth
+            // (decision.s5d-routing-philosophy). It classifies on keywords and
+            // does NOT verify a backing decision/architecture, so it must not
+            // claim one was approved — it emits a suggestion the agent verifies.
+            Some(
+                "WAIVER: Target+Decide | Reason: execute-intent keywords — router suggestion, verify a prior confirmed decision exists (not machine-checked)".into(),
+            ),
         ),
     };
     let entry_stage = if entry_step == 3 { "Spec" } else { "Target" };

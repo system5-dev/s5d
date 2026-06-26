@@ -2489,33 +2489,18 @@ fn run_new(
 
     // Auto-link spec_ref on the specified hypothesis in a parent decision spec
     if let Some(hyp_id) = hypothesis_id {
-        let decision_specs = project.discover_specs()?;
-        let mut linked = false;
-
-        for (dec_path, mut dec_spec) in decision_specs {
-            if !matches!(dec_spec.tier, s5d::Tier::Decision) {
-                continue;
-            }
-            if let Some(hyp) = dec_spec.hypotheses.iter_mut().find(|h| h.id == hyp_id) {
-                hyp.spec_ref = Some(spec_filename.clone());
-                save_spec_yaml(&dec_path, &dec_spec)?;
-                println!(
-                    "  {} Set spec_ref on hypothesis '{}' in {}",
-                    "ok".green(),
-                    hyp_id,
-                    dec_path.display()
-                );
-                linked = true;
-                break;
-            }
-        }
-
-        if !linked {
-            eprintln!(
+        match project.link_hypothesis_spec_ref(hyp_id, &spec_filename)? {
+            Some(dec_path) => println!(
+                "  {} Set spec_ref on hypothesis '{}' in {}",
+                "ok".green(),
+                hyp_id,
+                dec_path.display()
+            ),
+            None => eprintln!(
                 "  {} hypothesis '{}' not found in any decision spec — spec_ref not set",
                 "warn:".yellow(),
                 hyp_id
-            );
+            ),
         }
     }
 

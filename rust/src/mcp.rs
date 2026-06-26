@@ -93,7 +93,8 @@ fn core_tools() -> Vec<Value> {
                     "tier": {"type": "string", "description": "Spec tier: decision|standard|lightweight|high|note (default: standard)"},
                     "product": {"type": "string", "description": "Product name"},
                     "question": {"type": "string", "description": "Decision question (required for tier=decision)"},
-                    "rationale": {"type": "string", "description": "Note rationale (required for tier=note)"}
+                    "rationale": {"type": "string", "description": "Note rationale (required for tier=note)"},
+                    "hypothesis_id": {"type": "string", "description": "Hypothesis ID in a parent decision spec to auto-link this new feature spec as its spec_ref (CLI equivalent: --hypothesis-id). Optional; warns if the hypothesis is not found."}
                 }
             }
         }),
@@ -1141,7 +1142,7 @@ fn tool_s5d_new(args: &Value) -> anyhow::Result<String> {
     let record = crate::generate_record(&spec_filename, &sha);
     project.save_record(&spec_filename, &record)?;
 
-    Ok(format!(
+    let mut msg = format!(
         "Created spec: {}\nRecord: {}",
         spec_path.display(),
         project
@@ -1149,7 +1150,25 @@ fn tool_s5d_new(args: &Value) -> anyhow::Result<String> {
             .join("records")
             .join(spec_filename.replace(".s5d.yaml", ".record.yaml"))
             .display()
-    ))
+    );
+
+    // Auto-link spec_ref on the specified hypothesis in a parent decision spec
+    // (CLI parity with `s5d new --hypothesis-id`).
+    if let Some(hyp_id) = args["hypothesis_id"].as_str() {
+        match project.link_hypothesis_spec_ref(hyp_id, &spec_filename)? {
+            Some(dec_path) => msg.push_str(&format!(
+                "\nSet spec_ref on hypothesis '{}' in {}",
+                hyp_id,
+                dec_path.display()
+            )),
+            None => msg.push_str(&format!(
+                "\nWarning: hypothesis '{}' not found in any decision spec — spec_ref not set",
+                hyp_id
+            )),
+        }
+    }
+
+    Ok(msg)
 }
 
 // ── s5d_validate ──────────────────────────────────────────────────────────────

@@ -82,6 +82,43 @@ fn router_classifies_clean_requests() {
 }
 
 #[test]
+fn execute_waiver_is_a_non_authoritative_suggestion() {
+    // The router is a cross-check, not the source of truth
+    // (decision.s5d-routing-philosophy). On an execute-intent request it records a
+    // Target+Decide auto-waiver, but it MUST NOT claim a decision was made or
+    // approved — it has verified none. Lock the honest framing so a future edit
+    // can't quietly restore the authoritative "architecture decided / Approved:
+    // router" wording the conclave flagged as a control-plane-bypass shape.
+    let waiver = route("ship the new onboarding screen")
+        .waiver
+        .expect("execute intent records a Target+Decide auto-waiver");
+    assert!(
+        waiver.contains("WAIVER: Target+Decide"),
+        "auto-waiver concept preserved: {waiver:?}"
+    );
+    assert!(
+        !waiver.contains("architecture decided"),
+        "router must not claim architecture was decided: {waiver:?}"
+    );
+    assert!(
+        !waiver.contains("Approved: router"),
+        "router must not claim approval authority: {waiver:?}"
+    );
+    assert!(
+        waiver.contains("suggestion") && waiver.contains("verify"),
+        "router must frame its waiver as a suggestion to verify: {waiver:?}"
+    );
+
+    // Prepare mode records no waiver at all.
+    assert!(
+        route("Add a search filter to the dashboard")
+            .waiver
+            .is_none(),
+        "prepare mode emits no waiver"
+    );
+}
+
+#[test]
 fn router_known_limitations() {
     use RouteMode::{Execute, Prepare};
     use Tier::Lightweight;
