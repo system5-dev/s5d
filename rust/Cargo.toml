@@ -1,6 +1,6 @@
 [package]
 name = "s5d"
-version = "0.11.0-alpha.18"
+version = "0.11.0-alpha.19"
 edition = "2021"
 description = "S5D — Decision & Feature Framework CLI"
 
