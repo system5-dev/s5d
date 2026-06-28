@@ -167,13 +167,16 @@ pub fn validate_spec(spec: &Spec) -> Vec<String> {
                         ));
                     }
                 }
-                // FPF C.2:4.2 — Δ-move kind required when verdict=refine.
-                if ev.verdict == "refine" && ev.refine_kind.is_none() {
-                    errors.push(format!(
-                        "hypothesis '{}' evidence '{}' has verdict=refine but no refine_kind (FPF C.2:4.2)",
-                        h.id, ev.id
-                    ));
-                }
+                // FPF C.2:4.2 — a Δ-move kind belongs with verdict=refine. But the
+                // recorded decision.fpf.hypothesis-record-extension (hypothesis
+                // 'minimal-additions-only') deliberately deferred the Δ-moves enum and
+                // accepted opaque refine evidence ("FPF compliance partial"). Hard-
+                // erroring a MISSING refine_kind here would make the runtime stricter
+                // than that recorded policy and retroactively invalidate existing
+                // decision records — a policy change, not a bugfix. Full Δ-move adoption
+                // must come through a superseding decision. So a missing refine_kind is
+                // allowed; an INVALID one (below) is still rejected.
+                // s5d:debt(ceiling="validate allows opaque verdict=refine evidence without refine_kind per minimal-additions-only decision", trigger="when Δ-moves are adopted by a superseding decision")
                 if let Some(ref rk) = ev.refine_kind {
                     let allowed = [
                         "formalise",
@@ -1064,20 +1067,24 @@ mod decision_validation_tests {
     }
 
     #[test]
-    fn refine_verdict_without_refine_kind_is_rejected() {
+    fn refine_verdict_without_refine_kind_is_allowed_by_recorded_policy() {
+        // decision.fpf.hypothesis-record-extension (hypothesis minimal-additions-only)
+        // deliberately deferred the Δ-moves enum and accepted opaque refine evidence.
+        // A missing refine_kind must therefore NOT be a hard error — enforcing it
+        // would make the runtime stricter than recorded policy and invalidate
+        // existing decision records. (Full Δ-move adoption = a superseding decision.)
         let mut spec = decision_spec();
         spec.hypotheses
             .push(hyp("h1", vec![ev("refine", None)], None));
         let errs = validate_spec(&spec);
         assert!(
-            errs.iter()
-                .any(|e| e.contains("verdict=refine but no refine_kind")),
-            "{errs:?}"
+            !errs.iter().any(|e| e.contains("refine_kind")),
+            "missing refine_kind must be allowed per recorded policy: {errs:?}"
         );
     }
 
     #[test]
-    fn refine_with_valid_kind_and_pass_verdict_accepted() {
+    fn valid_refine_kind_is_accepted() {
         let mut spec = decision_spec();
         spec.hypotheses
             .push(hyp("h1", vec![ev("refine", Some("calibrate"))], None));
@@ -1085,6 +1092,20 @@ mod decision_validation_tests {
             .push(hyp("h2", vec![ev("pass", None)], None));
         let errs = validate_spec(&spec);
         assert!(errs.is_empty(), "{errs:?}");
+    }
+
+    #[test]
+    fn invalid_refine_kind_is_rejected_when_present() {
+        // The boundary the recorded policy draws: a MISSING refine_kind is allowed,
+        // but a PRESENT-but-garbage one is still rejected — opaque is fine, wrong is not.
+        let mut spec = decision_spec();
+        spec.hypotheses
+            .push(hyp("h1", vec![ev("refine", Some("bogus"))], None));
+        let errs = validate_spec(&spec);
+        assert!(
+            errs.iter().any(|e| e.contains("invalid refine_kind")),
+            "{errs:?}"
+        );
     }
 
     #[test]
