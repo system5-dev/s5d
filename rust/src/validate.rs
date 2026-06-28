@@ -98,9 +98,35 @@ pub fn validate_spec(spec: &Spec) -> Vec<String> {
     {
         let mut seen_hyp_ids = std::collections::HashSet::new();
         for h in &spec.hypotheses {
+            if h.id.trim().is_empty() {
+                errors.push(
+                    "hypothesis has an empty id (slug from an all-non-ASCII title); \
+                     ids must be non-empty — the generator falls back to h-<hash>"
+                        .into(),
+                );
+            }
             if !seen_hyp_ids.insert(&h.id) {
                 errors.push(format!("duplicate hypothesis ID: {}", h.id));
             }
+        }
+    }
+
+    // Gate-kind validity applies to every tier (Decision returns early below, so
+    // this must run before the tier branches to cover decision specs too).
+    let valid_gates = [
+        "schema",
+        "graph",
+        "contract",
+        "lint",
+        "test",
+        "typecheck",
+        "policy",
+        "architecture",
+        "review",
+    ];
+    for gate in &spec.gates {
+        if !valid_gates.contains(&gate.kind.as_str()) {
+            errors.push(format!("invalid gate kind: {}", gate.kind));
         }
     }
 
@@ -112,6 +138,18 @@ pub fn validate_spec(spec: &Spec) -> Vec<String> {
             errors.push("decision tier must not have artifacts".into());
         }
         for h in &spec.hypotheses {
+            // FPF B.5.2:13.3 — next_move enum (Decision-tier hypotheses only).
+            if let Some(ref nm) = h.next_move {
+                let allowed = ["deduction", "probe", "build", "defer"];
+                if !allowed.contains(&nm.as_str()) {
+                    errors.push(format!(
+                        "hypothesis '{}' has invalid next_move '{}' (allowed: {})",
+                        h.id,
+                        nm,
+                        allowed.join(", ")
+                    ));
+                }
+            }
             for ev in &h.evidence {
                 if let Some(f) = ev.formality {
                     if f > 9 {
@@ -126,6 +164,32 @@ pub fn validate_spec(spec: &Spec) -> Vec<String> {
                         errors.push(format!(
                             "evidence {}: congruence_level {} out of range (0-3)",
                             ev.id, c
+                        ));
+                    }
+                }
+                // FPF C.2:4.2 — Δ-move kind required when verdict=refine.
+                if ev.verdict == "refine" && ev.refine_kind.is_none() {
+                    errors.push(format!(
+                        "hypothesis '{}' evidence '{}' has verdict=refine but no refine_kind (FPF C.2:4.2)",
+                        h.id, ev.id
+                    ));
+                }
+                if let Some(ref rk) = ev.refine_kind {
+                    let allowed = [
+                        "formalise",
+                        "generalise",
+                        "specialise",
+                        "calibrate",
+                        "validate",
+                        "congrue",
+                    ];
+                    if !allowed.contains(&rk.as_str()) {
+                        errors.push(format!(
+                            "hypothesis '{}' evidence '{}' has invalid refine_kind '{}' (allowed: {})",
+                            h.id,
+                            ev.id,
+                            rk,
+                            allowed.join(", ")
                         ));
                     }
                 }
@@ -687,23 +751,6 @@ pub fn validate_spec(spec: &Spec) -> Vec<String> {
         }
     }
 
-    let valid_gates = [
-        "schema",
-        "graph",
-        "contract",
-        "lint",
-        "test",
-        "typecheck",
-        "policy",
-        "architecture",
-        "review",
-    ];
-    for gate in &spec.gates {
-        if !valid_gates.contains(&gate.kind.as_str()) {
-            errors.push(format!("invalid gate kind: {}", gate.kind));
-        }
-    }
-
     if let Tier::High = spec.tier {
         if spec
             .context
@@ -711,52 +758,6 @@ pub fn validate_spec(spec: &Spec) -> Vec<String> {
             .is_none_or(|c| !c.to_lowercase().contains("privacy"))
         {
             errors.push("high tier requires privacy note in context".into());
-        }
-    }
-
-    // FPF B.5.2:13.3 — high-tier hypotheses require prompt + next_move (Decision tier only).
-    if matches!(spec.tier, Tier::Decision) {
-        for hyp in &spec.hypotheses {
-            // Validate next_move enum if set.
-            if let Some(ref nm) = hyp.next_move {
-                let allowed = ["deduction", "probe", "build", "defer"];
-                if !allowed.contains(&nm.as_str()) {
-                    errors.push(format!(
-                        "hypothesis '{}' has invalid next_move '{}' (allowed: {})",
-                        hyp.id,
-                        nm,
-                        allowed.join(", ")
-                    ));
-                }
-            }
-            // FPF C.2:4.2 — Δ-move kind required when verdict=refine.
-            for ev in &hyp.evidence {
-                if ev.verdict == "refine" && ev.refine_kind.is_none() {
-                    errors.push(format!(
-                        "hypothesis '{}' evidence '{}' has verdict=refine but no refine_kind (FPF C.2:4.2)",
-                        hyp.id, ev.id
-                    ));
-                }
-                if let Some(ref rk) = ev.refine_kind {
-                    let allowed = [
-                        "formalise",
-                        "generalise",
-                        "specialise",
-                        "calibrate",
-                        "validate",
-                        "congrue",
-                    ];
-                    if !allowed.contains(&rk.as_str()) {
-                        errors.push(format!(
-                            "hypothesis '{}' evidence '{}' has invalid refine_kind '{}' (allowed: {})",
-                            hyp.id,
-                            ev.id,
-                            rk,
-                            allowed.join(", ")
-                        ));
-                    }
-                }
-            }
         }
     }
 
@@ -1004,5 +1005,111 @@ gates:
         assert!(errs(&y)
             .iter()
             .any(|e| e.contains("not declared in spec.gates")));
+    }
+}
+
+#[cfg(test)]
+mod decision_validation_tests {
+    //! Regression lock for the decision-tier early-return bug: the Decision
+    //! branch returned before the next_move / refine_kind / gate-kind checks, so
+    //! they were dead code for the only tier they applied to. These exercise the
+    //! checks now that they run inside the Decision branch.
+    use super::validate_spec;
+    use crate::models::{Gate, Hypothesis, HypothesisEvidence, Spec};
+
+    fn decision_spec() -> Spec {
+        crate::generate_decision_spec("decision.x", "x", "why are we here?")
+    }
+
+    fn ev(verdict: &str, refine_kind: Option<&str>) -> HypothesisEvidence {
+        HypothesisEvidence {
+            id: "e1".into(),
+            evidence_type: "internal".into(),
+            content: "x".into(),
+            verdict: verdict.into(),
+            valid_until: None,
+            carrier_ref: None,
+            formality: None,
+            claim_scope: vec![],
+            congruence_level: None,
+            reliability: None,
+            refine_kind: refine_kind.map(Into::into),
+            skill: None,
+            agent: None,
+        }
+    }
+
+    fn hyp(id: &str, evidence: Vec<HypothesisEvidence>, next_move: Option<&str>) -> Hypothesis {
+        Hypothesis {
+            id: id.into(),
+            title: "t".into(),
+            content: "c".into(),
+            scope: "s".into(),
+            kind: String::new(),
+            layer: String::new(),
+            r_eff: None,
+            evidence,
+            depends_on: vec![],
+            rationale: None,
+            spec_ref: None,
+            prompt: None,
+            next_move: next_move.map(Into::into),
+        }
+    }
+
+    #[test]
+    fn baseline_decision_scaffold_is_clean() {
+        let errs = validate_spec(&decision_spec());
+        assert!(errs.is_empty(), "scaffold should validate: {errs:?}");
+    }
+
+    #[test]
+    fn refine_verdict_without_refine_kind_is_rejected() {
+        let mut spec = decision_spec();
+        spec.hypotheses
+            .push(hyp("h1", vec![ev("refine", None)], None));
+        let errs = validate_spec(&spec);
+        assert!(
+            errs.iter()
+                .any(|e| e.contains("verdict=refine but no refine_kind")),
+            "{errs:?}"
+        );
+    }
+
+    #[test]
+    fn refine_with_valid_kind_and_pass_verdict_accepted() {
+        let mut spec = decision_spec();
+        spec.hypotheses
+            .push(hyp("h1", vec![ev("refine", Some("calibrate"))], None));
+        spec.hypotheses
+            .push(hyp("h2", vec![ev("pass", None)], None));
+        let errs = validate_spec(&spec);
+        assert!(errs.is_empty(), "{errs:?}");
+    }
+
+    #[test]
+    fn invalid_next_move_and_gate_kind_rejected_on_decision() {
+        let mut spec = decision_spec();
+        spec.gates.push(Gate {
+            kind: "bogus".into(),
+        });
+        spec.hypotheses.push(hyp("h1", vec![], Some("teleport")));
+        let errs = validate_spec(&spec);
+        assert!(
+            errs.iter().any(|e| e.contains("invalid next_move")),
+            "{errs:?}"
+        );
+        assert!(
+            errs.iter().any(|e| e.contains("invalid gate kind")),
+            "{errs:?}"
+        );
+    }
+
+    #[test]
+    fn empty_hypothesis_id_is_rejected() {
+        let mut spec = decision_spec();
+        spec.hypotheses.push(hyp("", vec![], None));
+        let errs = validate_spec(&spec);
+        assert!(errs.iter().any(|e| e.contains("empty id")), "{errs:?}");
     }
 }

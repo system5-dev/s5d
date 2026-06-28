@@ -63,6 +63,15 @@ fn router_classifies_clean_requests() {
         Some(High),
         Some(Execute),
     );
+    // "checkout" is a payment-adjacent high signal in its own right — the
+    // keyword router now catches behavior-probe P4 ("shopping cart and checkout
+    // flow") instead of leaning entirely on the LLM cross-check.
+    assert_route(
+        "Add a shopping cart and checkout flow",
+        true,
+        Some(High),
+        Some(Prepare),
+    );
     // lightweight default — single-domain feature
     assert_route(
         "Add a search filter to the dashboard",

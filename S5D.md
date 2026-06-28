@@ -217,7 +217,7 @@ Classify before touching tools. First match wins.
 
 **Mode:**
 - "Evaluate/compare" → `prepare` (analyze + target framing, stop for human)
-- "Implement X" with a confirmed decision record or stated existing architecture → `execute` (enters at Spec; records the Target+Decide auto-waiver)
+- "Implement X" backed by a **concrete decision/spec reference** — a prior decision record (winner + `confirmed_by`) or an existing component in the architecture map the change reuses → `execute` (enters at Spec; records the Target+Decide auto-waiver). A merely *asserted* "the architecture already exists", with no decision record and no mapped component, does not qualify — frame it first.
 - Raw idea, vague product request, unclear acceptance, mixed PRD/design/transcript → `shape`
 - Too vague to tell the domain count after Shape → run Discover / Domain-Capability mapping, then classify
 - No signal → `prepare`
@@ -336,4 +336,4 @@ WAIVER: <step> | Reason: <why> | Condition: <when required again> | Approved: <n
 Non-waivable: Decide human confirmation, Run approval.
 Route-to-Spec is an auto-waiver for Target and Decide. Record it explicitly.
 
-**High-tier "no waivers" ≠ the Target/Decide auto-waiver.** "No waivers" governs *assurance gates* (schema, graph, review, contract, privacy, human approval) — never waivable, any tier. The Target+Decide auto-waiver is *not* a gate waiver: it points at a **prior confirmed decision** (winner + `confirmed_by`), it does not skip one. A high-tier feature with no prior decision record cannot auto-waive Decide — frame it first.
+**High-tier "no waivers" ≠ the Target/Decide auto-waiver.** Two kinds of non-waivability: *structurally* non-waivable — Decide `confirmed_by` and Run `reviewer`, which no API bypasses — and *policy* non-waivable but API-reachable — the assurance gates (schema, graph, review, contract, privacy), which doctrine closes via fixes/evidence rather than waivers, though `s5d_waiver` can still record `status: waived` with an expiry (hold "never waivable" as discipline, not a runtime invariant). The Target+Decide auto-waiver is neither: it points at a **prior confirmed decision** (winner + `confirmed_by`) and does not skip one — a high-tier feature with no prior decision record cannot auto-waive Decide, so frame it first.

@@ -1842,12 +1842,16 @@ fn import_stays_blocked_when_declared_gate_only_skips() {
     let spec_path = only_spec_path(&repo);
     let spec_str = spec_path.to_str().unwrap();
 
-    // Add a custom gate kind that has no built-in handler and no configured command.
-    // Schema/graph now run built-in validation, so we need a different kind to test skip behavior.
+    // `lint` is a valid gate kind with no built-in handler and no configured
+    // command, so it SKIPS. Effective gates are now tier-default `schema`
+    // (union — always enforced, passes here) + `lint` (skips); import must still
+    // block because a skip is not a pass. (An invalid kind like "custom_check"
+    // would instead fail the built-in schema gate via validate_spec's
+    // valid-gate-kind check — a different assertion than skip-isn't-pass.)
     let mut spec: s5d::Spec = load_yaml(&spec_path);
     materialize_scaffold_paths(&mut spec);
     spec.gates = vec![s5d::Gate {
-        kind: "custom_check".to_string(),
+        kind: "lint".to_string(),
     }];
     let yaml = serde_yaml::to_string(&spec).unwrap();
     std::fs::write(&spec_path, yaml).unwrap();
@@ -1869,7 +1873,7 @@ fn import_stays_blocked_when_declared_gate_only_skips() {
     assert!(record
         .gate_results
         .iter()
-        .any(|result| result.kind == "custom_check" && result.status == "skipped"));
+        .any(|result| result.kind == "lint" && result.status == "skipped"));
 }
 
 #[test]

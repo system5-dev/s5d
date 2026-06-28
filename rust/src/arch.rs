@@ -193,16 +193,22 @@ pub fn resolve_component_path(project_root: &Path, pattern: &str) -> anyhow::Res
         );
     }
 
+    // Canonical root for confinement: even with the string-level escape guard
+    // above, an in-tree symlink can resolve outside the project — refuse any
+    // file whose real path escapes this root.
+    let root = project_root
+        .canonicalize()
+        .unwrap_or_else(|_| project_root.to_path_buf());
     let mut files = Vec::new();
     let full_pattern = project_root.join(pattern);
 
     if contains_glob(pattern) {
         for entry in glob::glob(&full_pattern.to_string_lossy())? {
             let path = entry?;
-            collect_source_files(&path, &mut files)?;
+            collect_source_files(&path, &mut files, &root)?;
         }
     } else {
-        collect_source_files(&full_pattern, &mut files)?;
+        collect_source_files(&full_pattern, &mut files, &root)?;
     }
 
     files.sort();
@@ -222,14 +228,26 @@ fn component_path_escapes_project(pattern: &str) -> bool {
         })
 }
 
-fn collect_source_files(path: &Path, files: &mut Vec<PathBuf>) -> anyhow::Result<()> {
+fn collect_source_files(path: &Path, files: &mut Vec<PathBuf>, root: &Path) -> anyhow::Result<()> {
     if path.is_file() {
         if is_source_file(path) {
-            files.push(path.canonicalize()?);
+            let canonical = path.canonicalize()?;
+            if canonical.starts_with(root) {
+                files.push(canonical);
+            }
         }
         return Ok(());
     }
     if path.is_dir() {
+        // Refuse to descend into a dir that resolves outside the project — and
+        // fail closed if it won't canonicalize at all (never traverse a path we
+        // cannot confine).
+        let Ok(canonical) = path.canonicalize() else {
+            return Ok(());
+        };
+        if !canonical.starts_with(root) {
+            return Ok(());
+        }
         for entry in std::fs::read_dir(path)? {
             let entry = entry?;
             let child = entry.path();
@@ -240,7 +258,7 @@ fn collect_source_files(path: &Path, files: &mut Vec<PathBuf>) -> anyhow::Result
             {
                 continue;
             }
-            collect_source_files(&child, files)?;
+            collect_source_files(&child, files, root)?;
         }
     }
     Ok(())

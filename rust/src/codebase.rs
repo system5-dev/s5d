@@ -156,6 +156,9 @@ pub fn load_codebase_snapshot(project: &S5dProject) -> anyhow::Result<Option<Cod
 }
 
 fn discover_modules(project_root: &Path) -> anyhow::Result<Vec<CodebaseModule>> {
+    let root = project_root
+        .canonicalize()
+        .unwrap_or_else(|_| project_root.to_path_buf());
     let mut modules = Vec::new();
     for entry in std::fs::read_dir(project_root)? {
         let entry = entry?;
@@ -165,7 +168,7 @@ fn discover_modules(project_root: &Path) -> anyhow::Result<Vec<CodebaseModule>> 
         }
 
         let mut files = BTreeSet::new();
-        collect_source_files(&path, &mut files)?;
+        collect_source_files(&path, &mut files, &root)?;
         if files.is_empty() {
             continue;
         }
@@ -190,10 +193,13 @@ fn module_source_files(
     project_root: &Path,
     modules: &[CodebaseModule],
 ) -> anyhow::Result<BTreeMap<String, BTreeSet<PathBuf>>> {
+    let root = project_root
+        .canonicalize()
+        .unwrap_or_else(|_| project_root.to_path_buf());
     let mut files_by_module = BTreeMap::new();
     for module in modules {
         let mut files = BTreeSet::new();
-        collect_source_files(&project_root.join(&module.path), &mut files)?;
+        collect_source_files(&project_root.join(&module.path), &mut files, &root)?;
         files_by_module.insert(module.path.clone(), files);
     }
     Ok(files_by_module)
@@ -203,25 +209,38 @@ fn component_source_files(
     project_root: &Path,
     component: &Component,
 ) -> anyhow::Result<Vec<PathBuf>> {
+    // Canonical root for confinement: a `..` in a pattern or an in-tree symlink
+    // can resolve outside the project; collect_source_files refuses any file
+    // whose real path escapes this root.
+    let root = project_root
+        .canonicalize()
+        .unwrap_or_else(|_| project_root.to_path_buf());
     let mut files = BTreeSet::new();
     for pattern in &component.paths {
         let full_pattern = project_root.join(pattern);
         if contains_glob(pattern) {
             for entry in glob::glob(&full_pattern.to_string_lossy())? {
                 let path = entry?;
-                collect_source_files(&path, &mut files)?;
+                collect_source_files(&path, &mut files, &root)?;
             }
         } else {
-            collect_source_files(&full_pattern, &mut files)?;
+            collect_source_files(&full_pattern, &mut files, &root)?;
         }
     }
     Ok(files.into_iter().collect())
 }
 
-fn collect_source_files(path: &Path, files: &mut BTreeSet<PathBuf>) -> anyhow::Result<()> {
+fn collect_source_files(
+    path: &Path,
+    files: &mut BTreeSet<PathBuf>,
+    root: &Path,
+) -> anyhow::Result<()> {
     if path.is_file() {
         if is_source_file(path) {
-            files.insert(path.canonicalize()?);
+            let canonical = path.canonicalize()?;
+            if canonical.starts_with(root) {
+                files.insert(canonical);
+            }
         }
         return Ok(());
     }
@@ -229,9 +248,18 @@ fn collect_source_files(path: &Path, files: &mut BTreeSet<PathBuf>) -> anyhow::R
         if should_skip_dir(path) {
             return Ok(());
         }
+        // Refuse to descend into a dir that resolves outside the project — and
+        // fail closed if it won't canonicalize at all (never traverse a path we
+        // cannot confine).
+        let Ok(canonical) = path.canonicalize() else {
+            return Ok(());
+        };
+        if !canonical.starts_with(root) {
+            return Ok(());
+        }
         for entry in std::fs::read_dir(path)? {
             let entry = entry?;
-            collect_source_files(&entry.path(), files)?;
+            collect_source_files(&entry.path(), files, root)?;
         }
     }
     Ok(())
@@ -328,4 +356,41 @@ fn display_rel(project_root: &Path, path: &Path) -> String {
         .unwrap_or(path)
         .to_string_lossy()
         .to_string()
+}
+
+#[cfg(all(test, unix))]
+mod confinement_tests {
+    use super::collect_source_files;
+    use std::collections::BTreeSet;
+
+    // A symlinked dir inside the project that points outside must not be
+    // followed — collect_source_files confines reads to the canonical root.
+    #[test]
+    fn collect_source_files_refuses_symlink_escape() {
+        let tmp = tempfile::tempdir().unwrap();
+        let root = tmp.path().join("project");
+        let outside = tmp.path().join("outside");
+        std::fs::create_dir_all(&root).unwrap();
+        std::fs::create_dir_all(&outside).unwrap();
+        std::fs::write(root.join("inside.rs"), "fn a() {}").unwrap();
+        std::fs::write(outside.join("secret.rs"), "fn s() {}").unwrap();
+        std::os::unix::fs::symlink(&outside, root.join("link")).unwrap();
+
+        let canon_root = root.canonicalize().unwrap();
+        let mut files = BTreeSet::new();
+        collect_source_files(&root, &mut files, &canon_root).unwrap();
+
+        let names: Vec<String> = files
+            .iter()
+            .filter_map(|p| p.file_name().map(|n| n.to_string_lossy().into_owned()))
+            .collect();
+        assert!(
+            names.contains(&"inside.rs".to_string()),
+            "in-root file kept: {names:?}"
+        );
+        assert!(
+            !names.contains(&"secret.rs".to_string()),
+            "symlink escape must be refused: {names:?}"
+        );
+    }
 }

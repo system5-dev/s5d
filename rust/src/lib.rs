@@ -97,6 +97,36 @@ pub fn truncate_chars(s: &str, max: usize) -> String {
     s.chars().take(max).collect()
 }
 
+/// Deterministic, ASCII-safe slug for a hypothesis id derived from its title.
+///
+/// Lowercases, keeps `[a-z0-9]`, collapses every other run to a single `-`, and
+/// trims dashes. A title with no ASCII alphanumerics (e.g. all-Cyrillic) would
+/// slug to `""` — an invalid id, and the exact point where the two surfaces used
+/// to diverge: the CLI regex produced `""` while the MCP `is_alphanumeric` path
+/// kept a Unicode id. Both now call this, and an empty slug falls back to
+/// `h-<sha256[..8]>`, so the same title yields the same non-empty id everywhere.
+pub fn hypothesis_slug(title: &str) -> String {
+    let mut slug = String::new();
+    let mut prev_dash = false;
+    for c in title.chars() {
+        if c.is_ascii_alphanumeric() {
+            slug.push(c.to_ascii_lowercase());
+            prev_dash = false;
+        } else if !prev_dash {
+            slug.push('-');
+            prev_dash = true;
+        }
+    }
+    let trimmed = slug.trim_matches('-');
+    if !trimmed.is_empty() {
+        return trimmed.to_string();
+    }
+    use sha2::{Digest, Sha256};
+    let digest = Sha256::digest(title.as_bytes());
+    let hex: String = digest.iter().take(4).map(|b| format!("{b:02x}")).collect();
+    format!("h-{hex}")
+}
+
 /// Create or update the structured problem card on a spec. Decision specs ship
 /// with a card; standard/lightweight ones do not, so an external workflow needs
 /// a way to set one via the API instead of hand-editing YAML. Creating a card
@@ -166,6 +196,28 @@ mod tests {
         // shorter-than-max returns the whole string; ASCII boundary stays correct.
         assert_eq!(truncate_chars("abc", 72), "abc");
         assert_eq!(truncate_chars("abcdef", 3), "abc");
+    }
+
+    #[test]
+    fn hypothesis_slug_is_ascii_safe_nonempty_and_deterministic() {
+        // ASCII titles slug as before: lowercase, collapse non-alnum runs, trim.
+        assert_eq!(
+            hypothesis_slug("Server-Side Rotation"),
+            "server-side-rotation"
+        );
+        assert_eq!(hypothesis_slug("  Foo!!  Bar  "), "foo-bar");
+        // Mixed title keeps only the ASCII portion.
+        assert_eq!(hypothesis_slug("Привет Foo"), "foo");
+        // All-non-ASCII used to slug to "" on the CLI path — now a stable,
+        // non-empty, ASCII hash id, identical on CLI and MCP.
+        let cyr = hypothesis_slug("Привет");
+        assert!(
+            cyr.starts_with("h-") && cyr.is_ascii() && cyr.len() > 2,
+            "{cyr}"
+        );
+        assert_eq!(hypothesis_slug("Привет"), cyr, "deterministic");
+        // Even an empty title yields a non-empty id.
+        assert!(!hypothesis_slug("").is_empty());
     }
 
     #[test]

@@ -110,6 +110,7 @@ const HIGH_SIGNALS: &[&str] = &[
     "authorization",
     "payment",
     "billing",
+    "checkout",
     "security",
     "pii",
     "compliance",

@@ -39,7 +39,7 @@ git status --short
 git diff --stat skills/s5d/
 ```
 
-Working tree may have **unrelated dirty files** (Rust source, `bin/s5d-darwin-arm64`, `.s5d/records/*`, `Cargo.*`). **Never** stage those. Only `skills/s5d/...` paths belong to this agent.
+Working tree may have **unrelated dirty files** (Rust source, `bin/s5d-darwin-arm64`, `.s5d/records/*`, `Cargo.*`). **Never** stage those into the skill-content commit. The **one** exception is the release-mode version bump (§6) — `rust/Cargo.toml`, the three plugin manifests, and the prebuilt binary, staged as a separate `chore(release):` commit so they match the tag. Only `skills/s5d/...` paths belong to the skill-content commit.
 
 If nothing under `skills/s5d/` is modified, stop and ask the user what they want changed.
 
@@ -117,6 +117,11 @@ grep -r '"version"' .claude-plugin/plugin.json .codex-plugin/plugin.json gemini-
 # also refresh the tracked prebuilt: cargo build --release && cp rust/target/release/s5d bin/s5d-darwin-arm64
 ```
 
+These four touchpoints + the binary are the **one sanctioned exception** to the
+skill-only scope rule below. Stage them as a **separate `chore(release): vX.Y.Z`
+commit** (after the `docs(skill):`/`feat(skill):` skill-content commit) — never
+mixed into it.
+
 Annotated tag:
 
 ```bash
@@ -145,7 +150,7 @@ Output:
 
 ## Hard rules
 
-- **Skill-only scope.** Never stage Rust source, binaries, `.s5d/records/`, `Cargo.*`, or anything outside `skills/s5d/`. The working tree may have parallel work that does not belong to you.
+- **Skill-only scope (skill-content commit).** Never stage Rust source, binaries, `.s5d/records/`, `Cargo.*`, or anything outside `skills/s5d/` into the `docs(skill):`/`feat(skill):` commit. The working tree may have parallel work that does not belong to you. **Exception:** release mode (§6) bumps `rust/Cargo.toml`, the three plugin manifests, and the prebuilt binary to match the tag — staged as a separate `chore(release):` commit, never mixed into the skill-content commit.
 - **No force push, ever.**
 - **No tag deletion** without explicit user approval.
 - **Per-action approval** for every push and every tag push. Past approval does not carry over to the next action.

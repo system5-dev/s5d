@@ -832,9 +832,30 @@ fn version_greater(left: &str, right: &str) -> bool {
 }
 
 fn compare_versions(left: &str, right: &str) -> std::cmp::Ordering {
-    let left_parts = parse_version(left);
-    let right_parts = parse_version(right);
-    left_parts.cmp(&right_parts)
+    let (lr, lpre) = split_semver(left);
+    let (rr, rpre) = split_semver(right);
+    // Release version compared first; on tie a prerelease ranks BELOW the
+    // matching release (semver §11): `0.11.0-alpha.20 < 0.11.0`. The old
+    // digits-only parse dropped the `-` and made the longer `[0,11,0,20]` sort
+    // ABOVE `[0,11,0]`. Prerelease segments compare numerically — correct for
+    // s5d's single `alpha.N` channel; a future `beta`/`rc` channel would need
+    // the `semver` crate for alphabetic ordering.
+    lr.cmp(&rr)
+        .then_with(|| match (lpre.is_empty(), rpre.is_empty()) {
+            (true, true) => std::cmp::Ordering::Equal,
+            (true, false) => std::cmp::Ordering::Greater, // release > its prerelease
+            (false, true) => std::cmp::Ordering::Less,
+            (false, false) => lpre.cmp(&rpre),
+        })
+}
+
+/// Split `v0.11.0-alpha.20` into (release segments `[0,11,0]`, prerelease
+/// segments `[20]`). The `v` prefix and the `alpha` word are dropped by
+/// `parse_version` (digits only); an empty prerelease means a plain release.
+fn split_semver(version: &str) -> (Vec<u64>, Vec<u64>) {
+    let v = version.trim_start_matches('v');
+    let (release, pre) = v.split_once('-').unwrap_or((v, ""));
+    (parse_version(release), parse_version(pre))
 }
 
 fn parse_version(version: &str) -> Vec<u64> {
@@ -1362,5 +1383,22 @@ mod tests {
         git(repo.path(), &["checkout", "-q", "-b", "feature/x"]);
         let reason = auto_update_safety(repo.path()).expect("branch must skip");
         assert!(reason.contains("feature/x"), "{reason}");
+    }
+
+    #[test]
+    fn prerelease_sorts_below_its_release() {
+        use std::cmp::Ordering;
+        let cmp = super::compare_versions;
+        let gt = super::version_greater;
+        // The bug: digits-only parse made an alpha sort ABOVE its release.
+        assert_eq!(cmp("0.11.0-alpha.20", "0.11.0"), Ordering::Less);
+        assert!(!gt("0.11.0-alpha.20", "0.11.0"));
+        assert!(gt("0.11.0", "0.11.0-alpha.20"));
+        // Prerelease channel numeric within itself; equal is equal.
+        assert_eq!(cmp("0.11.0-alpha.2", "0.11.0-alpha.20"), Ordering::Less);
+        assert_eq!(cmp("0.11.0-alpha.20", "0.11.0-alpha.20"), Ordering::Equal);
+        // Release segments dominate the prerelease suffix; 'v' tolerated.
+        assert_eq!(cmp("0.12.0", "0.11.0-alpha.99"), Ordering::Greater);
+        assert!(gt("v0.11.0", "v0.11.0-alpha.1"));
     }
 }

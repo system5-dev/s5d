@@ -927,18 +927,6 @@ fn save_spec_yaml_mcp(path: &std::path::Path, spec: &crate::Spec) -> anyhow::Res
     Ok(())
 }
 
-fn slugify_mcp(title: &str) -> String {
-    let mut out = String::new();
-    for c in title.to_lowercase().chars() {
-        if c.is_alphanumeric() {
-            out.push(c);
-        } else if !out.ends_with('-') {
-            out.push('-');
-        }
-    }
-    out.trim_matches('-').to_string()
-}
-
 // ── s5d_init ──────────────────────────────────────────────────────────────────
 
 fn tool_s5d_init(args: &Value) -> anyhow::Result<String> {
@@ -1134,6 +1122,18 @@ fn tool_s5d_new(args: &Value) -> anyhow::Result<String> {
         };
         crate::generate_spec(id, tier, product_name)
     };
+
+    // Parity with CLI run_new and tool_s5d_shape: never write a scaffold that
+    // wouldn't validate. sanitize_id above guards the file path, not the spec's
+    // own schema / id format, so an id that is path-safe but schema-invalid
+    // would otherwise land an invalid spec on disk via the MCP path only.
+    let scaffold_errors = crate::validate_spec(&spec);
+    if !scaffold_errors.is_empty() {
+        anyhow::bail!(
+            "generated scaffold would not validate:\n  {}",
+            scaffold_errors.join("\n  ")
+        );
+    }
 
     let yaml = serde_yaml::to_string(&spec)?;
     std::fs::write(&spec_path, &yaml)?;
@@ -1508,15 +1508,22 @@ fn tool_s5d_import(args: &Value) -> anyhow::Result<String> {
 
     let effective_gates = crate::effective_gates_for_spec(&spec);
     if !effective_gates.is_empty() {
-        let now_rfc = chrono::Utc::now().to_rfc3339();
+        let now = chrono::Utc::now();
         let all_latest_passed = effective_gates.iter().all(|g| {
             let latest = record.gate_results.iter().rev().find(|r| r.kind == g.kind);
             match latest {
                 Some(r) if r.status == "passed" => true,
-                Some(r) if r.status == "waived" => r
-                    .waiver_expires_at
-                    .as_ref()
-                    .is_some_and(|expires_at| expires_at.as_str() >= now_rfc.as_str()),
+                Some(r) if r.status == "waived" => r.waiver_expires_at.as_ref().is_some_and(
+                    // Parse the RFC3339 expiry and compare instants — a raw string
+                    // compare misreads `Z` vs `+00:00`, offsets, and fractional
+                    // seconds. Fall back to lexicographic only if it won't parse.
+                    |expires_at| match chrono::DateTime::parse_from_rfc3339(expires_at) {
+                        Ok(exp) => exp.with_timezone(&chrono::Utc) >= now,
+                        // Fail closed: an unparseable expiry is not a valid waiver
+                        // — a garbage string must not sort its way past the gate.
+                        Err(_) => false,
+                    },
+                ),
                 _ => false,
             }
         });
@@ -1741,7 +1748,7 @@ fn tool_s5d_add_hypothesis(args: &Value) -> anyhow::Result<String> {
         );
     }
 
-    let hyp_id = slugify_mcp(title);
+    let hyp_id = crate::hypothesis_slug(title);
 
     if spec.hypotheses.iter().any(|h| h.id == hyp_id) {
         anyhow::bail!("hypothesis '{}' already exists in this spec", hyp_id);

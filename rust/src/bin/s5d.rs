@@ -1817,20 +1817,28 @@ fn run_hook_require_spec() -> anyhow::Result<()> {
         return Ok(());
     }
 
-    // Non-trivial: any approved spec OR commit-message ref → allow
-    if has_any_feature_spec(&cwd) || has_applied_record(&cwd) {
+    // Traceable if the commit carries an explicit `S5D-Spec:` trailer, OR every
+    // staged source file is covered by some spec component's declared paths.
+    // (Previously the mere presence of ANY feat.* spec or applied record in the
+    // repo let any non-trivial commit through, with no link to the staged files.)
+    if commit_msg_has_spec_ref(&command) {
         println!(r#"{{"decision":"approve"}}"#);
         return Ok(());
     }
-    if commit_msg_has_spec_ref(&command) {
+    let uncovered = uncovered_source_files(&cwd, &source_files);
+    if uncovered.is_empty() {
         println!(r#"{{"decision":"approve"}}"#);
         return Ok(());
     }
 
     let reason = format!(
-        "Non-trivial change ({} source files, +{} LOC) without S5D spec. \
-Run /s5d to create a spec first, or add 'S5D-Spec: <spec-id>' to commit message if spec exists elsewhere.",
-        source_files.len(), loc_delta
+        "Non-trivial change ({} source files, +{} LOC) not traceable to an S5D spec. \
+{} staged path(s) covered by no spec component: {}. \
+Add 'S5D-Spec: <spec-id>' to the commit message, or declare these paths in a spec component (run /s5d).",
+        source_files.len(),
+        loc_delta,
+        uncovered.len(),
+        uncovered.join(", ")
     );
     println!(
         "{}",
@@ -1864,37 +1872,52 @@ fn git_staged_insertions() -> Option<usize> {
     })
 }
 
-fn has_any_feature_spec(cwd: &std::path::Path) -> bool {
-    let dir = cwd.join(".s5d/packages");
-    std::fs::read_dir(&dir)
-        .map(|entries| {
-            entries.flatten().any(|e| {
-                e.file_name().to_string_lossy().starts_with("feat.")
-                    && e.file_name().to_string_lossy().ends_with(".s5d.yaml")
-            })
+/// Spec component path patterns across every spec in the project (empty if no
+/// project is found or none load). The commit hook uses these to decide whether
+/// staged source files are traceable to a declared component.
+fn component_path_patterns(cwd: &std::path::Path) -> Vec<String> {
+    s5d::S5dProject::find(cwd)
+        .and_then(|p| p.discover_specs().ok())
+        .map(|specs| {
+            specs
+                .iter()
+                .filter_map(|(_, spec)| spec.artifacts.as_ref())
+                .flat_map(|a| a.components.iter())
+                .flat_map(|c| c.paths.iter().cloned())
+                .collect()
         })
-        .unwrap_or(false)
+        .unwrap_or_default()
 }
 
-fn has_applied_record(cwd: &std::path::Path) -> bool {
-    let dir = cwd.join(".s5d/records");
-    std::fs::read_dir(&dir)
-        .map(|entries| {
-            entries.flatten().any(|e| {
-                let path = e.path();
-                if path.extension().and_then(|s| s.to_str()) != Some("yaml") {
-                    return false;
-                }
-                std::fs::read_to_string(&path)
-                    .map(|c| {
-                        c.contains("status: applied")
-                            || c.contains("status: operated")
-                            || c.contains("status: approved")
-                    })
-                    .unwrap_or(false)
-            })
-        })
-        .unwrap_or(false)
+/// Staged source files NOT covered by any spec component path. Empty = every
+/// staged source file is traceable. Fail-safe: when no patterns load, all
+/// staged files count as uncovered, so the hook blocks (requires a trailer)
+/// rather than waving the commit through.
+fn uncovered_source_files(cwd: &std::path::Path, staged: &[&String]) -> Vec<String> {
+    let patterns = component_path_patterns(cwd);
+    let mut uncovered = Vec::new();
+    for s in staged {
+        let path = s.as_str();
+        if !patterns.iter().any(|p| path_covered_by_pattern(path, p)) {
+            uncovered.push(path.to_string());
+        }
+    }
+    uncovered
+}
+
+/// Does a spec component path pattern cover a staged repo-relative file?
+/// Exact match, directory prefix (`rust/src` covers `rust/src/a.rs`), or glob.
+fn path_covered_by_pattern(staged: &str, pattern: &str) -> bool {
+    let pat = pattern.trim_end_matches('/');
+    if staged == pat || staged.starts_with(&format!("{pat}/")) {
+        return true;
+    }
+    if pat.contains('*') || pat.contains('?') || pat.contains('[') {
+        if let Ok(p) = glob::Pattern::new(pat) {
+            return p.matches(staged);
+        }
+    }
+    false
 }
 
 fn commit_msg_has_spec_ref(command: &str) -> bool {
@@ -4263,13 +4286,6 @@ fn show_feature(spec: &s5d::Spec, record: Option<&s5d::Record>) {
 
 // ── AddHypothesis ─────────────────────────────────────────────────────────────
 
-fn slugify(title: &str) -> String {
-    let re = regex::Regex::new("[^a-zA-Z0-9]+").unwrap();
-    let lower = title.to_lowercase();
-    let slug = re.replace_all(&lower, "-");
-    slug.trim_matches('-').to_string()
-}
-
 #[allow(clippy::too_many_arguments)]
 fn run_add_hypothesis(
     spec_path: &str,
@@ -4304,7 +4320,7 @@ fn run_add_hypothesis(
 
     let hyp_id = custom_id
         .map(|s| s.to_string())
-        .unwrap_or_else(|| slugify(title));
+        .unwrap_or_else(|| s5d::hypothesis_slug(title));
 
     if spec.hypotheses.iter().any(|h| h.id == hyp_id) {
         anyhow::bail!("hypothesis '{}' already exists in this spec", hyp_id);
@@ -5192,5 +5208,28 @@ Implements: spec://s5d/PROP-003#verification.timeout""#
             assert!(body.contains(AGENTS_BEGIN));
             assert!(body.contains("MANDATORY"));
         }
+    }
+}
+
+#[cfg(test)]
+mod hook_coverage_tests {
+    use super::path_covered_by_pattern as covered;
+
+    #[test]
+    fn pattern_covers_exact_dir_and_glob_but_not_siblings() {
+        // exact file
+        assert!(covered("rust/src/gates.rs", "rust/src/gates.rs"));
+        // directory prefix, with and without a trailing slash
+        assert!(covered("rust/src/gates.rs", "rust/src"));
+        assert!(covered("rust/src/gates.rs", "rust/src/"));
+        // glob — including `**` matching zero intermediate dirs (Codex tribunal
+        // flag: glob `rust/src/**/*.rs` must still cover a top-level `gates.rs`).
+        assert!(covered("rust/src/gates.rs", "rust/src/*.rs"));
+        assert!(covered("rust/src/bin/s5d.rs", "rust/**/*.rs"));
+        assert!(covered("rust/src/gates.rs", "rust/src/**/*.rs"));
+        // NOT covered: sibling dir, a non-boundary prefix, wrong-extension glob
+        assert!(!covered("rust/tests/foo.rs", "rust/src"));
+        assert!(!covered("rust/srcfoo.rs", "rust/src"));
+        assert!(!covered("rust/src/gates.rs", "rust/src/*.py"));
     }
 }

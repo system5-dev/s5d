@@ -414,12 +414,24 @@ pub fn run_gates(
     Ok(results)
 }
 
+/// Effective gates = tier defaults UNION spec-declared gates, deduped by kind
+/// (defaults first, then any extra spec gate, order-stable).
+///
+/// Tier defaults are ALWAYS enforced: a spec's `gates:` list can only ADD
+/// assurance, never remove a tier-mandated gate. Previously a non-empty
+/// `spec.gates` *replaced* the defaults, so a high-tier spec listing only
+/// `schema` silently dropped the mandatory `graph` + `review` gates — a
+/// control-plane bypass. An empty `spec.gates` still resolves to the defaults.
 pub fn effective_gates_for_spec(spec: &crate::models::Spec) -> Vec<crate::models::Gate> {
-    if spec.gates.is_empty() {
-        default_gates_for_tier(&spec.tier)
-    } else {
-        spec.gates.clone()
+    let mut gates = default_gates_for_tier(&spec.tier);
+    let mut seen: std::collections::HashSet<String> =
+        gates.iter().map(|g| g.kind.clone()).collect();
+    for g in &spec.gates {
+        if seen.insert(g.kind.clone()) {
+            gates.push(g.clone());
+        }
     }
+    gates
 }
 
 fn spawn_pipe_reader<R>(mut reader: R) -> JoinHandle<String>
@@ -507,4 +519,72 @@ fn truncate_log(log: &mut String) {
 
 fn count_attempts(results: &[GateResult], kind: &str) -> u32 {
     results.iter().filter(|r| r.kind == kind).count() as u32
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::models::{Gate, Tier};
+
+    fn kinds(spec: &crate::models::Spec) -> Vec<String> {
+        effective_gates_for_spec(spec)
+            .iter()
+            .map(|g| g.kind.clone())
+            .collect()
+    }
+
+    #[test]
+    fn high_spec_cannot_drop_mandatory_gates_via_narrow_gate_list() {
+        // Regression lock for the gate-bypass: effective gates used to *replace*
+        // tier defaults when spec.gates was non-empty, letting a high-tier spec
+        // listing only `schema` shed the mandatory `graph` + `review` gates.
+        let mut spec = crate::generate_spec("feat.x.y", Tier::High, "prod");
+        spec.gates = vec![Gate {
+            kind: "schema".into(),
+        }];
+        let k = kinds(&spec);
+        assert!(k.contains(&"schema".to_string()), "{k:?}");
+        assert!(
+            k.contains(&"graph".to_string()),
+            "high must keep graph: {k:?}"
+        );
+        assert!(
+            k.contains(&"review".to_string()),
+            "high must keep review: {k:?}"
+        );
+    }
+
+    #[test]
+    fn spec_gate_adds_assurance_without_duplicating_defaults() {
+        let mut spec = crate::generate_spec("feat.x.y", Tier::High, "prod");
+        spec.gates = vec![
+            Gate {
+                kind: "schema".into(),
+            },
+            Gate {
+                kind: "test".into(),
+            },
+        ];
+        let k = kinds(&spec);
+        assert_eq!(
+            k.iter().filter(|x| *x == "schema").count(),
+            1,
+            "no duplicate schema: {k:?}"
+        );
+        assert!(k.contains(&"test".to_string()), "extra gate added: {k:?}");
+        assert!(k.contains(&"review".to_string()), "default kept: {k:?}");
+    }
+
+    #[test]
+    fn empty_spec_gates_still_resolves_to_tier_defaults() {
+        let spec = crate::generate_spec("feat.x.y", Tier::Standard, "prod");
+        // generate_spec may seed gates; force the empty case explicitly.
+        let mut spec = spec;
+        spec.gates = vec![];
+        let k = kinds(&spec);
+        assert!(
+            k.contains(&"schema".to_string()) && k.contains(&"graph".to_string()),
+            "{k:?}"
+        );
+    }
 }
