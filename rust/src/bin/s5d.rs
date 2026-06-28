@@ -1821,10 +1821,26 @@ fn run_hook_require_spec() -> anyhow::Result<()> {
     // staged source file is covered by some spec component's declared paths.
     // (Previously the mere presence of ANY feat.* spec or applied record in the
     // repo let any non-trivial commit through, with no link to the staged files.)
-    if commit_msg_has_spec_ref(&command) {
-        println!(r#"{{"decision":"approve"}}"#);
-        return Ok(());
+    // An `S5D-Spec:` trailer is a selector, not a free pass: the referenced spec
+    // must resolve, validate, be in an accepted recorded state, and itself cover
+    // the staged files. A bad trailer blocks (with the specific reason) rather than
+    // silently waving the commit through.
+    if let Some(spec_id) = commit_msg_spec_ref(&command) {
+        return match trailer_block_reason(&cwd, &spec_id, &source_files) {
+            None => {
+                println!(r#"{{"decision":"approve"}}"#);
+                Ok(())
+            }
+            Some(reason) => {
+                println!(
+                    "{}",
+                    serde_json::json!({"decision": "block", "reason": reason})
+                );
+                Ok(())
+            }
+        };
     }
+    // No trailer → every staged source file must be covered by some spec component.
     let uncovered = uncovered_source_files(&cwd, &source_files);
     if uncovered.is_empty() {
         println!(r#"{{"decision":"approve"}}"#);
@@ -1914,14 +1930,27 @@ fn path_covered_by_pattern(staged: &str, pattern: &str) -> bool {
     }
     if pat.contains('*') || pat.contains('?') || pat.contains('[') {
         if let Ok(p) = glob::Pattern::new(pat) {
-            return p.matches(staged);
+            // require_literal_separator: a single `*`/`?` must NOT cross `/`, so
+            // `rust/src/*.rs` covers `rust/src/gates.rs` but not the nested
+            // `rust/src/bin/s5d.rs`; `**` still spans directories. With the default
+            // (separator-crossing) `*`, a top-level pattern silently covered nested
+            // files — over-broad coverage weakens the traceability boundary.
+            return p.matches_with(
+                staged,
+                glob::MatchOptions {
+                    case_sensitive: true,
+                    require_literal_separator: true,
+                    require_literal_leading_dot: false,
+                },
+            );
         }
     }
     false
 }
 
-fn commit_msg_has_spec_ref(command: &str) -> bool {
-    // Extract -m "..." payload — handles single and double quotes
+/// Extract the `-m "..."` commit message payload (single or double quoted),
+/// capturing the full quoted body including newlines so trailer lines are visible.
+fn extract_commit_message(command: &str) -> Option<String> {
     let mut chars = command.chars().peekable();
     let mut found_dash_m = false;
     let mut msg = String::new();
@@ -1949,17 +1978,129 @@ fn commit_msg_has_spec_ref(command: &str) -> bool {
         }
         if let Some(q) = in_quote {
             if c == q {
-                break;
+                return Some(msg);
             }
             msg.push(c);
         } else {
             if c == ' ' || c == '\t' {
-                break;
+                return Some(msg);
             }
             msg.push(c);
         }
     }
-    msg.contains("S5D-Spec:") || msg.contains("spec://")
+    if found_dash_m {
+        Some(msg)
+    } else {
+        None
+    }
+}
+
+/// The spec id named by an `S5D-Spec: <id>` trailer line, if present. Only this
+/// resolvable form acts as a selector; a bare `spec://` URI is not auto-resolvable
+/// to a package file, so it does not short-circuit coverage (falls through to the
+/// aggregate check). Returns `None` when there is no `S5D-Spec:` trailer.
+fn commit_msg_spec_ref(command: &str) -> Option<String> {
+    let msg = extract_commit_message(command)?;
+    for line in msg.lines() {
+        if let Some(rest) = line.trim().strip_prefix("S5D-Spec:") {
+            let id = rest.trim();
+            if !id.is_empty() {
+                return Some(id.to_string());
+            }
+        }
+    }
+    None
+}
+
+/// Validate that an `S5D-Spec: <id>` trailer actually authorizes this commit.
+/// A trailer is a **selector, not a blanket override**: the id must resolve to a
+/// spec in `.s5d/packages` that validates, has a record in an accepted state
+/// (approved/applied/operated) whose `spec_sha256` still matches the file, and
+/// whose own component paths cover every staged source file. Returns `Some(reason)`
+/// to BLOCK, `None` to APPROVE.
+fn trailer_block_reason(
+    cwd: &std::path::Path,
+    spec_id: &str,
+    staged: &[&String],
+) -> Option<String> {
+    let Some(project) = s5d::S5dProject::find(cwd) else {
+        return Some(format!("S5D-Spec: {spec_id} — no S5D project found"));
+    };
+    let specs = match project.discover_specs() {
+        Ok(s) => s,
+        Err(e) => return Some(format!("S5D-Spec: {spec_id} — could not load specs: {e}")),
+    };
+    let Some((path, spec)) = specs.iter().find(|(p, s)| {
+        s.id == spec_id
+            || p.file_name()
+                .and_then(|n| n.to_str())
+                .is_some_and(|n| n.starts_with(&format!("{spec_id}__")))
+    }) else {
+        return Some(format!(
+            "S5D-Spec: {spec_id} does not resolve to a spec in .s5d/packages"
+        ));
+    };
+
+    let verrors = s5d::validate_spec(spec);
+    if !verrors.is_empty() {
+        return Some(format!(
+            "S5D-Spec: {spec_id} does not validate: {}",
+            verrors.join("; ")
+        ));
+    }
+
+    let filename = path
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or_default();
+    match project.load_record(filename) {
+        Ok(Some(record)) => {
+            use s5d::SpecStatus::{Applied, Approved, Operated};
+            if !matches!(record.status, Approved | Applied | Operated) {
+                return Some(format!(
+                    "S5D-Spec: {spec_id} record status is {}, not an accepted state (approved/applied/operated)",
+                    record.status
+                ));
+            }
+            if let Ok(current) = s5d::S5dProject::file_sha256(path) {
+                if current != record.spec_sha256 {
+                    return Some(format!(
+                        "S5D-Spec: {spec_id} changed since approval (spec sha ≠ record sha) — re-approve before referencing it"
+                    ));
+                }
+            }
+        }
+        Ok(None) => {
+            return Some(format!(
+                "S5D-Spec: {spec_id} has no record — not approved/imported"
+            ))
+        }
+        Err(e) => return Some(format!("S5D-Spec: {spec_id} record could not be read: {e}")),
+    }
+
+    // Selector: the referenced spec must itself own every staged source file.
+    let patterns: Vec<String> = spec
+        .artifacts
+        .as_ref()
+        .map(|a| {
+            a.components
+                .iter()
+                .flat_map(|c| c.paths.iter().cloned())
+                .collect()
+        })
+        .unwrap_or_default();
+    let uncovered: Vec<&str> = staged
+        .iter()
+        .map(|s| s.as_str())
+        .filter(|f| !patterns.iter().any(|p| path_covered_by_pattern(f, p)))
+        .collect();
+    if !uncovered.is_empty() {
+        return Some(format!(
+            "S5D-Spec: {spec_id} does not cover staged path(s): {} — name a spec whose components own the changed files",
+            uncovered.join(", ")
+        ));
+    }
+    None
 }
 
 /// Pure-Rust PreToolUse(Bash) staged-spec validation hook.
@@ -5131,23 +5272,33 @@ mod agents_md_tests {
     }
 
     #[test]
-    fn commit_spec_ref_detection_requires_explicit_marker() {
-        assert!(commit_msg_has_spec_ref(
-            r#"git commit -m "tighten hook detection
+    fn commit_spec_ref_extracts_only_resolvable_trailer() {
+        assert_eq!(
+            commit_msg_spec_ref(
+                r#"git commit -m "tighten hook detection
 
 S5D-Spec: feat.s5d.pretool-enforcement""#
-        ));
-        assert!(commit_msg_has_spec_ref(
-            r#"git commit -m "implement timeout
+            ),
+            Some("feat.s5d.pretool-enforcement".to_string())
+        );
+        // A bare `spec://` URI is not auto-resolvable to a package file, so it is
+        // not a selector — the hook falls through to aggregate coverage.
+        assert_eq!(
+            commit_msg_spec_ref(
+                r#"git commit -m "implement timeout
 
 Implements: spec://s5d/PROP-003#verification.timeout""#
-        ));
-        assert!(!commit_msg_has_spec_ref(
-            r#"git commit -m "feat.s5d cleanup without trailer""#
-        ));
-        assert!(!commit_msg_has_spec_ref(
-            r#"git commit -m "Implements: local cleanup""#
-        ));
+            ),
+            None
+        );
+        assert_eq!(
+            commit_msg_spec_ref(r#"git commit -m "feat.s5d cleanup without trailer""#),
+            None
+        );
+        assert_eq!(
+            commit_msg_spec_ref(r#"git commit -m "Implements: local cleanup""#),
+            None
+        );
     }
 
     #[test]
@@ -5222,14 +5373,83 @@ mod hook_coverage_tests {
         // directory prefix, with and without a trailing slash
         assert!(covered("rust/src/gates.rs", "rust/src"));
         assert!(covered("rust/src/gates.rs", "rust/src/"));
-        // glob — including `**` matching zero intermediate dirs (Codex tribunal
-        // flag: glob `rust/src/**/*.rs` must still cover a top-level `gates.rs`).
+        // glob — single `*` must NOT cross `/` (require_literal_separator), while
+        // `**` still spans directories INCLUDING zero (so `rust/src/**/*.rs` covers
+        // a top-level `gates.rs`).
         assert!(covered("rust/src/gates.rs", "rust/src/*.rs"));
+        // single `*` over-coverage regression: a top-level pattern must NOT silently
+        // cover a nested file — that blurred component ownership.
+        assert!(!covered("rust/src/bin/s5d.rs", "rust/src/*.rs"));
         assert!(covered("rust/src/bin/s5d.rs", "rust/**/*.rs"));
         assert!(covered("rust/src/gates.rs", "rust/src/**/*.rs"));
+        assert!(covered("rust/src/bin/s5d.rs", "rust/src/**/*.rs"));
         // NOT covered: sibling dir, a non-boundary prefix, wrong-extension glob
         assert!(!covered("rust/tests/foo.rs", "rust/src"));
         assert!(!covered("rust/srcfoo.rs", "rust/src"));
         assert!(!covered("rust/src/gates.rs", "rust/src/*.py"));
+    }
+}
+
+#[cfg(test)]
+mod trailer_validation_tests {
+    //! The `S5D-Spec:` trailer is a SELECTOR, not a blanket override. These lock
+    //! the two bypasses an external review flagged: a magic-string trailer to a
+    //! spec that does not exist, and a valid trailer to an approved spec that does
+    //! not own the staged files.
+    use std::fs;
+
+    fn refs(v: &[String]) -> Vec<&String> {
+        v.iter().collect()
+    }
+
+    #[test]
+    fn unresolvable_trailer_blocks() {
+        let dir = tempfile::TempDir::new().unwrap();
+        fs::create_dir_all(dir.path().join(".s5d/packages")).unwrap();
+        fs::create_dir_all(dir.path().join(".s5d/records")).unwrap();
+        let staged = vec!["rust/src/payments/charge.rs".to_string()];
+        let reason = super::trailer_block_reason(dir.path(), "whatever", &refs(&staged));
+        assert!(
+            reason.is_some_and(|r| r.contains("does not resolve")),
+            "a trailer naming no real spec must block, not wave the commit through"
+        );
+    }
+
+    #[test]
+    fn approved_spec_authorizes_only_its_own_paths() {
+        let dir = tempfile::TempDir::new().unwrap();
+        fs::create_dir_all(dir.path().join(".s5d/packages")).unwrap();
+        fs::create_dir_all(dir.path().join(".s5d/records")).unwrap();
+
+        let mut spec = s5d::generate_spec("feat.auth-fixture", s5d::Tier::Lightweight, "demo");
+        spec.artifacts.as_mut().unwrap().components[0].paths = vec!["rust/src/auth/".into()];
+        let filename = "feat.auth-fixture__test.s5d.yaml";
+        let spec_path = dir.path().join(".s5d/packages").join(filename);
+        fs::write(&spec_path, serde_yaml::to_string(&spec).unwrap()).unwrap();
+
+        let sha = s5d::S5dProject::file_sha256(&spec_path).unwrap();
+        let mut record = s5d::generate_record(filename, &sha);
+        record.status = s5d::SpecStatus::Approved;
+        fs::write(
+            dir.path()
+                .join(".s5d/records")
+                .join("feat.auth-fixture__test.record.yaml"),
+            serde_yaml::to_string(&record).unwrap(),
+        )
+        .unwrap();
+
+        // staged file the spec does NOT own → blocked (the bypass the review flagged)
+        let outside = vec!["rust/src/payments/charge.rs".to_string()];
+        assert!(
+            super::trailer_block_reason(dir.path(), "feat.auth-fixture", &refs(&outside))
+                .is_some_and(|r| r.contains("does not cover")),
+            "trailer must not authorize files outside the referenced spec"
+        );
+        // staged file the spec owns → approved
+        let inside = vec!["rust/src/auth/login.rs".to_string()];
+        assert!(
+            super::trailer_block_reason(dir.path(), "feat.auth-fixture", &refs(&inside)).is_none(),
+            "trailer must authorize files the referenced spec owns"
+        );
     }
 }
