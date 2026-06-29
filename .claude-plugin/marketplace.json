@@ -12,7 +12,7 @@
       "description": "S5D — decision and validation layer for repo changes. Preview, approve, import, drift-check, rollback.",
       "homepage": "https://github.com/system5-dev/s5d",
       "repository": "https://github.com/system5-dev/s5d",
-      "license": "Apache-2.0"
+      "license": "Apache-2.0 WITH Commons-Clause"
     }
   ]
 }

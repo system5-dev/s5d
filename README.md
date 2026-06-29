@@ -297,4 +297,7 @@ No warranties either way — see License. 🙂
 
 ## License
 
-Apache-2.0 — see [LICENSE](LICENSE).
+Apache-2.0 **with the Commons Clause** — source-available; you may not Sell the
+Software (resale, paid hosting, or a paid product/service deriving substantially
+from S5D). Internal and non-commercial use, modification, and redistribution
+remain permitted. See [LICENSE](LICENSE).
