@@ -1888,21 +1888,46 @@ fn git_staged_insertions() -> Option<usize> {
     })
 }
 
-/// Spec component path patterns across every spec in the project (empty if no
-/// project is found or none load). The commit hook uses these to decide whether
-/// staged source files are traceable to a declared component.
+/// Does this spec sit in an accepted recorded state (approved/applied/operated)
+/// with a record sha that still matches the file? Only such specs may grant
+/// commit coverage — a draft/unapproved/edited spec (or a `.s5d.yaml` freshly
+/// dropped in the very commit being checked) must authorize nothing. This is the
+/// same accepted-state + sha invariant the `S5D-Spec:` trailer path enforces
+/// inline (`trailer_block_reason`); applied here so the no-trailer aggregate path
+/// is not the unlocked side door next to the hardened trailer path.
+fn spec_grants_coverage(project: &s5d::S5dProject, spec_path: &std::path::Path) -> bool {
+    let Some(filename) = spec_path.file_name().and_then(|n| n.to_str()) else {
+        return false;
+    };
+    let Ok(Some(record)) = project.load_record(filename) else {
+        return false; // no record → not accepted, grants nothing
+    };
+    use s5d::SpecStatus::{Applied, Approved, Operated};
+    if !matches!(record.status, Approved | Applied | Operated) {
+        return false;
+    }
+    matches!(s5d::S5dProject::file_sha256(spec_path), Ok(sha) if sha == record.spec_sha256)
+}
+
+/// Spec component path patterns from specs in an ACCEPTED recorded state only
+/// (empty if no project is found or none qualify). The commit hook uses these to
+/// decide whether staged source files are traceable to a declared component.
+/// Draft/unapproved/edited specs are excluded so a freshly-committed `.s5d.yaml`
+/// cannot self-authorize the very commit that introduces it.
 fn component_path_patterns(cwd: &std::path::Path) -> Vec<String> {
-    s5d::S5dProject::find(cwd)
-        .and_then(|p| p.discover_specs().ok())
-        .map(|specs| {
-            specs
-                .iter()
-                .filter_map(|(_, spec)| spec.artifacts.as_ref())
-                .flat_map(|a| a.components.iter())
-                .flat_map(|c| c.paths.iter().cloned())
-                .collect()
-        })
-        .unwrap_or_default()
+    let Some(project) = s5d::S5dProject::find(cwd) else {
+        return Vec::new();
+    };
+    let Ok(specs) = project.discover_specs() else {
+        return Vec::new();
+    };
+    specs
+        .iter()
+        .filter(|(path, _)| spec_grants_coverage(&project, path))
+        .filter_map(|(_, spec)| spec.artifacts.as_ref())
+        .flat_map(|a| a.components.iter())
+        .flat_map(|c| c.paths.iter().cloned())
+        .collect()
 }
 
 /// Staged source files NOT covered by any spec component path. Empty = every
@@ -5450,6 +5475,87 @@ mod trailer_validation_tests {
         assert!(
             super::trailer_block_reason(dir.path(), "feat.auth-fixture", &refs(&inside)).is_none(),
             "trailer must authorize files the referenced spec owns"
+        );
+    }
+}
+
+#[cfg(test)]
+mod aggregate_coverage_tests {
+    //! The no-trailer aggregate path must draw component paths ONLY from specs in
+    //! an accepted recorded state with a matching sha — a freshly-dropped draft
+    //! `.s5d.yaml` must not self-authorize the commit that introduces it (the
+    //! side-door bypass an adversarial review flagged: trailer path hardened,
+    //! aggregate path left open).
+    use std::fs;
+    use std::path::Path;
+
+    fn write_spec(dir: &Path, filename: &str, paths: Vec<String>) -> std::path::PathBuf {
+        let mut spec = s5d::generate_spec("feat.cov-fixture", s5d::Tier::Lightweight, "demo");
+        spec.artifacts.as_mut().unwrap().components[0].paths = paths;
+        let p = dir.join(".s5d/packages").join(filename);
+        fs::write(&p, serde_yaml::to_string(&spec).unwrap()).unwrap();
+        p
+    }
+
+    fn approve(dir: &Path, filename: &str, spec_path: &Path) {
+        let sha = s5d::S5dProject::file_sha256(spec_path).unwrap();
+        let mut record = s5d::generate_record(filename, &sha);
+        record.status = s5d::SpecStatus::Approved;
+        fs::write(
+            dir.join(".s5d/records")
+                .join(filename.replace(".s5d.yaml", ".record.yaml")),
+            serde_yaml::to_string(&record).unwrap(),
+        )
+        .unwrap();
+    }
+
+    fn dirs() -> tempfile::TempDir {
+        let dir = tempfile::TempDir::new().unwrap();
+        fs::create_dir_all(dir.path().join(".s5d/packages")).unwrap();
+        fs::create_dir_all(dir.path().join(".s5d/records")).unwrap();
+        dir
+    }
+
+    #[test]
+    fn recordless_draft_spec_grants_no_coverage() {
+        let dir = dirs();
+        write_spec(
+            dir.path(),
+            "feat.cov-fixture__t.s5d.yaml",
+            vec!["rust/src/".into()],
+        );
+        let staged = vec!["rust/src/payments/charge.rs".to_string()];
+        let refs: Vec<&String> = staged.iter().collect();
+        assert_eq!(
+            super::uncovered_source_files(dir.path(), &refs),
+            staged,
+            "a draft spec with no record must not authorize a commit"
+        );
+    }
+
+    #[test]
+    fn approved_spec_grants_coverage_only_while_sha_matches() {
+        let dir = dirs();
+        let sp = write_spec(
+            dir.path(),
+            "feat.cov-fixture__t.s5d.yaml",
+            vec!["rust/src/".into()],
+        );
+        approve(dir.path(), "feat.cov-fixture__t.s5d.yaml", &sp);
+        let staged = vec!["rust/src/payments/charge.rs".to_string()];
+        let refs: Vec<&String> = staged.iter().collect();
+        // approved + sha match → covered
+        assert!(
+            super::uncovered_source_files(dir.path(), &refs).is_empty(),
+            "an approved, sha-matched spec should grant coverage"
+        );
+        // edit the spec after approval → sha mismatch → coverage revoked
+        let body = fs::read_to_string(&sp).unwrap();
+        fs::write(&sp, format!("{body}\n# edited after approval\n")).unwrap();
+        assert_eq!(
+            super::uncovered_source_files(dir.path(), &refs),
+            staged,
+            "a spec edited after approval (sha mismatch) must not grant coverage"
         );
     }
 }
