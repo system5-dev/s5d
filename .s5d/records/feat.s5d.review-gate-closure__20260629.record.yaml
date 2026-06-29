@@ -1,0 +1,89 @@
+spec_ref: feat.s5d.review-gate-closure__20260629.s5d.yaml
+spec_sha256: sha256:3e79c488cebc6dde25cc9b3b4ec8c88953718260ae7a0996c26f4af7efbb029b
+status: applied
+sync_status: synced
+status_history:
+- status: proposed
+  timestamp: 2026-06-29T17:43:57.537679+00:00
+- status: previewed
+  timestamp: 2026-06-29T17:49:20.159608+00:00
+- status: approved
+  timestamp: 2026-06-29T17:49:27.302703+00:00
+- status: applied
+  timestamp: 2026-06-29T17:58:32.760696+00:00
+- status: previewed
+  timestamp: 2026-06-29T18:01:03.711762+00:00
+- status: approved
+  timestamp: 2026-06-29T18:01:11.817715+00:00
+- status: applied
+  timestamp: 2026-06-29T18:01:31.226142+00:00
+active_phase: null
+phase_history: []
+phase_runs: []
+approvals:
+- reviewer: Roman
+  date: 2026-06-29T17:49:27.302701+00:00
+  spec_sha256: sha256:a0be75bb3a80dffd8956176479615ca02f12c0bdd38bf1ebf89e53abe76462a2
+  diff_sha256: sha256:308ee88f2f3b14b13a0cd2ab65b0a08f6a79c2f979c91836512fc5d4ad9264e5
+- reviewer: Roman
+  date: 2026-06-29T18:01:11.817713+00:00
+  spec_sha256: sha256:a26426dba2dcd870e4f52560a9b153d48432dd775bc84ae92679f46fd23bc283
+  diff_sha256: sha256:6b7f86898d8514163d74381ee8fcd97442960297986f6fc8fb155e54d9cb731f
+preview:
+  diff_sha256: sha256:6b7f86898d8514163d74381ee8fcd97442960297986f6fc8fb155e54d9cb731f
+  previewed_spec_sha256: sha256:a26426dba2dcd870e4f52560a9b153d48432dd775bc84ae92679f46fd23bc283
+  actions:
+    create: 0
+    link: 3
+    update: 7
+    delete: 0
+  log: null
+reflection: null
+gate_results:
+- kind: schema
+  status: passed
+  attempt: 1
+  timestamp: 2026-06-29T17:58:20.393372+00:00
+  log: schema validation passed (built-in)
+  exit_code: null
+  evidence_path: evidence/feat.s5d.review-gate-closure/schema_1.log
+  command: null
+  duration_ms: 0
+  waiver_expires_at: null
+  kind_class: null
+- kind: graph
+  status: passed
+  attempt: 1
+  timestamp: 2026-06-29T17:58:20.393469+00:00
+  log: graph check passed (built-in)
+  exit_code: null
+  evidence_path: evidence/feat.s5d.review-gate-closure/graph_1.log
+  command: null
+  duration_ms: 0
+  waiver_expires_at: null
+  kind_class: null
+- kind: schema
+  status: passed
+  attempt: 1
+  timestamp: 2026-06-29T18:01:20.161516+00:00
+  log: schema validation passed (built-in)
+  exit_code: null
+  evidence_path: evidence/feat.s5d.review-gate-closure/schema_1.log
+  command: null
+  duration_ms: 0
+  waiver_expires_at: null
+  kind_class: null
+- kind: graph
+  status: passed
+  attempt: 1
+  timestamp: 2026-06-29T18:01:20.161741+00:00
+  log: graph check passed (built-in)
+  exit_code: null
+  evidence_path: evidence/feat.s5d.review-gate-closure/graph_1.log
+  command: null
+  duration_ms: 0
+  waiver_expires_at: null
+  kind_class: null
+decision: null
+verified_by: Diana
+drift_tolerance: null

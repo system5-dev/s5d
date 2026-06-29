@@ -1,0 +1,44 @@
+spec_ref: decision.s5d.review-gate-closure__20260629.s5d.yaml
+spec_sha256: sha256:4c3e9a219942e231d78aee8e6bcf92fe5b7e1b83e2ed7b8b93a7ffa07ca046f2
+status: proposed
+sync_status: unknown
+status_history:
+- status: proposed
+  timestamp: 2026-06-29T13:16:21.433119+00:00
+active_phase: null
+phase_history: []
+phase_runs: []
+approvals: []
+preview: null
+reflection: null
+gate_results: []
+decision:
+  title: Feature-tier review gate closes via run-phase acceptance
+  winner_id: review-gate-reads-phase-history-accepted-entry
+  rejected_ids:
+  - relax-add-evidence-to-accept-feature-tiers
+  - forbid-review-gate-on-feature-tiers-at-validation
+  - dedicated-tier-agnostic-review-record
+  context: Standard/lightweight feature specs can declare a review gate but cannot close it (add_evidence is decision/high-only; the gate reads only hypotheses[].evidence). Need a human-backed closure path that keeps decision/high rigor intact.
+  decision: Extend gates::run_gates so the review gate ALSO closes on a WorkflowPhaseRecord{status:Accepted} in the spec's Record.phase_history, scoped to standard/lightweight ONLY; decision/high stay evidence-only. Add a validate rule requiring a workflow when a feature-tier spec declares a review gate.
+  rationale: 'Reuses the run-phase acceptance feature specs already use (named reviewer + timestamp), records human-review identity, is a local signature extension with no new persistence, and leaves decision/high assurance untouched. Beats relax (a: blurs the decision/high evidence boundary, weaker reviewer identity), forbid (c: removes a legitimate capability, gives feature specs no review path), and new-record (d: over-engineered third mechanism).'
+  consequences: gates::run_gates signature gains an accepted-phase parameter; review-gate semantics couple to the phase workflow; feature specs declaring review must define a workflow (enforced at validate); "accepted a run phase" becomes the feature-tier definition of review — security-grade review stays high-tier.
+  decided_at: 2026-06-29T17:48:28.942550+00:00
+  confirmed_by: Roman
+  expires_at: 2026-09-27
+  do_list: []
+  dont_list: []
+  challenge:
+    mode: standard
+    passed: true
+    summary: '5 probes (standard): (1) counter-argument — phase-accept != code-review, mitigated by scoping feature-tier review to human run sign-off while security-grade review stays high-tier; (2) tail failure — a spec declaring review with no workflow has empty phase_history, addressed by a validate rule requiring a workflow when a feature-tier spec declares review; (3) evidence weakness — central engine signature change, covered by regression tests on the 263-test suite; (4) weakest link — coupling to the phase workflow, which is stable, low risk; (5) existing alternatives — H-a is less code but blurs the evidence boundary and gives weaker reviewer identity. No fatal flaw; the two real weaknesses are closed in the feature spec.'
+    checks: []
+  decision_subject: null
+  decision_subject_granularity: null
+  evaluative_surface: null
+  belief_state: null
+  outcome_model: null
+  pareto_set: []
+  choice_rule: null
+verified_by: null
+drift_tolerance: null

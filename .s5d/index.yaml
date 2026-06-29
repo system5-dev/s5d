@@ -134,3 +134,8 @@ features:
   status: applied
   product: s5d
   version: 1.0.0
+- id: feat.s5d.review-gate-closure
+  spec_path: packages/feat.s5d.review-gate-closure__20260629.s5d.yaml
+  status: applied
+  product: s5d
+  version: 1.0.0

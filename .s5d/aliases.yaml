@@ -588,3 +588,21 @@ packages:
   package_id: feat.s5d.simplification-debt-marker
   owning_package: null
   deprecated: false
+- uuid: 032e2d49-4857-47a1-85fc-1f8e52505168
+  artifact_id: cap.review-gate-closure
+  artifact_type: Capability
+  package_id: feat.s5d.review-gate-closure
+  owning_package: null
+  deprecated: false
+- uuid: 9c7837dc-6a2e-4afb-8d87-edffd0509865
+  artifact_id: feat.s5d.review-gate-closure
+  artifact_type: Feature
+  package_id: feat.s5d.review-gate-closure
+  owning_package: null
+  deprecated: false
+- uuid: e3f65c8e-2940-40f1-9d1e-0b868edaf955
+  artifact_id: comp.review-gate-closure
+  artifact_type: Component
+  package_id: feat.s5d.review-gate-closure
+  owning_package: null
+  deprecated: false

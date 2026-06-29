@@ -130,6 +130,20 @@ pub fn validate_spec(spec: &Spec) -> Vec<String> {
         }
     }
 
+    // Standard/Lightweight specs that declare a review gate close it via run-phase
+    // acceptance, which requires a workflow to exist (Decision/High close via evidence
+    // and are exempt from this rule).
+    if matches!(spec.tier, Tier::Standard | Tier::Lightweight)
+        && spec.gates.iter().any(|g| g.kind == "review")
+        && spec.workflow.is_none()
+    {
+        errors.push(
+            "standard/lightweight spec declares a review gate but has no workflow \
+            — a feature-tier review gate closes via run-phase acceptance, which requires a workflow"
+                .into(),
+        );
+    }
+
     if let Tier::Decision = spec.tier {
         if spec.problem.as_ref().is_none_or(|p| p.signal().is_empty()) {
             errors.push("decision tier requires a non-empty 'problem.signal' field".into());

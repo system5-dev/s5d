@@ -44,7 +44,7 @@ pub use discovery::{
     DiscoveryNode, DiscoveryProvenance, DiscoverySnapshot,
 };
 pub use drift::{check_drift, reconcile, DriftResult};
-pub use gates::{effective_gates_for_spec, run_gates};
+pub use gates::{effective_gates_for_spec, eval_review_gate, run_gates};
 pub use graph::{check_domain_layering, graph_check, tarjan_scc};
 pub use identity::{AliasEntry, AliasTable};
 pub use import::{

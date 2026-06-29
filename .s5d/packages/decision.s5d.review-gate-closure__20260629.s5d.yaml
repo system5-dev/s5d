@@ -1,0 +1,144 @@
+s5d: '1.0'
+id: decision.s5d.review-gate-closure
+version: 1.0.0
+product: s5d
+tier: decision
+allow_update: true
+meta:
+  title: review-gate-closure
+  authors: []
+  date: 2026-06-29
+  tickets: []
+  adrs: []
+  renames: []
+context: null
+workflow: null
+artifacts: null
+links: null
+contracts: []
+gates:
+- kind: review
+roc: null
+problem:
+  signal: 'A standard- or lightweight-tier feature spec that declares a `review` gate can never close it: the gate:review closure (gates.rs:146-199) passes only on hypotheses[].evidence with evidence_type=gate:review+verdict=pass, and the sole attach path add_evidence hard-rejects non-decision/high tiers (mcp.rs:1885, s5d.rs:4591). Result: run-gates always fails, import is blocked (exit 7). Verified from source at HEAD 6341d2a.'
+  constraints:
+  - Minimal-additions ethos (no new first-class surface unless chosen); must not silently blur the decision/high evidence boundary; any gate-engine signature change must preserve eligibility-before-acceptance ordering (gates.rs:47-80); no regression to the 263 tests; CI dogfood green.
+  targets:
+  - smallest sufficient diff
+  - human-review integrity (named reviewer)
+  - uniform-or-explicitly-scoped gate semantics
+  indicators: []
+  goodhart_guard: null
+  acceptance: A standard/lightweight feature spec with a declared review gate has a defined, human-backed closure path that lets run-gates report the review gate passed and import proceed; the closure records a human reviewer identity; the decision/high evidence-based path is unchanged; full Rust suite stays green and dogfood CI (s5d ci exec) stays green.
+  blast_radius: null
+  reversibility: null
+  status: backlog
+hypotheses:
+- id: relax-add-evidence-to-accept-feature-tiers
+  title: Relax add_evidence to accept feature tiers
+  content: 'Flip the tier guard in add_evidence (and add_hypothesis if evidence needs a host hypothesis) on both MCP (mcp.rs:1885) and CLI (s5d.rs:4591) to also accept Standard/Lightweight. Feature specs then attach gate:review evidence the same way decision/high do; gates.rs closure is untouched. Smallest mechanical diff (flip ~2-4 matches). Cost: feature specs gain a hypotheses/evidence array the metamodel currently reserves for decision/high — blurs that boundary and invites ad-hoc evidence accumulation on feature specs; ignores the run/phase workflow feature specs actually use.'
+  scope: s5d evidence-attachment tier guard + metamodel boundary
+  kind: system
+  layer: L1
+  r_eff: null
+  evidence:
+  - id: 20260629-internal-relax-add-evidence-to-accept-feature-tiers
+    type: internal
+    content: 'Verified from source (HEAD 6341d2a): HypothesisEvidence (models.rs:641-643) carries evidence_type/verdict but NO reviewer field — so closing review via relaxed add_evidence records no named reviewer, weaker on the "records a human reviewer identity" acceptance criterion than phase_history (reviewer:Some(name)). It also places a hypotheses/evidence array on feature specs, which the metamodel reserves for decision/high. Feasible (smallest diff) but boundary-blurring with weaker human-identity.'
+    verdict: pass
+    valid_until: 2026-09-27T17:47:49.916955+00:00
+    carrier_ref: null
+    formality: 3
+    claim_scope:
+    - cost/feasibility of relaxing the evidence tier guard
+    congruence_level: null
+    reliability: 0.8
+    refine_kind: null
+    skill: s5d
+  depends_on: []
+  rationale: null
+  spec_ref: null
+  prompt: null
+  next_move: null
+- id: review-gate-reads-phase-history-accepted-entry
+  title: Review gate reads phase_history Accepted entry
+  content: 'Extend the gate:review closure to ALSO pass when the spec''s Record has >=1 WorkflowPhaseRecord{status:Accepted} in phase_history (the human run-phase sign-off written by run_phase_accept: reviewer + timestamp + notes "Human run evidence acceptance", s5d.rs:3055-3089). Decision/high keep the existing evidence path; feature tiers close review via the run-accept workflow they already use. Requires passing the Record into the gate engine (run_gates currently reads only spec.hypotheses; the Record is available at the CLI call site s5d.rs:3626). Cost: couples review-gate semantics to phase workflow; a feature spec with no workflow/phase still has no path (needs a documented fallback); "accepted a run phase" is arguably broader than "code-reviewed".'
+  scope: s5d gate:review closure + run-phase acceptance binding
+  kind: system
+  layer: L1
+  r_eff: null
+  evidence:
+  - id: 20260629-internal-review-gate-reads-phase-history-accepted-entry
+    type: internal
+    content: 'Feasibility verified from source (HEAD 6341d2a): run_phase_accept (s5d.rs:3055-3089) and its MCP twin (mcp.rs:2171-2211) already append WorkflowPhaseRecord{phase_id, status:Accepted, reviewer:Some(name), timestamp, notes:"Human run evidence acceptance"} to Record.phase_history — a named-human sign-off satisfying the "records a human reviewer identity" acceptance criterion. The Record is already loaded at the run-gates call site (s5d.rs:3626 record.gate_results.extend), so passing phase_history into gates::run_gates is a local signature extension, not new persistence. Acceptance requires record.status in {Approved,Applied,Operated}, so the sign-off can only exist post-approval — it cannot pre-authorize itself.'
+    verdict: pass
+    valid_until: 2026-09-27T13:18:00.206754+00:00
+    carrier_ref: null
+    formality: 4
+    claim_scope:
+    - feasibility + human-identity of the phase_history closure path
+    congruence_level: null
+    reliability: 0.85
+    refine_kind: null
+    skill: s5d
+  depends_on: []
+  rationale: null
+  spec_ref: feat.s5d.review-gate-closure
+  prompt: null
+  next_move: null
+- id: forbid-review-gate-on-feature-tiers-at-validation
+  title: Forbid review gate on feature tiers at validation
+  content: 'Make `review` a decision/high-only declarable gate: validate_spec (validate.rs:114-131) rejects a `review` gate on Standard/Lightweight, or effective_gates_for_spec filters it out for those tiers. The broken state becomes unreachable — feature specs simply cannot declare a gate they cannot close. No gate-engine change; honors the existing "evidence is decision/high" boundary. Cost: removes a legitimate want (lightweight code-review enforcement on a standard feature) — to get review on a feature the author must escalate to high tier (heavyweight: also forces schema+graph). Closes the gap by subtraction, gives feature specs zero review path.'
+  scope: s5d gate-kind validation / effective-gate filtering by tier
+  kind: system
+  layer: L1
+  r_eff: null
+  evidence:
+  - id: 20260629-internal-forbid-review-gate-on-feature-tiers-at-validation
+    type: internal
+    content: 'Closes the gap by subtraction — makes `review` undeclarable on standard/lightweight. This fails the problem''s own acceptance ("has a DEFINED closure path"): it gives feature specs zero review path, and a team wanting lightweight code-review enforcement must escalate the whole spec to high tier (which also forces schema+graph defaults). Solves "unclosable gate" but not the underlying want; strictly less capable than the phase-history path.'
+    verdict: pass
+    valid_until: 2026-09-27T17:48:01.487431+00:00
+    carrier_ref: null
+    formality: 3
+    claim_scope:
+    - capability cost of forbidding review on feature tiers
+    congruence_level: null
+    reliability: 0.8
+    refine_kind: null
+    skill: s5d
+  depends_on: []
+  rationale: null
+  spec_ref: null
+  prompt: null
+  next_move: null
+- id: dedicated-tier-agnostic-review-record
+  title: Dedicated tier-agnostic review record
+  content: 'Add a first-class review record on the Record (e.g. Record.reviews: Vec<ReviewRecord{reviewer,timestamp,verdict,scope,notes}>) plus a command `s5d run review <spec> --reviewer ... --verdict pass`, available to ALL tiers. The gate:review closure reads this list (any tier) in addition to the decision/high evidence path. Cleanly separates "code review" from both hypotheses-evidence (decision/high reasoning) and phase acceptance (broader run sign-off). Cost: most code — new struct, new command, new gate read branch, new tests; adds a surface that competes with existing evidence + phase-accept mechanisms; over-engineered for a narrow gap (violates minimal-additions ethos).'
+  scope: s5d new review-record artifact + command + gate read path
+  kind: system
+  layer: L1
+  r_eff: null
+  evidence:
+  - id: 20260629-internal-dedicated-tier-agnostic-review-record
+    type: internal
+    content: 'Cleanest semantics but highest cost: a new ReviewRecord struct + new `s5d run review` command + new gate read branch + new tests — a third review mechanism competing with hypotheses-evidence (decision/high) and phase-accept. Violates the minimal-additions constraint for a narrow gap, since phase_history already provides the named-reviewer human sign-off at zero new persistence. Justified only if review must be a tier-agnostic first-class fact, which the problem does not require.'
+    verdict: pass
+    valid_until: 2026-09-27T17:48:10.863584+00:00
+    carrier_ref: null
+    formality: 3
+    claim_scope:
+    - cost of a dedicated review-record mechanism
+    congruence_level: null
+    reliability: 0.8
+    refine_kind: null
+    skill: s5d
+  depends_on: []
+  rationale: null
+  spec_ref: null
+  prompt: null
+  next_move: null
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false

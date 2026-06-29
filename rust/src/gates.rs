@@ -9,12 +9,100 @@ use std::time::{Duration, Instant};
 /// Maximum log output size (10 KB). Truncated if exceeded.
 const MAX_LOG_BYTES: usize = 10 * 1024;
 
+/// Evaluate the review gate given the spec, evidence, and phase history.
+/// Returns `(status, log)` — does not touch the filesystem.
+///
+/// Pass conditions (OR):
+/// 1. `review_count >= 1`: at least one evidence entry with `evidence_type =
+///    "gate:review"` and `verdict = "pass"`.
+/// 2. `phase_pass`: Standard or Lightweight spec whose phase history contains at
+///    least one `WorkflowPhaseStatus::Accepted` entry.
+///
+/// Decision / High may NOT use path 2 — their review gate is evidence-only.
+pub fn eval_review_gate(
+    spec: &Spec,
+    phase_history: &[crate::models::WorkflowPhaseRecord],
+) -> (String, String) {
+    use crate::models::{Tier, WorkflowPhaseStatus};
+
+    let mut review_count: usize = 0;
+    let mut findings: Vec<String> = Vec::new();
+    for hyp in &spec.hypotheses {
+        for ev in &hyp.evidence {
+            let is_review =
+                ev.evidence_type == "gate:review" || ev.evidence_type.starts_with("gate:review:");
+            if is_review && ev.verdict == "pass" {
+                review_count += 1;
+                findings.push(format!(
+                    "  - hypothesis={} evidence_id={} formality={}",
+                    hyp.id,
+                    ev.id,
+                    ev.formality.map_or("?".into(), |f| f.to_string())
+                ));
+            }
+        }
+    }
+
+    let is_feature_tier = matches!(spec.tier, Tier::Standard | Tier::Lightweight);
+    let phase_pass = is_feature_tier
+        && phase_history
+            .iter()
+            .any(|p| p.status == WorkflowPhaseStatus::Accepted);
+
+    if review_count >= 1 {
+        (
+            "passed".into(),
+            format!(
+                "review gate passed (built-in): {} review-evidence with verdict=pass\n{}",
+                review_count,
+                findings.join("\n")
+            ),
+        )
+    } else if phase_pass {
+        let first_accepted = phase_history
+            .iter()
+            .find(|p| p.status == WorkflowPhaseStatus::Accepted)
+            .expect("phase_pass true implies an Accepted entry exists");
+        let reviewer_note = first_accepted
+            .reviewer
+            .as_deref()
+            .map(|r| format!(", reviewer={}", r))
+            .unwrap_or_default();
+        (
+            "passed".into(),
+            format!(
+                "review gate passed (built-in): accepted run phase (phase_id={}{})",
+                first_accepted.phase_id, reviewer_note
+            ),
+        )
+    } else {
+        let extra = if is_feature_tier {
+            " For standard/lightweight specs you may also close this gate by accepting \
+a run phase: s5d run accept <spec> --id <phase> --reviewer <name>."
+        } else {
+            ""
+        };
+        (
+            "failed".into(),
+            format!(
+                "review gate failed (built-in): no evidence with type=gate:review and verdict=pass found. \
+                Decision/high-tier specs require >=1 code review recorded as evidence. \
+                Use: s5d add-evidence <spec> --hypothesis-id <id> --evidence-type gate:review \
+                --content '<reviewer findings>' --verdict pass --formality <1-5> \
+                --claim-scope <scope> --reliability <0..1>{}",
+                extra
+            ),
+        )
+    }
+}
+
 pub fn run_gates(
     spec: &Spec,
     config: &S5dConfig,
     spec_path: &str,
     project_root: &Path,
     s5d_dir: &Path,
+    phase_history: &[crate::models::WorkflowPhaseRecord],
 ) -> anyhow::Result<Vec<GateResult>> {
     let mut results = Vec::new();
     let timeout_secs = config
@@ -146,42 +234,7 @@ pub fn run_gates(
                     "review" => {
                         let attempt = count_attempts(&results, &gate.kind) + 1;
                         let start = Instant::now();
-                        let mut review_count: usize = 0;
-                        let mut findings: Vec<String> = Vec::new();
-                        for hyp in &spec.hypotheses {
-                            for ev in &hyp.evidence {
-                                let is_review = ev.evidence_type == "gate:review"
-                                    || ev.evidence_type.starts_with("gate:review:");
-                                if is_review && ev.verdict == "pass" {
-                                    review_count += 1;
-                                    findings.push(format!(
-                                        "  - hypothesis={} evidence_id={} formality={}",
-                                        hyp.id,
-                                        ev.id,
-                                        ev.formality.map_or("?".into(), |f| f.to_string())
-                                    ));
-                                }
-                            }
-                        }
-                        let (status, log) = if review_count >= 1 {
-                            (
-                                "passed".into(),
-                                format!(
-                                    "review gate passed (built-in): {} review-evidence with verdict=pass\n{}",
-                                    review_count,
-                                    findings.join("\n")
-                                ),
-                            )
-                        } else {
-                            (
-                                "failed".into(),
-                                "review gate failed (built-in): no evidence with type=gate:review and verdict=pass found. \
-                                Decision/high-tier specs require >=1 code review recorded as evidence. \
-                                Use: s5d add-evidence <spec> --hypothesis-id <id> --evidence-type gate:review \
-                                --content '<reviewer findings>' --verdict pass --formality <1-5> \
-                                --claim-scope <scope> --reliability <0..1>".into(),
-                            )
-                        };
+                        let (status, log) = eval_review_gate(spec, phase_history);
                         let ev_path = save_evidence(&evidence_dir, &gate.kind, attempt, &log);
                         Some(GateResult {
                             kind: gate.kind.clone(),
@@ -524,7 +577,7 @@ fn count_attempts(results: &[GateResult], kind: &str) -> u32 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::{Gate, Tier};
+    use crate::models::{Gate, Tier, WorkflowPhaseRecord, WorkflowPhaseStatus};
 
     fn kinds(spec: &crate::models::Spec) -> Vec<String> {
         effective_gates_for_spec(spec)
@@ -585,6 +638,98 @@ mod tests {
         assert!(
             k.contains(&"schema".to_string()) && k.contains(&"graph".to_string()),
             "{k:?}"
+        );
+    }
+
+    fn accepted_phase_record() -> WorkflowPhaseRecord {
+        WorkflowPhaseRecord {
+            phase_id: "implement".into(),
+            status: WorkflowPhaseStatus::Accepted,
+            timestamp: "2026-01-01T00:00:00Z".into(),
+            reviewer: Some("alice".into()),
+            engine: None,
+            notes: None,
+        }
+    }
+
+    #[test]
+    fn review_gate_closes_on_accepted_phase_for_standard_tier() {
+        let mut spec = crate::generate_spec("feat.x.y", Tier::Standard, "prod");
+        spec.gates = vec![Gate {
+            kind: "review".into(),
+        }];
+        let phase_history = vec![accepted_phase_record()];
+        let (status, log) = eval_review_gate(&spec, &phase_history);
+        assert_eq!(status, "passed", "expected passed, got log: {log}");
+        assert!(
+            log.contains("accepted run phase"),
+            "log should mention accepted run phase: {log}"
+        );
+    }
+
+    #[test]
+    fn review_gate_fails_without_accepted_phase_for_standard_tier() {
+        let mut spec = crate::generate_spec("feat.x.y", Tier::Standard, "prod");
+        spec.gates = vec![Gate {
+            kind: "review".into(),
+        }];
+        // empty phase history — no Accepted entries
+        let (status, _log) = eval_review_gate(&spec, &[]);
+        assert_eq!(status, "failed");
+    }
+
+    #[test]
+    fn accepted_phase_does_not_close_review_for_high_tier() {
+        let mut spec = crate::generate_spec("feat.x.y", Tier::High, "prod");
+        spec.gates = vec![Gate {
+            kind: "review".into(),
+        }];
+        // Phase history has an Accepted entry but no gate:review evidence
+        let phase_history = vec![accepted_phase_record()];
+        let (status, log) = eval_review_gate(&spec, &phase_history);
+        assert_eq!(
+            status, "failed",
+            "High tier must not close review via phase acceptance; got log: {log}"
+        );
+    }
+
+    #[test]
+    fn feature_tier_review_gate_requires_workflow() {
+        use crate::validate_spec;
+
+        // Standard spec with review gate and no workflow → should have the error
+        let mut spec = crate::generate_spec("feat.x.y", Tier::Standard, "prod");
+        spec.gates = vec![Gate {
+            kind: "review".into(),
+        }];
+        spec.workflow = None;
+        let errors = validate_spec(&spec);
+        assert!(
+            errors
+                .iter()
+                .any(|e| e.contains("declares a review gate but has no workflow")),
+            "expected workflow-required error, got: {:?}",
+            errors
+        );
+
+        // Standard spec with review gate AND a workflow → no such error
+        let spec_with_workflow = crate::generate_spec("feat.x.y", Tier::Standard, "prod");
+        // generate_spec already sets workflow = Some(...); confirm review gate doesn't error
+        let mut spec_wf = spec_with_workflow;
+        spec_wf.gates = vec![Gate {
+            kind: "review".into(),
+        }];
+        assert!(
+            spec_wf.workflow.is_some(),
+            "generate_spec should set workflow"
+        );
+        let errors2 = validate_spec(&spec_wf);
+        assert!(
+            !errors2
+                .iter()
+                .any(|e| e.contains("declares a review gate but has no workflow")),
+            "should not error when workflow present: {:?}",
+            errors2
         );
     }
 }

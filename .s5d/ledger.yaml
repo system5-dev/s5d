@@ -189,3 +189,17 @@ entries:
   status: success
   timestamp: 2026-06-21T09:46:45.932571+00:00
   record_ref: records/feat.s5d.simplification-debt-marker__20260621.record.yaml
+- spec_sha256: sha256:a0be75bb3a80dffd8956176479615ca02f12c0bdd38bf1ebf89e53abe76462a2
+  state_fingerprint: sha256:12fc0bde148e4e2a89f621d24e858445a979476138e898d233738963c3b38e0b
+  package_id: feat.s5d.review-gate-closure
+  action: import
+  status: success
+  timestamp: 2026-06-29T17:58:32.751179+00:00
+  record_ref: records/feat.s5d.review-gate-closure__20260629.record.yaml
+- spec_sha256: sha256:a26426dba2dcd870e4f52560a9b153d48432dd775bc84ae92679f46fd23bc283
+  state_fingerprint: sha256:c298620302beb8c0ac1300a14ca3a2c2e53e7d3874f2df856e2173924ee728b3
+  package_id: feat.s5d.review-gate-closure
+  action: import
+  status: success
+  timestamp: 2026-06-29T18:01:31.216406+00:00
+  record_ref: records/feat.s5d.review-gate-closure__20260629.record.yaml

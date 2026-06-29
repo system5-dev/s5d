@@ -3601,7 +3601,19 @@ fn run_gates(spec_arg: &str) -> anyhow::Result<()> {
     let (project, _spec_path, spec, spec_filename) = load_spec_context(spec_arg)?;
 
     let config = project.load_config()?;
-    let results = s5d::run_gates(&spec, &config, spec_arg, &project.root, &project.s5d_dir())?;
+    // Load the record before running gates so phase_history is available for
+    // the review-gate phase-closure path (Standard/Lightweight only).
+    let mut record = project
+        .load_record(&spec_filename)?
+        .ok_or_else(|| anyhow::anyhow!("no record found for {}", spec_filename))?;
+    let results = s5d::run_gates(
+        &spec,
+        &config,
+        spec_arg,
+        &project.root,
+        &project.s5d_dir(),
+        &record.phase_history,
+    )?;
 
     let passed = results.iter().filter(|r| r.status == "passed").count();
     let failed = results
@@ -3624,9 +3636,6 @@ fn run_gates(spec_arg: &str) -> anyhow::Result<()> {
     );
 
     // Append gate results to record
-    let mut record = project
-        .load_record(&spec_filename)?
-        .ok_or_else(|| anyhow::anyhow!("no record found for {}", spec_filename))?;
     record.gate_results.extend(results);
     project.save_record(&spec_filename, &record)?;
 

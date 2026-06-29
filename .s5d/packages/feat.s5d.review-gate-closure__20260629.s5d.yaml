@@ -1,0 +1,208 @@
+s5d: '1.0'
+id: feat.s5d.review-gate-closure
+version: 1.0.0
+product: s5d
+tier: standard
+allow_update: true
+meta:
+  title: review-gate-closure
+  authors: []
+  date: 2026-06-29
+  tickets: []
+  adrs: []
+  renames: []
+context: |
+  ## Problem
+  A standard/lightweight feature spec that declares a `review` gate cannot close it.
+  The gate:review closure (gates.rs:146-199) passes only on hypotheses[].evidence with
+  evidence_type=gate:review+verdict=pass, and the sole attach path add_evidence hard-rejects
+  non-decision/high tiers (mcp.rs:1885, s5d.rs:4591). Unclosable gate → run-gates fails →
+  import blocked (exit 7). Verified from source at HEAD 6341d2a.
+
+  ## Goal
+  Let feature-tier (standard/lightweight) specs close a declared review gate via the human
+  run-phase acceptance they already use: gates::run_gates additionally treats a
+  WorkflowPhaseRecord{status:Accepted} (named reviewer + timestamp, written by run_phase_accept)
+  as review closure — scoped to standard/lightweight ONLY. Decision/high keep the evidence-only
+  path, unchanged.
+
+  ## Acceptance scenarios (GWT)
+  - G a standard feature spec with a declared review gate and a workflow phase accepted by a
+    named reviewer / W run-gates executes / T the review gate reports passed, citing the
+    accepted phase.
+  - G a standard feature spec with a declared review gate and NO accepted phase / W run-gates
+    executes / T the review gate reports failed with a message pointing to run-phase acceptance.
+  - G a high-tier spec with a review gate and an accepted phase but NO gate:review evidence /
+    W run-gates executes / T the review gate still reports failed — phase acceptance does NOT
+    close decision/high review (invariant: their path is unchanged).
+  - G a standard/lightweight spec that declares a review gate but has no workflow block /
+    W validate runs / T it errors that a feature-tier review gate requires a workflow
+    (closure is otherwise unreachable).
+
+  ## Privacy
+  Classification: Internal
+workflow:
+  mode: plan
+  target_architecture:
+    summary: gates::run_gates receives the spec's accepted phase history; the review-gate closure passes on (gate:review evidence with verdict=pass) for any tier, OR on (a WorkflowPhaseRecord status=Accepted) for standard/lightweight only. Decision/high review closure stays evidence-only.
+    invariants:
+    - Decision/high review gate closes only via gate:review evidence; phase acceptance never closes it.
+    - Eligibility-before-acceptance gate ordering (gates.rs:47-80) is preserved.
+    - No new persistence — phase_history already exists on the Record.
+  delivery_strategy:
+    summary: Extend gates::run_gates to take the accepted-phase slice from the Record (already loaded at the CLI call site s5d.rs:3626); add the tier-scoped phase-closure branch in the review gate; add a validate rule requiring a workflow when a feature-tier spec declares review; update the failure message; add regression tests.
+    rationale: Reuses the existing run-phase acceptance (named reviewer + timestamp) instead of adding a new artifact or relaxing the decision/high evidence boundary. Minimal-additions.
+  resources: null
+  role_map:
+    implementer: coder
+    reviewer: reviewer
+    owner: human
+    verifier: reviewer
+  review_policy:
+    cross_model_required: false
+    required_on: []
+  structure_outline:
+    summary: One engine change (review-gate closure reads accepted phase history, tier-scoped), one validation rule, one call-site signature update, plus regression tests.
+    signatures:
+    - 'gates::run_gates: add an accepted-phase-history parameter sourced from the Record'
+    - 'review branch: phase_pass = matches!(spec.tier, Standard|Lightweight) && phase_history.any(status==Accepted)'
+    - 'review pass condition becomes: evidence_review_count >= 1 || phase_pass'
+    - 'validate_spec: error when spec.tier in {Standard,Lightweight} && declares review gate && workflow is None'
+    types:
+    - reuse models::WorkflowPhaseRecord (phase_id,status,timestamp,reviewer,engine,notes)
+    - reuse models::WorkflowPhaseStatus::Accepted
+  execution_mode:
+    engine: manual
+    max_iterations: null
+    stop_conditions:
+    - Phase acceptance reached
+    - Approved scope exhausted
+    - New decision required
+  phases:
+  - id: prototype
+    title: Prototype
+    scope: Reduce unknowns before committed implementation
+    roles:
+    - owner
+    - implementer
+    acceptance:
+    - Critical feasibility questions answered
+    - Telemetry approach identified
+    rollback:
+    - Discard spike output if assumptions fail
+  - id: build
+    title: Build
+    scope: Implement approved scope and pass local gates
+    roles:
+    - implementer
+    - reviewer
+    acceptance:
+    - Declared gates pass
+    - Change matches approved scope
+    rollback:
+    - Revert or reconcile if gates or review fail
+  - id: measure
+    title: Measure
+    scope: Collect telemetry and close the loop with an explicit verdict
+    roles:
+    - owner
+    - verifier
+    acceptance:
+    - Telemetry collected against success criteria
+    - Outcome verdict recorded
+    rollback:
+    - Iterate or kill if evidence stays weak
+artifacts:
+  products:
+  - id: s5d
+    name: s5d
+    organization: null
+  domains:
+  - id: dom.s5d.core
+    product: s5d
+    name: s5d core domain
+    classification: supporting
+    description: Scaffold default — rename or split into real bounded contexts
+    team: null
+    maturity_level: null
+  capabilities:
+  - id: cap.review-gate-closure
+    domain: dom.s5d.core
+    name: review gate closure
+    description: null
+    since: null
+  entities: []
+  features:
+  - id: feat.s5d.review-gate-closure
+    product: s5d
+    name: review-gate-closure
+    description: null
+  use_cases: []
+  systems:
+  - id: sys.s5d
+    product: s5d
+    name: s5d
+  containers:
+  - id: ctr.s5d.app
+    system: sys.s5d
+    name: s5d app
+    technology: null
+  components:
+  - id: comp.review-gate-closure
+    feature: feat.s5d.review-gate-closure
+    domain: dom.s5d.core
+    container: ctr.s5d.app
+    name: review gate closure component
+    paths:
+    - rust/src/gates.rs
+    - rust/src/validate.rs
+    - rust/src/bin/s5d.rs
+    - rust/src/mcp.rs
+    - rust/src/lib.rs
+  roles: []
+  concerns: []
+  metrics: []
+  supersystems: []
+  transports: []
+links:
+  feature_to_domain:
+  - feature: feat.s5d.review-gate-closure
+    domain: dom.s5d.core
+  use_case_to_capability: []
+  use_case_to_entity: []
+  component_to_capability:
+  - capability: cap.review-gate-closure
+    component: comp.review-gate-closure
+  component_to_entity: []
+  container_to_capability: []
+  concern_to_metric: []
+  component_to_container: []
+  edges: []
+  depends_on: []
+  entity_relations: []
+  capability_to_entity: []
+  capability_to_concern: []
+contracts: []
+gates:
+- kind: schema
+- kind: graph
+roc: null
+problem:
+  signal: Feature-tier (standard/lightweight) spec declaring a review gate cannot close it — add_evidence rejects the tier and the gate reads only hypotheses[].evidence. Verified at HEAD 6341d2a.
+  constraints:
+  - Phase-closure scoped to standard/lightweight only; preserve eligibility ordering; no new persistence; no regression to 263 tests.
+  targets:
+  - smallest sufficient diff
+  - named-reviewer integrity
+  - decision/high path untouched
+  indicators: []
+  goodhart_guard: null
+  acceptance: Standard/lightweight spec with a declared review gate closes it via a human-accepted run phase (named reviewer); decision/high review path unchanged; full suite + dogfood CI green.
+  blast_radius: null
+  reversibility: null
+  status: null
+hypotheses: []
+decision: null
+note_rationale: null
+expires_at: null
+auto_noted: false
