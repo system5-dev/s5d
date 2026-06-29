@@ -1888,14 +1888,31 @@ fn git_staged_insertions() -> Option<usize> {
     })
 }
 
-/// Does this spec sit in an accepted recorded state (approved/applied/operated)
-/// with a record sha that still matches the file? Only such specs may grant
-/// commit coverage — a draft/unapproved/edited spec (or a `.s5d.yaml` freshly
-/// dropped in the very commit being checked) must authorize nothing. This is the
-/// same accepted-state + sha invariant the `S5D-Spec:` trailer path enforces
-/// inline (`trailer_block_reason`); applied here so the no-trailer aggregate path
-/// is not the unlocked side door next to the hardened trailer path.
-fn spec_grants_coverage(project: &s5d::S5dProject, spec_path: &std::path::Path) -> bool {
+/// Is this spec authorized to grant commit coverage? It must (1) currently
+/// validate, (2) have a record in an accepted state (approved/applied/operated),
+/// and (3) have a record sha that still matches the file. This is the SAME core
+/// authorization predicate the `S5D-Spec:` trailer path enforces — `trailer_block_reason`
+/// adds id-resolution + path-coverage + per-failure messaging on top of this core,
+/// and `aggregate_and_trailer_authorization_predicates_do_not_diverge` pins the two
+/// together so they can't silently drift apart.
+///
+/// THREAT MODEL — this is a PROCESS GUARD, not a defense against a malicious
+/// committer. The hook reads the working tree: the record is loaded from
+/// `.s5d/records/` on disk, NOT verified against the append-only ledger or a real
+/// approval chain. A committer with repo write access can forge a
+/// `.s5d/records/*.record.yaml` carrying `status: approved` and a `spec_sha256`
+/// matching a fake spec, all in the SAME commit, and pass this check. This hook
+/// prevents accidental / unapproved drift; it does NOT stop a forged S5D record.
+/// Ledger / CI integrity verification is what must enforce record authenticity —
+/// out of scope for the local pre-commit guard, tracked for hardening.
+fn spec_grants_coverage(
+    project: &s5d::S5dProject,
+    spec_path: &std::path::Path,
+    spec: &s5d::Spec,
+) -> bool {
+    if !s5d::validate_spec(spec).is_empty() {
+        return false; // a spec that does not validate authorizes nothing
+    }
     let Some(filename) = spec_path.file_name().and_then(|n| n.to_str()) else {
         return false;
     };
@@ -1923,7 +1940,7 @@ fn component_path_patterns(cwd: &std::path::Path) -> Vec<String> {
     };
     specs
         .iter()
-        .filter(|(path, _)| spec_grants_coverage(&project, path))
+        .filter(|(path, spec)| spec_grants_coverage(&project, path, spec))
         .filter_map(|(_, spec)| spec.artifacts.as_ref())
         .flat_map(|a| a.components.iter())
         .flat_map(|c| c.paths.iter().cloned())
@@ -5557,5 +5574,137 @@ mod aggregate_coverage_tests {
             staged,
             "a spec edited after approval (sha mismatch) must not grant coverage"
         );
+    }
+
+    #[test]
+    fn aggregate_coverage_rejects_invalid_spec_even_with_approved_record() {
+        // A spec that does not validate must authorize nothing — even if a record
+        // claims it approved with a matching sha (the validate leg of the predicate).
+        let dir = dirs();
+        let mut spec = s5d::generate_spec("feat.cov-fixture", s5d::Tier::Lightweight, "demo");
+        spec.artifacts.as_mut().unwrap().components[0].paths = vec!["rust/src/".into()];
+        spec.artifacts.as_mut().unwrap().capabilities.clear(); // Lightweight requires capabilities → invalid
+        assert!(
+            !s5d::validate_spec(&spec).is_empty(),
+            "fixture must actually be invalid"
+        );
+        let filename = "feat.cov-fixture__t.s5d.yaml";
+        let sp = dir.path().join(".s5d/packages").join(filename);
+        fs::write(&sp, serde_yaml::to_string(&spec).unwrap()).unwrap();
+        approve(dir.path(), filename, &sp); // approved record, sha of the invalid file
+        let staged = vec!["rust/src/payments/charge.rs".to_string()];
+        let refs: Vec<&String> = staged.iter().collect();
+        assert_eq!(
+            super::uncovered_source_files(dir.path(), &refs),
+            staged,
+            "an invalid spec must not grant coverage even with an approved, sha-matched record"
+        );
+    }
+
+    #[test]
+    fn aggregate_coverage_rejects_record_with_matching_sha_but_unaccepted_status() {
+        // accepted-state leg: a Proposed record with a matching sha grants nothing.
+        let dir = dirs();
+        let sp = write_spec(
+            dir.path(),
+            "feat.cov-fixture__t.s5d.yaml",
+            vec!["rust/src/".into()],
+        );
+        let sha = s5d::S5dProject::file_sha256(&sp).unwrap();
+        let mut record = s5d::generate_record("feat.cov-fixture__t.s5d.yaml", &sha);
+        record.status = s5d::SpecStatus::Proposed; // explicit: not an accepted state
+        fs::write(
+            dir.path()
+                .join(".s5d/records")
+                .join("feat.cov-fixture__t.record.yaml"),
+            serde_yaml::to_string(&record).unwrap(),
+        )
+        .unwrap();
+        let staged = vec!["rust/src/payments/charge.rs".to_string()];
+        let refs: Vec<&String> = staged.iter().collect();
+        assert_eq!(
+            super::uncovered_source_files(dir.path(), &refs),
+            staged,
+            "a Proposed (unaccepted) record must not grant coverage even with a matching sha"
+        );
+    }
+
+    /// (spec_grants_coverage, trailer_block_reason authorizes) for the fixture spec,
+    /// with staged files the spec's paths cover — so only the shared authorization
+    /// core (validate + accepted record + sha) decides, not path coverage.
+    fn predicates(dir: &Path) -> (bool, bool) {
+        let covered = ["rust/src/auth/login.rs".to_string()];
+        let refs: Vec<&String> = covered.iter().collect();
+        let project = s5d::S5dProject::find(dir).unwrap();
+        let (path, spec) = project
+            .discover_specs()
+            .unwrap()
+            .into_iter()
+            .find(|(_, s)| s.id == "feat.cov-fixture")
+            .expect("fixture spec on disk");
+        let grants = super::spec_grants_coverage(&project, &path, &spec);
+        let trailer = super::trailer_block_reason(dir, "feat.cov-fixture", &refs).is_none();
+        (grants, trailer)
+    }
+
+    #[test]
+    fn aggregate_and_trailer_authorization_predicates_do_not_diverge() {
+        // valid + approved + matching sha → both authorize
+        let d = dirs();
+        let sp = write_spec(
+            d.path(),
+            "feat.cov-fixture__t.s5d.yaml",
+            vec!["rust/src/auth/".into()],
+        );
+        approve(d.path(), "feat.cov-fixture__t.s5d.yaml", &sp);
+        let (g, t) = predicates(d.path());
+        assert_eq!(g, t, "valid+approved+sha");
+        assert!(g, "valid+approved+sha must authorize");
+
+        // valid + Proposed + matching sha → neither
+        let d = dirs();
+        let sp = write_spec(
+            d.path(),
+            "feat.cov-fixture__t.s5d.yaml",
+            vec!["rust/src/auth/".into()],
+        );
+        let sha = s5d::S5dProject::file_sha256(&sp).unwrap();
+        let mut rec = s5d::generate_record("feat.cov-fixture__t.s5d.yaml", &sha);
+        rec.status = s5d::SpecStatus::Proposed;
+        fs::write(
+            d.path()
+                .join(".s5d/records/feat.cov-fixture__t.record.yaml"),
+            serde_yaml::to_string(&rec).unwrap(),
+        )
+        .unwrap();
+        let (g, t) = predicates(d.path());
+        assert_eq!(g, t, "valid+proposed+sha");
+        assert!(!g, "proposed must not authorize");
+
+        // valid + approved + sha MISMATCH (edited after approval) → neither
+        let d = dirs();
+        let sp = write_spec(
+            d.path(),
+            "feat.cov-fixture__t.s5d.yaml",
+            vec!["rust/src/auth/".into()],
+        );
+        approve(d.path(), "feat.cov-fixture__t.s5d.yaml", &sp);
+        let body = fs::read_to_string(&sp).unwrap();
+        fs::write(&sp, format!("{body}\n# edited\n")).unwrap();
+        let (g, t) = predicates(d.path());
+        assert_eq!(g, t, "valid+approved+sha_mismatch");
+        assert!(!g, "sha mismatch must not authorize");
+
+        // INVALID + approved + matching sha → neither
+        let d = dirs();
+        let mut spec = s5d::generate_spec("feat.cov-fixture", s5d::Tier::Lightweight, "demo");
+        spec.artifacts.as_mut().unwrap().components[0].paths = vec!["rust/src/auth/".into()];
+        spec.artifacts.as_mut().unwrap().capabilities.clear();
+        let sp = d.path().join(".s5d/packages/feat.cov-fixture__t.s5d.yaml");
+        fs::write(&sp, serde_yaml::to_string(&spec).unwrap()).unwrap();
+        approve(d.path(), "feat.cov-fixture__t.s5d.yaml", &sp);
+        let (g, t) = predicates(d.path());
+        assert_eq!(g, t, "invalid+approved+sha");
+        assert!(!g, "invalid spec must not authorize");
     }
 }
